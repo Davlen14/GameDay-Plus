@@ -141,3 +141,105 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
+
+/* Enhanced version for featured game logos */
+.metallic-3d-logo-enhanced {
+  /* All base metallic-3d-logo properties plus enhanced effects */
+  filter: contrast(1.15) saturate(1.15) brightness(1.05) drop-shadow(0 12px 24px rgba(0,0,0,0.4));
+  position: relative;
+  border-radius: 12px;
+  transition: all 0.4s ease;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Enhanced multi-layered metallic shine overlay */
+.metallic-3d-logo-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: linear-gradient(45deg, 
+    transparent 0%, 
+    rgba(255,255,255,0.15) 15%,
+    rgba(255,255,255,0.7) 25%, 
+    rgba(255,255,255,0.4) 40%,
+    rgba(255,255,255,0.9) 50%,
+    rgba(255,255,255,0.4) 60%,
+    rgba(255,255,255,0.7) 75%,
+    rgba(255,255,255,0.15) 85%,
+    transparent 100%
+  );
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  z-index: 1;
+}
+
+/* Enhanced 3D emboss effect */
+.metallic-3d-logo-enhanced::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, 
+    rgba(255,255,255,0.9) 0%,
+    rgba(255,255,255,0.5) 8%,
+    transparent 12%,
+    transparent 88%,
+    rgba(0,0,0,0.25) 92%,
+    rgba(0,0,0,0.5) 100%
+  );
+  z-index: -1;
+  box-shadow: 
+    /* Enhanced white emboss highlight */
+    inset -2px -2px 4px rgba(255,255,255,0.9),
+    /* Enhanced dark emboss shadow */
+    inset 2px 2px 4px rgba(0,0,0,0.4),
+    /* Enhanced floating shadow */
+    0 16px 32px rgba(0,0,0,0.3);
+}
+
+/* Enhanced hover effect with more dramatic metallic shine animation */
+.metallic-3d-logo-enhanced:hover {
+  filter: contrast(1.25) saturate(1.25) brightness(1.1) drop-shadow(0 16px 32px rgba(0,0,0,0.5));
+  transform: scale(1.08) translateY(-4px) rotateX(5deg);
+}
+
+.metallic-3d-logo-enhanced:hover::before {
+  background: linear-gradient(45deg, 
+    transparent 0%, 
+    rgba(255,255,255,0.25) 15%,
+    rgba(255,255,255,0.9) 25%, 
+    rgba(255,255,255,0.6) 40%,
+    rgba(255,255,255,1.0) 50%,
+    rgba(255,255,255,0.6) 60%,
+    rgba(255,255,255,0.9) 75%,
+    rgba(255,255,255,0.25) 85%,
+    transparent 100%
+  );
+  animation: metallic-shine-enhanced 1.8s ease-in-out infinite;
+}
+
+/* Enhanced metallic shine animation */
+@keyframes metallic-shine-enhanced {
+  0% {
+    background-position: -300% 0;
+    transform: skewX(-15deg);
+  }
+  50% {
+    background-position: 300% 0;
+    transform: skewX(15deg);
+  }
+  100% {
+    background-position: -300% 0;
+    transform: skewX(-15deg);
+  }
+}

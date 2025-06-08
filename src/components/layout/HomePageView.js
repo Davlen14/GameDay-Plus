@@ -340,11 +340,11 @@ const HomePageView = () => {
                 <div className="flex items-center justify-center space-x-6">
                   {/* Away Team */}
                   <div className="text-center flex-1">
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 mx-auto mb-2 flex items-center justify-center p-2 relative">
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 mx-auto mb-2 flex items-center justify-center p-3 relative metallic-3d-logo-container">
                       <img 
                         src={getTeamLogo(featuredGame.awayTeam)} 
                         alt={`${featuredGame.awayTeam} logo`}
-                        className="w-full h-full object-contain hover:scale-110 transition-transform duration-300 metallic-3d-logo"
+                        className="w-full h-full object-contain hover:scale-110 transition-transform duration-300 metallic-3d-logo-enhanced"
                         onError={(e) => {
                           e.target.src = '/photos/ncaaf.png';
                         }}
@@ -363,11 +363,11 @@ const HomePageView = () => {
 
                   {/* Home Team */}
                   <div className="text-center flex-1">
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 mx-auto mb-2 flex items-center justify-center p-2 relative">
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 mx-auto mb-2 flex items-center justify-center p-2 relative metallic-3d-logo-container">
                       <img 
                         src={getTeamLogo(featuredGame.homeTeam)} 
                         alt={`${featuredGame.homeTeam} logo`}
-                        className="w-full h-full object-contain hover:scale-110 transition-transform duration-300 metallic-3d-logo"
+                        className="w-full h-full object-contain hover:scale-110 transition-transform duration-300 metallic-3d-logo-enhanced"
                         onError={(e) => {
                           e.target.src = '/photos/ncaaf.png';
                         }}
@@ -407,50 +407,62 @@ const HomePageView = () => {
               
               <div className="grid grid-cols-1 gap-3">
                 {topRecruits.slice(0, 25).map((recruit) => (
-                  <div key={recruit.id} className="p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-md">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="w-6 h-6 gradient-bg rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-xs">
-                          {recruit.ranking}
-                        </span>
-                      </div>
-                      <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded">
-                        {recruit.position}
-                      </span>
-                    </div>
-                    
-                    <h4 className="font-bold text-sm text-gray-800 mb-1">{recruit.name}</h4>
-                    <p className="text-xs text-gray-600 mb-2">{recruit.school}, {recruit.state}</p>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex">
-                        {[...Array(recruit.stars)].map((_, i) => (
-                          <svg key={i} className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                          </svg>
-                        ))}
+                  <div key={recruit.id} className="p-4 bg-gradient-to-r from-white/90 to-gray-50/90 backdrop-blur-sm border border-gray-200/50 rounded-xl hover:from-white hover:to-gray-50 hover:border-gray-300/70 transition-all duration-300 hover:scale-105 hover:shadow-lg group">
+                    <div className="flex items-start space-x-3">
+                      {/* Person Icon */}
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm group-hover:shadow-md transition-all duration-300">
+                        <svg className="w-5 h-5 text-blue-600 group-hover:text-purple-600 transition-colors duration-300" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
                       </div>
                       
-                      {recruit.committedTo ? (
-                        <div className="flex items-center space-x-1">
-                          <div className="w-4 h-4 flex items-center justify-center">
-                            <img 
-                              src={getTeamLogo(recruit.committedTo)} 
-                              alt={`${recruit.committedTo} logo`}
-                              className="w-full h-full object-contain"
-                              onError={(e) => {
-                                e.target.src = '/photos/ncaaf.png';
-                              }}
-                            />
+                      {/* Recruit Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="w-7 h-7 gradient-bg rounded-full flex items-center justify-center shadow-sm">
+                            <span className="text-white font-bold text-xs">
+                              {recruit.ranking}
+                            </span>
                           </div>
-                          <span className="text-xs text-gray-700 truncate max-w-[50px]">{recruit.committedTo}</span>
-                          <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                          </svg>
+                          <span className="px-2.5 py-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 text-xs font-semibold rounded-full border border-gray-300/50">
+                            {recruit.position}
+                          </span>
                         </div>
-                      ) : (
-                        <span className="text-xs text-gray-500">Open</span>
-                      )}
+                        
+                        <h4 className="font-bold text-sm text-gray-800 mb-1 group-hover:gradient-text transition-all duration-300">{recruit.name}</h4>
+                        <p className="text-xs text-gray-600 mb-2">{recruit.school}, {recruit.state}</p>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex">
+                            {[...Array(recruit.stars)].map((_, i) => (
+                              <svg key={i} className="w-3 h-3 text-yellow-400 hover:text-yellow-500 transition-colors duration-200" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                              </svg>
+                            ))}
+                          </div>
+                          
+                          {recruit.committedTo ? (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-4 h-4 flex items-center justify-center">
+                                <img 
+                                  src={getTeamLogo(recruit.committedTo)} 
+                                  alt={`${recruit.committedTo} logo`}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    e.target.src = '/photos/ncaaf.png';
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-700 truncate max-w-[50px]">{recruit.committedTo}</span>
+                              <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                              </svg>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-orange-500 font-medium">Open</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -464,25 +476,26 @@ const HomePageView = () => {
               {articles.map((article) => (
                 <div 
                   key={article.id}
-                  className="bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105"
+                  className="bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl overflow-hidden hover:shadow-3xl hover:bg-white/70 transition-all duration-500 cursor-pointer hover:scale-105 hover:border-white/50"
                   onClick={() => openArticle(article.url)}
                 >
                   {article.image && (
-                    <div className="h-48 bg-gray-200 overflow-hidden">
+                    <div className="h-64 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative">
                       <img 
                         src={article.image} 
                         alt={article.title}
-                        className="w-full h-full object-cover hover:scale-105 transition duration-300"
+                        className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                         onError={(e) => {
                           e.target.src = "/photos/ncaaf.png";
                         }}
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                     </div>
                   )}
                   
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="px-3 py-1 bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-bold rounded-full">
+                      <span className="text-lg font-bold gradient-text italic">
                         GAMEDAY+ News
                       </span>
                       <svg className="w-5 h-5 text-gray-400 hover:text-red-500 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -490,17 +503,11 @@ const HomePageView = () => {
                       </svg>
                     </div>
                     
-                    <h3 className="text-xl font-bold text-gray-800 mb-3 hover:gradient-text transition duration-300">
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 hover:gradient-text transition duration-300 line-clamp-2">
                       {article.title}
                     </h3>
                     
-                    {article.description && (
-                      <p className="text-gray-600 mb-4 line-clamp-3">
-                        {article.description}
-                      </p>
-                    )}
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center justify-between text-sm text-gray-500 mt-4">
                       <span className="font-semibold">{article.source?.name || 'Unknown Source'}</span>
                       <span>{article.publishedAt ? formatDate(article.publishedAt) : 'Recently'}</span>
                     </div>
