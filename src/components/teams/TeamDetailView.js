@@ -154,10 +154,10 @@ const TeamDetailView = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 px-2 md:px-4 bg-gray-50">
+      <div className="min-h-screen pt-32 px-2 md:px-4 bg-gradient-to-br from-slate-50 via-cyan-50 to-blue-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-500 border-t-transparent"></div>
+            <div className="animate-spin rounded-full h-20 w-20 border-4 border-transparent bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-padding border-l-transparent shadow-xl"></div>
           </div>
         </div>
       </div>
@@ -166,12 +166,12 @@ const TeamDetailView = () => {
 
   if (!team) {
     return (
-      <div className="min-h-screen pt-32 px-2 md:px-4 bg-gray-50">
+      <div className="min-h-screen pt-32 px-2 md:px-4 bg-gradient-to-br from-slate-50 via-cyan-50 to-blue-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-20">
-            <i className="fas fa-exclamation-triangle text-6xl text-gray-300 mb-6"></i>
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">Team Not Found</h3>
-            <p className="text-gray-500 text-lg">
+            <i className="fas fa-exclamation-triangle text-7xl text-slate-300 mb-8 filter drop-shadow-lg"></i>
+            <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent mb-6">Team Not Found</h3>
+            <p className="text-slate-500 text-xl leading-relaxed">
               The team you're looking for doesn't exist or has been removed.
             </p>
           </div>
@@ -188,91 +188,94 @@ const TeamDetailView = () => {
 
   return (
     <div className="min-h-screen pt-20 bg-gray-50">
-      {/* Back Button */}
-      <div className="bg-white border-b border-gray-200 sticky top-20 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      {/* HD Back Button */}
+      <div className="bg-gradient-to-r from-white via-slate-50 to-white border-b border-slate-200/50 sticky top-20 z-50 backdrop-blur-sm shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-5">
           <button
             onClick={() => window.location.hash = 'teams'}
-            className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors duration-300 font-medium"
+            className="flex items-center gap-3 text-slate-600 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 font-bold tracking-wide group"
           >
-            <i className="fas fa-arrow-left"></i>
+            <i className="fas fa-arrow-left filter drop-shadow-sm group-hover:transform group-hover:-translate-x-1 transition-transform duration-300"></i>
             <span>Back to All Teams</span>
           </button>
         </div>
       </div>
 
-      {/* Galaxy Background Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-        {/* Animated Galaxy Background */}
+      {/* Modern HD Galaxy Background Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900">
+        {/* HD Galaxy Background with Shiny Effects */}
         <div className="absolute inset-0">
-          {/* Stars Layer 1 */}
+          {/* Sparkling Stars Layer 1 - Small diamond sparkles */}
           <div className="absolute inset-0">
             {starLayer1.map((star) => (
               <div
                 key={star.id}
-                className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                className="absolute w-1 h-1 bg-white rounded-full shadow-white shadow-sm animate-pulse"
                 style={{
                   left: `${star.left}%`,
                   top: `${star.top}%`,
                   animationDelay: `${star.delay}s`,
                   animationDuration: `${star.duration}s`,
+                  filter: 'brightness(1.5) contrast(1.2)',
+                  boxShadow: '0 0 4px rgba(255,255,255,0.8), 0 0 8px rgba(255,255,255,0.4)',
                 }}
               />
             ))}
           </div>
           
-          {/* Stars Layer 2 - Larger */}
+          {/* Sparkling Stars Layer 2 - Larger crystal sparkles */}
           <div className="absolute inset-0">
             {starLayer2.map((star) => (
               <div
                 key={star.id}
-                className="absolute w-2 h-2 bg-blue-200 rounded-full animate-pulse opacity-60"
+                className="absolute w-2 h-2 bg-gradient-to-br from-cyan-200 via-blue-100 to-indigo-200 rounded-full animate-pulse opacity-80"
                 style={{
                   left: `${star.left}%`,
                   top: `${star.top}%`,
                   animationDelay: `${star.delay}s`,
                   animationDuration: `${star.duration}s`,
+                  filter: 'brightness(1.8) saturate(1.5)',
+                  boxShadow: '0 0 6px rgba(139,69,255,0.6), 0 0 12px rgba(59,130,246,0.4), 0 0 18px rgba(14,165,233,0.2)',
                 }}
               />
             ))}
           </div>
 
-          {/* Nebula Effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-blue-900/20 to-indigo-900/20 animate-pulse"></div>
+          {/* HD Nebula Cloud Effects */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-800/30 via-blue-800/25 to-indigo-800/30 animate-pulse"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-cyan-600/10 via-transparent to-purple-600/15 animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-blue-700/15 to-indigo-700/20 animate-pulse" style={{ animationDelay: '2s' }}></div>
           
-          {/* Rotating Galaxy Rings */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="w-96 h-96 border border-blue-500/20 rounded-full animate-spin" style={{ animationDuration: '20s' }}></div>
-            <div className="absolute inset-8 border border-purple-500/20 rounded-full animate-spin" style={{ animationDuration: '15s', animationDirection: 'reverse' }}></div>
-            <div className="absolute inset-16 border border-indigo-500/20 rounded-full animate-spin" style={{ animationDuration: '25s' }}></div>
-          </div>
+          {/* Shiny Gradient Overlays for HD Effect */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent"></div>
         </div>
 
         {/* Hero Content */}
         <div className="relative z-10 px-4 py-16">
           <div className="max-w-7xl mx-auto text-center">
-            {/* Team Logo with Enhanced 3D Metallic Effect */}
+            {/* HD Shiny Team Logo with Crystal Effect */}
             <div className="relative inline-block mb-8">
-              {/* Outer Glow Ring */}
-              <div className="absolute inset-0 w-48 h-48 mx-auto">
-                <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-indigo-500/30 blur-2xl animate-pulse"></div>
+              {/* Outer Crystal Glow */}
+              <div className="absolute inset-0 w-52 h-52 mx-auto">
+                <div className="w-full h-full rounded-full bg-gradient-to-r from-cyan-400/40 via-blue-500/40 to-purple-600/40 blur-3xl animate-pulse"></div>
               </div>
               
-              {/* Main Logo Container */}
-              <div className="relative w-40 h-40 mx-auto">
-                {/* Shadow Layers */}
-                <div className="absolute inset-0 w-full h-full rounded-full bg-gradient-to-br from-gray-300 via-gray-400 to-gray-600 shadow-2xl transform rotate-6 group-hover:rotate-12 transition-transform duration-500"></div>
-                <div className="absolute inset-2 w-36 h-36 rounded-full bg-gradient-to-br from-gray-200 via-gray-300 to-gray-500 shadow-xl transform -rotate-3 group-hover:-rotate-6 transition-transform duration-500"></div>
+              {/* HD Logo Container with Shiny Effects */}
+              <div className="relative w-44 h-44 mx-auto">
+                {/* Crystal Shadow Layers */}
+                <div className="absolute inset-0 w-full h-full rounded-full bg-gradient-to-br from-white/30 via-cyan-200/25 to-blue-300/20 shadow-2xl transform rotate-3 transition-transform duration-700 hover:rotate-6"></div>
+                <div className="absolute inset-1 w-42 h-42 rounded-full bg-gradient-to-br from-blue-100/25 via-indigo-200/20 to-purple-300/15 shadow-xl transform -rotate-2 transition-transform duration-700 hover:-rotate-4"></div>
                 
-                {/* Main Logo Frame */}
-                <div className="absolute inset-4 w-32 h-32 rounded-full bg-gradient-to-br from-white via-gray-100 to-gray-300 shadow-inner overflow-hidden border-4 border-white/50 backdrop-blur-sm">
+                {/* Main HD Logo Frame */}
+                <div className="absolute inset-3 w-38 h-38 rounded-full bg-gradient-to-br from-white/95 via-slate-50/90 to-blue-50/85 shadow-inner overflow-hidden border-4 border-white/60 backdrop-blur-lg">
                   {secureTeamLogo ? (
                     <img
                       src={secureTeamLogo}
                       alt={team.school}
-                      className="w-full h-full object-contain p-3 filter drop-shadow-2xl"
+                      className="w-full h-full object-contain p-4 filter drop-shadow-2xl"
                       style={{
-                        filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3)) contrast(1.1) saturate(1.2)',
+                        filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.4)) contrast(1.15) saturate(1.3) brightness(1.05)',
                       }}
                       onError={(e) => {
                         console.log('Logo failed to load:', secureTeamLogo);
@@ -282,14 +285,14 @@ const TeamDetailView = () => {
                     />
                   ) : null}
                   <div className="fallback-icon w-full h-full flex items-center justify-center" style={{ display: secureTeamLogo ? 'none' : 'flex' }}>
-                    <i className="fas fa-university text-gray-600 text-4xl"></i>
+                    <i className="fas fa-university text-slate-600 text-5xl filter drop-shadow-lg"></i>
                   </div>
                 </div>
 
-                {/* Floating Orbs */}
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-lg animate-bounce opacity-80"></div>
-                <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full shadow-lg animate-bounce opacity-60" style={{ animationDelay: '0.5s' }}></div>
-                <div className="absolute top-0 -left-6 w-4 h-4 bg-gradient-to-br from-green-400 to-blue-500 rounded-full shadow-lg animate-bounce opacity-70" style={{ animationDelay: '1s' }}></div>
+                {/* HD Floating Crystal Orbs */}
+                <div className="absolute -top-3 -right-3 w-6 h-6 bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 rounded-full shadow-lg animate-bounce opacity-90" style={{ filter: 'brightness(1.2) contrast(1.1)', boxShadow: '0 0 12px rgba(251,191,36,0.6)' }}></div>
+                <div className="absolute -bottom-3 -left-3 w-5 h-5 bg-gradient-to-br from-cyan-300 via-blue-400 to-indigo-500 rounded-full shadow-lg animate-bounce opacity-85" style={{ animationDelay: '0.5s', filter: 'brightness(1.2) contrast(1.1)', boxShadow: '0 0 10px rgba(59,130,246,0.6)' }}></div>
+                <div className="absolute top-1 -left-5 w-4 h-4 bg-gradient-to-br from-emerald-300 via-teal-400 to-cyan-500 rounded-full shadow-lg animate-bounce opacity-80" style={{ animationDelay: '1s', filter: 'brightness(1.2) contrast(1.1)', boxShadow: '0 0 8px rgba(20,184,166,0.6)' }}></div>
               </div>
             </div>
 
@@ -302,17 +305,17 @@ const TeamDetailView = () => {
                 {team.mascot || 'Unknown Mascot'}
               </p>
               
-              {/* Conference and Location */}
+              {/* Conference and Location with HD Gradient Pills */}
               <div className="flex flex-wrap items-center justify-center gap-6 mt-6">
-                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3">
-                  <i className="fas fa-layer-group text-blue-400"></i>
-                  <span className="text-white font-medium">{team.conference || 'N/A'}</span>
+                <div className="flex items-center gap-3 bg-gradient-to-r from-white/15 via-cyan-50/10 to-blue-50/15 backdrop-blur-lg rounded-full px-8 py-4 border border-white/20 shadow-lg">
+                  <i className="fas fa-layer-group text-cyan-300 filter drop-shadow-sm"></i>
+                  <span className="text-white font-semibold tracking-wide">{team.conference || 'N/A'}</span>
                 </div>
                 
                 {(team.location || team.city) && (
-                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3">
-                    <i className="fas fa-map-marker-alt text-red-400"></i>
-                    <span className="text-white font-medium">
+                  <div className="flex items-center gap-3 bg-gradient-to-r from-white/15 via-purple-50/10 to-indigo-50/15 backdrop-blur-lg rounded-full px-8 py-4 border border-white/20 shadow-lg">
+                    <i className="fas fa-map-marker-alt text-purple-300 filter drop-shadow-sm"></i>
+                    <span className="text-white font-semibold tracking-wide">
                       {typeof team.location === 'string' 
                         ? team.location 
                         : team.city 
@@ -324,95 +327,105 @@ const TeamDetailView = () => {
                 )}
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
+              {/* HD Gradient Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-6 mt-10">
                 <button
                   onClick={toggleFavorite}
-                  className={`px-8 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-3 ${
+                  className={`px-10 py-5 rounded-2xl font-bold transition-all duration-300 flex items-center gap-4 backdrop-blur-lg border shadow-xl transform hover:scale-105 ${
                     isFavorite
-                      ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-lg shadow-yellow-500/25'
-                      : 'bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30'
+                      ? 'bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 text-white border-yellow-400/30 shadow-yellow-500/25'
+                      : 'bg-gradient-to-r from-white/20 via-cyan-50/15 to-blue-50/20 border-white/30 text-white hover:from-white/25 hover:via-cyan-50/20 hover:to-blue-50/25'
                   }`}
                 >
-                  <i className={`fas fa-star ${isFavorite ? 'text-white' : 'text-yellow-400'}`}></i>
-                  {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                  <i className={`fas fa-star ${isFavorite ? 'text-white' : 'text-yellow-300'} filter drop-shadow-sm`}></i>
+                  <span className="tracking-wide">{isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}</span>
                 </button>
                 
-                <button className="px-8 py-4 rounded-2xl font-semibold bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-3">
-                  <i className="fas fa-plus text-white"></i>
-                  Follow Team
+                <button className="px-10 py-5 rounded-2xl font-bold bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-700 text-white shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 flex items-center gap-4 backdrop-blur-lg border border-blue-400/30">
+                  <i className="fas fa-plus text-white filter drop-shadow-sm"></i>
+                  <span className="tracking-wide">Follow Team</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Team Colors Gradient Bottom */}
+        {/* HD Team Colors Gradient Bottom */}
         <div 
-          className="absolute bottom-0 left-0 right-0 h-2"
+          className="absolute bottom-0 left-0 right-0 h-3"
           style={{
-            background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`
+            background: `linear-gradient(90deg, ${primaryColor}00, ${primaryColor}80, ${secondaryColor}80, ${secondaryColor}00)`,
+            filter: 'blur(0.5px) brightness(1.2)',
           }}
         ></div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white shadow-lg border-b border-gray-200 sticky top-20 z-40">
+      {/* HD Gradient Navigation Tabs */}
+      <div className="bg-gradient-to-r from-white via-slate-50 to-white shadow-xl border-b border-slate-200/50 sticky top-20 z-40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto">
           <div className="flex overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-shrink-0 px-8 py-6 font-semibold transition-all duration-300 border-b-4 flex items-center gap-3 ${
+                className={`flex-shrink-0 px-10 py-7 font-bold transition-all duration-300 border-b-4 flex items-center gap-4 ${
                   activeTab === tab.id
-                    ? 'border-red-500 text-red-600 bg-red-50'
-                    : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    ? 'border-gradient-to-r from-cyan-500 to-blue-600 text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-blue-700 bg-gradient-to-r from-cyan-50 to-blue-50 shadow-lg'
+                    : 'border-transparent text-slate-600 hover:text-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-cyan-50 hover:shadow-md'
                 }`}
+                style={activeTab === tab.id ? {
+                  background: 'linear-gradient(135deg, rgba(6,182,212,0.1) 0%, rgba(59,130,246,0.15) 100%)',
+                  borderImage: 'linear-gradient(90deg, #06b6d4, #3b82f6) 1',
+                  borderImageSlice: 1,
+                  color: 'transparent',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  backgroundImage: 'linear-gradient(90deg, #0891b2, #2563eb)',
+                } : {}}
               >
-                <i className={`fas ${tab.icon}`}></i>
-                <span className="whitespace-nowrap">{tab.label}</span>
+                <i className={`fas ${tab.icon} filter drop-shadow-sm`}></i>
+                <span className="whitespace-nowrap tracking-wide">{tab.label}</span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Tab Content */}
+      {/* HD Tab Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-3xl p-12 border border-gray-200 shadow-xl">
-          {/* Coming Soon Content */}
+        <div className="bg-gradient-to-br from-white via-slate-50 to-cyan-50 rounded-3xl p-12 border border-slate-200/50 shadow-2xl backdrop-blur-sm">
+          {/* Coming Soon Content with HD Effects */}
           <div className="text-center py-20">
             <div className="relative inline-block mb-8">
-              {/* Animated Icon Background */}
-              <div className="absolute inset-0 w-24 h-24 mx-auto">
-                <div className="w-full h-full rounded-full bg-gradient-to-r from-red-500/20 via-purple-500/20 to-blue-500/20 blur-xl animate-pulse"></div>
+              {/* HD Animated Icon Background */}
+              <div className="absolute inset-0 w-28 h-28 mx-auto">
+                <div className="w-full h-full rounded-full bg-gradient-to-r from-cyan-400/30 via-blue-500/25 to-purple-600/30 blur-2xl animate-pulse"></div>
               </div>
               
-              {/* Main Icon */}
-              <div className="relative w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-2xl">
-                <i className={`fas ${tabs.find(t => t.id === activeTab)?.icon} text-white text-3xl`}></i>
+              {/* HD Main Icon */}
+              <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-sm border border-white/20">
+                <i className={`fas ${tabs.find(t => t.id === activeTab)?.icon} text-white text-4xl filter drop-shadow-lg`}></i>
               </div>
             </div>
 
-            <h2 className="text-4xl font-bold text-gray-800 mb-6">
+            <h2 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-8 tracking-tight">
               {tabs.find(t => t.id === activeTab)?.label} Coming Soon
             </h2>
             
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
               We're working hard to bring you comprehensive {tabs.find(t => t.id === activeTab)?.label?.toLowerCase() || 'team'} data 
-              for {team.school || 'this team'}. Stay tuned for an amazing experience!
+              for {team.school || 'this team'}. Stay tuned for an amazing HD experience!
             </p>
 
-            {/* Features Preview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            {/* HD Features Preview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-16">
               {getTabFeatures(activeTab).map((feature, index) => (
-                <div key={index} className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                    <i className={`fas ${feature.icon} text-white`}></i>
+                <div key={index} className="bg-gradient-to-br from-white via-slate-50 to-cyan-50 rounded-3xl p-8 border border-slate-200/50 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 backdrop-blur-sm">
+                  <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-xl">
+                    <i className={`fas ${feature.icon} text-white text-xl filter drop-shadow-sm`}></i>
                   </div>
-                  <h3 className="font-bold text-gray-800 mb-2">{feature.title}</h3>
-                  <p className="text-gray-600 text-sm">{feature.description}</p>
+                  <h3 className="font-bold text-slate-800 mb-3 text-lg tracking-wide">{feature.title}</h3>
+                  <p className="text-slate-600 leading-relaxed">{feature.description}</p>
                 </div>
               ))}
             </div>
