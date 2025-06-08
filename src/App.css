@@ -272,6 +272,11 @@
   object-fit: cover;
   object-position: center;
   transition: transform 0.7s ease;
+  position: relative;
+  z-index: 1;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .news-card-image:hover {
@@ -287,4 +292,13 @@
   color: #6b7280;
   font-size: 0.875rem;
   text-align: center;
+}
+
+/* News image overlay styling */
+.news-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.2), transparent);
+  z-index: 2;
+  pointer-events: none;
 }

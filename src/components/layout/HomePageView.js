@@ -481,7 +481,7 @@ const HomePageView = () => {
                         e.target.src = "/photos/ncaaf.png";
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    <div className="news-image-overlay"></div>
                   </div>
                   
                   <div className="p-6">
