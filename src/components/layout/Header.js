@@ -18,19 +18,32 @@ const Header = () => {
     }
   };
 
+  const navigateTo = (page) => {
+    window.location.hash = page;
+    setMobileMenuOpen(false); // Close mobile menu after navigation
+  };
+
   return (
     <header className="fixed top-0 left-0 w-full bg-white bg-opacity-95 shadow-lg z-50 py-4 px-8 border-b border-gray-200 backdrop-filter backdrop-blur-md">
       <nav className="flex items-center justify-between w-full max-w-none">
         {/* Logo - Far Left */}
         <div className="flex items-center pr-4">
-          <a href="#home" className="text-3xl header-logo gradient-text hover:opacity-80 transition duration-300 cursor-pointer">
+          <button 
+            onClick={() => navigateTo('home')} 
+            className="text-3xl header-logo gradient-text hover:opacity-80 transition duration-300 cursor-pointer bg-transparent border-none p-0"
+          >
             GAMEDAY+
-          </a>
+          </button>
         </div>
         
         {/* Desktop Navigation - Centered and Spread */}
         <div className="hidden lg:flex space-x-8 text-sm font-bold flex-1 justify-center">
-          <a href="#home-page" className="gradient-text hover:opacity-80 transition duration-300 font-extrabold">Home</a>
+          <button 
+            onClick={() => navigateTo('home-page')} 
+            className="gradient-text hover:opacity-80 transition duration-300 font-extrabold bg-transparent border-none p-0 cursor-pointer"
+          >
+            Home
+          </button>
           
           {/* Teams & Conferences Dropdown */}
           <div className="dropdown">
@@ -177,7 +190,12 @@ const Header = () => {
       
       {/* Mobile Menu */}
       <div className={`lg:hidden mt-4 space-y-2 text-base bg-white bg-opacity-95 rounded-lg py-4 px-2 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
-        <a href="#home-page" className="block gradient-text py-2 px-4">Home</a>
+        <button 
+          onClick={() => navigateTo('home-page')} 
+          className="block gradient-text py-2 px-4 w-full text-left bg-transparent border-none cursor-pointer"
+        >
+          Home
+        </button>
         
         {/* Mobile Teams & Conferences */}
         <div className={`mobile-dropdown ${activeDropdowns.includes(0) ? 'active' : ''}`}>

@@ -122,7 +122,10 @@ const Hero = () => {
         <p className="text-lg md:text-xl lg:text-2xl max-w-4xl mx-auto mb-10 opacity-90">
           GAMEDAY+ provides deeper insights than ESPN, The Athletic, and traditional sports apps combined, with <span className="font-bold">comprehensive modules</span> covering every aspect of college football.
         </p>
-        <div className="cta-button-elevated text-xl font-bold py-4 px-10 rounded-lg shadow-lg">
+        <div 
+          className="cta-button-elevated text-xl font-bold py-4 px-10 rounded-lg shadow-lg cursor-pointer"
+          onClick={() => window.location.hash = 'home-page'}
+        >
           <span className="cta-text">EXPLORE ALL MODULES</span>
         </div>
       </div>

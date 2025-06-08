@@ -9,7 +9,10 @@ const CTA = () => {
           Join thousands of college football fans who rely on GAMEDAY+ for the most comprehensive insights available.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <div className="cta-button-elevated text-xl py-4 px-8 rounded-lg">
+          <div 
+            className="cta-button-elevated text-xl py-4 px-8 rounded-lg cursor-pointer"
+            onClick={() => window.location.hash = 'home-page'}
+          >
             <span className="cta-text">Start Free Trial</span>
           </div>
           <a href="#" className="border-2 border-white text-white hover:bg-white hover:text-red-600 transition duration-300 inline-block text-xl font-bold py-4 px-8 rounded-lg">

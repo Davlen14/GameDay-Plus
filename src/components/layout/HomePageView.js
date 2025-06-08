@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { newsService, teamService, rankingsService, gameService } from '../../services';
+import React, { useState, useEffect, useCallback } from 'react';
+import { newsService, teamService, rankingsService } from '../../services';
 
 const HomePageView = () => {
   const [loading, setLoading] = useState(true);
@@ -16,11 +16,7 @@ const HomePageView = () => {
     return team?.logos?.[0] || '/photos/ncaaf.png';
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch all data in parallel
@@ -43,7 +39,11 @@ const HomePageView = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty dependency array since fetchData doesn't depend on any props or state
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const fetchNews = async () => {
     try {
@@ -74,7 +74,23 @@ const HomePageView = () => {
 
   const fetchTopRecruits = async () => {
     try {
-      // Mock recruits data - replace with actual service call
+      // Use actual recruiting service to fetch top recruits for 2025 class
+      const recruits = await rankingsService.getPlayerRecruitingRankings(2025);
+      
+      // Transform API data to match our component's expected format
+      return recruits.slice(0, 8).map((recruit, index) => ({
+        id: recruit.id || index + 1,
+        name: recruit.name,
+        position: recruit.position,
+        ranking: recruit.ranking || index + 1,
+        stars: recruit.stars || 4,
+        school: recruit.school,
+        state: recruit.stateProvince || recruit.state,
+        committedTo: recruit.committedTo
+      }));
+    } catch (error) {
+      console.error('Error fetching recruits:', error);
+      // Fallback recruits data if API fails
       return [
         { id: 1, name: "Marcus Johnson", position: "QB", ranking: 1, stars: 5, school: "De La Salle High School", state: "CA", committedTo: "Georgia" },
         { id: 2, name: "Trevor Williams", position: "RB", ranking: 2, stars: 5, school: "IMG Academy", state: "FL", committedTo: "Alabama" },
@@ -85,9 +101,6 @@ const HomePageView = () => {
         { id: 7, name: "Robert Wilson", position: "LB", ranking: 7, stars: 5, school: "Centennial", state: "NV", committedTo: "USC" },
         { id: 8, name: "Kevin Garcia", position: "DT", ranking: 8, stars: 4, school: "Bishop Gorman", state: "NV", committedTo: "Oregon" }
       ];
-    } catch (error) {
-      console.error('Error fetching recruits:', error);
-      return [];
     }
   };
 
@@ -186,10 +199,10 @@ const HomePageView = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pt-32 px-6">
+      <div className="min-h-screen gradient-bg pt-32 px-6">
         <div className="max-w-7xl mx-auto text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-xl font-semibold text-gray-700">Loading GAMEDAY+ Home...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
+          <p className="text-xl font-semibold text-white">Loading GAMEDAY+ Home...</p>
         </div>
       </div>
     );
@@ -197,7 +210,7 @@ const HomePageView = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pt-32 px-6">
+      <div className="min-h-screen gradient-bg pt-32 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <div className="bg-red-50 border border-red-200 rounded-xl p-8">
             <h2 className="text-2xl font-bold text-red-700 mb-4">Error Loading Content</h2>
@@ -215,14 +228,14 @@ const HomePageView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pt-32 px-6">
+    <div className="min-h-screen gradient-bg pt-32 px-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-6xl md:text-7xl font-black gradient-text mb-4 tracking-tight">
+          <h1 className="text-6xl md:text-7xl font-black text-white mb-4 tracking-tight">
             GAMEDAY+ HOME
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-white opacity-90 max-w-3xl mx-auto">
             Your ultimate college football headquarters - News, Rankings, and Recruiting
           </p>
         </div>
@@ -230,10 +243,10 @@ const HomePageView = () => {
         {/* Featured Game */}
         {featuredGame && (
           <div className="mb-12">
-            <div className="bg-white bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-white border-opacity-20">
+            <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-white border-opacity-30">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold gradient-text">FEATURED GAME</h2>
-                <span className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-sm font-bold">
+                <h2 className="text-2xl font-bold text-white">FEATURED GAME</h2>
+                <span className="px-4 py-2 bg-white text-red-600 rounded-full text-sm font-bold">
                   Week {featuredGame.week}
                 </span>
               </div>
@@ -241,36 +254,50 @@ const HomePageView = () => {
               <div className="flex items-center justify-center space-x-8">
                 {/* Away Team */}
                 <div className="text-center flex-1">
-                  <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center shadow-lg">
-                    <i className="fas fa-university text-3xl text-gray-600"></i>
+                  <div className="w-24 h-24 mx-auto mb-4 bg-white rounded-full flex items-center justify-center shadow-lg p-2">
+                    <img 
+                      src={getTeamLogo(featuredGame.awayTeam)} 
+                      alt={`${featuredGame.awayTeam} logo`}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.src = '/photos/ncaaf.png';
+                      }}
+                    />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800">{featuredGame.awayTeam}</h3>
-                  <p className="text-sm text-gray-600">{featuredGame.awayConference}</p>
+                  <h3 className="text-xl font-bold text-white">{featuredGame.awayTeam}</h3>
+                  <p className="text-sm text-white opacity-80">{featuredGame.awayConference}</p>
                 </div>
 
                 {/* VS Badge */}
                 <div className="flex-shrink-0">
-                  <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white font-black text-lg">VS</span>
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-red-600 font-black text-lg">VS</span>
                   </div>
                 </div>
 
                 {/* Home Team */}
                 <div className="text-center flex-1">
-                  <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center shadow-lg">
-                    <i className="fas fa-university text-3xl text-gray-600"></i>
+                  <div className="w-24 h-24 mx-auto mb-4 bg-white rounded-full flex items-center justify-center shadow-lg p-2">
+                    <img 
+                      src={getTeamLogo(featuredGame.homeTeam)} 
+                      alt={`${featuredGame.homeTeam} logo`}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.src = '/photos/ncaaf.png';
+                      }}
+                    />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800">{featuredGame.homeTeam}</h3>
-                  <p className="text-sm text-gray-600">{featuredGame.homeConference}</p>
+                  <h3 className="text-xl font-bold text-white">{featuredGame.homeTeam}</h3>
+                  <p className="text-sm text-white opacity-80">{featuredGame.homeConference}</p>
                 </div>
               </div>
 
               <div className="mt-6 text-center">
-                <p className="text-gray-700 mb-2">
-                  <i className="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                <p className="text-white mb-2">
+                  <i className="fas fa-map-marker-alt text-white mr-2"></i>
                   {featuredGame.venue}
                 </p>
-                <p className="text-sm text-gray-600">{featuredGame.date} • {featuredGame.time} • {featuredGame.network}</p>
+                <p className="text-sm text-white opacity-80">{featuredGame.date} • {featuredGame.time} • {featuredGame.network}</p>
               </div>
             </div>
           </div>
@@ -280,10 +307,10 @@ const HomePageView = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Sidebar - Top Recruits */}
           <div className="lg:col-span-3">
-            <div className="bg-white bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20 sticky top-32">
+            <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-30 sticky top-32">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold gradient-text">TOP RECRUITS</h2>
-                <span className="text-sm text-gray-600 font-semibold">2025 Class</span>
+                <h2 className="text-xl font-bold text-white">TOP RECRUITS</h2>
+                <span className="text-sm text-white opacity-80 font-semibold">2025 Class</span>
               </div>
               
               <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -310,8 +337,15 @@ const HomePageView = () => {
                       
                       {recruit.committedTo ? (
                         <div className="flex items-center space-x-1">
-                          <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
-                            <i className="fas fa-university text-xs text-gray-600"></i>
+                          <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center p-0.5">
+                            <img 
+                              src={getTeamLogo(recruit.committedTo)} 
+                              alt={`${recruit.committedTo} logo`}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                e.target.src = '/photos/ncaaf.png';
+                              }}
+                            />
                           </div>
                           <span className="text-xs text-gray-700">{recruit.committedTo}</span>
                           <i className="fas fa-check-circle text-green-500 text-xs"></i>
@@ -330,8 +364,8 @@ const HomePageView = () => {
           <div className="lg:col-span-6">
             <div className="space-y-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold gradient-text mb-2">GAMEDAY+ NEWS</h2>
-                <p className="text-gray-600">Latest college football updates and analysis</p>
+                <h2 className="text-3xl font-bold text-white mb-2">GAMEDAY+ NEWS</h2>
+                <p className="text-white opacity-90">Latest college football updates and analysis</p>
               </div>
 
               {articles.map((article) => (
@@ -384,9 +418,9 @@ const HomePageView = () => {
 
           {/* Right Sidebar - AP Top 25 Poll */}
           <div className="lg:col-span-3">
-            <div className="bg-white bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20 sticky top-32">
+            <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-30 sticky top-32">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold gradient-text">AP TOP 25</h2>
+                <h2 className="text-xl font-bold text-white">AP TOP 25</h2>
                 <img src="/photos/AP25.jpg" alt="AP Poll" className="h-6 object-contain" />
               </div>
               
@@ -425,7 +459,7 @@ const HomePageView = () => {
 
         {/* Footer Call to Action */}
         <div className="mt-16 text-center">
-          <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-8 text-white">
+          <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-2xl p-8 text-white border border-white border-opacity-30">
             <h3 className="text-3xl font-bold mb-4">Experience More with GAMEDAY+</h3>
             <p className="text-xl mb-6 opacity-90">
               Get access to premium analytics, betting models, and exclusive content

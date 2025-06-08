@@ -3,7 +3,7 @@ import './App.css';
 
 // Layout Components
 import Header from './components/layout/Header';
-import Hero from './components/layout/Hero';
+import Hero from './components/layout/Hero';  
 import Features from './components/layout/Features';
 import CTA from './components/layout/CTA';
 import Footer from './components/layout/Footer';
@@ -103,30 +103,8 @@ function App() {
     window.addEventListener('hashchange', handleHashChange);
     handleHashChange(); // Set initial page
 
-    // Smooth scrolling for navigation
-    const handleLinkClick = (e) => {
-      if (e.target.getAttribute('href')?.startsWith('#')) {
-        e.preventDefault();
-        const targetId = e.target.getAttribute('href');
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-          const headerOffset = document.querySelector('header')?.offsetHeight || 0;
-          const elementPosition = targetElement.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: "smooth"
-          });
-        }
-      }
-    };
-
-    document.addEventListener('click', handleLinkClick);
-
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
-      document.removeEventListener('click', handleLinkClick);
       aosElements.forEach(el => {
         aosObserver.unobserve(el);
       });
