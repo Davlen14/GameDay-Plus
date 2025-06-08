@@ -1,10 +1,19 @@
+/* Font loading with fallbacks for better performance */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
 @import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
 @import url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css');
 
+/* Font face with fallbacks for instant loading */
+@font-face {
+  font-family: 'Orbitron-Fallback';
+  src: local('Arial'), local('Helvetica'), local('sans-serif');
+  font-display: swap;
+  font-weight: 100 900;
+}
+
 /* Base styles */
 body {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Orbitron', 'Orbitron-Fallback', 'Arial', sans-serif;
   color: #1a1a1a;
   background-color: #ffffff;
   scroll-behavior: smooth;
@@ -16,9 +25,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure all elements inherit Orbitron font */
+/* Ensure all elements inherit Orbitron font with fallbacks */
 * {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Orbitron', 'Orbitron-Fallback', 'Arial', sans-serif;
 }
 
 /* Gradient text - no shine */
