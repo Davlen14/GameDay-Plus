@@ -7,6 +7,9 @@ const TeamDetailView = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isFavorite, setIsFavorite] = useState(false);
 
+  // Add debug logging
+  console.log('TeamDetailView render - team:', team, 'loading:', loading);
+
   // Generate static star positions to avoid re-rendering
   const starLayer1 = useMemo(() => 
     [...Array(50)].map((_, i) => ({
@@ -61,11 +64,29 @@ const TeamDetailView = () => {
           try {
             const parsedTeam = JSON.parse(cachedTeam);
             console.log('Cached team:', parsedTeam);
-            if (parsedTeam.id === teamId) {
-              setTeam(parsedTeam);
+            
+            // Validate the parsed team data
+            if (parsedTeam && typeof parsedTeam === 'object' && parsedTeam.id === teamId) {
+              // Ensure all required fields are strings or valid values
+              const cleanedTeam = {
+                ...parsedTeam,
+                school: String(parsedTeam.school || 'Unknown Team'),
+                mascot: String(parsedTeam.mascot || 'Unknown Mascot'),
+                conference: String(parsedTeam.conference || 'Unknown Conference'),
+                location: parsedTeam.location && typeof parsedTeam.location === 'object' 
+                  ? `${parsedTeam.location.city || ''}${parsedTeam.location.state ? `, ${parsedTeam.location.state}` : ''}`.trim() || 'Unknown Location'
+                  : String(parsedTeam.location || parsedTeam.city || 'Unknown Location'),
+                logos: Array.isArray(parsedTeam.logos) ? parsedTeam.logos : [],
+                color: parsedTeam.color || '#dc2626',
+                alternateColor: parsedTeam.alternateColor || '#991b1b'
+              };
+              
+              console.log('Cleaned team data:', cleanedTeam);
+              setTeam(cleanedTeam);
+              
               // Check if team is in favorites
               const favorites = JSON.parse(localStorage.getItem('favoriteTeams') || '[]');
-              setIsFavorite(favorites.some(fav => fav.id === parsedTeam.id));
+              setIsFavorite(favorites.some(fav => fav.id === cleanedTeam.id));
               setLoading(false);
               return;
             }
@@ -83,12 +104,29 @@ const TeamDetailView = () => {
         console.log('Found team:', foundTeam);
         
         if (foundTeam) {
-          setTeam(foundTeam);
+          // Clean the team data before setting it
+          const cleanedTeam = {
+            ...foundTeam,
+            school: String(foundTeam.school || 'Unknown Team'),
+            mascot: String(foundTeam.mascot || 'Unknown Mascot'),
+            conference: String(foundTeam.conference || 'Unknown Conference'),
+            location: foundTeam.location && typeof foundTeam.location === 'object' 
+              ? `${foundTeam.location.city || ''}${foundTeam.location.state ? `, ${foundTeam.location.state}` : ''}`.trim() || 'Unknown Location'
+              : String(foundTeam.location || foundTeam.city || 'Unknown Location'),
+            logos: Array.isArray(foundTeam.logos) ? foundTeam.logos : [],
+            color: foundTeam.color || '#dc2626',
+            alternateColor: foundTeam.alternateColor || '#991b1b'
+          };
+          
+          console.log('Setting cleaned team from API:', cleanedTeam);
+          setTeam(cleanedTeam);
+          
           // Store for future use
-          localStorage.setItem('selectedTeamData', JSON.stringify(foundTeam));
+          localStorage.setItem('selectedTeamData', JSON.stringify(cleanedTeam));
+          
           // Check if team is in favorites
           const favorites = JSON.parse(localStorage.getItem('favoriteTeams') || '[]');
-          setIsFavorite(favorites.some(fav => fav.id === foundTeam.id));
+          setIsFavorite(favorites.some(fav => fav.id === cleanedTeam.id));
         } else {
           console.log('Team not found with ID:', teamId);
         }
@@ -143,6 +181,8 @@ const TeamDetailView = () => {
   }
 
   const teamLogo = team.logos?.[0];
+  // Ensure HTTPS for team logos to avoid mixed content issues
+  const secureTeamLogo = teamLogo ? teamLogo.replace(/^http:/, 'https:') : null;
   const primaryColor = team.color || '#dc2626';
   const secondaryColor = team.alternateColor || '#991b1b';
 
@@ -226,20 +266,24 @@ const TeamDetailView = () => {
                 
                 {/* Main Logo Frame */}
                 <div className="absolute inset-4 w-32 h-32 rounded-full bg-gradient-to-br from-white via-gray-100 to-gray-300 shadow-inner overflow-hidden border-4 border-white/50 backdrop-blur-sm">
-                  {teamLogo ? (
+                  {secureTeamLogo ? (
                     <img
-                      src={teamLogo}
+                      src={secureTeamLogo}
                       alt={team.school}
                       className="w-full h-full object-contain p-3 filter drop-shadow-2xl"
                       style={{
                         filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3)) contrast(1.1) saturate(1.2)',
                       }}
+                      onError={(e) => {
+                        console.log('Logo failed to load:', secureTeamLogo);
+                        e.target.style.display = 'none';
+                        e.target.parentElement.querySelector('.fallback-icon').style.display = 'flex';
+                      }}
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <i className="fas fa-university text-gray-600 text-4xl"></i>
-                    </div>
-                  )}
+                  ) : null}
+                  <div className="fallback-icon w-full h-full flex items-center justify-center" style={{ display: secureTeamLogo ? 'none' : 'flex' }}>
+                    <i className="fas fa-university text-gray-600 text-4xl"></i>
+                  </div>
                 </div>
 
                 {/* Floating Orbs */}
@@ -252,23 +296,30 @@ const TeamDetailView = () => {
             {/* Team Information */}
             <div className="space-y-4">
               <h1 className="text-5xl md:text-6xl font-bold text-white mb-2 tracking-tight">
-                {team.school}
+                {team.school || 'Unknown Team'}
               </h1>
               <p className="text-2xl md:text-3xl text-gray-300 font-semibold">
-                {team.mascot}
+                {team.mascot || 'Unknown Mascot'}
               </p>
               
               {/* Conference and Location */}
               <div className="flex flex-wrap items-center justify-center gap-6 mt-6">
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3">
                   <i className="fas fa-layer-group text-blue-400"></i>
-                  <span className="text-white font-medium">{team.conference}</span>
+                  <span className="text-white font-medium">{team.conference || 'N/A'}</span>
                 </div>
                 
-                {team.location && (
+                {(team.location || team.city) && (
                   <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3">
                     <i className="fas fa-map-marker-alt text-red-400"></i>
-                    <span className="text-white font-medium">{team.location}</span>
+                    <span className="text-white font-medium">
+                      {typeof team.location === 'string' 
+                        ? team.location 
+                        : team.city 
+                        ? `${team.city}${team.state ? `, ${team.state}` : ''}` 
+                        : 'N/A'
+                      }
+                    </span>
                   </div>
                 )}
               </div>
@@ -349,8 +400,8 @@ const TeamDetailView = () => {
             </h2>
             
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              We're working hard to bring you comprehensive {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} data 
-              for {team.school}. Stay tuned for an amazing experience!
+              We're working hard to bring you comprehensive {tabs.find(t => t.id === activeTab)?.label?.toLowerCase() || 'team'} data 
+              for {team.school || 'this team'}. Stay tuned for an amazing experience!
             </p>
 
             {/* Features Preview */}
