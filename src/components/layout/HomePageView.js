@@ -400,61 +400,75 @@ const HomePageView = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-2">
                 {topRecruits.slice(0, 25).map((recruit) => (
                   <div key={recruit.id} className="p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-md">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="w-6 h-6 gradient-bg rounded-full flex items-center justify-center">
+                    {/* Main row with clean 247 Sports-style alignment */}
+                    <div className="flex items-center space-x-3">
+                      {/* Rank number - fixed width for alignment */}
+                      <div className="flex-shrink-0 w-6 h-6 gradient-bg rounded-full flex items-center justify-center">
                         <span className="text-white font-bold text-xs">
                           {recruit.ranking}
                         </span>
                       </div>
-                      <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded">
-                        {recruit.position}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 mb-2">
-                      {/* Person Icon with gradient background */}
+                      
+                      {/* Person Icon */}
                       <div className="flex-shrink-0 w-6 h-6 gradient-bg rounded-full flex items-center justify-center">
                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                         </svg>
                       </div>
-                      <h4 className="font-bold text-sm text-gray-800">{recruit.name}</h4>
-                    </div>
-                    
-                    <p className="text-xs text-gray-600 mb-2">{recruit.school}, {recruit.state}</p>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex">
-                        {[...Array(recruit.stars)].map((_, i) => (
-                          <svg key={i} className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                          </svg>
-                        ))}
-                      </div>
                       
-                      {recruit.committedTo ? (
-                        <div className="flex items-center space-x-1">
-                          <div className="w-4 h-4 flex items-center justify-center">
-                            <img 
-                              src={getTeamLogo(recruit.committedTo)} 
-                              alt={`${recruit.committedTo} logo`}
-                              className="w-full h-full object-contain"
-                              onError={(e) => {
-                                e.target.src = '/photos/ncaaf.png';
-                              }}
-                            />
+                      {/* Player info - flex to take remaining space */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-sm text-gray-800 truncate">{recruit.name}</h4>
+                            <p className="text-xs text-gray-600 truncate">{recruit.school}, {recruit.state}</p>
                           </div>
-                          <span className="text-xs text-gray-700 truncate max-w-[50px]">{recruit.committedTo}</span>
-                          <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                          </svg>
+                          
+                          {/* Position badge - aligned right */}
+                          <span className="ml-2 px-2 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded flex-shrink-0">
+                            {recruit.position}
+                          </span>
                         </div>
-                      ) : (
-                        <span className="text-xs text-gray-500">Open</span>
-                      )}
+                        
+                        {/* Bottom row with stars and commitment */}
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center space-x-2">
+                            {/* Star rating */}
+                            <div className="flex">
+                              {[...Array(recruit.stars)].map((_, i) => (
+                                <svg key={i} className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Commitment status */}
+                          {recruit.committedTo ? (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-4 h-4 flex items-center justify-center">
+                                <img 
+                                  src={getTeamLogo(recruit.committedTo)} 
+                                  alt={`${recruit.committedTo} logo`}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    e.target.src = '/photos/ncaaf.png';
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-700 truncate max-w-[60px]">{recruit.committedTo}</span>
+                              <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                              </svg>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-500 font-medium">Open</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
