@@ -140,7 +140,7 @@ const AllTeams = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 px-6 md:px-12 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-500 border-t-transparent"></div>
@@ -151,16 +151,16 @@ const AllTeams = () => {
   }
 
   return (
-    <div className="min-h-screen pt-24 px-4 md:px-8 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+    <div className="min-h-screen pt-24 px-4 md:px-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         {/* Glass Morphism Search Section */}
         <div className="relative mb-8">
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl">
+          <div className="bg-white backdrop-blur-lg rounded-3xl p-8 border border-gray-200 shadow-xl">
             <div className="relative">
               {/* Search Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                  <i className="fas fa-search text-white/60 text-xl"></i>
+                  <i className="fas fa-search text-gray-400 text-xl"></i>
                 </div>
                 <input
                   type="text"
@@ -169,13 +169,13 @@ const AllTeams = () => {
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   placeholder="Search teams, conferences, or mascots..."
-                  className="w-full pl-16 pr-6 py-4 bg-white/20 border border-white/30 rounded-2xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-lg backdrop-blur-sm transition-all duration-300"
+                  className="w-full pl-16 pr-6 py-4 bg-gray-50 border border-gray-300 rounded-2xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-lg backdrop-blur-sm transition-all duration-300"
                 />
               </div>
 
               {/* Search Suggestions */}
               {showSuggestions && (searchSuggestions.length > 0 || recentSearches.length > 0) && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl z-50 overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white backdrop-blur-lg rounded-2xl border border-gray-200 shadow-xl z-50 overflow-hidden">
                   {searchSuggestions.length > 0 && (
                     <div className="p-4">
                       <h4 className="text-sm font-semibold text-gray-600 mb-2">Suggestions</h4>
@@ -227,7 +227,7 @@ const AllTeams = () => {
                 className={`px-6 py-3 rounded-2xl font-semibold transition-all duration-300 ${
                   compareMode 
                     ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg' 
-                    : 'bg-white/20 text-white border border-white/30 hover:bg-white/30'
+                    : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
                 }`}
               >
                 <i className="fas fa-balance-scale mr-2"></i>
@@ -237,7 +237,7 @@ const AllTeams = () => {
               {compareMode && selectedTeams.length > 0 && (
                 <button
                   onClick={clearComparison}
-                  className="px-6 py-3 rounded-2xl font-semibold bg-white/20 text-white border border-white/30 hover:bg-white/30 transition-all duration-300"
+                  className="px-6 py-3 rounded-2xl font-semibold bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-all duration-300"
                 >
                   <i className="fas fa-times mr-2"></i>
                   Clear Selection
@@ -260,7 +260,7 @@ const AllTeams = () => {
         {/* Favorites Section */}
         {favorites.length > 0 && !searchQuery && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
               <i className="fas fa-star text-yellow-400"></i>
               Favorite Teams
             </h2>
@@ -283,11 +283,11 @@ const AllTeams = () => {
         {/* Teams by Conference */}
         <div className="space-y-8">
           {Object.entries(teamsByConference).map(([conference, conferenceTeams]) => (
-            <div key={conference} className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
+            <div key={conference} className="bg-white rounded-3xl p-6 border border-gray-200 shadow-lg">
               {/* Conference Header */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-white/20 to-white/10 border border-white/20 flex items-center justify-center overflow-hidden">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center overflow-hidden">
                     <img
                       src={`/photos/${conference}.png`}
                       alt={conference}
@@ -297,11 +297,11 @@ const AllTeams = () => {
                         e.target.nextSibling.style.display = 'block';
                       }}
                     />
-                    <i className="fas fa-layer-group text-white/60 hidden"></i>
+                    <i className="fas fa-layer-group text-gray-400 hidden"></i>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white">{conference}</h2>
-                    <p className="text-white/60">{conferenceTeams.length} teams</p>
+                    <h2 className="text-2xl font-bold text-gray-800">{conference}</h2>
+                    <p className="text-gray-500">{conferenceTeams.length} teams</p>
                   </div>
                 </div>
               </div>
@@ -327,9 +327,9 @@ const AllTeams = () => {
         {/* Empty State */}
         {filteredTeams.length === 0 && searchQuery && (
           <div className="text-center py-20">
-            <i className="fas fa-search text-6xl text-white/30 mb-6"></i>
-            <h3 className="text-2xl font-bold text-white mb-4">No teams found</h3>
-            <p className="text-white/60 text-lg">
+            <i className="fas fa-search text-6xl text-gray-300 mb-6"></i>
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">No teams found</h3>
+            <p className="text-gray-500 text-lg">
               Try adjusting your search or browse by conference
             </p>
           </div>
@@ -345,10 +345,10 @@ const TeamCard = ({ team, isFavorite, onToggleFavorite, onSelect, isSelected, co
   
   return (
     <div 
-      className={`group relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl p-4 border transition-all duration-300 cursor-pointer ${
+      className={`group relative bg-white backdrop-blur-sm rounded-2xl p-4 border transition-all duration-300 cursor-pointer ${
         isSelected 
-          ? 'border-red-500 bg-gradient-to-br from-red-500/20 to-red-600/10 shadow-lg shadow-red-500/25 scale-105' 
-          : 'border-white/20 hover:border-white/40 hover:bg-white/15 hover:scale-105'
+          ? 'border-red-500 bg-gradient-to-br from-red-50 to-red-100 shadow-lg shadow-red-500/25 scale-105' 
+          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:scale-105 shadow-md hover:shadow-lg'
       }`}
       onClick={() => compareMode && onSelect(team)}
     >
@@ -357,7 +357,7 @@ const TeamCard = ({ team, isFavorite, onToggleFavorite, onSelect, isSelected, co
         <div className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 transition-all duration-300 ${
           isSelected 
             ? 'bg-red-500 border-red-500' 
-            : 'border-white/40 group-hover:border-white/60'
+            : 'border-gray-300 group-hover:border-gray-400'
         }`}>
           {isSelected && <i className="fas fa-check text-white text-xs absolute inset-0 flex items-center justify-center"></i>}
         </div>
@@ -372,7 +372,7 @@ const TeamCard = ({ team, isFavorite, onToggleFavorite, onSelect, isSelected, co
         className={`absolute top-2 left-2 w-8 h-8 rounded-full transition-all duration-300 flex items-center justify-center ${
           isFavorite 
             ? 'bg-yellow-500 text-white' 
-            : 'bg-white/20 text-white/60 hover:bg-white/30 hover:text-white'
+            : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
         }`}
       >
         <i className={`fas fa-star text-xs ${isFavorite ? 'text-white' : ''}`}></i>
@@ -398,10 +398,10 @@ const TeamCard = ({ team, isFavorite, onToggleFavorite, onSelect, isSelected, co
 
       {/* Team Info */}
       <div className="text-center">
-        <h3 className="font-bold text-white text-sm leading-tight mb-1 group-hover:text-red-300 transition-colors">
+        <h3 className="font-bold text-gray-800 text-sm leading-tight mb-1 group-hover:text-red-600 transition-colors">
           {team.school}
         </h3>
-        <p className="text-white/60 text-xs">
+        <p className="text-gray-500 text-xs">
           {team.mascot}
         </p>
       </div>
