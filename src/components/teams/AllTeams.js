@@ -124,7 +124,12 @@ const AllTeams = () => {
   };
 
   const handleTeamSelect = (team) => {
-    if (!compareMode) return;
+    if (!compareMode) {
+      // Store team data and navigate to team detail view
+      localStorage.setItem('selectedTeamData', JSON.stringify(team));
+      window.location.hash = `team-detail-${team.id}`;
+      return;
+    }
     
     if (selectedTeams.find(t => t.id === team.id)) {
       setSelectedTeams(selectedTeams.filter(t => t.id !== team.id));
@@ -350,7 +355,8 @@ const TeamCard = ({ team, isFavorite, onToggleFavorite, onSelect, isSelected, co
           ? 'border-red-500 bg-gradient-to-br from-red-50 to-red-100 shadow-lg shadow-red-500/25 scale-105' 
           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:scale-105 shadow-md hover:shadow-lg'
       }`}
-      onClick={() => compareMode && onSelect(team)}
+      onClick={() => onSelect(team)}
+      title={compareMode ? 'Click to select for comparison' : `View ${team.school} details`}
     >
       {/* Selection Indicator */}
       {compareMode && (

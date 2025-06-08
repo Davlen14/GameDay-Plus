@@ -11,6 +11,7 @@ import HomePageView from './components/layout/HomePageView';
 
 // Team Components
 import AllTeams from './components/teams/AllTeams';
+import TeamDetailView from './components/teams/TeamDetailView';
 import SEC from './components/teams/SEC';
 import BigTen from './components/teams/BigTen';
 import ACC from './components/teams/ACC';
@@ -112,6 +113,11 @@ function App() {
   }, []);
 
   const renderPage = () => {
+    // Check for team detail routes (team-detail-{id})
+    if (currentPage.startsWith('team-detail-')) {
+      return <TeamDetailView />;
+    }
+    
     switch (currentPage) {
       // Launch/Main page route
       case 'home':
