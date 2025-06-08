@@ -23,7 +23,9 @@ const Header = () => {
       <nav className="flex items-center justify-between w-full max-w-none">
         {/* Logo - Far Left */}
         <div className="flex items-center pr-4">
-          <span className="text-3xl header-logo gradient-text">GAMEDAY+</span>
+          <a href="#home" className="text-3xl header-logo gradient-text hover:opacity-80 transition duration-300 cursor-pointer">
+            GAMEDAY+
+          </a>
         </div>
         
         {/* Desktop Navigation - Centered and Spread */}
