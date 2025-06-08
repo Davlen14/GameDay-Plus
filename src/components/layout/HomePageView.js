@@ -64,7 +64,6 @@ const HomePageView = () => {
       ]);
 
       setArticles(newsData);
-      console.log('News articles with images:', newsData.map(article => ({ title: article.title, image: article.image })));
       setTopRecruits(recruitsData);
       setPollRankings(pollData);
       setTeams(teamsData);
