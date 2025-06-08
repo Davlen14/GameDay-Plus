@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { teamService } from '../../services/teamService';
 
 const TeamDetailView = () => {
@@ -6,6 +6,27 @@ const TeamDetailView = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [isFavorite, setIsFavorite] = useState(false);
+
+  // Generate static star positions to avoid re-rendering
+  const starLayer1 = useMemo(() => 
+    [...Array(50)].map((_, i) => ({
+      id: `star1-${i}`,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 3,
+      duration: 2 + Math.random() * 3,
+    })), []
+  );
+
+  const starLayer2 = useMemo(() => 
+    [...Array(30)].map((_, i) => ({
+      id: `star2-${i}`,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 4,
+      duration: 3 + Math.random() * 2,
+    })), []
+  );
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: 'fa-home' },
@@ -21,38 +42,55 @@ const TeamDetailView = () => {
       try {
         // Get team ID from hash
         const hash = window.location.hash;
+        console.log('Current hash:', hash);
+        
         const teamIdMatch = hash.match(/team-detail-(\d+)/);
         
         if (!teamIdMatch) {
+          console.log('No team ID found in hash');
           setLoading(false);
           return;
         }
         
         const teamId = parseInt(teamIdMatch[1]);
+        console.log('Team ID from hash:', teamId);
         
         // Try to get team from localStorage first (faster)
         const cachedTeam = localStorage.getItem('selectedTeamData');
         if (cachedTeam) {
-          const parsedTeam = JSON.parse(cachedTeam);
-          if (parsedTeam.id === teamId) {
-            setTeam(parsedTeam);
-            // Check if team is in favorites
-            const favorites = JSON.parse(localStorage.getItem('favoriteTeams') || '[]');
-            setIsFavorite(favorites.some(fav => fav.id === parsedTeam.id));
-            setLoading(false);
-            return;
+          try {
+            const parsedTeam = JSON.parse(cachedTeam);
+            console.log('Cached team:', parsedTeam);
+            if (parsedTeam.id === teamId) {
+              setTeam(parsedTeam);
+              // Check if team is in favorites
+              const favorites = JSON.parse(localStorage.getItem('favoriteTeams') || '[]');
+              setIsFavorite(favorites.some(fav => fav.id === parsedTeam.id));
+              setLoading(false);
+              return;
+            }
+          } catch (e) {
+            console.log('Error parsing cached team data:', e);
           }
         }
         
         // Fallback: load from API
+        console.log('Loading teams from API...');
         const teams = await teamService.getFBSTeams(true);
+        console.log('Teams loaded:', teams.length);
+        
         const foundTeam = teams.find(t => t.id === teamId);
+        console.log('Found team:', foundTeam);
         
         if (foundTeam) {
           setTeam(foundTeam);
+          // Store for future use
+          localStorage.setItem('selectedTeamData', JSON.stringify(foundTeam));
           // Check if team is in favorites
           const favorites = JSON.parse(localStorage.getItem('favoriteTeams') || '[]');
           setIsFavorite(favorites.some(fav => fav.id === foundTeam.id));
+        } else {
+          console.log('Team not found with ID:', teamId);
         }
       } catch (error) {
         console.error('Error loading team:', error);
@@ -129,15 +167,15 @@ const TeamDetailView = () => {
         <div className="absolute inset-0">
           {/* Stars Layer 1 */}
           <div className="absolute inset-0">
-            {[...Array(50)].map((_, i) => (
+            {starLayer1.map((star) => (
               <div
-                key={`star1-${i}`}
+                key={star.id}
                 className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 3}s`,
-                  animationDuration: `${2 + Math.random() * 3}s`,
+                  left: `${star.left}%`,
+                  top: `${star.top}%`,
+                  animationDelay: `${star.delay}s`,
+                  animationDuration: `${star.duration}s`,
                 }}
               />
             ))}
@@ -145,15 +183,15 @@ const TeamDetailView = () => {
           
           {/* Stars Layer 2 - Larger */}
           <div className="absolute inset-0">
-            {[...Array(30)].map((_, i) => (
+            {starLayer2.map((star) => (
               <div
-                key={`star2-${i}`}
+                key={star.id}
                 className="absolute w-2 h-2 bg-blue-200 rounded-full animate-pulse opacity-60"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 4}s`,
-                  animationDuration: `${3 + Math.random() * 2}s`,
+                  left: `${star.left}%`,
+                  top: `${star.top}%`,
+                  animationDelay: `${star.delay}s`,
+                  animationDuration: `${star.duration}s`,
                 }}
               />
             ))}
