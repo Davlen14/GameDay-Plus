@@ -258,6 +258,50 @@ const GraphQLDemo = () => {
       }
     },
 
+    backendGraphQL: {
+      name: 'Backend GraphQL Demo',
+      description: 'Show GraphQL working through our backend services',
+      run: async () => {
+        const startTime = performance.now();
+        
+        try {
+          // Use our backend GraphQL service that works around CORS
+          const georgiaGames = await gameService.getGamesByTeam('Georgia', 2024);
+          const georgiaRatings = await teamService.getTeamRatings('Georgia', 2024);
+          
+          const totalTime = performance.now() - startTime;
+          
+          return {
+            backend: {
+              time: totalTime,
+              georgiaGames: {
+                count: georgiaGames.length,
+                sample: georgiaGames.slice(0, 3).map(game => ({
+                  opponent: game.homeTeam === 'Georgia' ? game.awayTeam : game.homeTeam,
+                  week: game.week,
+                  homePoints: game.homePoints,
+                  awayPoints: game.awayPoints
+                }))
+              },
+              georgiaRatings: georgiaRatings || { overall: 'N/A', offense: 'N/A', defense: 'N/A' }
+            },
+            description: 'GraphQL working successfully through backend service - CORS bypassed!'
+          };
+        } catch (error) {
+          const totalTime = performance.now() - startTime;
+          
+          return {
+            backend: {
+              time: totalTime,
+              error: error.message,
+              note: 'Backend GraphQL service encountered an error'
+            },
+            description: 'Backend GraphQL service failed'
+          };
+        }
+      }
+    },
+
     status: {
       name: 'GraphQL Status',
       description: 'Check GraphQL API availability and authentication',
@@ -559,6 +603,63 @@ const GraphQLDemo = () => {
                       <pre className="bg-gray-800 rounded p-4 text-xs overflow-x-auto max-h-64">
                         {JSON.stringify(results.raw.result, null, 2)}
                       </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Backend GraphQL Results */}
+              {results.backend && (
+                <div className={`rounded-xl p-6 ${results.backend.error ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
+                  <h3 className="text-lg font-bold mb-4 flex items-center space-x-2">
+                    <span className={`w-3 h-3 rounded-full ${results.backend.error ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                    <span className={results.backend.error ? 'text-red-800' : 'text-green-800'}>Backend GraphQL Service</span>
+                  </h3>
+                  
+                  {results.backend.error ? (
+                    <div className="text-red-700">
+                      <div className="font-semibold">Error:</div>
+                      <div>{results.backend.error}</div>
+                      {results.backend.note && (
+                        <div className="mt-2 text-sm">{results.backend.note}</div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white rounded-lg p-4">
+                          <div className="text-green-600 font-semibold">Response Time</div>
+                          <div className="text-2xl font-bold text-green-800">{results.backend.time.toFixed(2)}ms</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-4">
+                          <div className="text-green-600 font-semibold">Georgia Games</div>
+                          <div className="text-2xl font-bold text-green-800">{results.backend.georgiaGames.count}</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-4">
+                          <div className="text-green-600 font-semibold">Overall Rating</div>
+                          <div className="text-2xl font-bold text-green-800">{results.backend.georgiaRatings.overall || 'N/A'}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white rounded-lg p-4">
+                        <div className="text-sm font-semibold text-green-800 mb-2">Sample Georgia Games (GraphQL Data):</div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {results.backend.georgiaGames.sample.map((game, index) => (
+                            <div key={index} className="bg-green-50 rounded p-3 border border-green-200">
+                              <div className="font-semibold text-green-900">vs {game.opponent}</div>
+                              <div className="text-sm text-green-700">Week {game.week}</div>
+                              <div className="text-xs text-green-600">
+                                Score: {game.homePoints}-{game.awayPoints}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-green-100 rounded p-3">
+                        <div className="text-green-800 font-semibold">✅ Success!</div>
+                        <div className="text-green-700 text-sm">GraphQL queries executed successfully through our backend service, bypassing CORS restrictions.</div>
+                      </div>
                     </div>
                   )}
                 </div>
