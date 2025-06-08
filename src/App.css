@@ -257,3 +257,34 @@
     0 0 20px rgba(255,255,255,0.1),
     0 15px 35px rgba(0,0,0,0.2);
 }
+
+/* General image styling for news articles */
+.news-article img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Ensure images load properly in news cards */
+.news-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.7s ease;
+}
+
+.news-card-image:hover {
+  transform: scale(1.1);
+}
+
+/* Error state for images */
+.image-error-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  color: #6b7280;
+  font-size: 0.875rem;
+  text-align: center;
+}

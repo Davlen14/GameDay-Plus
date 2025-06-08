@@ -7,27 +7,30 @@ export const newsService = {
     try {
       const response = await fetchNewsData('college football', 'sports', 'en', 'us', limit);
       
-      // Debug: Log the response structure
-      console.log('GNews API response:', response);
-      console.log('Articles array:', response.articles);
-      
-      // Handle GNews API response structure and normalize image URLs
       const articles = response.articles || [];
       return articles.map((article, index) => ({
-        ...article,
         id: article.id || `news-${index + 1}`,
-        // Ensure image property is properly set - GNews uses 'image' property
-        image: article.image || "/photos/ncaaf.png",
-        // Ensure other required properties exist
-        title: article.title || "No title available",
-        description: article.description || "",
-        url: article.url || "#",
-        source: article.source || { name: "Unknown Source" },
-        publishedAt: article.publishedAt || new Date().toISOString()
+        title: article.title,
+        description: article.description,
+        url: article.url,
+        image: article.image,
+        publishedAt: article.publishedAt,
+        source: article.source
       }));
     } catch (error) {
       console.error('Error fetching latest news:', error);
-      return [];
+      // Return fallback data if API fails
+      return [
+        {
+          id: 'fallback-1',
+          title: 'College Football News Currently Unavailable',
+          description: 'Please check back later for the latest college football news.',
+          url: '#',
+          image: '/photos/ncaaf.png',
+          publishedAt: new Date().toISOString(),
+          source: { name: 'GAMEDAY+' }
+        }
+      ];
     }
   },
 
