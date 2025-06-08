@@ -7,6 +7,7 @@ import Hero from './components/layout/Hero';
 import Features from './components/layout/Features';
 import CTA from './components/layout/CTA';
 import Footer from './components/layout/Footer';
+import HomePageView from './components/layout/HomePageView';
 
 // Team Components
 import AllTeams from './components/teams/AllTeams';
@@ -134,6 +135,20 @@ function App() {
 
   const renderPage = () => {
     switch (currentPage) {
+      // Launch/Main page route
+      case 'home':
+        return (
+          <>
+            <Hero />
+            <Features />
+            <CTA />
+          </>
+        );
+      
+      // Home page route
+      case 'home-page':
+        return <HomePageView />;
+      
       // Team routes
       case 'teams':
         return <AllTeams />;

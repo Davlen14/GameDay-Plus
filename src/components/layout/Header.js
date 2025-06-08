@@ -30,7 +30,7 @@ const Header = () => {
         
         {/* Desktop Navigation - Centered and Spread */}
         <div className="hidden lg:flex space-x-8 text-sm font-bold flex-1 justify-center">
-          <a href="#home" className="gradient-text hover:opacity-80 transition duration-300 font-extrabold">Home</a>
+          <a href="#home-page" className="gradient-text hover:opacity-80 transition duration-300 font-extrabold">Home</a>
           
           {/* Teams & Conferences Dropdown */}
           <div className="dropdown">
@@ -177,7 +177,7 @@ const Header = () => {
       
       {/* Mobile Menu */}
       <div className={`lg:hidden mt-4 space-y-2 text-base bg-white bg-opacity-95 rounded-lg py-4 px-2 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
-        <a href="#home" className="block gradient-text py-2 px-4">Home</a>
+        <a href="#home-page" className="block gradient-text py-2 px-4">Home</a>
         
         {/* Mobile Teams & Conferences */}
         <div className={`mobile-dropdown ${activeDropdowns.includes(0) ? 'active' : ''}`}>
