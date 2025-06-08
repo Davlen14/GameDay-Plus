@@ -37,16 +37,20 @@
   }
 }
 
-/* Metallic 3D HD Logo Effects - Mirroring Swift Implementation */
+/* Metallic 3D HD Logo Effects - Mirroring Swift Implementation Exactly */
 .metallic-3d-logo {
-  /* Base image enhancement - contrast and saturation boost */
-  filter: contrast(1.1) saturate(1.1) drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+  /* Base image enhancement - exact Swift contrast and saturation boost */
+  filter: contrast(1.1) saturate(1.1) drop-shadow(0 5px 8px rgba(0,0,0,0.25));
   position: relative;
   border-radius: 8px;
   transition: all 0.3s ease;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-/* Multi-layered metallic shine overlay - mimics Swift's dynamic gradient */
+/* Metallic sheen overlay - exact Swift gradient implementation */
 .metallic-3d-logo::before {
   content: '';
   position: absolute;
@@ -57,131 +61,123 @@
   border-radius: inherit;
   background: linear-gradient(45deg, 
     transparent 0%, 
-    rgba(255,255,255,0.1) 20%,
     rgba(255,255,255,0.6) 30%, 
-    rgba(255,255,255,0.3) 50%,
-    rgba(255,255,255,0.8) 60%,
-    rgba(255,255,255,0.2) 80%,
+    transparent 50%, 
+    rgba(255,255,255,0.3) 80%, 
     transparent 100%
   );
   pointer-events: none;
   mix-blend-mode: overlay;
   z-index: 1;
+  transform: rotate(45deg);
+  mask-image: radial-gradient(circle, white 70%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle, white 70%, transparent 100%);
 }
 
-/* 3D emboss effect - white highlight and dark shadow for depth */
+/* 3D emboss effect - exact Swift shadow implementation */
 .metallic-3d-logo::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, 
-    rgba(255,255,255,0.8) 0%,
-    rgba(255,255,255,0.4) 10%,
-    transparent 15%,
-    transparent 85%,
-    rgba(0,0,0,0.2) 90%,
-    rgba(0,0,0,0.4) 100%
-  );
-  z-index: -1;
-  box-shadow: 
-    /* White emboss highlight */
-    inset -1px -1px 2px rgba(255,255,255,0.8),
-    /* Dark emboss shadow */
-    inset 1px 1px 2px rgba(0,0,0,0.3),
-    /* Floating shadow */
-    0 8px 24px rgba(0,0,0,0.2);
-}
-
-/* Enhanced hover effect with metallic shine animation */
-.metallic-3d-logo:hover {
-  filter: contrast(1.2) saturate(1.2) drop-shadow(0 12px 24px rgba(0,0,0,0.4));
-  transform: scale(1.05) translateY(-2px);
-}
-
-.metallic-3d-logo:hover::before {
-  background: linear-gradient(45deg, 
-    transparent 0%, 
-    rgba(255,255,255,0.2) 20%,
-    rgba(255,255,255,0.8) 30%, 
-    rgba(255,255,255,0.5) 50%,
-    rgba(255,255,255,0.9) 60%,
-    rgba(255,255,255,0.3) 80%,
-    transparent 100%
-  );
-  animation: metallic-shine 2s ease-in-out infinite;
-}
-
-/* Metallic shine animation */
-@keyframes metallic-shine {
-  0% {
-    background-position: -200% 0;
-  }
-  50% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* Enhanced parent container for better 3D effect */
-.metallic-3d-logo-container {
-  perspective: 1000px;
-  transform-style: preserve-3d;
-}
-
-/* Additional HD quality enhancements */
-.metallic-3d-logo {
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-/* Enhanced version for featured game logos with your specific effects */
-.metallic-3d-logo-enhanced {
-  /* Base effects: contrast and saturation boost */
-  filter: contrast(1.1) saturate(1.1) 
-    drop-shadow(-0.5px -0.5px 0 white)
-    drop-shadow(0.5px 0.5px 0 rgba(0,0,0,0.7))
-    drop-shadow(-1px -1px 1.5px rgba(255,255,255,0.3))
-    drop-shadow(2px 2px 2px rgba(0,0,0,0.4))
-    drop-shadow(0 5px 8px rgba(0,0,0,0.25));
-  position: relative;
-  transition: all 0.4s ease;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-/* Metallic sheen overlay - white gradient at 45° angle */
-.metallic-3d-logo-enhanced::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, 
-    transparent 0%, 
-    rgba(255,255,255,0.6) 30%, 
-    transparent 50%, 
-    rgba(255,255,255,0.3) 80%, 
-    transparent 100%
+  border-radius: inherit;
+  background: linear-gradient(180deg, 
+    rgba(255,255,255,0.9) 0%,
+    transparent 10%,
+    transparent 90%,
+    rgba(255,255,255,0.6) 100%
   );
-  mix-blend-mode: overlay;
-  transform: rotate(45deg);
+  mix-blend-mode: screen;
   pointer-events: none;
-  z-index: 1;
-  clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+  z-index: 2;
 }
 
-/* Edge highlights - vertical gradient overlay */
+/* Enhanced hover effect with exact Swift transformations */
+.metallic-3d-logo:hover {
+  filter: contrast(1.2) saturate(1.2) 
+    drop-shadow(-0.5px -0.5px 0 rgba(255,255,255,1))
+    drop-shadow(0.5px 0.5px 0 rgba(0,0,0,0.7))
+    drop-shadow(-1px -1px 1.5px rgba(255,255,255,0.3))
+    drop-shadow(2px 2px 2px rgba(0,0,0,0.4))
+    drop-shadow(0 8px 12px rgba(0,0,0,0.35));
+  transform: scale(1.1) translateY(-2px);
+}
+
+.metallic-3d-logo:hover::before {
+  background: linear-gradient(45deg, 
+    transparent 0%, 
+    rgba(255,255,255,0.8) 30%, 
+    transparent 50%, 
+    rgba(255,255,255,0.5) 80%, 
+    transparent 100%
+  );
+  animation: metallic-shine 1.5s ease-in-out infinite;
+}
+
+/* Metallic shine animation - smooth Swift-like movement */
+@keyframes metallic-shine {
+  0% {
+    transform: rotate(45deg) translateX(-200%);
+  }
+  50% {
+    transform: rotate(45deg) translateX(200%);
+  }
+  100% {
+    transform: rotate(45deg) translateX(-200%);
+  }
+}
+
+/* Enhanced parent container for exact 3D perspective */
+.metallic-3d-logo-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  padding: 8px;
+}
+
+/* Enhanced version for featured game logos - exact Swift PremiumTeamLogoContent mirror */
+.metallic-3d-logo-enhanced {
+  /* Exact Swift base effects: contrast, saturation, and all shadows */
+  filter: contrast(1.1) saturate(1.1) 
+    drop-shadow(-0.5px -0.5px 0 rgba(255,255,255,1))
+    drop-shadow(0.5px 0.5px 0 rgba(0,0,0,0.7))
+    drop-shadow(-1px -1px 1.5px rgba(255,255,255,0.3))
+    drop-shadow(2px 2px 2px rgba(0,0,0,0.4))
+    drop-shadow(0 5px 8px rgba(0,0,0,0.25));
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, filter;
+}
+
+/* Exact Swift metallic sheen overlay - 45° angle with precise gradient stops */
+.metallic-3d-logo-enhanced::before {
+  content: '';
+  position: absolute;
+  top: -5%;
+  left: -5%;
+  right: -5%;
+  bottom: -5%;
+  background: linear-gradient(45deg, 
+    rgba(255,255,255,0) 0%, 
+    rgba(255,255,255,0.6) 30%, 
+    rgba(255,255,255,0) 50%, 
+    rgba(255,255,255,0.3) 80%, 
+    rgba(255,255,255,0) 100%
+  );
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+  mask: radial-gradient(ellipse at center, white 80%, transparent 100%);
+  -webkit-mask: radial-gradient(ellipse at center, white 80%, transparent 100%);
+}
+
+/* Exact Swift edge highlights - vertical gradient with precise opacity */
 .metallic-3d-logo-enhanced::after {
   content: '';
   position: absolute;
@@ -191,33 +187,73 @@
   bottom: 0;
   background: linear-gradient(180deg, 
     rgba(255,255,255,0.9) 0%, 
-    transparent 10%, 
-    transparent 90%, 
+    rgba(255,255,255,0) 10%, 
+    rgba(255,255,255,0) 90%, 
     rgba(255,255,255,0.6) 100%
   );
   mix-blend-mode: screen;
   pointer-events: none;
   z-index: 2;
-  clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+  border-radius: inherit;
 }
 
-/* Enhanced hover effect */
+/* Exact Swift hover effect with enhanced transformations */
 .metallic-3d-logo-enhanced:hover {
   filter: contrast(1.2) saturate(1.2) 
-    drop-shadow(-0.5px -0.5px 0 white)
+    drop-shadow(-0.5px -0.5px 0 rgba(255,255,255,1))
     drop-shadow(0.5px 0.5px 0 rgba(0,0,0,0.8))
     drop-shadow(-1px -1px 2px rgba(255,255,255,0.4))
     drop-shadow(3px 3px 3px rgba(0,0,0,0.5))
-    drop-shadow(0 8px 12px rgba(0,0,0,0.35));
-  transform: scale(1.05) translateY(-2px);
+    drop-shadow(0 8px 16px rgba(0,0,0,0.35));
+  transform: scale(1.1) translateY(-3px) rotateY(2deg);
 }
 
 .metallic-3d-logo-enhanced:hover::before {
   background: linear-gradient(45deg, 
-    transparent 0%, 
+    rgba(255,255,255,0) 0%, 
     rgba(255,255,255,0.8) 30%, 
-    transparent 50%, 
+    rgba(255,255,255,0) 50%, 
     rgba(255,255,255,0.5) 80%, 
-    transparent 100%
+    rgba(255,255,255,0) 100%
   );
+  animation: swift-metallic-shine 2s ease-in-out infinite;
+}
+
+.metallic-3d-logo-enhanced:hover::after {
+  background: linear-gradient(180deg, 
+    rgba(255,255,255,1) 0%, 
+    rgba(255,255,255,0) 15%, 
+    rgba(255,255,255,0) 85%, 
+    rgba(255,255,255,0.8) 100%
+  );
+}
+
+/* Swift-inspired metallic shine animation with exact timing */
+@keyframes swift-metallic-shine {
+  0% {
+    transform: translateX(-150%) translateY(-150%) rotate(45deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(150%) translateY(150%) rotate(45deg);
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(250%) translateY(250%) rotate(45deg);
+    opacity: 0;
+  }
+}
+
+/* Additional premium polish for container interaction */
+.metallic-3d-logo-container:hover .metallic-3d-logo-enhanced {
+  box-shadow: 
+    0 0 0 1px rgba(255,255,255,0.1),
+    0 0 20px rgba(255,255,255,0.1),
+    0 15px 35px rgba(0,0,0,0.2);
 }

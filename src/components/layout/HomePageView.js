@@ -85,10 +85,19 @@ const HomePageView = () => {
       // Use actual news service to fetch college football articles
       const articles = await newsService.getLatestNews(10);
       
-      // Add unique IDs to articles since GNews might not provide them
+      // Debug: Log the first article to see the structure
+      if (articles.length > 0) {
+        console.log('First article from news service:', articles[0]);
+        console.log('Article properties:', Object.keys(articles[0]));
+        console.log('Image property value:', articles[0].image);
+      }
+      
+      // Articles should already be normalized by the news service
       return articles.map((article, index) => ({
         ...article,
-        id: article.id || index + 1
+        id: article.id || `home-${index + 1}`,
+        // Double-check image property exists
+        image: article.image || "/photos/ncaaf.png"
       }));
     } catch (error) {
       console.error('Error fetching news:', error);
@@ -476,14 +485,18 @@ const HomePageView = () => {
                   className="bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl overflow-hidden hover:shadow-3xl hover:bg-white/70 transition-all duration-500 cursor-pointer hover:scale-105 hover:border-white/50"
                   onClick={() => openArticle(article.url)}
                 >
-                  {/* Always show image container */}
+                  {/* Image container with improved error handling */}
                   <div className="h-64 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative">
                     <img 
-                      src={article.image || article.urlToImage || "/photos/ncaaf.png"} 
+                      src={article.image || "/photos/ncaaf.png"} 
                       alt={article.title}
                       className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                       onError={(e) => {
+                        console.log('Image failed to load:', e.target.src);
                         e.target.src = "/photos/ncaaf.png";
+                      }}
+                      onLoad={(e) => {
+                        console.log('Image loaded successfully:', e.target.src);
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
