@@ -2,7 +2,7 @@
 // Direct endpoint interaction with focused functionality
 
 const GRAPHQL_ENDPOINT = 'https://graphql.collegefootballdata.com/v1/graphql';
-const COLLEGE_FOOTBALL_API_KEY = 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
+const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY;
 
 // Direct GraphQL API interaction
 const fetchData = async (query, variables = {}) => {

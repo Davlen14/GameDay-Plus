@@ -1,9 +1,9 @@
 // Core API utility functions
 const COLLEGE_FOOTBALL_API_BASE = 'https://api.collegefootballdata.com';
-const COLLEGE_FOOTBALL_API_KEY = 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
-const GNEWS_API_KEY = '30ed9bdb7ce6aa43a5951fb3c02cfe5a';
-const GEMINI_API_KEY = 'AIzaSyB2SP9z5e8-S112QCgNmjdw-H0JLD05-a8';
-const YOUTUBE_API_KEY = 'AIzaSyCdXEcPZ6XfG6ol5t0ow89KFoHcWT-YT6M';
+const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY;
+const GNEWS_API_KEY = process.env.REACT_APP_GNEWS_API_KEY;
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+const YOUTUBE_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY;
 
 // College Football Data API
 const fetchCollegeFootballData = async (endpoint, params = {}) => {
