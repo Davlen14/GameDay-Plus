@@ -140,8 +140,8 @@ const AllTeams = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen pt-32 px-2 md:px-4 bg-gray-50">
+        <div className="max-w-full mx-auto">
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-500 border-t-transparent"></div>
           </div>
@@ -151,8 +151,8 @@ const AllTeams = () => {
   }
 
   return (
-    <div className="min-h-screen pt-24 px-4 md:px-8 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen pt-24 px-2 md:px-4 bg-gray-50">
+      <div className="max-w-full mx-auto">
         {/* Glass Morphism Search Section */}
         <div className="relative mb-8">
           <div className="bg-white backdrop-blur-lg rounded-3xl p-8 border border-gray-200 shadow-xl">
@@ -264,7 +264,7 @@ const AllTeams = () => {
               <i className="fas fa-star text-yellow-400"></i>
               Favorite Teams
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-4">
               {favorites.map(team => (
                 <TeamCard 
                   key={`fav-${team.id}`}
@@ -307,7 +307,7 @@ const AllTeams = () => {
               </div>
 
               {/* Teams Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-4">
                 {conferenceTeams.map(team => (
                   <TeamCard
                     key={team.id}
