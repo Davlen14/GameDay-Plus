@@ -255,10 +255,21 @@ body {
   border-radius: 8px;
   margin-top: 8px;
   padding: 8px 0;
+  border: 1px solid rgba(204, 0, 28, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .mobile-dropdown.active .mobile-dropdown-content {
   display: block;
+}
+
+.mobile-dropdown-toggle {
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.mobile-dropdown-toggle:hover {
+  background-color: rgba(204, 0, 28, 0.05);
 }
 
 .mobile-sub-dropdown-content {
@@ -295,12 +306,13 @@ body {
   height: 100%;
   z-index: 1;
   background-color: transparent;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .hero-content {
   position: relative;
   z-index: 2;
+  pointer-events: auto;
 }
 
 /* Feature card styling */

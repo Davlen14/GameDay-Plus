@@ -7,57 +7,54 @@ const Hero = () => {
       window.particlesJS('particles-js', {
         "particles": {
             "number": {
-                "value": 80,
+                "value": 120,
                 "density": {
                     "enable": true,
-                    "value_area": 800
+                    "value_area": 1000
                 }
             },
             "color": {
-                "value": "#D4001C"
+                "value": ["#ffffff", "#ffcccc", "#ff9999"]
             },
             "shape": {
                 "type": "circle",
                 "stroke": {
                     "width": 0,
                     "color": "#000000"
-                },
-                "polygon": {
-                    "nb_sides": 5
                 }
             },
             "opacity": {
-                "value": 0.5,
-                "random": false,
+                "value": 0.6,
+                "random": true,
                 "anim": {
-                    "enable": false,
-                    "speed": 1,
-                    "opacity_min": 0.1,
+                    "enable": true,
+                    "speed": 0.5,
+                    "opacity_min": 0.2,
                     "sync": false
                 }
             },
             "size": {
-                "value": 3,
+                "value": 2,
                 "random": true,
                 "anim": {
-                    "enable": false,
-                    "speed": 40,
-                    "size_min": 0.1,
+                    "enable": true,
+                    "speed": 2,
+                    "size_min": 0.5,
                     "sync": false
                 }
             },
             "line_linked": {
                 "enable": true,
-                "distance": 150,
-                "color": "#FF6666",
-                "opacity": 0.4,
+                "distance": 180,
+                "color": "#ffffff",
+                "opacity": 0.3,
                 "width": 1
             },
             "move": {
                 "enable": true,
-                "speed": 6,
+                "speed": 1.5,
                 "direction": "none",
-                "random": false,
+                "random": true,
                 "straight": false,
                 "out_mode": "out",
                 "bounce": false,
@@ -83,24 +80,24 @@ const Hero = () => {
             },
             "modes": {
                 "grab": {
-                    "distance": 140,
+                    "distance": 200,
                     "line_linked": {
-                        "opacity": 1
+                        "opacity": 0.8
                     }
                 },
                 "bubble": {
-                    "distance": 400,
-                    "size": 40,
-                    "duration": 2,
-                    "opacity": 8,
-                    "speed": 3
+                    "distance": 300,
+                    "size": 20,
+                    "duration": 1,
+                    "opacity": 0.8,
+                    "speed": 2
                 },
                 "repulse": {
-                    "distance": 200,
+                    "distance": 150,
                     "duration": 0.4
                 },
                 "push": {
-                    "particles_nb": 4
+                    "particles_nb": 3
                 },
                 "remove": {
                     "particles_nb": 2

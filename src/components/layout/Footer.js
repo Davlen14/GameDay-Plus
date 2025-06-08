@@ -11,9 +11,9 @@ const Footer = () => {
               The most comprehensive college football intelligence platform, delivering insights that go beyond traditional sports coverage.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="hover:opacity-80 transition duration-300"><i className="fab fa-twitter text-xl icon-gradient"></i></a>
-              <a href="#" className="hover:opacity-80 transition duration-300"><i className="fab fa-facebook text-xl icon-gradient"></i></a>
-              <a href="#" className="hover:opacity-80 transition duration-300"><i className="fab fa-instagram text-xl icon-gradient"></i></a>
+              <a href="https://x.com/Gameday_Plus" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition duration-300"><i className="fab fa-twitter text-xl icon-gradient"></i></a>
+              <a href="https://www.facebook.com/people/GameDay/61576661680395/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition duration-300"><i className="fab fa-facebook text-xl icon-gradient"></i></a>
+              <a href="https://www.instagram.com/gameday_plus/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition duration-300"><i className="fab fa-instagram text-xl icon-gradient"></i></a>
             </div>
           </div>
           <div>
