@@ -197,24 +197,24 @@ const Rankings = () => {
                 <span className="text-sm">Live Updates</span>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               {availablePolls.map(poll => (
                 <button
                   key={poll}
                   onClick={() => setSelectedPoll(poll)}
-                  className={`group relative p-6 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 ${
+                  className={`group relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 ${
                     selectedPoll === poll
                       ? 'border-red-400 bg-gradient-to-r from-red-50 to-red-100 shadow-lg shadow-red-200/50'
                       : 'border-gray-200 bg-gradient-to-r from-gray-50 to-white hover:border-gray-300 hover:shadow-md'
                   }`}
                 >
-                  <div className="flex flex-col items-center space-y-4">
+                  <div className="flex flex-col items-center space-y-2 sm:space-y-4">
                     {getPollLogo(poll) && (
                       <div className="relative">
                         <img 
                           src={getPollLogo(poll)} 
                           alt={`${poll} logo`}
-                          className="w-16 h-16 object-contain transition-all duration-300 group-hover:scale-110 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)] hover:drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)]"
+                          className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain transition-all duration-300 group-hover:scale-110 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)] hover:drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)]"
                           style={{
                             filter: 'brightness(1.1) contrast(1.2) saturate(1.3)',
                             background: 'linear-gradient(145deg, #f0f0f0, #d0d0d0)',
@@ -235,7 +235,7 @@ const Rankings = () => {
                         ></div>
                       </div>
                     )}
-                    <span className={`font-bold text-lg transition-all duration-300 ${
+                    <span className={`font-bold text-sm sm:text-base md:text-lg transition-all duration-300 text-center ${
                       selectedPoll === poll ? 'gradient-text' : 'text-gray-700 group-hover:text-gray-900'
                     }`}>
                       {poll}
@@ -263,7 +263,7 @@ const Rankings = () => {
                         <img 
                           src={getPollLogo(selectedPoll)} 
                           alt={`${selectedPoll} logo`}
-                          className="w-16 h-16 object-contain transition-all duration-300 hover:scale-110 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)] hover:drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)]"
+                          className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain transition-all duration-300 hover:scale-110 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)] hover:drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)]"
                           style={{
                             filter: 'brightness(1.1) contrast(1.2) saturate(1.3)',
                             background: 'linear-gradient(145deg, #f0f0f0, #d0d0d0)',
@@ -285,8 +285,8 @@ const Rankings = () => {
                       </div>
                     )}
                     <div>
-                      <h2 className="text-4xl font-black gradient-text">{selectedPoll}</h2>
-                      <p className="text-gray-600 text-sm mt-1">Official College Football Rankings</p>
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-black gradient-text">{selectedPoll}</h2>
+                      <p className="text-gray-600 text-xs sm:text-sm mt-1">Official College Football Rankings</p>
                     </div>
                   </div>
                   <div className="bg-white/70 backdrop-blur-sm rounded-xl px-4 py-3 border border-gray-200">
@@ -302,33 +302,33 @@ const Rankings = () => {
               </div>
               
               {/* Rankings List */}
-              <div className="p-6">
-                <div className="space-y-3">
+              <div className="p-3 sm:p-4 md:p-6">
+                <div className="space-y-2 sm:space-y-3">
                   {latestRankings.ranks?.map((team, index) => (
                     <div 
                       key={team.rank} 
-                      className="group relative bg-gradient-to-r from-white to-gray-50 backdrop-blur-sm border border-gray-200 rounded-xl p-4 hover:from-gray-50 hover:to-gray-100 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                      className="group relative bg-gradient-to-r from-white to-gray-50 backdrop-blur-sm border border-gray-200 rounded-xl p-3 sm:p-4 hover:from-gray-50 hover:to-gray-100 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-lg"
                       style={{
                         animationDelay: `${index * 50}ms`
                       }}
                     >
                       {/* Rank Badge */}
-                      <div className="absolute -left-2 -top-2">
+                      <div className="absolute -left-1 sm:-left-2 -top-1 sm:-top-2">
                         <div className="relative">
-                          <div className="w-12 h-12 gradient-bg rounded-full flex items-center justify-center font-black text-white text-lg shadow-lg border-4 border-white group-hover:scale-110 transition-transform duration-300">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 gradient-bg rounded-full flex items-center justify-center font-black text-white text-sm sm:text-base md:text-lg shadow-lg border-2 sm:border-4 border-white group-hover:scale-110 transition-transform duration-300">
                             {team.rank}
                           </div>
                           {team.rank <= 3 && (
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full animate-pulse"></div>
+                            <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 md:w-4 md:h-4 bg-yellow-400 rounded-full animate-pulse"></div>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between ml-8">
-                        <div className="flex items-end space-x-4 flex-1">
+                      <div className="flex items-center justify-between ml-4 sm:ml-8">
+                        <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
                           {/* Team Logo */}
                           <div className="relative group">
-                            <div className="w-24 h-24 p-1 bg-gray-50 rounded-xl backdrop-blur-sm border border-gray-200 group-hover:bg-gray-100 transition-all duration-300">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 p-1 bg-gray-50 rounded-xl backdrop-blur-sm border border-gray-200 group-hover:bg-gray-100 transition-all duration-300">
                               <img 
                                 src={getTeamLogo(team.school)} 
                                 alt={`${team.school} logo`}
@@ -342,8 +342,8 @@ const Rankings = () => {
 
                           {/* Conference Logo - aligned to bottom */}
                           {getConferenceLogo(team.conference) && (
-                            <div className="relative group mb-1">
-                              <div className="w-12 h-12 p-1 bg-gray-100 rounded-lg backdrop-blur-sm border border-gray-200 group-hover:bg-gray-200 transition-all duration-300">
+                            <div className="relative group mb-1 hidden sm:block">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 p-1 bg-gray-100 rounded-lg backdrop-blur-sm border border-gray-200 group-hover:bg-gray-200 transition-all duration-300">
                                 <img 
                                   src={getConferenceLogo(team.conference)} 
                                   alt={`${team.conference} logo`}
@@ -357,12 +357,12 @@ const Rankings = () => {
                           )}
 
                           {/* Team Info */}
-                          <div className="flex-1">
-                            <h3 className="text-2xl font-bold text-gray-900 transition-all duration-300">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 transition-all duration-300 truncate">
                               {team.school}
                             </h3>
                             {getTeamMascot(team.school) && (
-                              <p className="text-lg gradient-text font-semibold mt-1">
+                              <p className="text-sm sm:text-base md:text-lg gradient-text font-semibold mt-1 truncate">
                                 {getTeamMascot(team.school)}
                               </p>
                             )}
@@ -370,17 +370,17 @@ const Rankings = () => {
                         </div>
 
                         {/* Stats */}
-                        <div className="text-right space-y-2">
+                        <div className="text-right space-y-1 sm:space-y-2 ml-2">
                           {team.points > 0 && (
-                            <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-3 py-2">
-                              <div className="text-blue-700 text-sm font-medium">Points</div>
-                              <div className="text-gray-900 text-xl font-bold">{team.points}</div>
+                            <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-2 py-1 sm:px-3 sm:py-2">
+                              <div className="text-blue-700 text-xs font-medium">Points</div>
+                              <div className="text-gray-900 text-sm sm:text-lg md:text-xl font-bold">{team.points}</div>
                             </div>
                           )}
                           {team.firstPlaceVotes > 0 && (
-                            <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg px-3 py-2">
+                            <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg px-2 py-1 sm:px-3 sm:py-2">
                               <div className="text-yellow-700 text-xs font-medium">1st Place</div>
-                              <div className="gradient-text text-lg font-bold">{team.firstPlaceVotes}</div>
+                              <div className="gradient-text text-sm sm:text-lg font-bold">{team.firstPlaceVotes}</div>
                             </div>
                           )}
                         </div>

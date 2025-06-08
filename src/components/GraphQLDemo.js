@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { graphqlService, teamService, rankingsService, gameService } from '../services';
+import { getTeamRatings } from '../services/graphqlService';
 
 const GraphQLDemo = () => {
   const [loading, setLoading] = useState(false);
@@ -267,7 +268,7 @@ const GraphQLDemo = () => {
         try {
           // Use our backend GraphQL service that works around CORS
           const georgiaGames = await gameService.getGamesByTeam('Georgia', 2024);
-          const georgiaRatings = await teamService.getTeamRatings('Georgia', 2024);
+          const georgiaRatings = await getTeamRatings('Georgia', 2024);
           
           const totalTime = performance.now() - startTime;
           
