@@ -1,0 +1,103 @@
+// Core API utility functions
+const COLLEGE_FOOTBALL_API_BASE = 'https://api.collegefootballdata.com';
+const COLLEGE_FOOTBALL_API_KEY = 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
+const GNEWS_API_KEY = '30ed9bdb7ce6aa43a5951fb3c02cfe5a';
+const GEMINI_API_KEY = 'AIzaSyB2SP9z5e8-S112QCgNmjdw-H0JLD05-a8';
+const YOUTUBE_API_KEY = 'AIzaSyCdXEcPZ6XfG6ol5t0ow89KFoHcWT-YT6M';
+
+// College Football Data API
+const fetchCollegeFootballData = async (endpoint, params = {}) => {
+  const url = new URL(`${COLLEGE_FOOTBALL_API_BASE}${endpoint}`);
+  
+  // Add parameters to URL
+  Object.keys(params).forEach(key => {
+    if (params[key] !== null && params[key] !== undefined) {
+      url.searchParams.append(key, params[key]);
+    }
+  });
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${COLLEGE_FOOTBALL_API_KEY}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`College Football API Error: ${response.status} ${response.statusText}`, errorText);
+      const error = new Error(`College Football API Error: ${response.status} ${response.statusText} - ${errorText || 'No additional details'}`);
+      error.status = response.status;
+      error.statusText = response.statusText;
+      error.endpoint = endpoint;
+      error.params = params;
+      throw error;
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("College Football API Error:", error.message);
+    throw error;
+  }
+};
+
+// News API (GNews)
+const fetchNewsData = async (query, category = 'sports', lang = 'en', country = 'us', max = 10) => {
+  const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&category=${category}&lang=${lang}&country=${country}&max=${max}&apikey=${GNEWS_API_KEY}`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`News API Error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("News API Error:", error.message);
+    throw error;
+  }
+};
+
+// YouTube API
+const fetchYouTubeData = async (query, maxResults = 25) => {
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=${maxResults}&key=${YOUTUBE_API_KEY}`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`YouTube API Error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("YouTube API Error:", error.message);
+    throw error;
+  }
+};
+
+// Generic fetch function for other APIs
+const fetchData = async (endpoint, params = {}) => {
+  const url = `/api/proxy`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ endpoint, params }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Error:", error.message);
+    throw error;
+  }
+};
+
+export { fetchCollegeFootballData, fetchNewsData, fetchYouTubeData };
+export default fetchData;

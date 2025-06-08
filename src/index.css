@@ -1,13 +1,352 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
+@import url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css');
+
+/* Base styles */
 body {
+  font-family: 'Orbitron', sans-serif;
+  color: #1a1a1a;
+  background-color: #ffffff;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  padding: 0;
+  box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Ensure all elements inherit Orbitron font */
+* {
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* Gradient text - no shine */
+.gradient-text {
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hover gradient text for mobile menu items */
+.hover\:gradient-text:hover {
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Metallic Red Gradient Background */
+.gradient-bg {
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+}
+
+/* Modern Login Button with Elevated "Popping Out" Effect */
+.login-button {
+  transform: translateY(0px);
+}
+
+.login-button:hover {
+  /* Even more elevated on hover */
+  transform: translateY(-3px);
+  box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: rgba(148, 163, 184, 0.6);
+  /* Slight scale for more dramatic effect */
+  scale: 1.02;
+}
+
+.login-button:active {
+  /* Pressed state - slightly less elevated */
+  transform: translateY(-1px);
+}
+
+/* Login button text with red gradient */
+.login-button .login-text {
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Elevated CTA Button Styling (for Explore All Modules and Start Free Trial) */
+.cta-button-elevated {
+  background: linear-gradient(145deg, #ffffff, #f1f5f9, #e2e8f0, #cbd5e1, #94a3b8);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 8px;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  /* Elevated shadow effect - popping out */
+  box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-weight: 800;
+  position: relative;
+  cursor: pointer;
+  transform: translateY(0px);
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.cta-button-elevated:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: rgba(148, 163, 184, 0.6);
+  scale: 1.02;
+  color: white;
+}
+
+.cta-button-elevated:active {
+  transform: translateY(-1px);
+}
+
+/* CTA button text with red gradient */
+.cta-button-elevated .cta-text {
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Original CTA Button Styling (for View Pricing) */
+.cta-button {
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 20px rgba(204, 0, 28, 0.4);
+  border: 2px solid rgba(204, 0, 28, 0.6);
+  background-color: rgba(204, 0, 28, 0.1);
+  color: white;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  font-weight: 700;
+}
+
+.cta-button:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(204, 0, 28, 0.6);
+  background-color: rgba(204, 0, 28, 0.2);
+  border-color: rgb(204,0,28);
+  color: white;
+}
+
+/* Modern Dropdown Styles */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: white;
+  min-width: 280px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  z-index: 1000;
+  border-radius: 12px;
+  border: 1px solid rgba(204,0,28,0.1);
+  top: 100%;
+  left: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.dropdown-content a {
+  color: #1a1a1a;
+  padding: 12px 20px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dropdown-content a:hover {
+  background-color: rgba(204,0,28,0.05);
+  transform: translateX(2px);
+}
+
+.dropdown-content a:hover i,
+.dropdown-content a:hover span {
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dropdown-content a:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.dropdown-content a:last-child {
+  border-radius: 0 0 12px 12px;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+      opacity: 0;
+      transform: translateY(-10px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+.dropdown-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1a1a1a;
+  font-weight: 800;
+}
+
+.dropdown-button:hover {
+  color: rgb(204,0,28);
+}
+
+/* Sub-dropdown styles */
+.sub-dropdown {
+  position: relative;
+}
+
+.sub-dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: white;
+  min-width: 220px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  z-index: 1001;
+  border-radius: 8px;
+  border: 1px solid rgba(204,0,28,0.1);
+  top: 0;
+  left: 100%;
+  margin-left: 8px;
+}
+
+.sub-dropdown:hover .sub-dropdown-content {
+  display: block;
+}
+
+/* Mobile styles */
+.mobile-dropdown-content {
+  display: none;
+  background-color: rgba(255,255,255,0.95);
+  border-radius: 8px;
+  margin-top: 8px;
+  padding: 8px 0;
+}
+
+.mobile-dropdown.active .mobile-dropdown-content {
+  display: block;
+}
+
+.mobile-sub-dropdown-content {
+  display: none;
+  background-color: rgba(245,245,245,0.95);
+  border-radius: 6px;
+  margin: 4px 0;
+  padding: 4px 0;
+}
+
+.mobile-sub-dropdown.active .mobile-sub-dropdown-content {
+  display: block;
+}
+
+/* Animations */
+[data-aos] {
+  opacity: 0;
+  transition-property: opacity, transform;
+  transition-duration: 0.8s;
+  transition-timing-function: ease-out;
+}
+[data-aos="fade-up"] {
+  transform: translateY(40px);
+}
+[data-aos].aos-animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Particle Background */
+#particles-js {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-color: transparent;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Feature card styling */
+.feature-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(204, 0, 28, 0.2);
+  transition: all 0.3s ease;
+}
+
+/* Icon gradient styling */
+.icon-gradient {
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(204, 0, 28, 0.2);
+  border-color: rgba(204, 0, 28, 0.4);
+}
+
+/* Header styles */
+.header-logo {
+  display: inline-block;
+  white-space: nowrap;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: normal !important;
+  padding-right: 0.25rem;
+}
+
+/* Footer logo styling */
+.footer-logo {
+  display: inline-block;
+  white-space: nowrap;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: normal !important;
+  padding-right: 0.25rem;
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero logo styling */
+.hero-logo {
+  display: inline-block;
+  white-space: nowrap;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: normal !important;
+  padding-right: 0.25rem;
 }

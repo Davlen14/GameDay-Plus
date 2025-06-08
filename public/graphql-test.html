@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphQL Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>GraphQL API Test</h1>
+    <p>Testing College Football Data API GraphQL endpoint</p>
+    
+    <button onclick="testBasicQuery()">Test Basic Teams Query</button>
+    <button onclick="testGamesQuery()">Test Games Query</button>
+    <button onclick="testFallback()">Test REST Fallback</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const GRAPHQL_ENDPOINT = 'https://graphql.collegefootballdata.com/v1/graphql';
+        const API_KEY = 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
+        
+        function addResult(title, content, isSuccess = true) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = `<h3>${title}</h3><pre>${content}</pre>`;
+            results.appendChild(div);
+        }
+        
+        async function executeGraphQL(query, variables = {}) {
+            try {
+                const response = await fetch(GRAPHQL_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ query, variables })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.errors) {
+                    throw new Error(`GraphQL Errors: ${JSON.stringify(result.errors, null, 2)}`);
+                }
+                
+                return result.data;
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        async function testBasicQuery() {
+            const query = `
+                query GetFBSTeams {
+                    currentTeams(limit: 10, where: { classification: { _eq: "fbs" } }) {
+                        id
+                        school
+                        mascot
+                        conference
+                        division
+                        color
+                        alt_color
+                    }
+                }
+            `;
+            
+            try {
+                addResult('Testing Basic Teams Query...', 'Loading...', true);
+                const data = await executeGraphQL(query);
+                addResult(
+                    '✅ Basic Teams Query Success', 
+                    `Found ${data.currentTeams.length} teams:\n${JSON.stringify(data.currentTeams.slice(0, 3), null, 2)}`,
+                    true
+                );
+            } catch (error) {
+                addResult(
+                    '❌ Basic Teams Query Failed', 
+                    `Error: ${error.message}`,
+                    false
+                );
+            }
+        }
+        
+        async function testGamesQuery() {
+            const query = `
+                query GetRecentGames {
+                    game(limit: 5, where: { season: { _eq: 2024 } }, orderBy: { start_date: desc }) {
+                        id
+                        season
+                        week
+                        home_team
+                        away_team
+                        home_points
+                        away_points
+                        completed
+                    }
+                }
+            `;
+            
+            try {
+                addResult('Testing Games Query...', 'Loading...', true);
+                const data = await executeGraphQL(query);
+                addResult(
+                    '✅ Games Query Success', 
+                    `Found ${data.game.length} games:\n${JSON.stringify(data.game.slice(0, 2), null, 2)}`,
+                    true
+                );
+            } catch (error) {
+                addResult(
+                    '❌ Games Query Failed', 
+                    `Error: ${error.message}`,
+                    false
+                );
+            }
+        }
+        
+        async function testFallback() {
+            try {
+                addResult('Testing REST Fallback...', 'Loading...', true);
+                const response = await fetch('https://api.collegefootballdata.com/teams?division=fbs');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const teams = await response.json();
+                addResult(
+                    '✅ REST Fallback Success', 
+                    `Found ${teams.length} teams via REST API:\n${JSON.stringify(teams.slice(0, 2), null, 2)}`,
+                    true
+                );
+            } catch (error) {
+                addResult(
+                    '❌ REST Fallback Failed', 
+                    `Error: ${error.message}`,
+                    false
+                );
+            }
+        }
+    </script>
+</body>
+</html>
