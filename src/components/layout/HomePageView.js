@@ -292,11 +292,37 @@ const HomePageView = () => {
       <div className="container mx-auto px-4">
         {/* Featured Game */}
         {featuredGame && (
-          <div className="w-[98%] mx-auto mb-12">
+          <div className="w-[98%] mx-auto mb-6">
             <div className="bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
-              <div className="bg-gradient-to-r from-red-50 to-red-100 border-b border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold gradient-text">FEATURED GAME</h2>
+              <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-3 relative">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-xl font-bold gradient-text">FEATURED GAME</h2>
+                  
+                  {/* Live Countdown Timer - Centered */}
+                  <div className="absolute left-1/2 transform -translate-x-1/2 top-2">
+                    <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 border border-gray-200 shadow-lg">
+                      <div className="text-xs text-gray-600 font-medium mb-1 text-center">KICKOFF IN</div>
+                      <div className="grid grid-cols-4 gap-1 text-center">
+                        <div className="gradient-bg rounded px-1 py-1">
+                          <div className="text-white font-bold text-xs">{timeLeft.days}</div>
+                          <div className="text-white text-xs">DAYS</div>
+                        </div>
+                        <div className="gradient-bg rounded px-1 py-1">
+                          <div className="text-white font-bold text-xs">{timeLeft.hours}</div>
+                          <div className="text-white text-xs">HRS</div>
+                        </div>
+                        <div className="gradient-bg rounded px-1 py-1">
+                          <div className="text-white font-bold text-xs">{timeLeft.minutes}</div>
+                          <div className="text-white text-xs">MIN</div>
+                        </div>
+                        <div className="gradient-bg rounded px-1 py-1">
+                          <div className="text-white font-bold text-xs">{timeLeft.seconds}</div>
+                          <div className="text-white text-xs">SEC</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div className="flex items-center space-x-3">
                     <div className="px-3 py-1 gradient-bg text-white rounded-full text-sm font-bold">
                       Week {featuredGame.week}
@@ -311,79 +337,56 @@ const HomePageView = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-center space-x-8">
+                <div className="flex items-center justify-center space-x-6">
                   {/* Away Team */}
                   <div className="text-center flex-1">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 flex items-center justify-center p-2">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 mx-auto mb-2 flex items-center justify-center p-2 relative">
                       <img 
                         src={getTeamLogo(featuredGame.awayTeam)} 
                         alt={`${featuredGame.awayTeam} logo`}
-                        className="w-full h-full object-contain drop-shadow-lg hover:scale-110 transition-transform duration-300"
+                        className="w-full h-full object-contain hover:scale-110 transition-transform duration-300 metallic-3d-logo"
                         onError={(e) => {
                           e.target.src = '/photos/ncaaf.png';
                         }}
                       />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">{featuredGame.awayTeam}</h3>
+                    <h3 className="text-lg font-bold text-gray-900">{featuredGame.awayTeam}</h3>
                     <p className="text-sm text-gray-600">{featuredGame.awayConference}</p>
                   </div>
 
-                  {/* VS Badge with Countdown */}
+                  {/* VS Badge */}
                   <div className="flex-shrink-0 text-center">
-                    <div className="w-16 h-16 gradient-bg rounded-full flex items-center justify-center shadow-lg mb-4">
-                      <span className="text-white font-black text-lg">VS</span>
-                    </div>
-                    
-                    {/* Live Countdown Timer */}
-                    <div className="bg-white/90 backdrop-blur-sm rounded-xl px-4 py-3 border border-gray-200 shadow-lg">
-                      <div className="text-xs text-gray-600 font-medium mb-2">KICKOFF IN</div>
-                      <div className="grid grid-cols-4 gap-2 text-center">
-                        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg px-2 py-1">
-                          <div className="text-white font-bold text-sm">{timeLeft.days}</div>
-                          <div className="text-white text-xs">DAYS</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg px-2 py-1">
-                          <div className="text-white font-bold text-sm">{timeLeft.hours}</div>
-                          <div className="text-white text-xs">HRS</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg px-2 py-1">
-                          <div className="text-white font-bold text-sm">{timeLeft.minutes}</div>
-                          <div className="text-white text-xs">MIN</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg px-2 py-1">
-                          <div className="text-white font-bold text-sm">{timeLeft.seconds}</div>
-                          <div className="text-white text-xs">SEC</div>
-                        </div>
-                      </div>
+                    <div className="w-12 h-12 gradient-bg rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white font-black text-sm">VS</span>
                     </div>
                   </div>
 
                   {/* Home Team */}
                   <div className="text-center flex-1">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 flex items-center justify-center p-2">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 mx-auto mb-2 flex items-center justify-center p-2 relative">
                       <img 
                         src={getTeamLogo(featuredGame.homeTeam)} 
                         alt={`${featuredGame.homeTeam} logo`}
-                        className="w-full h-full object-contain drop-shadow-lg hover:scale-110 transition-transform duration-300"
+                        className="w-full h-full object-contain hover:scale-110 transition-transform duration-300 metallic-3d-logo"
                         onError={(e) => {
                           e.target.src = '/photos/ncaaf.png';
                         }}
                       />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">{featuredGame.homeTeam}</h3>
+                    <h3 className="text-lg font-bold text-gray-900">{featuredGame.homeTeam}</h3>
                     <p className="text-sm text-gray-600">{featuredGame.homeConference}</p>
                   </div>
                 </div>
 
-                <div className="mt-6 text-center">
-                  <p className="text-gray-700 mb-2 flex items-center justify-center">
+                <div className="mt-3 text-center">
+                  <p className="text-gray-700 mb-1 flex items-center justify-center text-sm">
                     <svg className="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     {featuredGame.venue}
                   </p>
-                  <p className="text-sm text-gray-600">{featuredGame.date} • {featuredGame.time} • {featuredGame.network}</p>
+                  <p className="text-xs text-gray-600">{featuredGame.date} • {featuredGame.time} • {featuredGame.network}</p>
                 </div>
               </div>
             </div>
@@ -395,14 +398,14 @@ const HomePageView = () => {
           {/* Left Sidebar - Top Recruits */}
           <div className="lg:col-span-3">
             <div className="bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-xl p-6">
-              <div className="bg-gradient-to-r from-red-50 to-red-100 border-b border-gray-200 p-4 -m-6 mb-6 rounded-t-2xl">
+              <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 -m-6 mb-6 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold gradient-text">TOP RECRUITS</h2>
                   <span className="text-sm text-gray-600 font-semibold">2025 Class</span>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 gap-3 max-h-[600px] overflow-y-auto">
+              <div className="grid grid-cols-1 gap-3">
                 {topRecruits.slice(0, 25).map((recruit) => (
                   <div key={recruit.id} className="p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-md">
                     <div className="flex items-start justify-between mb-2">
@@ -479,7 +482,7 @@ const HomePageView = () => {
                   
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="px-3 py-1 gradient-bg text-white text-sm font-bold rounded-full">
+                      <span className="px-3 py-1 bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-bold rounded-full">
                         GAMEDAY+ News
                       </span>
                       <svg className="w-5 h-5 text-gray-400 hover:text-red-500 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -510,14 +513,14 @@ const HomePageView = () => {
           {/* Right Sidebar - AP Top 25 Poll */}
           <div className="lg:col-span-3">
             <div className="bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-xl p-6">
-              <div className="bg-gradient-to-r from-red-50 to-red-100 border-b border-gray-200 p-4 -m-6 mb-6 rounded-t-2xl">
+              <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 -m-6 mb-6 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold gradient-text">AP TOP 25</h2>
                   <img src="/photos/AP25.jpg" alt="AP Poll" className="h-6 object-contain" />
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 gap-2 max-h-[600px] overflow-y-auto">
+              <div className="grid grid-cols-1 gap-2">
                 {pollRankings.slice(0, 25).map((team) => (
                   <div key={team.rank} className="flex items-center space-x-3 p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-md">
                     <div className="flex-shrink-0 w-6 h-6 gradient-bg rounded-full flex items-center justify-center">

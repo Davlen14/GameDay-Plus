@@ -36,3 +36,108 @@
     transform: rotate(360deg);
   }
 }
+
+/* Metallic 3D HD Logo Effects - Mirroring Swift Implementation */
+.metallic-3d-logo {
+  /* Base image enhancement - contrast and saturation boost */
+  filter: contrast(1.1) saturate(1.1) drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+  position: relative;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+/* Multi-layered metallic shine overlay - mimics Swift's dynamic gradient */
+.metallic-3d-logo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: linear-gradient(45deg, 
+    transparent 0%, 
+    rgba(255,255,255,0.1) 20%,
+    rgba(255,255,255,0.6) 30%, 
+    rgba(255,255,255,0.3) 50%,
+    rgba(255,255,255,0.8) 60%,
+    rgba(255,255,255,0.2) 80%,
+    transparent 100%
+  );
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  z-index: 1;
+}
+
+/* 3D emboss effect - white highlight and dark shadow for depth */
+.metallic-3d-logo::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, 
+    rgba(255,255,255,0.8) 0%,
+    rgba(255,255,255,0.4) 10%,
+    transparent 15%,
+    transparent 85%,
+    rgba(0,0,0,0.2) 90%,
+    rgba(0,0,0,0.4) 100%
+  );
+  z-index: -1;
+  box-shadow: 
+    /* White emboss highlight */
+    inset -1px -1px 2px rgba(255,255,255,0.8),
+    /* Dark emboss shadow */
+    inset 1px 1px 2px rgba(0,0,0,0.3),
+    /* Floating shadow */
+    0 8px 24px rgba(0,0,0,0.2);
+}
+
+/* Enhanced hover effect with metallic shine animation */
+.metallic-3d-logo:hover {
+  filter: contrast(1.2) saturate(1.2) drop-shadow(0 12px 24px rgba(0,0,0,0.4));
+  transform: scale(1.05) translateY(-2px);
+}
+
+.metallic-3d-logo:hover::before {
+  background: linear-gradient(45deg, 
+    transparent 0%, 
+    rgba(255,255,255,0.2) 20%,
+    rgba(255,255,255,0.8) 30%, 
+    rgba(255,255,255,0.5) 50%,
+    rgba(255,255,255,0.9) 60%,
+    rgba(255,255,255,0.3) 80%,
+    transparent 100%
+  );
+  animation: metallic-shine 2s ease-in-out infinite;
+}
+
+/* Metallic shine animation */
+@keyframes metallic-shine {
+  0% {
+    background-position: -200% 0;
+  }
+  50% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Enhanced parent container for better 3D effect */
+.metallic-3d-logo-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Additional HD quality enhancements */
+.metallic-3d-logo {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
