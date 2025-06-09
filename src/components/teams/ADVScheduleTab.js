@@ -96,11 +96,19 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
         }
       }
       
-      // Load 2024 postseason games
+      // Load 2024 postseason games (similar to SwiftUI loadScheduleData)
       try {
         const postseasonGames = await gameService.getGames(2024, null, 'postseason');
         if (postseasonGames && postseasonGames.length > 0) {
-          completed2024Games.push(...postseasonGames);
+          // Mark postseason games for special styling
+          const markedPostseasonGames = postseasonGames.map(game => ({
+            ...game,
+            seasonType: 'postseason',
+            isPostseason: true,
+            isBowlGame: true
+          }));
+          completed2024Games.push(...markedPostseasonGames);
+          console.log(`🏆 Loaded ${markedPostseasonGames.length} postseason games for 2024`);
         }
       } catch (postseasonError) {
         console.warn('Could not load 2024 postseason games:', postseasonError);
@@ -126,7 +134,15 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
       try {
         const postseason2025Games = await gameService.getGames(2025, null, 'postseason');
         if (postseason2025Games && postseason2025Games.length > 0) {
-          upcoming2025Games.push(...postseason2025Games);
+          // Mark postseason games for special styling
+          const markedPostseason2025Games = postseason2025Games.map(game => ({
+            ...game,
+            seasonType: 'postseason',
+            isPostseason: true,
+            isBowlGame: true
+          }));
+          upcoming2025Games.push(...markedPostseason2025Games);
+          console.log(`🏆 Loaded ${markedPostseason2025Games.length} postseason games for 2025`);
         }
       } catch (postseasonError) {
         // 2025 postseason not available yet
@@ -168,7 +184,10 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
           seasonType: game.season_type || game.seasonType,
           startDate: game.start_date || game.startDate,
           venue: game.venue,
-          notes: game.notes
+          notes: game.notes,
+          // Preserve postseason properties for gold gradient styling
+          isPostseason: game.isPostseason || game.seasonType === 'postseason',
+          isBowlGame: game.isBowlGame || game.seasonType === 'postseason'
         }));
       };
       
@@ -220,6 +239,17 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
   }, [loadScheduleData]);
 
   // Helper functions
+  
+  // Create gold metallic gradient (similar to SwiftUI goldMetallicGradient)
+  const getGoldMetallicGradient = () => {
+    return 'linear-gradient(135deg, #ffd700 0%, #ffb700 25%, #ffd700 50%, #ffb700 75%, #ffd700 100%)';
+  };
+  
+  // Enhanced postseason detection
+  const isPostseasonGame = (game) => {
+    return game.seasonType === 'postseason' || game.isPostseason || game.isBowlGame;
+  };
+
   const calculateRecord = () => {
     if (completedGames.length === 0) return "0-0";
     const wins = completedGames.filter(game => {
@@ -419,14 +449,19 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
           animateScheduleCards ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
         }`}
         style={{
-          borderColor: game.seasonType === "postseason" 
-            ? 'rgba(251, 191, 36, 0.4)' 
+          borderColor: isPostseasonGame(game)
+            ? 'rgba(255, 215, 0, 0.6)' 
             : isUpcoming 
               ? `rgba(${teamColorRgb}, 0.3)` 
               : result?.isWin 
                 ? 'rgba(34, 197, 94, 0.3)' 
                 : 'rgba(239, 68, 68, 0.3)',
-          boxShadow: '0 6px 20px rgba(0,0,0,0.08)'
+          background: isPostseasonGame(game) 
+            ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 220, 0.95) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(219, 234, 254, 0.3) 100%)',
+          boxShadow: isPostseasonGame(game)
+            ? '0 8px 32px rgba(255, 215, 0, 0.25), 0 0 20px rgba(255, 215, 0, 0.1)'
+            : '0 6px 20px rgba(0,0,0,0.08)'
         }}
       >
         {/* Main Game Info */}
@@ -449,10 +484,15 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
                       CONF
                     </span>
                   )}
-                  {game.seasonType === "postseason" && (
+                  {isPostseasonGame(game) && (
                     <span 
-                      className="text-xs font-bold text-white px-2 py-1 rounded-sm bg-gradient-to-r from-yellow-400 to-yellow-600"
-                      style={{ fontFamily: 'Orbitron, sans-serif' }}
+                      className="text-xs font-bold text-white px-2 py-1 rounded-sm"
+                      style={{ 
+                        background: getGoldMetallicGradient(),
+                        fontFamily: 'Orbitron, sans-serif',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                        boxShadow: '0 2px 6px rgba(255, 215, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                      }}
                     >
                       BOWL
                     </span>
@@ -474,17 +514,19 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
                 <span 
                   className="text-xs font-bold text-white px-3 py-2 rounded-lg"
                   style={{
-                    background: game.completed && game.seasonType === "postseason"
-                      ? 'linear-gradient(135deg, #fbbf24, #f59e0b)'
+                    background: isPostseasonGame(game)
+                      ? getGoldMetallicGradient()
                       : game.completed
                         ? `linear-gradient(135deg, rgba(${teamColorRgb}, 1), rgba(${teamColorRgb}, 0.8))`
-                        : game.seasonType === "postseason"
-                          ? 'linear-gradient(135deg, #fbbf24, #f59e0b)'
-                          : `linear-gradient(135deg, rgba(${teamColorRgb}, 1), rgba(${teamColorRgb}, 0.8))`,
-                    fontFamily: 'Orbitron, sans-serif'
+                        : `linear-gradient(135deg, rgba(${teamColorRgb}, 1), rgba(${teamColorRgb}, 0.8))`,
+                    fontFamily: 'Orbitron, sans-serif',
+                    textShadow: isPostseasonGame(game) ? '0 1px 2px rgba(0,0,0,0.3)' : 'none',
+                    boxShadow: isPostseasonGame(game) 
+                      ? '0 2px 8px rgba(255, 215, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                      : 'none'
                   }}
                 >
-                  {game.completed ? "FINAL" : game.seasonType === "postseason" ? "BOWL" : "UPCOMING"}
+                  {game.completed ? "FINAL" : isPostseasonGame(game) ? "BOWL" : "UPCOMING"}
                 </span>
               </div>
               
@@ -643,11 +685,33 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
               
               {/* Additional Details */}
               <div className="mt-6 space-y-2">
-                {game.seasonType === "postseason" && (
-                  <div className="flex items-center gap-2 text-yellow-600">
-                    <i className="fas fa-trophy"></i>
-                    <span className="text-sm font-medium" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                      Bowl Game / Playoff
+                {isPostseasonGame(game) && (
+                  <div 
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                    style={{ 
+                      background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 248, 220, 0.2))',
+                      border: '1px solid rgba(255, 215, 0, 0.3)'
+                    }}
+                  >
+                    <i 
+                      className="fas fa-trophy"
+                      style={{ 
+                        background: getGoldMetallicGradient(),
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        fontSize: '16px'
+                      }}
+                    ></i>
+                    <span 
+                      className="text-sm font-bold"
+                      style={{ 
+                        fontFamily: 'Orbitron, sans-serif',
+                        background: getGoldMetallicGradient(),
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent'
+                      }}
+                    >
+                      {game.notes || 'Bowl Game / Playoff'}
                     </span>
                   </div>
                 )}
