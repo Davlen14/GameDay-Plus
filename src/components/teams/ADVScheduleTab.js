@@ -330,7 +330,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
   // Season Overview Card Component
   const SeasonOverviewCard = () => (
     <div 
-      className={`p-6 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl transition-all duration-700 ${
+      className={`p-8 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl transition-all duration-700 ${
         animateScheduleCards ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
       }`}
       style={{ 
@@ -338,7 +338,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
         boxShadow: '0 6px 20px rgba(0,0,0,0.08)'
       }}
     >
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-6">
         <div 
           className="text-lg font-bold bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent"
           style={{ filter: 'drop-shadow(0 2px 4px rgba(251, 191, 36, 0.3))' }}
@@ -350,21 +350,28 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
         </h3>
       </div>
       
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-6">
         {[
           { title: "Record", value: calculateRecord(), subtitle: "Overall" },
           { title: "Conference", value: calculateConferenceRecord(), subtitle: team.conference || "Conference" },
           { title: "Home", value: calculateHomeRecord(), subtitle: "Home Games" },
-          { title: "Games", value: completedGames.length.toString(), subtitle: "Total" }
+          { title: "Games", value: completedGames.length.toString(), subtitle: "Total" },
+          { title: "Bowl Games", value: completedGames.filter(g => isPostseasonGame(g)).length.toString(), subtitle: "Postseason" },
+          { title: "Conf Games", value: completedGames.filter(g => g.conferenceGame).length.toString(), subtitle: "Conference" },
+          { title: "Neutral", value: completedGames.filter(g => g.neutralSite).length.toString(), subtitle: "Neutral Site" },
+          { title: "Wins", value: completedGames.filter(game => {
+            const isHome = game.homeTeam?.toLowerCase() === team.school.toLowerCase();
+            return isHome ? (game.homePoints > game.awayPoints) : (game.awayPoints > game.homePoints);
+          }).length.toString(), subtitle: "Total Wins" }
         ].map((stat, index) => (
-          <div key={index} className="text-center py-3 bg-white rounded-lg">
+          <div key={index} className="text-center py-4 bg-white rounded-lg shadow-sm">
             <div 
-              className="text-lg font-black mb-1"
+              className="text-xl font-black mb-2"
               style={{ fontFamily: 'Orbitron, sans-serif', color: primaryTeamColor }}
             >
               {stat.value}
             </div>
-            <div className="text-xs font-semibold text-gray-900" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+            <div className="text-sm font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Orbitron, sans-serif' }}>
               {stat.title}
             </div>
             <div className="text-xs font-medium text-gray-600" style={{ fontFamily: 'Orbitron, sans-serif' }}>
@@ -834,7 +841,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
   }
 
   return (
-    <div className="relative">
+    <div className="relative w-full max-w-none" style={{ width: '97vw', margin: '0 auto' }}>
       {/* Confetti Overlay */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
@@ -855,7 +862,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-8 px-6">
         {/* Header */}
         <ModernSectionHeader 
           title="2024-25 Season Schedule"
@@ -869,8 +876,8 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
         {/* Schedule Tab Selection */}
         <ScheduleTabSelector />
 
-        {/* Tab Content */}
-        <div className="space-y-4">
+        {/* Tab Content with Enhanced Spacing for 97% Width */}
+        <div className="space-y-6">
           {selectedScheduleTab === 0 && (
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -948,74 +955,200 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
           )}
 
           {selectedScheduleTab === 2 && (
-            <div className="space-y-6">
-              {/* Schedule Analysis Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Strength of Schedule */}
-                <div className="p-6 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
-                  <div className="flex items-center gap-3 mb-4">
+            <div className="space-y-8">
+              {/* Wide Grid Layout for Better Screen Utilization - 97% Width */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                {/* Schedule Breakdown */}
+                <div className="p-8 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
+                  <div className="flex items-center gap-3 mb-6">
                     <div className="text-lg font-bold bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
                       <i className="fas fa-chart-bar"></i>
                     </div>
                     <h4 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                      Schedule Analysis
+                      Schedule Breakdown
                     </h4>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-4">
                     {[
-                      { title: "Conference", value: [...completedGames, ...upcomingGames].filter(g => g.conferenceGame).length },
-                      { title: "Neutral Site", value: [...completedGames, ...upcomingGames].filter(g => g.neutralSite).length },
-                      { title: "Total", value: completedGames.length + upcomingGames.length }
+                      { title: "Conference Games", value: [...completedGames, ...upcomingGames].filter(g => g.conferenceGame).length, icon: "fa-trophy" },
+                      { title: "Neutral Site Games", value: [...completedGames, ...upcomingGames].filter(g => g.neutralSite).length, icon: "fa-map-marker-alt" },
+                      { title: "Total Games", value: completedGames.length + upcomingGames.length, icon: "fa-calendar" }
                     ].map((stat, index) => (
-                      <div key={index} className="text-center py-3 bg-white rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs"
+                            style={{ backgroundColor: `rgba(${teamColorRgb}, 0.1)`, color: primaryTeamColor }}
+                          >
+                            <i className={`fas ${stat.icon}`}></i>
+                          </div>
+                          <span className="text-sm font-medium text-gray-900" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                            {stat.title}
+                          </span>
+                        </div>
                         <div 
-                          className="text-lg font-black mb-1"
+                          className="text-xl font-black"
                           style={{ fontFamily: 'Orbitron, sans-serif', color: primaryTeamColor }}
                         >
                           {stat.value}
-                        </div>
-                        <div className="text-xs font-medium text-gray-600" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                          {stat.title}
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Performance Overview */}
-                <div className="p-6 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
-                  <div className="flex items-center gap-3 mb-4">
+                {/* Performance Stats */}
+                <div className="p-8 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
+                  <div className="flex items-center gap-3 mb-6">
                     <div className="text-lg font-bold bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
                       <i className="fas fa-chart-line"></i>
                     </div>
                     <h4 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                      Performance Overview
+                      Performance Stats
                     </h4>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {[
-                      { title: "Games Played", value: completedGames.length },
-                      { title: "Wins", value: completedGames.filter(game => {
+                      { title: "Games Played", value: completedGames.length, icon: "fa-play" },
+                      { title: "Total Wins", value: completedGames.filter(game => {
                         const isHome = game.homeTeam?.toLowerCase() === team.school.toLowerCase();
                         return isHome ? (game.homePoints > game.awayPoints) : (game.awayPoints > game.homePoints);
-                      }).length },
-                      { title: "Conference Record", value: calculateConferenceRecord() }
+                      }).length, icon: "fa-trophy" },
+                      { title: "Conference Record", value: calculateConferenceRecord(), icon: "fa-star" }
                     ].map((stat, index) => (
-                      <div key={index} className="flex justify-between items-center px-3">
-                        <span className="text-sm font-medium text-gray-900" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                          {stat.title}
-                        </span>
-                        <span 
-                          className="text-sm font-bold"
+                      <div key={index} className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs"
+                            style={{ backgroundColor: `rgba(${teamColorRgb}, 0.1)`, color: primaryTeamColor }}
+                          >
+                            <i className={`fas ${stat.icon}`}></i>
+                          </div>
+                          <span className="text-sm font-medium text-gray-900" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                            {stat.title}
+                          </span>
+                        </div>
+                        <div 
+                          className="text-xl font-black"
                           style={{ fontFamily: 'Orbitron, sans-serif', color: primaryTeamColor }}
                         >
                           {stat.value}
-                        </span>
+                        </div>
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* Special Games & Postseason */}
+                <div className="p-8 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="text-lg font-bold bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
+                      <i className="fas fa-crown"></i>
+                    </div>
+                    <h4 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                      Special Games
+                    </h4>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {[
+                      { title: "Bowl Games", value: [...completedGames, ...upcomingGames].filter(g => isPostseasonGame(g)).length, icon: "fa-trophy" },
+                      { title: "Ranked Opponents", value: [...completedGames, ...upcomingGames].filter(g => g.ranking || g.homeRanking || g.awayRanking).length, icon: "fa-medal" },
+                      { title: "Home Games", value: [...completedGames, ...upcomingGames].filter(g => g.homeTeam?.toLowerCase() === team.school.toLowerCase()).length, icon: "fa-home" }
+                    ].map((stat, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs"
+                            style={{ backgroundColor: `rgba(${teamColorRgb}, 0.1)`, color: primaryTeamColor }}
+                          >
+                            <i className={`fas ${stat.icon}`}></i>
+                          </div>
+                          <span className="text-sm font-medium text-gray-900" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                            {stat.title}
+                          </span>
+                        </div>
+                        <div 
+                          className="text-xl font-black"
+                          style={{ fontFamily: 'Orbitron, sans-serif', color: primaryTeamColor }}
+                        >
+                          {stat.value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Enhanced Season Summary - Full Width Utilization */}
+              <div className="p-8 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="text-lg font-bold bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
+                    <i className="fas fa-analytics"></i>
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                    Season Summary & Analysis
+                  </h4>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
+                  {[
+                    { title: "Win Percentage", value: completedGames.length > 0 ? `${Math.round((completedGames.filter(game => {
+                      const isHome = game.homeTeam?.toLowerCase() === team.school.toLowerCase();
+                      return isHome ? (game.homePoints > game.awayPoints) : (game.awayPoints > game.homePoints);
+                    }).length / completedGames.length) * 100)}%` : "0%", icon: "fa-percentage", color: "#10b981" },
+                    { title: "Away Record", value: (() => {
+                      const awayGames = completedGames.filter(g => g.awayTeam?.toLowerCase() === team.school.toLowerCase());
+                      const awayWins = awayGames.filter(g => g.awayPoints > g.homePoints).length;
+                      return awayGames.length > 0 ? `${awayWins}-${awayGames.length - awayWins}` : "0-0";
+                    })(), icon: "fa-plane", color: "#3b82f6" },
+                    { title: "Margin of Victory", value: (() => {
+                      const wins = completedGames.filter(game => {
+                        const isHome = game.homeTeam?.toLowerCase() === team.school.toLowerCase();
+                        return isHome ? (game.homePoints > game.awayPoints) : (game.awayPoints > game.homePoints);
+                      });
+                      if (wins.length === 0) return "N/A";
+                      const totalMargin = wins.reduce((sum, game) => {
+                        const isHome = game.homeTeam?.toLowerCase() === team.school.toLowerCase();
+                        const margin = isHome ? (game.homePoints - game.awayPoints) : (game.awayPoints - game.homePoints);
+                        return sum + margin;
+                      }, 0);
+                      return `+${Math.round(totalMargin / wins.length)}`;
+                    })(), icon: "fa-chart-line", color: "#f59e0b" },
+                    { title: "Close Games", value: completedGames.filter(game => {
+                      return Math.abs((game.homePoints || 0) - (game.awayPoints || 0)) <= 7;
+                    }).length, icon: "fa-clock", color: "#ef4444" },
+                    { title: "High Scoring", value: completedGames.filter(game => {
+                      const isHome = game.homeTeam?.toLowerCase() === team.school.toLowerCase();
+                      const teamScore = isHome ? (game.homePoints || 0) : (game.awayPoints || 0);
+                      return teamScore >= 30;
+                    }).length, icon: "fa-fire", color: "#8b5cf6" },
+                    { title: "Shutouts", value: completedGames.filter(game => {
+                      const isHome = game.homeTeam?.toLowerCase() === team.school.toLowerCase();
+                      const opponentScore = isHome ? (game.awayPoints || 0) : (game.homePoints || 0);
+                      return opponentScore === 0;
+                    }).length, icon: "fa-shield", color: "#06b6d4" }
+                  ].map((stat, index) => (
+                    <div key={index} className="text-center p-4 bg-white rounded-lg shadow-sm">
+                      <div 
+                        className="w-10 h-10 mx-auto mb-3 rounded-full flex items-center justify-center text-white"
+                        style={{ backgroundColor: stat.color }}
+                      >
+                        <i className={`fas ${stat.icon} text-sm`}></i>
+                      </div>
+                      <div 
+                        className="text-lg font-black mb-2"
+                        style={{ fontFamily: 'Orbitron, sans-serif', color: stat.color }}
+                      >
+                        {stat.value}
+                      </div>
+                      <div className="text-xs font-medium text-gray-600" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                        {stat.title}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
