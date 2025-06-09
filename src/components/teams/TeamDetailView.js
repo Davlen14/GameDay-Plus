@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { teamService } from '../../services/teamService';
+import ADVScheduleTab from './ADVScheduleTab';
 
 const TeamDetailView = () => {
   const [team, setTeam] = useState(null);
@@ -588,41 +589,45 @@ const TeamDetailView = () => {
 
       {/* Content Area */}
       <div className="px-4 py-8 max-w-6xl mx-auto">
-        <div className="text-center py-20">
-          <div className="mb-8">
-            <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
-              style={{ 
-                background: `linear-gradient(135deg, rgba(${teamColorRgb}, 0.15) 0%, rgba(${teamColorRgb}, 0.05) 100%)`,
-                border: `2px solid rgba(${teamColorRgb}, 0.2)`
-              }}
-            >
-              <i 
-                className="fas fa-hammer text-3xl font-bold filter drop-shadow-sm"
-                style={{ color: primaryColor }}
-              ></i>
+        {activeTab === 4 ? (
+          <ADVScheduleTab team={team} primaryTeamColor={primaryColor} />
+        ) : (
+          <div className="text-center py-20">
+            <div className="mb-8">
+              <div 
+                className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
+                style={{ 
+                  background: `linear-gradient(135deg, rgba(${teamColorRgb}, 0.15) 0%, rgba(${teamColorRgb}, 0.05) 100%)`,
+                  border: `2px solid rgba(${teamColorRgb}, 0.2)`
+                }}
+              >
+                <i 
+                  className="fas fa-hammer text-3xl font-bold filter drop-shadow-sm"
+                  style={{ color: primaryColor }}
+                ></i>
+              </div>
+              
+              <h2 
+                className="text-xl font-black mb-3"
+                style={{ 
+                  fontFamily: 'Orbitron, sans-serif',
+                  color: primaryColor,
+                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                }}
+              >
+                COMING SOON
+              </h2>
+              
+              <p className="text-sm font-medium text-gray-600 mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                In Development
+              </p>
+              
+              <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
+                {`We're working hard to bring you comprehensive ${tabs.find(t => t.id === activeTab)?.label.toLowerCase()} data for ${team.school}. Stay tuned for an amazing experience!`}
+              </p>
             </div>
-            
-            <h2 
-              className="text-xl font-black mb-3"
-              style={{ 
-                fontFamily: 'Orbitron, sans-serif',
-                color: primaryColor,
-                textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-              }}
-            >
-              COMING SOON
-            </h2>
-            
-            <p className="text-sm font-medium text-gray-600 mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-              In Development
-            </p>
-            
-            <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
-              {`We're working hard to bring you comprehensive ${tabs.find(t => t.id === activeTab)?.label.toLowerCase()} data for ${team.school}. Stay tuned for an amazing experience!`}
-            </p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
