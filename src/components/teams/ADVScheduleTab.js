@@ -98,20 +98,64 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
       
       // Load 2024 postseason games (similar to SwiftUI loadScheduleData)
       try {
-        const postseasonGames = await gameService.getGames(2024, null, 'postseason');
+        console.log('🏆 Attempting to load 2024 postseason games...');
+        
+        // Try multiple approaches to get postseason games
+        let postseasonGames = [];
+        
+        // Method 1: Direct postseason call
+        try {
+          postseasonGames = await gameService.getGames(2024, null, 'postseason', null, null, null, null, 'fbs', null, false);
+          console.log(`🎯 Method 1 - Direct postseason call: ${postseasonGames?.length || 0} games`);
+        } catch (error) {
+          console.warn('Method 1 failed:', error);
+        }
+        
+        // Method 2: If direct call fails, try loading all 2024 games and filter
+        if (!postseasonGames || postseasonGames.length === 0) {
+          try {
+            console.log('🔄 Trying method 2 - Load all games and filter...');
+            const allGames = await gameService.getGames(2024, null, 'both', null, null, null, null, 'fbs', null, false);
+            postseasonGames = allGames.filter(game => 
+              game.season_type === 'postseason' || 
+              game.seasonType === 'postseason' ||
+              (game.week && game.week > 15) ||
+              (game.notes && (
+                game.notes.toLowerCase().includes('bowl') ||
+                game.notes.toLowerCase().includes('playoff') ||
+                game.notes.toLowerCase().includes('championship')
+              ))
+            );
+            console.log(`🎯 Method 2 - Filtered from all games: ${postseasonGames?.length || 0} games`);
+          } catch (error) {
+            console.warn('Method 2 failed:', error);
+          }
+        }
+        
         if (postseasonGames && postseasonGames.length > 0) {
           // Mark postseason games for special styling
           const markedPostseasonGames = postseasonGames.map(game => ({
             ...game,
             seasonType: 'postseason',
+            season_type: 'postseason',
             isPostseason: true,
             isBowlGame: true
           }));
           completed2024Games.push(...markedPostseasonGames);
-          console.log(`🏆 Loaded ${markedPostseasonGames.length} postseason games for 2024`);
+          console.log(`🏆 Successfully loaded ${markedPostseasonGames.length} postseason games for 2024`);
+          
+          // Debug: Show some postseason games
+          if (markedPostseasonGames.length > 0) {
+            console.log('📋 Sample postseason games:');
+            markedPostseasonGames.slice(0, 3).forEach(game => {
+              console.log(`   - ${game.home_team || game.homeTeam} vs ${game.away_team || game.awayTeam} (${game.notes || 'Bowl Game'})`);
+            });
+          }
+        } else {
+          console.warn('⚠️ No postseason games found for 2024');
         }
       } catch (postseasonError) {
-        console.warn('Could not load 2024 postseason games:', postseasonError);
+        console.error('❌ Could not load 2024 postseason games:', postseasonError);
       }
       
       // Load 2025 upcoming games using your gameService
@@ -132,20 +176,55 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
       
       // Try to load 2025 postseason games
       try {
-        const postseason2025Games = await gameService.getGames(2025, null, 'postseason');
+        console.log('🏆 Attempting to load 2025 postseason games...');
+        
+        let postseason2025Games = [];
+        
+        // Method 1: Direct postseason call
+        try {
+          postseason2025Games = await gameService.getGames(2025, null, 'postseason', null, null, null, null, 'fbs', null, false);
+          console.log(`🎯 Method 1 - Direct 2025 postseason call: ${postseason2025Games?.length || 0} games`);
+        } catch (error) {
+          console.warn('2025 Method 1 failed:', error);
+        }
+        
+        // Method 2: If direct call fails, try loading all 2025 games and filter
+        if (!postseason2025Games || postseason2025Games.length === 0) {
+          try {
+            console.log('🔄 Trying method 2 - Load all 2025 games and filter...');
+            const allGames2025 = await gameService.getGames(2025, null, 'both', null, null, null, null, 'fbs', null, false);
+            postseason2025Games = allGames2025.filter(game => 
+              game.season_type === 'postseason' || 
+              game.seasonType === 'postseason' ||
+              (game.week && game.week > 15) ||
+              (game.notes && (
+                game.notes.toLowerCase().includes('bowl') ||
+                game.notes.toLowerCase().includes('playoff') ||
+                game.notes.toLowerCase().includes('championship')
+              ))
+            );
+            console.log(`🎯 Method 2 - Filtered from all 2025 games: ${postseason2025Games?.length || 0} games`);
+          } catch (error) {
+            console.warn('2025 Method 2 failed:', error);
+          }
+        }
+        
         if (postseason2025Games && postseason2025Games.length > 0) {
           // Mark postseason games for special styling
           const markedPostseason2025Games = postseason2025Games.map(game => ({
             ...game,
             seasonType: 'postseason',
+            season_type: 'postseason',
             isPostseason: true,
             isBowlGame: true
           }));
           upcoming2025Games.push(...markedPostseason2025Games);
-          console.log(`🏆 Loaded ${markedPostseason2025Games.length} postseason games for 2025`);
+          console.log(`🏆 Successfully loaded ${markedPostseason2025Games.length} postseason games for 2025`);
+        } else {
+          console.log('ℹ️ No 2025 postseason games available yet (expected)');
         }
       } catch (postseasonError) {
-        // 2025 postseason not available yet
+        console.log('ℹ️ 2025 postseason games not available yet:', postseasonError.message);
       }
       
       console.log(`🔍 Total games loaded - 2024: ${completed2024Games.length}, 2025: ${upcoming2025Games.length}`);
@@ -182,12 +261,13 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
           conferenceGame: game.conference_game || game.conferenceGame,
           neutralSite: game.neutral_site || game.neutralSite,
           seasonType: game.season_type || game.seasonType,
+          season_type: game.season_type || game.seasonType, // Keep both for compatibility
           startDate: game.start_date || game.startDate,
           venue: game.venue,
           notes: game.notes,
-          // Preserve postseason properties for gold gradient styling
-          isPostseason: game.isPostseason || game.seasonType === 'postseason',
-          isBowlGame: game.isBowlGame || game.seasonType === 'postseason'
+          // Enhanced postseason properties for gold gradient styling
+          isPostseason: game.isPostseason || game.season_type === 'postseason' || game.seasonType === 'postseason',
+          isBowlGame: game.isBowlGame || game.season_type === 'postseason' || game.seasonType === 'postseason'
         }));
       };
       
@@ -247,7 +327,22 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
   
   // Enhanced postseason detection
   const isPostseasonGame = (game) => {
-    return game.seasonType === 'postseason' || game.isPostseason || game.isBowlGame;
+    // Check multiple properties for postseason indicators
+    const seasonTypeCheck = game.seasonType === 'postseason' || game.season_type === 'postseason';
+    const explicitCheck = game.isPostseason || game.isBowlGame;
+    const weekCheck = game.week && game.week > 15; // Regular season typically ends at week 15
+    const notesCheck = game.notes && (
+      game.notes.toLowerCase().includes('bowl') ||
+      game.notes.toLowerCase().includes('playoff') ||
+      game.notes.toLowerCase().includes('championship') ||
+      game.notes.toLowerCase().includes('cfp') ||
+      game.notes.toLowerCase().includes('rose bowl') ||
+      game.notes.toLowerCase().includes('orange bowl') ||
+      game.notes.toLowerCase().includes('sugar bowl') ||
+      game.notes.toLowerCase().includes('fiesta bowl')
+    );
+    
+    return seasonTypeCheck || explicitCheck || weekCheck || notesCheck;
   };
 
   const calculateRecord = () => {
