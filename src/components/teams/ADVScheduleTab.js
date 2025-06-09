@@ -96,41 +96,10 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
         }
       }
       
-      // Load 2024 postseason games (similar to SwiftUI loadScheduleData)
+      // Load 2024 postseason games using the dedicated method
       try {
-        console.log('🏆 Attempting to load 2024 postseason games...');
-        
-        // Try multiple approaches to get postseason games
-        let postseasonGames = [];
-        
-        // Method 1: Direct postseason call
-        try {
-          postseasonGames = await gameService.getGames(2024, null, 'postseason', null, null, null, null, 'fbs', null, false);
-          console.log(`🎯 Method 1 - Direct postseason call: ${postseasonGames?.length || 0} games`);
-        } catch (error) {
-          console.warn('Method 1 failed:', error);
-        }
-        
-        // Method 2: If direct call fails, try loading all 2024 games and filter
-        if (!postseasonGames || postseasonGames.length === 0) {
-          try {
-            console.log('🔄 Trying method 2 - Load all games and filter...');
-            const allGames = await gameService.getGames(2024, null, 'both', null, null, null, null, 'fbs', null, false);
-            postseasonGames = allGames.filter(game => 
-              game.season_type === 'postseason' || 
-              game.seasonType === 'postseason' ||
-              (game.week && game.week > 15) ||
-              (game.notes && (
-                game.notes.toLowerCase().includes('bowl') ||
-                game.notes.toLowerCase().includes('playoff') ||
-                game.notes.toLowerCase().includes('championship')
-              ))
-            );
-            console.log(`🎯 Method 2 - Filtered from all games: ${postseasonGames?.length || 0} games`);
-          } catch (error) {
-            console.warn('Method 2 failed:', error);
-          }
-        }
+        console.log('🏆 Loading 2024 postseason games...');
+        const postseasonGames = await gameService.getPostseasonGames(2024, false);
         
         if (postseasonGames && postseasonGames.length > 0) {
           // Mark postseason games for special styling
@@ -174,40 +143,10 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
         }
       }
       
-      // Try to load 2025 postseason games
+      // Try to load 2025 postseason games using the dedicated method
       try {
-        console.log('🏆 Attempting to load 2025 postseason games...');
-        
-        let postseason2025Games = [];
-        
-        // Method 1: Direct postseason call
-        try {
-          postseason2025Games = await gameService.getGames(2025, null, 'postseason', null, null, null, null, 'fbs', null, false);
-          console.log(`🎯 Method 1 - Direct 2025 postseason call: ${postseason2025Games?.length || 0} games`);
-        } catch (error) {
-          console.warn('2025 Method 1 failed:', error);
-        }
-        
-        // Method 2: If direct call fails, try loading all 2025 games and filter
-        if (!postseason2025Games || postseason2025Games.length === 0) {
-          try {
-            console.log('🔄 Trying method 2 - Load all 2025 games and filter...');
-            const allGames2025 = await gameService.getGames(2025, null, 'both', null, null, null, null, 'fbs', null, false);
-            postseason2025Games = allGames2025.filter(game => 
-              game.season_type === 'postseason' || 
-              game.seasonType === 'postseason' ||
-              (game.week && game.week > 15) ||
-              (game.notes && (
-                game.notes.toLowerCase().includes('bowl') ||
-                game.notes.toLowerCase().includes('playoff') ||
-                game.notes.toLowerCase().includes('championship')
-              ))
-            );
-            console.log(`🎯 Method 2 - Filtered from all 2025 games: ${postseason2025Games?.length || 0} games`);
-          } catch (error) {
-            console.warn('2025 Method 2 failed:', error);
-          }
-        }
+        console.log('🏆 Loading 2025 postseason games...');
+        const postseason2025Games = await gameService.getPostseasonGames(2025, false);
         
         if (postseason2025Games && postseason2025Games.length > 0) {
           // Mark postseason games for special styling

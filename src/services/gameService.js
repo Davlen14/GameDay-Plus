@@ -249,5 +249,47 @@ export const gameService = {
     if (week) params.week = week;
     if (team) params.team = team;
     return await fetchCollegeFootballData('/metrics/wp/pregame', params);
-  }
+  },
+
+  // Get postseason games (bowl games, playoffs, championships)
+  // Based on API analysis: all postseason games use week=1 and seasonType="postseason"
+  getPostseasonGames: async (season, useGraphQL = true) => {
+    try {
+      console.log(`🏆 Loading postseason games for ${season} (week=1, seasonType=postseason)...`);
+      
+      // Method 1: Use getGamesByWeek with week=1 and seasonType=postseason
+      let postseasonGames = await this.getGamesByWeek(season, 1, 'postseason', useGraphQL);
+      
+      if (!postseasonGames || postseasonGames.length === 0) {
+        // Method 2: Use general getGames with week=1 and seasonType=postseason
+        console.log(`🔄 Fallback: using getGames with week=1 and seasonType=postseason...`);
+        postseasonGames = await this.getGames(season, 1, 'postseason', null, null, null, null, 'fbs', null, useGraphQL);
+      }
+      
+      if (!postseasonGames || postseasonGames.length === 0) {
+        // Method 3: Load all games and filter for postseason
+        console.log(`🔄 Final fallback: loading all games and filtering...`);
+        const allGames = await this.getGames(season, null, 'both', null, null, null, null, 'fbs', null, useGraphQL);
+        postseasonGames = allGames.filter(game => 
+          game.season_type === 'postseason' || 
+          game.seasonType === 'postseason' ||
+          (game.week === 1 && (game.season_type === 'postseason' || game.seasonType === 'postseason')) ||
+          (game.notes && (
+            game.notes.toLowerCase().includes('bowl') ||
+            game.notes.toLowerCase().includes('playoff') ||
+            game.notes.toLowerCase().includes('championship') ||
+            game.notes.toLowerCase().includes('cfp') ||
+            game.notes.toLowerCase().includes('national championship')
+          ))
+        );
+      }
+      
+      console.log(`✅ Loaded ${postseasonGames?.length || 0} postseason games for ${season}`);
+      return postseasonGames || [];
+      
+    } catch (error) {
+      console.error(`❌ Error loading postseason games for ${season}:`, error);
+      return [];
+    }
+  },
 };
