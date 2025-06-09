@@ -247,7 +247,7 @@ function App() {
   return (
     <div className="App">
       <Header />
-      <main className="pt-24">
+      <main className="pt-16">
         {renderPage()}
       </main>
       <Footer />
