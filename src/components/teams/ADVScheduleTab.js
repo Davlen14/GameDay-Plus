@@ -936,7 +936,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
   }
 
   return (
-    <div className="relative w-full max-w-none" style={{ width: '97vw', margin: '0 auto' }}>
+    <div className="w-full">
       {/* Confetti Overlay */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
@@ -957,7 +957,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
         </div>
       )}
 
-      <div className="space-y-8 px-6">
+      <div className="space-y-8 pl-2 pr-4">
         {/* Header */}
         <ModernSectionHeader 
           title="2024-25 Season Schedule"
@@ -971,7 +971,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
         {/* Schedule Tab Selection */}
         <ScheduleTabSelector />
 
-        {/* Tab Content with Enhanced Spacing for 97% Width */}
+        {/* Tab Content with Better Left Alignment */}
         <div className="space-y-6">
           {selectedScheduleTab === 0 && (
             <div>
@@ -1051,10 +1051,10 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
 
           {selectedScheduleTab === 2 && (
             <div className="space-y-8">
-              {/* Wide Grid Layout for Better Screen Utilization - 97% Width */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+              {/* Better Grid Layout with Proper Left Alignment */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {/* Schedule Breakdown */}
-                <div className="p-8 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
+                <div className="p-6 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="text-lg font-bold bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
                       <i className="fas fa-chart-bar"></i>
@@ -1094,7 +1094,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
                 </div>
 
                 {/* Performance Stats */}
-                <div className="p-8 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
+                <div className="p-6 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="text-lg font-bold bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
                       <i className="fas fa-chart-line"></i>
@@ -1137,7 +1137,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
                 </div>
 
                 {/* Special Games & Postseason */}
-                <div className="p-8 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
+                <div className="p-6 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="text-lg font-bold bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
                       <i className="fas fa-crown"></i>
@@ -1177,8 +1177,8 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
                 </div>
               </div>
 
-              {/* Enhanced Season Summary - Full Width Utilization */}
-              <div className="p-8 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
+              {/* Enhanced Season Summary - Better Left Aligned */}
+              <div className="p-6 bg-gradient-to-br from-white to-blue-50 rounded-xl border shadow-xl" style={{ borderColor: `rgba(${teamColorRgb}, 0.2)` }}>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="text-lg font-bold bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
                     <i className="fas fa-analytics"></i>
@@ -1188,7 +1188,7 @@ const ADVScheduleTab = ({ team, primaryTeamColor }) => {
                   </h4>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {[
                     { title: "Win Percentage", value: completedGames.length > 0 ? `${Math.round((completedGames.filter(game => {
                       const isHome = game.homeTeam?.toLowerCase() === team.school.toLowerCase();
