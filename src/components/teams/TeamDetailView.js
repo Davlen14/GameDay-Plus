@@ -215,17 +215,6 @@ const TeamDetailView = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Fixed Back Button */}
-      <div className="fixed top-9 left-5 z-50">
-        <button
-          onClick={() => window.location.hash = 'teams'}
-          className="flex items-center gap-2 text-white px-4 py-2.5 bg-black/20 hover:bg-black/30 rounded-lg transition-all duration-300 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-xl"
-        >
-          <i className="fas fa-chevron-left text-sm font-semibold"></i>
-          <span className="font-medium text-sm tracking-wide" style={{ fontFamily: 'Orbitron, sans-serif' }}>Back</span>
-        </button>
-      </div>
-
       {/* HD Galaxy Header - Enhanced Crisp Version */}
       <div 
         className="relative overflow-hidden"
@@ -241,6 +230,17 @@ const TeamDetailView = () => {
           filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
         }}
       >
+        {/* Back Button - Positioned inside galaxy header */}
+        <div className="absolute top-8 left-5 z-50">
+          <button
+            onClick={() => window.location.hash = 'teams'}
+            className="flex items-center gap-2 text-white px-4 py-2.5 bg-black/20 hover:bg-black/30 rounded-lg transition-all duration-300 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-xl"
+          >
+            <i className="fas fa-chevron-left text-sm font-semibold"></i>
+            <span className="font-medium text-sm tracking-wide" style={{ fontFamily: 'Orbitron, sans-serif' }}>Back</span>
+          </button>
+        </div>
+
         {/* HD Galaxy Texture Overlay */}
         <div className="absolute inset-0">
           {/* Enhanced First Galaxy Core */}
@@ -449,7 +449,7 @@ const TeamDetailView = () => {
 
         {/* Header Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 pt-6">
-          {/* Team Logo with Premium Effects */}
+          {/* Team Logo with Premium Effects - BIGGER SIZE */}
           <div 
             className="mb-5 metallic-3d-logo-container"
             style={{
@@ -462,7 +462,7 @@ const TeamDetailView = () => {
               <img
                 src={secureTeamLogo}
                 alt={team.school}
-                className="w-44 h-44 metallic-3d-logo-enhanced"
+                className="w-56 h-56 metallic-3d-logo-enhanced"
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextElementSibling.style.display = 'flex';
@@ -470,10 +470,10 @@ const TeamDetailView = () => {
               />
             ) : null}
             <div 
-              className="w-44 h-44 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30"
+              className="w-56 h-56 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30"
               style={{ display: secureTeamLogo ? 'none' : 'flex' }}
             >
-              <i className="fas fa-university text-white text-6xl filter drop-shadow-lg"></i>
+              <i className="fas fa-university text-white text-7xl filter drop-shadow-lg"></i>
             </div>
           </div>
 
@@ -490,19 +490,33 @@ const TeamDetailView = () => {
               {team.school.toUpperCase()}
             </h1>
             
-            <div className="flex items-center justify-center gap-4 text-white/95">
+            <div className="flex items-center justify-center gap-4">
               {team.mascot && (
-                <span className="text-sm font-medium" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+                <span 
+                  className="text-sm font-bold" 
+                  style={{ 
+                    fontFamily: 'Orbitron, sans-serif', 
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    color: secondaryColor
+                  }}
+                >
                   {team.mascot}
                 </span>
               )}
               
               {team.mascot && team.conference && (
-                <span className="text-white/80">•</span>
+                <span style={{ color: secondaryColor }}>•</span>
               )}
               
               {team.conference && (
-                <span className="text-sm font-medium" style={{ fontFamily: 'Orbitron, sans-serif', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+                <span 
+                  className="text-sm font-bold" 
+                  style={{ 
+                    fontFamily: 'Orbitron, sans-serif', 
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    color: secondaryColor
+                  }}
+                >
                   {team.conference}
                 </span>
               )}
