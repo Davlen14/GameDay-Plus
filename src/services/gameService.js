@@ -258,22 +258,88 @@ export const gameService = {
       console.log(`🏆 Loading postseason games for ${season} (week=1, seasonType=postseason)...`);
       
       // Method 1: Use getGamesByWeek with week=1 and seasonType=postseason
-      let postseasonGames = await this.getGamesByWeek(season, 1, 'postseason', useGraphQL);
-      
-      if (!postseasonGames || postseasonGames.length === 0) {
-        // Method 2: Use general getGames with week=1 and seasonType=postseason
-        console.log(`🔄 Fallback: using getGames with week=1 and seasonType=postseason...`);
-        postseasonGames = await this.getGames(season, 1, 'postseason', null, null, null, null, 'fbs', null, useGraphQL);
+      try {
+        let postseasonGames = await gameService.getGamesByWeek(season, 1, 'postseason', useGraphQL);
+        if (postseasonGames && postseasonGames.length > 0) {
+          console.log(`✅ Method 1 success: Found ${postseasonGames.length} postseason games using getGamesByWeek`);
+          return postseasonGames;
+        }
+      } catch (error) {
+        console.log(`⚠️ Method 1 failed: ${error.message}`);
       }
       
-      if (!postseasonGames || postseasonGames.length === 0) {
-        // Method 3: Load all games and filter for postseason
-        console.log(`🔄 Final fallback: loading all games and filtering...`);
-        const allGames = await this.getGames(season, null, 'both', null, null, null, null, 'fbs', null, useGraphQL);
-        postseasonGames = allGames.filter(game => 
+      // Method 2: Use general getGames with week=1 and seasonType=postseason
+      try {
+        console.log(`🔄 Method 2: using getGames with week=1 and seasonType=postseason...`);
+        let postseasonGames = await gameService.getGames(season, 1, 'postseason', null, null, null, null, 'fbs', null, useGraphQL);
+        if (postseasonGames && postseasonGames.length > 0) {
+          console.log(`✅ Method 2 success: Found ${postseasonGames.length} postseason games using getGames`);
+          return postseasonGames;
+        }
+      } catch (error) {
+        console.log(`⚠️ Method 2 failed: ${error.message}`);
+      }
+      
+      // Method 3: Try different postseason weeks (some APIs use different week numbering)
+      console.log(`🔄 Method 3: trying different postseason weeks...`);
+      for (let week = 1; week <= 5; week++) {
+        try {
+          let postseasonGames = await gameService.getGames(season, week, 'postseason', null, null, null, null, 'fbs', null, useGraphQL);
+          if (postseasonGames && postseasonGames.length > 0) {
+            console.log(`✅ Method 3 success: Found ${postseasonGames.length} postseason games for week ${week}`);
+            return postseasonGames;
+          }
+        } catch (error) {
+          console.log(`⚠️ Method 3 week ${week} failed: ${error.message}`);
+        }
+      }
+      
+      // Method 4: Load all regular season games and filter for completed games with bowl/playoff characteristics
+      try {
+        console.log(`🔄 Method 4: loading all games and filtering for postseason characteristics...`);
+        const allGames = await gameService.getGames(season, null, 'regular', null, null, null, null, 'fbs', null, useGraphQL);
+        const potentialPostseasonGames = allGames.filter(game => {
+          // Look for games that might be postseason based on notes, timing, or naming
+          const notes = (game.notes || '').toLowerCase();
+          const hasPostseasonKeywords = notes.includes('bowl') ||
+                                        notes.includes('playoff') ||
+                                        notes.includes('championship') ||
+                                        notes.includes('cfp') ||
+                                        notes.includes('national championship') ||
+                                        notes.includes('cotton bowl') ||
+                                        notes.includes('orange bowl') ||
+                                        notes.includes('sugar bowl') ||
+                                        notes.includes('rose bowl') ||
+                                        notes.includes('fiesta bowl') ||
+                                        notes.includes('peach bowl');
+          
+          // Check if game is in late December/January (typical bowl season)
+          const startDate = game.start_date || game.startDate;
+          let isInBowlSeason = false;
+          if (startDate) {
+            const gameDate = new Date(startDate);
+            const month = gameDate.getMonth() + 1; // 0-based months
+            isInBowlSeason = month === 12 || month === 1;
+          }
+          
+          return hasPostseasonKeywords || (isInBowlSeason && game.week > 15);
+        });
+        
+        if (potentialPostseasonGames && potentialPostseasonGames.length > 0) {
+          console.log(`✅ Method 4 success: Found ${potentialPostseasonGames.length} potential postseason games by filtering`);
+          return potentialPostseasonGames;
+        }
+      } catch (error) {
+        console.log(`⚠️ Method 4 failed: ${error.message}`);
+      }
+      
+      // Method 5: Try using 'both' seasonType and filter
+      try {
+        console.log(`🔄 Method 5: using 'both' seasonType and filtering...`);
+        const allGames = await gameService.getGames(season, null, 'both', null, null, null, null, 'fbs', null, useGraphQL);
+        const postseasonGames = allGames.filter(game => 
           game.season_type === 'postseason' || 
           game.seasonType === 'postseason' ||
-          (game.week === 1 && (game.season_type === 'postseason' || game.seasonType === 'postseason')) ||
           (game.notes && (
             game.notes.toLowerCase().includes('bowl') ||
             game.notes.toLowerCase().includes('playoff') ||
@@ -282,10 +348,17 @@ export const gameService = {
             game.notes.toLowerCase().includes('national championship')
           ))
         );
+        
+        if (postseasonGames && postseasonGames.length > 0) {
+          console.log(`✅ Method 5 success: Found ${postseasonGames.length} postseason games using 'both' filter`);
+          return postseasonGames;
+        }
+      } catch (error) {
+        console.log(`⚠️ Method 5 failed: ${error.message}`);
       }
       
-      console.log(`✅ Loaded ${postseasonGames?.length || 0} postseason games for ${season}`);
-      return postseasonGames || [];
+      console.log(`❌ All methods failed: No postseason games found for ${season}`);
+      return [];
       
     } catch (error) {
       console.error(`❌ Error loading postseason games for ${season}:`, error);
