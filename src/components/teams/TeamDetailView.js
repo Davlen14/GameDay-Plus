@@ -39,6 +39,15 @@ const TeamDetailView = () => {
       offsetX: Math.random() * 40 - 20,
       offsetY: Math.random() * 30 - 15,
     })),
+    crystalParticles: [...Array(20)].map((_, i) => ({
+      id: `crystal-${i}`,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      size: Math.random() * 8 + 4,
+      delay: i * 0.15,
+      duration: Math.random() * 6 + 3,
+      brightness: Math.random() * 0.8 + 0.4,
+    })),
   }), []);
 
   const tabs = [
@@ -210,126 +219,173 @@ const TeamDetailView = () => {
       <div className="fixed top-9 left-5 z-50">
         <button
           onClick={() => window.location.hash = 'teams'}
-          className="flex items-center gap-2 text-white px-4 py-2.5 hover:bg-white/10 rounded-lg transition-all duration-300"
+          className="flex items-center gap-2 text-white px-4 py-2.5 bg-black/20 hover:bg-black/30 rounded-lg transition-all duration-300 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-xl"
         >
           <i className="fas fa-chevron-left text-sm font-semibold"></i>
-          <span className="font-medium text-sm tracking-wide">Back</span>
+          <span className="font-medium text-sm tracking-wide" style={{ fontFamily: 'Orbitron, sans-serif' }}>Back</span>
         </button>
       </div>
 
-      {/* Galaxy Header - Exact SwiftUI Mirror */}
+      {/* HD Galaxy Header - Enhanced Crisp Version */}
       <div 
         className="relative overflow-hidden"
         style={{ 
           height: '415px',
           background: `linear-gradient(135deg, 
-            rgba(${teamColorRgb}, 0.9) 0%, 
-            rgba(${teamColorRgb}, 1) 25%, 
-            rgba(${teamColorRgb}, 0.8) 50%, 
-            rgba(${teamColorRgb}, 1) 75%, 
-            rgba(${teamColorRgb}, 0.9) 100%)`
+            rgba(${teamColorRgb}, 0.95) 0%, 
+            rgba(${teamColorRgb}, 1) 20%, 
+            rgba(${teamColorRgb}, 0.85) 40%, 
+            rgba(${teamColorRgb}, 1) 60%, 
+            rgba(${teamColorRgb}, 0.9) 80%, 
+            rgba(${teamColorRgb}, 0.95) 100%)`,
+          filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
         }}
       >
-        {/* Galaxy Texture Overlay */}
+        {/* HD Galaxy Texture Overlay */}
         <div className="absolute inset-0">
-          {/* First Galaxy Core */}
+          {/* Enhanced First Galaxy Core */}
           <div 
             className="absolute inset-0"
             style={{
-              background: `radial-gradient(circle at 30% 30%, 
-                rgba(${teamColorRgb}, 0.3) 0%, 
-                transparent 20%, 
-                rgba(${teamColorRgb}, 0.2) 40%, 
-                transparent 60%, 
-                rgba(${teamColorRgb}, 0.4) 80%, 
+              background: `radial-gradient(ellipse 150px 100px at 30% 30%, 
+                rgba(${teamColorRgb}, 0.4) 0%, 
+                rgba(${teamColorRgb}, 0.1) 15%,
+                transparent 25%, 
+                rgba(${teamColorRgb}, 0.25) 45%, 
+                transparent 65%, 
+                rgba(${teamColorRgb}, 0.5) 85%, 
                 transparent 100%)`,
               transform: animateGalaxy ? 'scale(1.1) rotate(360deg)' : 'scale(0.9) rotate(0deg)',
               transition: 'transform 20s linear infinite',
+              filter: 'blur(0.5px) brightness(1.2)',
             }}
           />
           
-          {/* Second Galaxy Core */}
+          {/* Enhanced Second Galaxy Core */}
           <div 
             className="absolute inset-0"
             style={{
-              background: `radial-gradient(circle at 70% 70%, 
+              background: `radial-gradient(ellipse 120px 80px at 70% 70%, 
                 transparent 0%, 
-                rgba(${teamColorRgb}, 0.1) 30%, 
-                transparent 50%, 
-                rgba(${teamColorRgb}, 0.3) 70%, 
+                rgba(${teamColorRgb}, 0.15) 20%,
+                transparent 35%, 
+                rgba(${teamColorRgb}, 0.35) 55%, 
+                transparent 75%,
+                rgba(${teamColorRgb}, 0.2) 90%,
                 transparent 100%)`,
               transform: animateGalaxy ? 'scale(0.8) rotate(-180deg)' : 'scale(1.2) rotate(180deg)',
               transition: 'transform 15s linear infinite',
+              filter: 'blur(0.3px) brightness(1.15)',
             }}
           />
 
-          {/* Enhanced Star Field - Main Stars */}
+          {/* HD Crystal Star Field - Main Stars */}
           {galaxyElements.mainStars.map((star) => (
             <div
               key={star.id}
-              className="absolute bg-white rounded-full opacity-30"
+              className="absolute rounded-full"
               style={{
                 left: `${star.left}%`,
                 top: `${star.top}%`,
                 width: `${star.size}px`,
                 height: `${star.size}px`,
+                background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 40%, transparent 100%)',
                 transform: animateGalaxy ? `scale(${star.scale * 1.8})` : `scale(${star.scale * 1.2})`,
                 transition: `transform ${star.duration}s ease-in-out infinite`,
                 transitionDelay: `${star.delay}s`,
                 animationDirection: 'alternate',
+                filter: 'brightness(1.4) contrast(1.2)',
+                boxShadow: '0 0 6px rgba(255,255,255,0.8), 0 0 12px rgba(255,255,255,0.4)',
               }}
             />
           ))}
 
-          {/* Twinkling Stars Layer */}
+          {/* HD Twinkling Stars Layer */}
           {galaxyElements.twinkleStars.map((star) => (
             <div
               key={star.id}
-              className="absolute bg-white rounded-full"
+              className="absolute rounded-full"
               style={{
                 left: `${star.left}%`,
                 top: `${star.top}%`,
                 width: `${star.size}px`,
                 height: `${star.size}px`,
+                background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 30%, transparent 100%)',
                 opacity: animateGalaxy ? star.opacity : star.opacity * 0.6,
                 transition: `opacity ${star.duration}s ease-in-out infinite`,
                 transitionDelay: `${star.delay}s`,
                 animationDirection: 'alternate',
+                filter: 'brightness(1.6) saturate(1.1)',
+                boxShadow: '0 0 4px rgba(255,255,255,0.9), 0 0 8px rgba(255,255,255,0.5)',
               }}
             />
           ))}
 
-          {/* Nebula Swirls */}
+          {/* HD Crystal Particles */}
+          {galaxyElements.crystalParticles.map((crystal) => (
+            <div
+              key={crystal.id}
+              className="absolute rounded-full"
+              style={{
+                left: `${crystal.left}%`,
+                top: `${crystal.top}%`,
+                width: `${crystal.size}px`,
+                height: `${crystal.size}px`,
+                background: `radial-gradient(circle, 
+                  rgba(255, 255, 255, ${crystal.brightness}) 0%, 
+                  rgba(${teamColorRgb}, 0.4) 30%,
+                  rgba(255, 255, 255, 0.3) 60%, 
+                  transparent 100%)`,
+                transform: animateGalaxy 
+                  ? `scale(${Math.random() * 0.8 + 0.6}) rotate(${Math.random() * 360}deg)` 
+                  : `scale(${Math.random() * 0.5 + 0.3}) rotate(0deg)`,
+                transition: `transform ${crystal.duration}s ease-in-out infinite`,
+                transitionDelay: `${crystal.delay}s`,
+                animationDirection: 'alternate',
+                filter: 'brightness(1.3) contrast(1.1) saturate(1.2)',
+                boxShadow: `0 0 8px rgba(${teamColorRgb}, 0.6), 0 0 16px rgba(255,255,255,0.3)`,
+              }}
+            />
+          ))}
+
+          {/* HD Nebula Swirls */}
           <div 
             className="absolute inset-0"
             style={{
-              background: `elliptical-gradient(ellipse at 20% 80%, 
-                rgba(${teamColorRgb}, 0.15) 0%, 
-                transparent 20%, 
-                rgba(${teamColorRgb}, 0.08) 40%, 
-                transparent 100%)`,
-              transform: animateGalaxy ? 'rotate(90deg)' : 'rotate(-90deg)',
+              background: `conic-gradient(from 0deg at 20% 80%, 
+                rgba(${teamColorRgb}, 0.18) 0deg,
+                transparent 60deg, 
+                rgba(${teamColorRgb}, 0.12) 120deg, 
+                transparent 180deg,
+                rgba(${teamColorRgb}, 0.08) 240deg,
+                transparent 300deg,
+                rgba(${teamColorRgb}, 0.15) 360deg)`,
+              transform: animateGalaxy ? 'rotate(90deg) scale(1.1)' : 'rotate(-90deg) scale(0.9)',
               transition: 'transform 25s ease-in-out infinite',
               animationDirection: 'alternate',
+              filter: 'blur(1px) brightness(1.1)',
             }}
           />
           
           <div 
             className="absolute inset-0"
             style={{
-              background: `elliptical-gradient(ellipse at 80% 20%, 
-                transparent 0%, 
-                rgba(${teamColorRgb}, 0.12) 20%, 
-                transparent 40%, 
-                rgba(${teamColorRgb}, 0.06) 60%, 
-                transparent 100%)`,
-              transform: animateGalaxy ? 'rotate(-120deg)' : 'rotate(120deg)',
+              background: `conic-gradient(from 180deg at 80% 20%, 
+                transparent 0deg,
+                rgba(${teamColorRgb}, 0.15) 60deg, 
+                transparent 120deg, 
+                rgba(${teamColorRgb}, 0.08) 180deg,
+                transparent 240deg,
+                rgba(${teamColorRgb}, 0.12) 300deg,
+                transparent 360deg)`,
+              transform: animateGalaxy ? 'rotate(-120deg) scale(0.9)' : 'rotate(120deg) scale(1.1)',
               transition: 'transform 30s ease-in-out infinite',
               animationDirection: 'alternate',
+              filter: 'blur(0.8px) brightness(1.05)',
             }}
           />
 
-          {/* Floating Light Particles */}
+          {/* HD Floating Light Particles */}
           {galaxyElements.lightParticles.map((particle) => (
             <div
               key={particle.id}
@@ -340,8 +396,9 @@ const TeamDetailView = () => {
                 width: `${particle.size}px`,
                 height: `${particle.size}px`,
                 background: `radial-gradient(circle, 
-                  rgba(255, 255, 255, 0.6) 0%, 
-                  rgba(255, 255, 255, 0.2) 50%, 
+                  rgba(255, 255, 255, 0.8) 0%, 
+                  rgba(${teamColorRgb}, 0.4) 30%,
+                  rgba(255, 255, 255, 0.3) 60%, 
                   transparent 100%)`,
                 transform: animateGalaxy 
                   ? `translate(${particle.offsetX}px, ${particle.offsetY}px) scale(${Math.random() * 0.6 + 0.8})` 
@@ -349,21 +406,42 @@ const TeamDetailView = () => {
                 transition: `transform ${particle.duration}s ease-in-out infinite`,
                 transitionDelay: `${particle.delay}s`,
                 animationDirection: 'alternate',
+                filter: 'brightness(1.4) contrast(1.2)',
+                boxShadow: `0 0 12px rgba(${teamColorRgb}, 0.5), 0 0 24px rgba(255,255,255,0.3)`,
               }}
             />
           ))}
 
-          {/* Color Waves */}
+          {/* HD Color Waves */}
           <div 
             className="absolute inset-0"
             style={{
               background: `linear-gradient(${animateGalaxy ? '45deg' : '225deg'}, 
-                rgba(${teamColorRgb}, 0.05) 0%, 
-                transparent 25%, 
-                rgba(${teamColorRgb}, 0.08) 50%, 
-                transparent 75%, 
-                rgba(${teamColorRgb}, 0.03) 100%)`,
+                rgba(${teamColorRgb}, 0.08) 0%, 
+                transparent 20%, 
+                rgba(${teamColorRgb}, 0.12) 40%, 
+                transparent 60%, 
+                rgba(${teamColorRgb}, 0.06) 80%,
+                transparent 100%)`,
               transition: 'background 12s ease-in-out infinite',
+              animationDirection: 'alternate',
+              filter: 'blur(0.5px) brightness(1.1)',
+            }}
+          />
+
+          {/* HD Shimmer Overlay */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(45deg, 
+                transparent 0%, 
+                rgba(255,255,255,0.1) 20%,
+                transparent 40%, 
+                rgba(255,255,255,0.05) 60%,
+                transparent 80%,
+                rgba(255,255,255,0.08) 100%)`,
+              transform: animateGalaxy ? 'translateX(100%)' : 'translateX(-100%)',
+              transition: 'transform 8s ease-in-out infinite',
               animationDirection: 'alternate',
             }}
           />
@@ -392,10 +470,10 @@ const TeamDetailView = () => {
               />
             ) : null}
             <div 
-              className="w-44 h-44 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm"
+              className="w-44 h-44 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30"
               style={{ display: secureTeamLogo ? 'none' : 'flex' }}
             >
-              <i className="fas fa-university text-white text-6xl"></i>
+              <i className="fas fa-university text-white text-6xl filter drop-shadow-lg"></i>
             </div>
           </div>
 
@@ -432,34 +510,58 @@ const TeamDetailView = () => {
           </div>
         </div>
 
-        {/* Team Color Shadow */}
+        {/* Enhanced Team Color Shadow */}
         <div 
-          className="absolute bottom-0 left-0 right-0 h-4"
+          className="absolute bottom-0 left-0 right-0 h-6"
           style={{
-            background: `linear-gradient(90deg, transparent 0%, rgba(${teamColorRgb}, 0.4) 50%, transparent 100%)`,
-            filter: 'blur(8px)',
+            background: `linear-gradient(90deg, 
+              transparent 0%, 
+              rgba(${teamColorRgb}, 0.2) 20%,
+              rgba(${teamColorRgb}, 0.6) 50%, 
+              rgba(${teamColorRgb}, 0.2) 80%,
+              transparent 100%)`,
+            filter: 'blur(8px) brightness(1.2)',
           }}
         />
       </div>
 
-      {/* Modern Tab Selection - Exact SwiftUI Mirror */}
-      <div className="bg-white sticky top-0 z-40 border-b border-gray-200">
+      {/* HD Shiny Tab Selection - Centered */}
+      <div className="bg-white sticky top-0 z-40 border-b border-gray-200 shadow-lg backdrop-blur-sm">
         <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-2 px-2 py-1">
+          <div className="flex justify-center items-center gap-2 px-4 py-3 min-w-max mx-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-shrink-0 px-4 py-3 text-xs font-bold rounded transition-all duration-300 ${
+                className={`flex-shrink-0 px-4 py-3 text-xs font-bold rounded transition-all duration-300 transform hover:scale-105 ${
                   activeTab === tab.id
-                    ? 'text-white shadow-md'
-                    : 'text-gray-600 bg-gray-100 border border-gray-200 hover:bg-gray-200'
+                    ? 'text-white shadow-lg'
+                    : 'text-gray-600 hover:text-gray-800'
                 }`}
                 style={activeTab === tab.id ? {
-                  backgroundColor: primaryColor,
-                  boxShadow: `0 2px 4px rgba(${teamColorRgb}, 0.4)`,
+                  background: `linear-gradient(135deg, 
+                    ${primaryColor} 0%, 
+                    rgba(${teamColorRgb}, 0.9) 50%, 
+                    ${primaryColor} 100%)`,
+                  boxShadow: `
+                    0 4px 12px rgba(${teamColorRgb}, 0.4),
+                    0 2px 6px rgba(${teamColorRgb}, 0.3),
+                    inset 0 1px 0 rgba(255,255,255,0.3),
+                    inset 0 -1px 0 rgba(0,0,0,0.1)
+                  `,
                   fontFamily: 'Orbitron, sans-serif',
+                  filter: 'brightness(1.05) contrast(1.1)',
                 } : {
+                  background: `linear-gradient(135deg, 
+                    rgba(243,244,246,1) 0%, 
+                    rgba(249,250,251,1) 50%, 
+                    rgba(243,244,246,1) 100%)`,
+                  border: '1px solid rgba(209,213,219,0.5)',
+                  boxShadow: `
+                    0 2px 4px rgba(0,0,0,0.05),
+                    inset 0 1px 0 rgba(255,255,255,0.8),
+                    inset 0 -1px 0 rgba(0,0,0,0.05)
+                  `,
                   fontFamily: 'Orbitron, sans-serif',
                 }}
               >
@@ -471,15 +573,18 @@ const TeamDetailView = () => {
       </div>
 
       {/* Content Area */}
-      <div className="px-2 py-6">
+      <div className="px-4 py-8 max-w-6xl mx-auto">
         <div className="text-center py-20">
           <div className="mb-8">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-              style={{ backgroundColor: `rgba(${teamColorRgb}, 0.1)` }}
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
+              style={{ 
+                background: `linear-gradient(135deg, rgba(${teamColorRgb}, 0.15) 0%, rgba(${teamColorRgb}, 0.05) 100%)`,
+                border: `2px solid rgba(${teamColorRgb}, 0.2)`
+              }}
             >
               <i 
-                className="fas fa-hammer text-3xl font-bold"
+                className="fas fa-hammer text-3xl font-bold filter drop-shadow-sm"
                 style={{ color: primaryColor }}
               ></i>
             </div>
@@ -488,7 +593,8 @@ const TeamDetailView = () => {
               className="text-xl font-black mb-3"
               style={{ 
                 fontFamily: 'Orbitron, sans-serif',
-                color: primaryColor
+                color: primaryColor,
+                textShadow: '0 1px 2px rgba(0,0,0,0.1)'
               }}
             >
               COMING SOON
