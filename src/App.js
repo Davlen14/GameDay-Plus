@@ -69,6 +69,7 @@ import Schedule from './components/games/Schedule';
 import Schedule2024Recap from './components/games/Schedule2024Recap';
 import GamePredictor from './components/games/GamePredictor';
 import LiveGames from './components/games/LiveGames';
+import GameDetailView from './components/games/GameDetailView';
 
 // Testing Component
 import APITester from './components/APITester';
@@ -233,6 +234,8 @@ function App() {
         return <GamePredictor />;
       case 'live-games':
         return <LiveGames />;
+      case 'game-detail':
+        return <GameDetailView />;
       
       // Testing route
       case 'api-tester':
