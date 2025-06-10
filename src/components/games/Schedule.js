@@ -5,8 +5,8 @@ import { gameService, teamService, rankingsService } from '../../services';
 const ExcitementStars = ({ excitementIndex = 0 }) => {
   const stars = Math.min(Math.max(Math.round(excitementIndex / 2), 0), 5);
   const getStarColor = () => {
-    if (excitementIndex >= 8) return 'text-red-500';
-    if (excitementIndex >= 6) return 'text-orange-500';
+    if (excitementIndex >= 8) return 'text-yellow-400';
+    if (excitementIndex >= 6) return 'text-yellow-400';
     if (excitementIndex >= 4) return 'text-yellow-500';
     return 'text-gray-400';
   };
@@ -16,10 +16,13 @@ const ExcitementStars = ({ excitementIndex = 0 }) => {
       {[...Array(5)].map((_, i) => (
         <i 
           key={i} 
-          className={`fas fa-star text-xs ${i < stars ? getStarColor() : 'text-gray-300'} drop-shadow-sm`} 
+          className={`fas fa-star text-sm ${i < stars ? getStarColor() : 'text-gray-300'} drop-shadow-lg filter`}
+          style={i < stars && excitementIndex >= 4 ? { 
+            filter: 'drop-shadow(0 0 4px rgba(234, 179, 8, 0.6))' 
+          } : {}}
         />
       ))}
-      <span className="text-xs font-bold text-gray-600 ml-1">
+      <span className="text-xs font-bold text-gray-700 ml-2">
         {excitementIndex ? excitementIndex.toFixed(1) : 'N/A'}
       </span>
     </div>
@@ -33,37 +36,52 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
   const awayPct = awayProb ? Math.round(awayProb * 100) : 50;
   
   return (
-    <div className="bg-white/30 backdrop-blur-sm rounded-lg border border-white/40 p-3">
-      <div className="text-xs font-bold text-gray-600 mb-2 text-center">Win Probability</div>
-      <div className="flex items-center space-x-2">
-        {/* Away Team */}
-        <div className="flex items-center space-x-1 flex-1">
-          <img 
-            src={getTeamLogo(awayTeamId)} 
-            alt={awayTeam}
-            className="w-4 h-4 object-contain"
-            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-          />
-          <span className="text-xs font-bold text-gray-700">{awayPct}%</span>
+    <div className="bg-white/40 backdrop-blur-xl rounded-2xl border border-white/50 p-4 shadow-[0_8px_25px_rgba(0,0,0,0.1)]">
+      {/* Glass highlight */}
+      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+      
+      <div className="relative z-10">
+        <div className="text-xs font-bold text-gray-700 mb-3 text-center flex items-center justify-center space-x-2">
+          <i className="fas fa-chart-line" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
+          <span>Win Probability</span>
         </div>
-        
-        {/* Probability Bar */}
-        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-blue-500 to-red-500 rounded-full transition-all duration-500"
-            style={{ width: `${awayPct}%` }}
-          />
-        </div>
-        
-        {/* Home Team */}
-        <div className="flex items-center space-x-1 flex-1 justify-end">
-          <span className="text-xs font-bold text-gray-700">{homePct}%</span>
-          <img 
-            src={getTeamLogo(homeTeamId)} 
-            alt={homeTeam}
-            className="w-4 h-4 object-contain"
-            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-          />
+        <div className="flex items-center space-x-3">
+          {/* Away Team */}
+          <div className="flex items-center space-x-2 flex-1">
+            <div className="w-6 h-6 rounded-full bg-white/40 backdrop-blur-sm border border-white/50 flex items-center justify-center overflow-hidden">
+              <img 
+                src={getTeamLogo(awayTeamId)} 
+                alt={awayTeam}
+                className="w-4 h-4 object-contain"
+                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+              />
+            </div>
+            <span className="text-sm font-bold text-gray-800">{awayPct}%</span>
+          </div>
+          
+          {/* Enhanced Probability Bar */}
+          <div className="flex-1 h-3 bg-gray-200/50 rounded-full overflow-hidden shadow-inner">
+            <div 
+              className="h-full rounded-full transition-all duration-700 ease-out shadow-lg"
+              style={{ 
+                width: `${awayPct}%`,
+                background: `linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)`
+              }}
+            />
+          </div>
+          
+          {/* Home Team */}
+          <div className="flex items-center space-x-2 flex-1 justify-end">
+            <span className="text-sm font-bold text-gray-800">{homePct}%</span>
+            <div className="w-6 h-6 rounded-full bg-white/40 backdrop-blur-sm border border-white/50 flex items-center justify-center overflow-hidden">
+              <img 
+                src={getTeamLogo(homeTeamId)} 
+                alt={homeTeam}
+                className="w-4 h-4 object-contain"
+                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -71,22 +89,82 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
 };
 
 const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  
   if (!preGameElo) return null;
   
   const eloChange = postGameElo && isCompleted ? postGameElo - preGameElo : 0;
   const eloLevel = preGameElo >= 2000 ? 'Elite' : preGameElo >= 1800 ? 'Strong' : preGameElo >= 1600 ? 'Good' : 'Developing';
   
   return (
-    <div className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-xs">
-      <div className="flex items-center space-x-1">
-        <span className="font-bold text-gray-700">{preGameElo}</span>
-        <span className="text-gray-500">({eloLevel})</span>
-        {isCompleted && eloChange !== 0 && (
-          <span className={`font-bold ${eloChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {eloChange > 0 ? '+' : ''}{eloChange}
-          </span>
-        )}
+    <div className="relative">
+      <div 
+        className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-xs cursor-help hover:bg-white/30 transition-all duration-200"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        <div className="flex items-center space-x-1">
+          <i className="fas fa-chart-line text-blue-500 mr-1" />
+          <span className="font-bold text-gray-700">{preGameElo}</span>
+          <span className="text-gray-500">({eloLevel})</span>
+          {isCompleted && eloChange !== 0 && (
+            <span className={`font-bold ${eloChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {eloChange > 0 ? '+' : ''}{eloChange}
+            </span>
+          )}
+        </div>
       </div>
+      
+      {/* ELO Explanation Tooltip */}
+      {showTooltip && (
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-[10000] w-72">
+          <div className="bg-white/95 backdrop-blur-xl border border-white/50 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] p-4">
+            {/* Glass highlight */}
+            <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center space-x-2 mb-2">
+                <i className="fas fa-info-circle text-blue-500" />
+                <h4 className="font-bold text-gray-800">ELO Rating System</h4>
+              </div>
+              
+              <p className="text-sm text-gray-700 mb-3">
+                ELO is a rating system that measures team strength based on game results and opponent quality. 
+                Teams gain/lose points based on wins/losses and the strength of their opponents.
+              </p>
+              
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Elite:</span>
+                  <span className="font-bold text-green-600">2000+</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Strong:</span>
+                  <span className="font-bold text-blue-600">1800-1999</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Good:</span>
+                  <span className="font-bold text-yellow-600">1600-1799</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Developing:</span>
+                  <span className="font-bold text-gray-600">Below 1600</span>
+                </div>
+              </div>
+              
+              <div className="mt-3 pt-2 border-t border-gray-200">
+                <p className="text-xs text-gray-600">
+                  <i className="fas fa-lightbulb text-yellow-500 mr-1" />
+                  Higher ratings indicate stronger teams. Changes show performance impact.
+                </p>
+              </div>
+            </div>
+            
+            {/* Tooltip arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white/95 border-r border-b border-white/50 rotate-45"></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -114,11 +192,19 @@ const WeatherIcon = ({ condition, temperature }) => {
     return 'text-gray-500';
   };
 
+  const getWeatherGlow = () => {
+    if (!condition) return '';
+    const cond = condition.toLowerCase();
+    if (cond.includes('clear') || cond.includes('sunny')) return 'drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]';
+    if (cond.includes('rain') || cond.includes('storm')) return 'drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]';
+    return 'drop-shadow-lg';
+  };
+
   return (
-    <div className="flex items-center space-x-1">
-      <i className={`${getWeatherIcon()} ${getWeatherColor()}`} />
+    <div className="flex items-center space-x-2">
+      <i className={`${getWeatherIcon()} ${getWeatherColor()} text-lg ${getWeatherGlow()}`} />
       {temperature && (
-        <span className="text-xs font-medium text-gray-700">
+        <span className="text-sm font-bold text-gray-800">
           {Math.round(temperature)}°F
         </span>
       )}
@@ -143,7 +229,7 @@ const MediaIcon = ({ outlet, mediaType }) => {
   };
 
   const getNetworkColor = () => {
-    if (!outlet) return 'text-gray-500';
+    if (!outlet) return 'text-gray-600';
     const network = outlet.toLowerCase();
     if (network.includes('espn')) return 'text-red-600';
     if (network.includes('fox')) return 'text-blue-600';
@@ -151,10 +237,18 @@ const MediaIcon = ({ outlet, mediaType }) => {
     if (network.includes('nbc')) return 'text-purple-600';
     if (network.includes('peacock')) return 'text-blue-500';
     if (mediaType === 'web') return 'text-purple-500';
-    return 'text-gray-600';
+    return 'text-gray-700';
   };
 
-  return <i className={`${getNetworkIcon()} ${getNetworkColor()}`} />;
+  const getNetworkGlow = () => {
+    if (!outlet) return 'drop-shadow-lg';
+    const network = outlet.toLowerCase();
+    if (network.includes('espn')) return 'drop-shadow-[0_0_8px_rgba(220,38,38,0.6)]';
+    if (network.includes('nbc') || network.includes('peacock')) return 'drop-shadow-[0_0_8px_rgba(147,51,234,0.6)]';
+    return 'drop-shadow-lg';
+  };
+
+  return <i className={`${getNetworkIcon()} ${getNetworkColor()} text-lg ${getNetworkGlow()}`} />;
 };
 
 const Schedule = () => {
@@ -788,11 +882,11 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const mediaData = gameMedia.get(game.id);
   const weatherData = gameWeather.get(game.id);
 
-  // Extract real weather data
-  const temperature = game.temperature;
-  const weatherCondition = game.weather_condition || game.weatherCondition;
-  const windSpeed = game.wind_speed || game.windSpeed;
-  const gameIndoors = game.game_indoors || game.gameIndoors;
+  // Extract real weather data - check multiple sources
+  const temperature = weatherData?.temperature || game.temperature;
+  const weatherCondition = weatherData?.condition || weatherData?.weather_condition || game.weather_condition || game.weatherCondition;
+  const windSpeed = weatherData?.wind_speed || game.wind_speed || game.windSpeed;
+  const gameIndoors = weatherData?.indoors || game.game_indoors || game.gameIndoors;
 
   // Extract real media data
   const tvOutlet = mediaData?.outlet || game.tv_outlet;
@@ -813,121 +907,123 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
 
   return (
     <div 
-      className={`group relative overflow-hidden transition-all duration-300 ${
+      className={`group relative overflow-hidden transition-all duration-500 ${
         isAnyDropdownOpen 
           ? 'cursor-not-allowed opacity-75 pointer-events-none' 
-          : 'cursor-pointer hover:scale-[1.02]'
+          : 'cursor-pointer hover:scale-[1.01] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]'
       }`}
       onClick={handleCardClick}
+      style={{
+        animationDelay: `${index * 100}ms`
+      }}
     >
-      {/* Liquid Glass Container */}
-      <div className={`relative bg-white/60 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_15px_rgba(255,255,255,0.4),0_25px_50px_rgba(0,0,0,0.1)] p-6 transition-all duration-500 ${
-        isAnyDropdownOpen 
-          ? '' 
-          : 'hover:scale-[1.02] hover:shadow-[inset_0_2px_20px_rgba(255,255,255,0.5),0_35px_70px_rgba(0,0,0,0.15)] hover:bg-white/70'
-      }`}>
-        {/* Glass highlight overlay */}
-        <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/20 to-transparent pointer-events-none"></div>
+      {/* Enhanced Liquid Glass Container */}
+      <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70">
+        {/* Liquid Glass Highlight */}
+        <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
         
-        {/* Floating highlight particles */}
-        <div className="absolute top-4 right-4 w-2 h-2 rounded-full opacity-60 animate-pulse" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
-        <div className="absolute bottom-4 left-4 w-1.5 h-1.5 rounded-full opacity-40 animate-pulse animation-delay-1000" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
+        {/* Dynamic Glow Effect */}
+        <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(220,38,38,0.1) 0%, rgba(185,28,28,0.1) 50%, rgba(153,27,27,0.1) 100%)' }}></div>
         
-        {/* Main Content Layout */}
-        <div className="relative z-10 space-y-4">
+        <div className="relative z-10 space-y-6">
           
           {/* Top Row: Teams and Core Info */}
           <div className="flex items-center justify-between">
             {/* Teams Section */}
             <div className="flex items-center space-x-6 flex-1">
               {/* Away Team */}
-              <div className="flex items-center space-x-3">
-                {/* Logo Container */}
-                <div className="relative w-14 h-14 rounded-xl bg-white/30 backdrop-blur-xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
+              <div className="flex items-center space-x-4">
+                {/* Enhanced Logo Container */}
+                <div className="relative w-16 h-16 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                  <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
                   <img
                     src={getTeamLogo(awayTeamId)}
                     alt={`${awayTeam} logo`}
-                    className="w-10 h-10 object-contain relative z-10 drop-shadow-lg"
+                    className="w-12 h-12 object-contain relative z-10 drop-shadow-xl"
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
                 </div>
                 
                 <div className="min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
+                  <div className="flex items-center space-x-3 mb-2">
                     {getTeamRank(awayTeamId) && (
                       <div className="relative">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(204,0,28,0.4)]" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}>
-                          <span className="text-white text-xs font-black">{getTeamRank(awayTeamId)}</span>
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(220,38,38,0.4)] group-hover:shadow-[0_6px_25px_rgba(220,38,38,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}>
+                          <span className="text-white text-sm font-black">{getTeamRank(awayTeamId)}</span>
                         </div>
                       </div>
                     )}
-                    <span className="font-black text-gray-900 text-base truncate drop-shadow-sm">
+                    <span className="font-black text-gray-900 text-lg truncate drop-shadow-sm">
                       {getTeamAbbreviation(awayTeamId, awayTeam)}
                     </span>
                   </div>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-2xl font-black drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    <div className="text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       {awayPoints}
                     </div>
                   )}
                   {/* Away Team ELO */}
                   {awayPreElo && (
-                    <EloRatingDisplay 
-                      preGameElo={awayPreElo} 
-                      postGameElo={awayPostElo}
-                      teamName={awayTeam}
-                      isCompleted={isCompleted}
-                    />
+                    <div className="mt-2">
+                      <EloRatingDisplay 
+                        preGameElo={awayPreElo} 
+                        postGameElo={awayPostElo}
+                        teamName={awayTeam}
+                        isCompleted={isCompleted}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* VS Separator */}
               <div className="flex items-center justify-center">
-                <div className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] flex items-center justify-center">
-                  <span className="text-gray-500 font-black text-sm">@</span>
+                <div className="w-12 h-12 rounded-full bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                  <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
+                  <span className="relative z-10 text-lg font-black drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>@</span>
                 </div>
               </div>
 
               {/* Home Team */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-4">
                 <div className="min-w-0 text-right">
-                  <div className="flex items-center justify-end space-x-2 mb-1">
-                    <span className="font-black text-gray-900 text-base truncate drop-shadow-sm">
+                  <div className="flex items-center justify-end space-x-3 mb-2">
+                    <span className="font-black text-gray-900 text-lg truncate drop-shadow-sm">
                       {getTeamAbbreviation(homeTeamId, homeTeam)}
                     </span>
                     {getTeamRank(homeTeamId) && (
                       <div className="relative">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(204,0,28,0.4)]" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}>
-                          <span className="text-white text-xs font-black">{getTeamRank(homeTeamId)}</span>
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(220,38,38,0.4)] group-hover:shadow-[0_6px_25px_rgba(220,38,38,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}>
+                          <span className="text-white text-sm font-black">{getTeamRank(homeTeamId)}</span>
                         </div>
                       </div>
                     )}
                   </div>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-2xl font-black drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    <div className="text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       {homePoints}
                     </div>
                   )}
                   {/* Home Team ELO */}
                   {homePreElo && (
-                    <EloRatingDisplay 
-                      preGameElo={homePreElo} 
-                      postGameElo={homePostElo}
-                      teamName={homeTeam}
-                      isCompleted={isCompleted}
-                    />
+                    <div className="mt-2">
+                      <EloRatingDisplay 
+                        preGameElo={homePreElo} 
+                        postGameElo={homePostElo}
+                        teamName={homeTeam}
+                        isCompleted={isCompleted}
+                      />
+                    </div>
                   )}
                 </div>
                 
-                {/* Logo Container */}
-                <div className="relative w-14 h-14 rounded-xl bg-white/30 backdrop-blur-xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
+                {/* Enhanced Logo Container */}
+                <div className="relative w-16 h-16 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                  <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
                   <img
                     src={getTeamLogo(homeTeamId)}
                     alt={`${homeTeam} logo`}
-                    className="w-10 h-10 object-contain relative z-10 drop-shadow-lg"
+                    className="w-12 h-12 object-contain relative z-10 drop-shadow-xl"
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
                 </div>
@@ -985,15 +1081,18 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               </div>
             )}
 
-            {/* Weather Information */}
-            {(temperature || weatherCondition) && (
+            {/* Weather Information - Show with fallback data */}
+            {(temperature || weatherCondition || game.venue_details?.climate) && (
               <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
                 <div className="flex items-center justify-between">
-                  <WeatherIcon condition={weatherCondition} temperature={temperature} />
+                  <WeatherIcon 
+                    condition={weatherCondition || game.venue_details?.climate || 'Unknown'} 
+                    temperature={temperature || (game.venue_details?.temperature_avg)} 
+                  />
                   <div className="text-right">
-                    {weatherCondition && (
+                    {(weatherCondition || game.venue_details?.climate) && (
                       <div className="text-xs font-bold text-gray-700 capitalize">
-                        {weatherCondition}
+                        {weatherCondition || game.venue_details?.climate || 'Check Local Weather'}
                       </div>
                     )}
                     {windSpeed && windSpeed > 10 && (
@@ -1001,7 +1100,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                         Wind: {Math.round(windSpeed)} mph
                       </div>
                     )}
-                    {gameIndoors && (
+                    {(gameIndoors || game.venue_details?.dome) && (
                       <div className="text-xs bg-gray-500/20 text-gray-700 px-2 py-0.5 rounded-full font-bold">
                         Indoor
                       </div>
@@ -1075,9 +1174,12 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
             )}
 
             {game.rivalry && (
-              <div className="inline-block text-xs bg-red-500/20 backdrop-blur-sm text-red-700 font-bold px-3 py-1 rounded-full border border-red-400/30">
-                <i className="fas fa-fire mr-1"></i>
-                Rivalry Game
+              <div className="relative inline-block text-xs font-bold px-3 py-1 rounded-full border border-white/40 text-white shadow-[0_4px_15px_rgba(220,38,38,0.3)]" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}>
+                <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                <span className="relative z-10 flex items-center">
+                  <i className="fas fa-fire mr-1"></i>
+                  Rivalry Game
+                </span>
               </div>
             )}
 
