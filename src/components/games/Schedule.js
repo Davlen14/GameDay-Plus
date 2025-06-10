@@ -36,9 +36,8 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
   const awayPct = awayProb ? Math.round(awayProb * 100) : 50;
   
   return (
-    <div className="bg-white/40 backdrop-blur-xl rounded-2xl border border-white/50 p-4 shadow-[0_8px_25px_rgba(0,0,0,0.1)]">
-      {/* Glass highlight */}
-      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+    <div className="bg-white/30 backdrop-blur-xl rounded-2xl border border-white/40 p-4 shadow-[0_8px_25px_rgba(0,0,0,0.1)]">
+      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
       
       <div className="relative z-10">
         <div className="text-xs font-bold text-gray-700 mb-3 text-center flex items-center justify-center space-x-2">
@@ -48,11 +47,14 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
         <div className="flex items-center space-x-3">
           {/* Away Team */}
           <div className="flex items-center space-x-2 flex-1">
-            <div className="w-6 h-6 rounded-full bg-white/40 backdrop-blur-sm border border-white/50 flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 flex items-center justify-center">
               <img 
                 src={getTeamLogo(awayTeamId)} 
                 alt={awayTeam}
-                className="w-4 h-4 object-contain"
+                className="w-8 h-8 object-contain filter drop-shadow-lg"
+                style={{
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.2) contrast(1.1)',
+                }}
                 onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
               />
             </div>
@@ -73,11 +75,14 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
           {/* Home Team */}
           <div className="flex items-center space-x-2 flex-1 justify-end">
             <span className="text-sm font-bold text-gray-800">{homePct}%</span>
-            <div className="w-6 h-6 rounded-full bg-white/40 backdrop-blur-sm border border-white/50 flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 flex items-center justify-center">
               <img 
                 src={getTeamLogo(homeTeamId)} 
                 alt={homeTeam}
-                className="w-4 h-4 object-contain"
+                className="w-8 h-8 object-contain filter drop-shadow-lg"
+                style={{
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.2) contrast(1.1)',
+                }}
                 onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
               />
             </div>
@@ -119,7 +124,6 @@ const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) =>
       {showTooltip && (
         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-[10000] w-72">
           <div className="bg-white/95 backdrop-blur-xl border border-white/50 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] p-4">
-            {/* Glass highlight */}
             <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
             
             <div className="relative z-10">
@@ -171,42 +175,53 @@ const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) =>
 
 const WeatherIcon = ({ condition, temperature }) => {
   const getWeatherIcon = () => {
-    if (!condition) return 'fas fa-question-circle';
+    if (!condition) return 'fas fa-thermometer-half';
     const cond = condition.toLowerCase();
     if (cond.includes('clear') || cond.includes('sunny')) return 'fas fa-sun';
-    if (cond.includes('cloud')) return 'fas fa-cloud';
+    if (cond.includes('partly') || cond.includes('scattered')) return 'fas fa-cloud-sun';
+    if (cond.includes('cloud') || cond.includes('overcast')) return 'fas fa-cloud';
     if (cond.includes('rain') || cond.includes('shower')) return 'fas fa-cloud-rain';
-    if (cond.includes('snow')) return 'fas fa-snowflake';
+    if (cond.includes('snow') || cond.includes('blizzard')) return 'fas fa-snowflake';
     if (cond.includes('storm') || cond.includes('thunder')) return 'fas fa-bolt';
     if (cond.includes('fog') || cond.includes('mist')) return 'fas fa-smog';
+    if (cond.includes('wind')) return 'fas fa-wind';
     return 'fas fa-cloud-sun';
   };
 
   const getWeatherColor = () => {
     if (!condition) return 'text-gray-500';
     const cond = condition.toLowerCase();
-    if (cond.includes('clear') || cond.includes('sunny')) return 'text-yellow-500';
+    if (cond.includes('clear') || cond.includes('sunny')) return 'text-amber-500';
     if (cond.includes('rain') || cond.includes('storm')) return 'text-blue-500';
-    if (cond.includes('snow')) return 'text-blue-200';
-    if (cond.includes('cloud')) return 'text-gray-400';
+    if (cond.includes('snow')) return 'text-cyan-400';
+    if (cond.includes('cloud')) return 'text-slate-500';
+    if (cond.includes('wind')) return 'text-emerald-500';
     return 'text-gray-500';
   };
 
   const getWeatherGlow = () => {
-    if (!condition) return '';
+    if (!condition) return 'drop-shadow-md';
     const cond = condition.toLowerCase();
-    if (cond.includes('clear') || cond.includes('sunny')) return 'drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]';
+    if (cond.includes('clear') || cond.includes('sunny')) return 'drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]';
     if (cond.includes('rain') || cond.includes('storm')) return 'drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]';
-    return 'drop-shadow-lg';
+    if (cond.includes('snow')) return 'drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]';
+    return 'drop-shadow-md';
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <i className={`${getWeatherIcon()} ${getWeatherColor()} text-lg ${getWeatherGlow()}`} />
+    <div className="flex items-center space-x-3">
+      <div className="relative">
+        <i className={`${getWeatherIcon()} ${getWeatherColor()} text-xl ${getWeatherGlow()}`} />
+        {/* Modern weather accent */}
+        <div className="absolute -top-1 -right-1 w-2 h-2 bg-current rounded-full opacity-30 animate-pulse"></div>
+      </div>
       {temperature && (
-        <span className="text-sm font-bold text-gray-800">
-          {Math.round(temperature)}°F
-        </span>
+        <div className="text-right">
+          <span className="text-lg font-bold text-gray-800">
+            {Math.round(temperature)}°
+          </span>
+          <div className="text-xs text-gray-500 font-medium">F</div>
+        </div>
       )}
     </div>
   );
@@ -216,12 +231,12 @@ const MediaIcon = ({ outlet, mediaType }) => {
   const getNetworkIcon = () => {
     if (!outlet) return 'fas fa-tv';
     const network = outlet.toLowerCase();
-    if (network.includes('espn')) return 'fab fa-youtube'; // Using YouTube as ESPN placeholder
+    if (network.includes('espn')) return 'fas fa-satellite-dish';
     if (network.includes('fox')) return 'fas fa-broadcast-tower';
     if (network.includes('cbs')) return 'fas fa-tv';
     if (network.includes('nbc')) return 'fas fa-tv';
-    if (network.includes('peacock')) return 'fas fa-feather';
-    if (network.includes('paramount')) return 'fas fa-mountain';
+    if (network.includes('peacock')) return 'fas fa-play-circle';
+    if (network.includes('paramount')) return 'fas fa-video';
     if (network.includes('hulu')) return 'fas fa-play-circle';
     if (network.includes('netflix')) return 'fas fa-film';
     if (mediaType === 'web') return 'fas fa-globe';
@@ -241,14 +256,19 @@ const MediaIcon = ({ outlet, mediaType }) => {
   };
 
   const getNetworkGlow = () => {
-    if (!outlet) return 'drop-shadow-lg';
+    if (!outlet) return 'drop-shadow-md';
     const network = outlet.toLowerCase();
     if (network.includes('espn')) return 'drop-shadow-[0_0_8px_rgba(220,38,38,0.6)]';
     if (network.includes('nbc') || network.includes('peacock')) return 'drop-shadow-[0_0_8px_rgba(147,51,234,0.6)]';
-    return 'drop-shadow-lg';
+    return 'drop-shadow-md';
   };
 
-  return <i className={`${getNetworkIcon()} ${getNetworkColor()} text-lg ${getNetworkGlow()}`} />;
+  return (
+    <div className="relative">
+      <i className={`${getNetworkIcon()} ${getNetworkColor()} text-lg ${getNetworkGlow()}`} />
+      <div className="absolute -top-1 -right-1 w-2 h-2 bg-current rounded-full opacity-40 animate-ping"></div>
+    </div>
+  );
 };
 
 const Schedule = () => {
@@ -262,7 +282,7 @@ const Schedule = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Top 25');
   
-  // UI state - removed animateShine to improve performance
+  // UI state
   const [showWeekPicker, setShowWeekPicker] = useState(false);
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showConferencePicker, setShowConferencePicker] = useState(false);
@@ -547,22 +567,38 @@ const Schedule = () => {
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-        .animation-delay-1000 {
-          animation-delay: 1s;
+        .digital-lines {
+          background-image: 
+            linear-gradient(90deg, rgba(204,0,28,0.1) 1px, transparent 1px),
+            linear-gradient(0deg, rgba(204,0,28,0.1) 1px, transparent 1px),
+            linear-gradient(45deg, rgba(204,0,28,0.05) 1px, transparent 1px),
+            linear-gradient(-45deg, rgba(204,0,28,0.05) 1px, transparent 1px);
+          background-size: 60px 60px, 60px 60px, 40px 40px, 40px 40px;
+          animation: digitalMove 20s linear infinite;
         }
-        .animation-delay-2000 {
-          animation-delay: 2s;
+        @keyframes digitalMove {
+          0% { background-position: 0 0, 0 0, 0 0, 0 0; }
+          100% { background-position: 60px 60px, 60px 60px, 40px 40px, 40px 40px; }
         }
-        .animation-delay-3000 {
-          animation-delay: 3s;
+        .metallic-logo {
+          filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4)) saturate(1.3) contrast(1.2) brightness(1.1);
+          transform: perspective(100px) rotateX(2deg);
         }
-        .animation-delay-500 {
-          animation-delay: 0.5s;
+        .metallic-logo:hover {
+          filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5)) saturate(1.4) contrast(1.3) brightness(1.2);
+          transform: perspective(100px) rotateX(0deg) scale(1.05);
         }
       `}</style>
 
-      {/* Floating Orbs Background */}
+      {/* Digital Grid Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Base gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50 to-gray-100"></div>
+        
+        {/* Digital lines overlay */}
+        <div className="absolute inset-0 digital-lines opacity-60"></div>
+        
+        {/* Floating digital orbs */}
         <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
         <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
         <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '2s' }}></div>
@@ -585,7 +621,7 @@ const Schedule = () => {
               </div>
               {/* Floating particles */}
               <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-              <div className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full opacity-40 animate-ping animation-delay-500" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+              <div className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full opacity-40 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '0.5s' }}></div>
             </div>
           </div>
           
@@ -642,7 +678,7 @@ const Schedule = () => {
                     
                     {/* Inactive glass background */}
                     {selectedCategory !== category && (
-                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
+                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-gray-200/40 transition-all duration-300"></div>
                     )}
                     
                     {/* Glass highlight */}
@@ -683,7 +719,7 @@ const Schedule = () => {
                       setShowWeekPicker(false);
                       setShowConferencePicker(false);
                     }}
-                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
+                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-gray-200/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
                     {/* Glass highlight */}
                     <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
@@ -705,7 +741,7 @@ const Schedule = () => {
                             setSelectedYear(year);
                             setShowYearPicker(false);
                           }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
+                          className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                         >
                           {year}
                         </button>
@@ -723,7 +759,7 @@ const Schedule = () => {
                       setShowYearPicker(false);
                       setShowWeekPicker(false);
                     }}
-                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
+                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-gray-200/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
                     {/* Glass highlight */}
                     <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
@@ -743,7 +779,7 @@ const Schedule = () => {
                           setSelectedConference(null);
                           setShowConferencePicker(false);
                         }}
-                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
+                        className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                       >
                         All Conferences
                       </button>
@@ -755,7 +791,7 @@ const Schedule = () => {
                             setSelectedConference(conf.name);
                             setShowConferencePicker(false);
                           }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
+                          className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                         >
                           {conf.name}
                         </button>
@@ -773,7 +809,7 @@ const Schedule = () => {
                       setShowYearPicker(false);
                       setShowConferencePicker(false);
                     }}
-                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
+                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-gray-200/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
                     {/* Glass highlight */}
                     <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
@@ -796,7 +832,7 @@ const Schedule = () => {
                             setIsPostseason(false);
                             setShowWeekPicker(false);
                           }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
+                          className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                         >
                           Week {week}
                         </button>
@@ -807,7 +843,7 @@ const Schedule = () => {
                           setIsPostseason(true);
                           setShowWeekPicker(false);
                         }}
-                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
+                        className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                       >
                         Postseason
                       </button>
@@ -823,7 +859,7 @@ const Schedule = () => {
         <div className="relative">
           {/* Overlay when dropdowns are open */}
           {isAnyDropdownOpen && (
-            <div className="absolute inset-0 bg-black/5 backdrop-blur-[1px] z-10 rounded-3xl pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gray-400/20 backdrop-blur-[2px] z-10 rounded-3xl pointer-events-none"></div>
           )}
           
           {filteredGames.length === 0 ? (
@@ -835,7 +871,7 @@ const Schedule = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {filteredGames.map((game, index) => (
                 <GameCard
                   key={game.id}
@@ -909,8 +945,8 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
     <div 
       className={`group relative overflow-hidden transition-all duration-500 ${
         isAnyDropdownOpen 
-          ? 'cursor-not-allowed opacity-75 pointer-events-none' 
-          : 'cursor-pointer hover:scale-[1.01] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]'
+          ? 'cursor-not-allowed opacity-60 pointer-events-none' 
+          : 'cursor-pointer hover:scale-[1.02] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]'
       }`}
       onClick={handleCardClick}
       style={{
@@ -918,112 +954,106 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
       }}
     >
       {/* Enhanced Liquid Glass Container */}
-      <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70">
+      <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70 group-hover:shadow-[0_30px_60px_rgba(0,0,0,0.15)]">
         {/* Liquid Glass Highlight */}
         <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
         
-        {/* Dynamic Glow Effect */}
-        <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(220,38,38,0.1) 0%, rgba(185,28,28,0.1) 50%, rgba(153,27,27,0.1) 100%)' }}></div>
+        {/* Gray Glow Effect on Hover */}
+        <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-gray-200/20 via-gray-300/10 to-gray-100/20 blur-xl"></div>
         
-        <div className="relative z-10 space-y-6">
+        <div className="relative z-10 space-y-8">
           
           {/* Top Row: Teams and Core Info */}
           <div className="flex items-center justify-between">
             {/* Teams Section */}
-            <div className="flex items-center space-x-6 flex-1">
+            <div className="flex items-center space-x-8 flex-1">
               {/* Away Team */}
-              <div className="flex items-center space-x-4">
-                {/* Enhanced Logo Container */}
-                <div className="relative w-16 h-16 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                  <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
+              <div className="flex items-center space-x-6">
+                {/* Enhanced Metallic Logo */}
+                <div className="relative">
                   <img
                     src={getTeamLogo(awayTeamId)}
                     alt={`${awayTeam} logo`}
-                    className="w-12 h-12 object-contain relative z-10 drop-shadow-xl"
+                    className="w-20 h-20 object-contain metallic-logo transition-all duration-300"
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
                 </div>
                 
                 <div className="min-w-0">
-                  <div className="flex items-center space-x-3 mb-2">
+                  <div className="flex items-center space-x-4 mb-3">
                     {getTeamRank(awayTeamId) && (
                       <div className="relative">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(220,38,38,0.4)] group-hover:shadow-[0_6px_25px_rgba(220,38,38,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-[0_6px_20px_rgba(204,0,28,0.4)] group-hover:shadow-[0_8px_25px_rgba(204,0,28,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
                           <span className="text-white text-sm font-black">{getTeamRank(awayTeamId)}</span>
                         </div>
                       </div>
                     )}
-                    <span className="font-black text-gray-900 text-lg truncate drop-shadow-sm">
+                    <span className="font-black text-gray-900 text-xl drop-shadow-sm">
                       {getTeamAbbreviation(awayTeamId, awayTeam)}
                     </span>
                   </div>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    <div className="text-4xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300 mb-3" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       {awayPoints}
                     </div>
                   )}
                   {/* Away Team ELO */}
                   {awayPreElo && (
-                    <div className="mt-2">
-                      <EloRatingDisplay 
-                        preGameElo={awayPreElo} 
-                        postGameElo={awayPostElo}
-                        teamName={awayTeam}
-                        isCompleted={isCompleted}
-                      />
-                    </div>
+                    <EloRatingDisplay 
+                      preGameElo={awayPreElo} 
+                      postGameElo={awayPostElo}
+                      teamName={awayTeam}
+                      isCompleted={isCompleted}
+                    />
                   )}
                 </div>
               </div>
 
               {/* VS Separator */}
               <div className="flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                <div className="w-16 h-16 rounded-full bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
                   <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
-                  <span className="relative z-10 text-lg font-black drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>@</span>
+                  <span className="relative z-10 text-2xl font-black drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>@</span>
                 </div>
               </div>
 
               {/* Home Team */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-6">
                 <div className="min-w-0 text-right">
-                  <div className="flex items-center justify-end space-x-3 mb-2">
-                    <span className="font-black text-gray-900 text-lg truncate drop-shadow-sm">
+                  <div className="flex items-center justify-end space-x-4 mb-3">
+                    <span className="font-black text-gray-900 text-xl drop-shadow-sm">
                       {getTeamAbbreviation(homeTeamId, homeTeam)}
                     </span>
                     {getTeamRank(homeTeamId) && (
                       <div className="relative">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(220,38,38,0.4)] group-hover:shadow-[0_6px_25px_rgba(220,38,38,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-[0_6px_20px_rgba(204,0,28,0.4)] group-hover:shadow-[0_8px_25px_rgba(204,0,28,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
                           <span className="text-white text-sm font-black">{getTeamRank(homeTeamId)}</span>
                         </div>
                       </div>
                     )}
                   </div>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    <div className="text-4xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300 mb-3" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       {homePoints}
                     </div>
                   )}
                   {/* Home Team ELO */}
                   {homePreElo && (
-                    <div className="mt-2">
-                      <EloRatingDisplay 
-                        preGameElo={homePreElo} 
-                        postGameElo={homePostElo}
-                        teamName={homeTeam}
-                        isCompleted={isCompleted}
-                      />
-                    </div>
+                    <EloRatingDisplay 
+                      preGameElo={homePreElo} 
+                      postGameElo={homePostElo}
+                      teamName={homeTeam}
+                      isCompleted={isCompleted}
+                    />
                   )}
                 </div>
                 
-                {/* Enhanced Logo Container */}
-                <div className="relative w-16 h-16 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                  <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
+                {/* Enhanced Metallic Logo */}
+                <div className="relative">
                   <img
                     src={getTeamLogo(homeTeamId)}
                     alt={`${homeTeam} logo`}
-                    className="w-12 h-12 object-contain relative z-10 drop-shadow-xl"
+                    className="w-20 h-20 object-contain metallic-logo transition-all duration-300"
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
                 </div>
@@ -1032,7 +1062,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
 
             {/* Status Badge */}
             <div 
-              className={`relative inline-flex items-center px-4 py-2 rounded-xl font-bold text-sm backdrop-blur-xl border shadow-lg ${
+              className={`relative inline-flex items-center px-6 py-3 rounded-xl font-bold text-base backdrop-blur-xl border shadow-lg ${
                 isCompleted 
                   ? 'bg-green-500/20 border-green-400/30 text-green-700 shadow-[0_8px_25px_rgba(34,197,94,0.2)]' 
                   : 'border-white/30 text-white shadow-[0_8px_25px_rgba(204,0,28,0.3)]'
@@ -1040,10 +1070,10 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               style={!isCompleted ? { background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' } : {}}
             >
               <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
-              <div className="relative z-10 flex items-center space-x-2">
+              <div className="relative z-10 flex items-center space-x-3">
                 {isCompleted ? (
                   <>
-                    <i className="fas fa-check-circle"></i>
+                    <i className="fas fa-check-circle text-lg"></i>
                     <span>FINAL</span>
                   </>
                 ) : (
@@ -1057,20 +1087,20 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
           </div>
 
           {/* Second Row: Enhanced Game Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             
             {/* Media Coverage */}
             {(tvOutlet || streamingOutlet) && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                <div className="flex items-center space-x-2 text-sm">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
+                <div className="flex items-center space-x-3 text-sm">
                   <MediaIcon outlet={tvOutlet || streamingOutlet} mediaType={mediaType} />
                   <div>
-                    <div className="font-bold text-gray-700">{tvOutlet || streamingOutlet}</div>
+                    <div className="font-bold text-gray-700 text-base">{tvOutlet || streamingOutlet}</div>
                     {streamingOutlet && tvOutlet && (
                       <div className="text-xs text-gray-500">+ {streamingOutlet}</div>
                     )}
                     {mediaType && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                      <span className={`text-xs px-2 py-1 rounded-full font-bold ${
                         mediaType === 'web' ? 'bg-purple-500/20 text-purple-700' : 'bg-blue-500/20 text-blue-700'
                       }`}>
                         {mediaType.toUpperCase()}
@@ -1081,9 +1111,9 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               </div>
             )}
 
-            {/* Weather Information - Show with fallback data */}
+            {/* Weather Information */}
             {(temperature || weatherCondition || game.venue_details?.climate) && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
                 <div className="flex items-center justify-between">
                   <WeatherIcon 
                     condition={weatherCondition || game.venue_details?.climate || 'Unknown'} 
@@ -1091,18 +1121,20 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   />
                   <div className="text-right">
                     {(weatherCondition || game.venue_details?.climate) && (
-                      <div className="text-xs font-bold text-gray-700 capitalize">
+                      <div className="text-sm font-bold text-gray-700 capitalize">
                         {weatherCondition || game.venue_details?.climate || 'Check Local Weather'}
                       </div>
                     )}
                     {windSpeed && windSpeed > 10 && (
-                      <div className="text-xs text-gray-500">
-                        Wind: {Math.round(windSpeed)} mph
+                      <div className="text-xs text-gray-500 flex items-center space-x-1">
+                        <i className="fas fa-wind"></i>
+                        <span>{Math.round(windSpeed)} mph</span>
                       </div>
                     )}
                     {(gameIndoors || game.venue_details?.dome) && (
-                      <div className="text-xs bg-gray-500/20 text-gray-700 px-2 py-0.5 rounded-full font-bold">
-                        Indoor
+                      <div className="text-xs bg-gray-500/20 text-gray-700 px-2 py-1 rounded-full font-bold inline-flex items-center space-x-1">
+                        <i className="fas fa-home"></i>
+                        <span>Indoor</span>
                       </div>
                     )}
                   </div>
@@ -1112,10 +1144,10 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
 
             {/* Excitement Level */}
             {excitementIndex > 0 && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                <div className="text-xs font-bold text-gray-600 mb-1">Excitement Level</div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
+                <div className="text-sm font-bold text-gray-600 mb-2">Excitement Level</div>
                 <ExcitementStars excitementIndex={excitementIndex} />
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 mt-2">
                   {excitementIndex >= 8 ? 'Thriller!' : 
                    excitementIndex >= 6 ? 'Great Game' : 
                    excitementIndex >= 4 ? 'Good Game' : 'Standard'}
@@ -1125,14 +1157,15 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
 
             {/* Venue Information */}
             {game.venue && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                <div className="flex items-center space-x-2">
-                  <i className="fas fa-map-marker-alt text-gray-500"></i>
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
+                <div className="flex items-center space-x-3">
+                  <i className="fas fa-map-marker-alt text-gray-500 text-lg"></i>
                   <div>
-                    <div className="text-xs font-bold text-gray-700">{game.venue}</div>
+                    <div className="text-sm font-bold text-gray-700">{game.venue}</div>
                     {attendance && (
-                      <div className="text-xs text-gray-500">
-                        {attendance.toLocaleString()} fans
+                      <div className="text-xs text-gray-500 flex items-center space-x-1">
+                        <i className="fas fa-users"></i>
+                        <span>{attendance.toLocaleString()} fans</span>
                       </div>
                     )}
                   </div>
@@ -1158,34 +1191,34 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
           </div>
 
           {/* Third Row: Game Type Badges */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {(game.conference_game || game.conferenceGame) && (
-              <div className="inline-block text-xs bg-blue-500/20 backdrop-blur-sm text-blue-700 font-bold px-3 py-1 rounded-full border border-blue-400/30">
-                <i className="fas fa-trophy mr-1"></i>
+              <div className="inline-block text-sm bg-blue-500/20 backdrop-blur-sm text-blue-700 font-bold px-4 py-2 rounded-full border border-blue-400/30">
+                <i className="fas fa-trophy mr-2"></i>
                 Conference Game
               </div>
             )}
             
             {(game.neutral_site || game.neutralSite) && (
-              <div className="inline-block text-xs bg-purple-500/20 backdrop-blur-sm text-purple-700 font-bold px-3 py-1 rounded-full border border-purple-400/30">
-                <i className="fas fa-balance-scale mr-1"></i>
+              <div className="inline-block text-sm bg-purple-500/20 backdrop-blur-sm text-purple-700 font-bold px-4 py-2 rounded-full border border-purple-400/30">
+                <i className="fas fa-balance-scale mr-2"></i>
                 Neutral Site
               </div>
             )}
 
             {game.rivalry && (
-              <div className="relative inline-block text-xs font-bold px-3 py-1 rounded-full border border-white/40 text-white shadow-[0_4px_15px_rgba(220,38,38,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
+              <div className="relative inline-block text-sm font-bold px-4 py-2 rounded-full border border-white/40 text-white shadow-[0_4px_15px_rgba(220,38,38,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
                 <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
                 <span className="relative z-10 flex items-center">
-                  <i className="fas fa-fire mr-1"></i>
+                  <i className="fas fa-fire mr-2"></i>
                   Rivalry Game
                 </span>
               </div>
             )}
 
             {isCompleted && excitementIndex >= 8 && (
-              <div className="inline-block text-xs bg-yellow-500/20 backdrop-blur-sm text-yellow-700 font-bold px-3 py-1 rounded-full border border-yellow-400/30">
-                <i className="fas fa-star mr-1"></i>
+              <div className="inline-block text-sm bg-yellow-500/20 backdrop-blur-sm text-yellow-700 font-bold px-4 py-2 rounded-full border border-yellow-400/30">
+                <i className="fas fa-star mr-2"></i>
                 Game of the Week
               </div>
             )}
@@ -1193,7 +1226,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
         </div>
         
         {/* Hover effect overlay */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-gray-200/10 via-transparent to-gray-200/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
       </div>
     </div>
   );
