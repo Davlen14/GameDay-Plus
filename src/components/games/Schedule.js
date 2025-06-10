@@ -269,7 +269,7 @@ const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) =>
   return (
     <div className="relative">
       <div 
-        className="bg-white/25 backdrop-blur-xl px-3 py-2 rounded-xl text-xs cursor-help hover:bg-white/35 transition-all duration-300 border border-white/30"
+        className="bg-white/25 backdrop-blur-xl px-3 py-2 rounded-xl text-xs cursor-help glassy-hover border border-white/30"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         style={{
@@ -816,7 +816,7 @@ const Schedule = () => {
                   )}
                   
                   {selectedCategory !== category && (
-                    <div className="absolute inset-0 liquid-glass rounded-2xl hover:bg-white/40 transition-all duration-300"></div>
+                    <div className="absolute inset-0 liquid-glass rounded-2xl glassy-hover"></div>
                   )}
                   
                   <span className="relative z-10">{category}</span>
@@ -859,7 +859,7 @@ const Schedule = () => {
                     setShowWeekPicker(false);
                     setShowConferencePicker(false);
                   }}
-                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700"
+                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl glassy-hover font-semibold text-gray-700"
                 >
                   <i className="fas fa-calendar-alt"></i>
                   <span>{selectedYear}</span>
@@ -881,7 +881,7 @@ const Schedule = () => {
                           setSelectedYear(year);
                           setShowYearPicker(false);
                         }}
-                        className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                        className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
                       >
                         {year}
                       </button>
@@ -899,7 +899,7 @@ const Schedule = () => {
                     setShowYearPicker(false);
                     setShowWeekPicker(false);
                   }}
-                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700"
+                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl glassy-hover font-semibold text-gray-700"
                 >
                   <i className="fas fa-layer-group"></i>
                   <span>{selectedConference || 'All Conferences'}</span>
@@ -919,7 +919,7 @@ const Schedule = () => {
                         setSelectedConference(null);
                         setShowConferencePicker(false);
                       }}
-                      className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                      className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
                     >
                       All Conferences
                     </button>
@@ -931,7 +931,7 @@ const Schedule = () => {
                           setSelectedConference(conf.name);
                           setShowConferencePicker(false);
                         }}
-                        className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                        className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
                       >
                         {conf.name}
                       </button>
@@ -949,7 +949,7 @@ const Schedule = () => {
                     setShowYearPicker(false);
                     setShowConferencePicker(false);
                   }}
-                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700"
+                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl glassy-hover font-semibold text-gray-700"
                 >
                   <i className="fas fa-calendar-week"></i>
                   <span>{isPostseason ? 'Postseason' : `Week ${selectedWeek}`}</span>
@@ -972,7 +972,7 @@ const Schedule = () => {
                           setIsPostseason(false);
                           setShowWeekPicker(false);
                         }}
-                        className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                        className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
                       >
                         Week {week}
                       </button>
@@ -983,7 +983,7 @@ const Schedule = () => {
                         setIsPostseason(true);
                         setShowWeekPicker(false);
                       }}
-                      className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                      className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
                     >
                       Postseason
                     </button>
@@ -1091,7 +1091,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
     >
       {/* Apple Liquid Glass Card */}
       <div 
-        className="relative liquid-glass rounded-3xl p-10 transition-all duration-700"
+        className="relative liquid-glass card-hover rounded-3xl p-10 transition-all duration-700"
         style={{
           boxShadow: `
             0 25px 50px rgba(0,0,0,0.1),
@@ -1198,9 +1198,9 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   />
                   {getTeamRank(homeTeamId) && (
                     <div 
-                      className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-2xl"
+                      className="absolute -top-2 -left-2 w-8 h-8 rounded-full brand-gradient-to-br flex items-center justify-center shadow-2xl"
                       style={{
-                        boxShadow: '0 8px 25px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                        boxShadow: '0 8px 25px rgba(204, 0, 28, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
                       }}
                     >
                       <span className="text-white text-sm font-black">{getTeamRank(homeTeamId)}</span>
@@ -1215,10 +1215,10 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               className={`relative px-8 py-4 rounded-2xl font-black text-lg backdrop-blur-xl border shadow-2xl ${
                 isCompleted 
                   ? 'bg-green-500/20 border-green-400/30 text-green-700' 
-                  : 'bg-gradient-to-br from-red-600 to-red-800 border-white/30 text-white'
+                  : 'brand-gradient-to-br border-white/30 text-white'
               }`}
               style={!isCompleted ? {
-                boxShadow: '0 8px 32px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                boxShadow: '0 8px 32px rgba(204, 0, 28, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
               } : {}}
             >
               <div className="flex items-center space-x-3">
@@ -1373,9 +1373,9 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
 
             {game.rivalry && (
               <div 
-                className="px-6 py-3 rounded-full bg-gradient-to-br from-red-600 to-red-800 text-white font-bold text-sm shadow-2xl"
+                className="px-6 py-3 rounded-full brand-gradient-to-br text-white font-bold text-sm shadow-2xl"
                 style={{
-                  boxShadow: '0 4px 15px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                  boxShadow: '0 4px 15px rgba(204, 0, 28, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
                 }}
               >
                 <i className="fas fa-fire mr-2"></i>

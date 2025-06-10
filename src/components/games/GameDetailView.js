@@ -238,51 +238,51 @@ const GameDetailView = ({ gameId }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Fixed Height Game Header - Same size as TeamDetailView */}
+      {/* Fixed Height Game Header - Team Colors Meeting in Middle */}
       <div 
         className="relative overflow-hidden"
         style={{ 
           height: '415px',
-          background: `linear-gradient(135deg, 
+          background: `linear-gradient(to right, 
             rgba(${awayColorRgb}, 0.95) 0%, 
-            rgba(${awayColorRgb}, 1) 15%, 
-            rgba(${homeColorRgb}, 0.85) 35%, 
-            rgba(${homeColorRgb}, 1) 50%, 
-            rgba(${awayColorRgb}, 0.85) 65%, 
-            rgba(${homeColorRgb}, 0.9) 85%, 
+            rgba(${awayColorRgb}, 0.8) 25%, 
+            rgba(${awayColorRgb}, 0.4) 45%, 
+            rgba(${awayColorRgb}, 0.2) 48%, 
+            rgba(${homeColorRgb}, 0.2) 52%, 
+            rgba(${homeColorRgb}, 0.4) 55%, 
+            rgba(${homeColorRgb}, 0.8) 75%, 
             rgba(${homeColorRgb}, 0.95) 100%)`,
-          filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
         }}
       >
-        {/* Dynamic Team Color Particles */}
+        {/* Dynamic Team Color Particles - Team Specific */}
         <div className="absolute inset-0">
-          {/* Away Team Color Orbs */}
+          {/* Away Team Side - Left */}
           <div 
-            className="absolute w-96 h-96 rounded-full opacity-30 blur-3xl"
+            className="absolute w-80 h-80 rounded-full opacity-40 blur-3xl"
             style={{
-              background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.6) 0%, transparent 70%)`,
+              background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.8) 0%, transparent 70%)`,
               top: '10%',
               left: '5%',
               animation: 'float 8s ease-in-out infinite',
             }}
           />
           <div 
-            className="absolute w-72 h-72 rounded-full opacity-20 blur-2xl"
+            className="absolute w-64 h-64 rounded-full opacity-30 blur-2xl"
             style={{
-              background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.4) 0%, transparent 70%)`,
-              top: '50%',
-              left: '15%',
+              background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.6) 0%, transparent 70%)`,
+              top: '60%',
+              left: '10%',
               animation: 'float 12s ease-in-out infinite reverse',
             }}
           />
           
-          {/* Home Team Color Orbs */}
+          {/* Home Team Side - Right */}
           <div 
-            className="absolute w-80 h-80 rounded-full opacity-25 blur-3xl"
+            className="absolute w-80 h-80 rounded-full opacity-40 blur-3xl"
             style={{
-              background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.5) 0%, transparent 70%)`,
-              top: '20%',
-              right: '10%',
+              background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.8) 0%, transparent 70%)`,
+              top: '10%',
+              right: '5%',
               animation: 'float 10s ease-in-out infinite',
             }}
           />
@@ -291,26 +291,40 @@ const GameDetailView = ({ gameId }) => {
             style={{
               background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.6) 0%, transparent 70%)`,
               bottom: '15%',
-              right: '5%',
+              right: '10%',
               animation: 'float 14s ease-in-out infinite reverse',
             }}
           />
           
-          {/* Central Energy Field */}
+          {/* Central Meeting Effect */}
           <div 
             className="absolute inset-0"
             style={{
-              background: `conic-gradient(from 180deg at center, 
-                transparent 0deg,
-                rgba(${awayColorRgb}, 0.1) 90deg,
-                rgba(${homeColorRgb}, 0.1) 180deg,
-                rgba(${awayColorRgb}, 0.1) 270deg,
-                transparent 360deg)`,
-              animation: 'spin 30s linear infinite',
-              filter: 'blur(1px)',
+              background: `radial-gradient(ellipse at center, 
+                transparent 0%,
+                rgba(${awayColorRgb}, 0.1) 30%,
+                rgba(${homeColorRgb}, 0.1) 70%,
+                transparent 100%)`,
+              animation: 'pulse 6s ease-in-out infinite',
+            }}
+          />
+          
+          {/* Moving Energy Connection */}
+          <div 
+            className="absolute top-1/2 left-0 right-0 h-32 transform -translate-y-1/2"
+            style={{
+              background: `linear-gradient(90deg, 
+                rgba(${awayColorRgb}, 0.3) 0%,
+                rgba(${awayColorRgb}, 0.5) 25%,
+                rgba(255,255,255, 0.2) 50%,
+                rgba(${homeColorRgb}, 0.5) 75%,
+                rgba(${homeColorRgb}, 0.3) 100%)`,
+              filter: 'blur(20px)',
+              animation: 'shimmer 4s ease-in-out infinite alternate',
             }}
           />
         </div>
+
         {/* Back Button */}
         <div className="absolute top-8 left-5 z-50">
           <button
@@ -366,27 +380,71 @@ const GameDetailView = ({ gameId }) => {
 
         {/* Header Content - Game Scoreboard */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 pt-6">
-          {/* Teams and Score - Enhanced Swift-like Design */}
+          {/* Teams and Score - Enhanced 3D Logos */}
           <div className="flex items-center justify-center space-x-16 mb-8">
-            {/* Away Team - Enhanced Premium Design */}
+            {/* Away Team - Ultra 3D Logo */}
             <div className="flex flex-col items-center group">
-              {/* Enhanced Team Logo */}
+              {/* Ultra Enhanced 3D Team Logo */}
               <div className="relative mb-6">
+                {/* 3D Shadow Layers */}
+                <div 
+                  className="absolute inset-0 w-32 h-32"
+                  style={{
+                    background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.4) 0%, transparent 70%)`,
+                    filter: 'blur(25px)',
+                    transform: 'translateY(8px) scale(1.1)',
+                  }}
+                />
+                <div 
+                  className="absolute inset-0 w-32 h-32"
+                  style={{
+                    background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.6) 0%, transparent 50%)`,
+                    filter: 'blur(15px)',
+                    transform: 'translateY(4px) scale(1.05)',
+                  }}
+                />
+                <div 
+                  className="absolute inset-0 w-32 h-32"
+                  style={{
+                    background: `radial-gradient(circle, rgba(0,0,0, 0.3) 0%, transparent 60%)`,
+                    filter: 'blur(12px)',
+                    transform: 'translateY(6px)',
+                  }}
+                />
+                
+                {/* Main Logo - Authentic Colors with 3D Effects */}
                 <img
                   src={getTeamLogo(currentGame?.away_id || currentGame?.awayId)}
                   alt={awayTeam?.school || 'Away Team'}
-                  className="w-32 h-32 object-contain relative z-10 group-hover:scale-110 transition-transform duration-500"
+                  className="w-32 h-32 object-contain relative z-10 group-hover:scale-110 transition-all duration-500"
                   style={{
                     filter: `
-                      contrast(1.3) 
-                      saturate(1.4) 
-                      brightness(1.2)
-                      drop-shadow(0 0 20px rgba(${awayColorRgb}, 0.8))
-                      drop-shadow(0 8px 32px rgba(${awayColorRgb}, 0.6))
-                      drop-shadow(0 0 40px rgba(255,255,255,0.3))
+                      drop-shadow(0 0 15px rgba(${awayColorRgb}, 0.7))
+                      drop-shadow(0 8px 25px rgba(0,0,0,0.4))
+                      drop-shadow(0 15px 35px rgba(${awayColorRgb}, 0.3))
+                      drop-shadow(0 0 8px rgba(255,255,255,0.2))
                     `,
+                    transform: 'translateZ(20px)',
                   }}
                   onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                />
+                
+                {/* Glowing Ring Effect */}
+                <div 
+                  className="absolute inset-0 w-32 h-32 rounded-full opacity-60 group-hover:opacity-80 transition-opacity duration-500"
+                  style={{
+                    background: `conic-gradient(from 0deg, 
+                      rgba(${awayColorRgb}, 0.8) 0deg,
+                      transparent 60deg,
+                      rgba(${awayColorRgb}, 0.4) 120deg,
+                      transparent 180deg,
+                      rgba(${awayColorRgb}, 0.6) 240deg,
+                      transparent 300deg,
+                      rgba(${awayColorRgb}, 0.8) 360deg)`,
+                    filter: 'blur(8px)',
+                    animation: 'spin 20s linear infinite',
+                    transform: 'scale(1.3)',
+                  }}
                 />
               </div>
               
@@ -489,11 +547,11 @@ const GameDetailView = ({ gameId }) => {
                   className="absolute inset-0 rounded-full"
                   style={{
                     background: `conic-gradient(from 0deg, 
-                      transparent 0deg,
-                      rgba(255,255,255,0.3) 90deg,
-                      transparent 180deg,
-                      rgba(255,255,255,0.2) 270deg,
-                      transparent 360deg)`,
+                      rgba(${awayColorRgb}, 0.3) 0deg,
+                      transparent 90deg,
+                      rgba(${homeColorRgb}, 0.3) 180deg,
+                      transparent 270deg,
+                      rgba(${awayColorRgb}, 0.3) 360deg)`,
                     animation: 'spin 15s linear infinite reverse',
                   }}
                 />
@@ -531,25 +589,69 @@ const GameDetailView = ({ gameId }) => {
               )}
             </div>
             
-            {/* Home Team - Enhanced Premium Design */}
+            {/* Home Team - Ultra 3D Logo */}
             <div className="flex flex-col items-center group">
-              {/* Enhanced Team Logo */}
+              {/* Ultra Enhanced 3D Team Logo */}
               <div className="relative mb-6">
+                {/* 3D Shadow Layers */}
+                <div 
+                  className="absolute inset-0 w-32 h-32"
+                  style={{
+                    background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.4) 0%, transparent 70%)`,
+                    filter: 'blur(25px)',
+                    transform: 'translateY(8px) scale(1.1)',
+                  }}
+                />
+                <div 
+                  className="absolute inset-0 w-32 h-32"
+                  style={{
+                    background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.6) 0%, transparent 50%)`,
+                    filter: 'blur(15px)',
+                    transform: 'translateY(4px) scale(1.05)',
+                  }}
+                />
+                <div 
+                  className="absolute inset-0 w-32 h-32"
+                  style={{
+                    background: `radial-gradient(circle, rgba(0,0,0, 0.3) 0%, transparent 60%)`,
+                    filter: 'blur(12px)',
+                    transform: 'translateY(6px)',
+                  }}
+                />
+                
+                {/* Main Logo - Authentic Colors with 3D Effects */}
                 <img
                   src={getTeamLogo(currentGame?.home_id || currentGame?.homeId)}
                   alt={homeTeam?.school || 'Home Team'}
-                  className="w-32 h-32 object-contain relative z-10 group-hover:scale-110 transition-transform duration-500"
+                  className="w-32 h-32 object-contain relative z-10 group-hover:scale-110 transition-all duration-500"
                   style={{
                     filter: `
-                      contrast(1.3) 
-                      saturate(1.4) 
-                      brightness(1.2)
-                      drop-shadow(0 0 20px rgba(${homeColorRgb}, 0.8))
-                      drop-shadow(0 8px 32px rgba(${homeColorRgb}, 0.6))
-                      drop-shadow(0 0 40px rgba(255,255,255,0.3))
+                      drop-shadow(0 0 15px rgba(${homeColorRgb}, 0.7))
+                      drop-shadow(0 8px 25px rgba(0,0,0,0.4))
+                      drop-shadow(0 15px 35px rgba(${homeColorRgb}, 0.3))
+                      drop-shadow(0 0 8px rgba(255,255,255,0.2))
                     `,
+                    transform: 'translateZ(20px)',
                   }}
                   onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                />
+                
+                {/* Glowing Ring Effect */}
+                <div 
+                  className="absolute inset-0 w-32 h-32 rounded-full opacity-60 group-hover:opacity-80 transition-opacity duration-500"
+                  style={{
+                    background: `conic-gradient(from 0deg, 
+                      rgba(${homeColorRgb}, 0.8) 0deg,
+                      transparent 60deg,
+                      rgba(${homeColorRgb}, 0.4) 120deg,
+                      transparent 180deg,
+                      rgba(${homeColorRgb}, 0.6) 240deg,
+                      transparent 300deg,
+                      rgba(${homeColorRgb}, 0.8) 360deg)`,
+                    filter: 'blur(8px)',
+                    animation: 'spin 20s linear infinite reverse',
+                    transform: 'scale(1.3)',
+                  }}
                 />
               </div>
               
@@ -631,32 +733,34 @@ const GameDetailView = ({ gameId }) => {
           </div>
         </div>
 
-        {/* Enhanced Team Color Shadow with Dynamic Pulse */}
+        {/* Enhanced Team Color Shadow with Meeting Effect */}
         <div 
           className="absolute bottom-0 left-0 right-0 h-8"
           style={{
             background: `linear-gradient(90deg, 
-              transparent 0%, 
-              rgba(${awayColorRgb}, 0.3) 15%,
+              rgba(${awayColorRgb}, 0.8) 0%, 
               rgba(${awayColorRgb}, 0.6) 25%,
-              rgba(${homeColorRgb}, 0.8) 50%, 
+              rgba(${awayColorRgb}, 0.3) 45%,
+              rgba(255,255,255, 0.2) 50%,
+              rgba(${homeColorRgb}, 0.3) 55%,
               rgba(${homeColorRgb}, 0.6) 75%,
-              rgba(${awayColorRgb}, 0.3) 85%,
-              transparent 100%)`,
+              rgba(${homeColorRgb}, 0.8) 100%)`,
             filter: 'blur(8px) brightness(1.2)',
-            animation: 'pulse 4s ease-in-out infinite',
+            animation: 'shimmer 6s ease-in-out infinite alternate',
           }}
         />
         
-        {/* Additional Glowing Border Effect */}
+        {/* Meeting Point Glow */}
         <div 
-          className="absolute bottom-0 left-0 right-0 h-1"
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-2 w-32"
           style={{
-            background: `linear-gradient(90deg, 
-              ${awayColor} 0%, 
-              ${homeColor} 50%, 
-              ${awayColor} 100%)`,
-            boxShadow: `0 0 20px rgba(${awayColorRgb}, 0.6), 0 0 40px rgba(${homeColorRgb}, 0.4)`,
+            background: `radial-gradient(ellipse, 
+              rgba(255,255,255, 0.6) 0%, 
+              rgba(${awayColorRgb}, 0.4) 30%,
+              rgba(${homeColorRgb}, 0.4) 70%,
+              transparent 100%)`,
+            boxShadow: `0 0 20px rgba(255,255,255, 0.4)`,
+            animation: 'pulse 4s ease-in-out infinite',
           }}
         />
       </div>
@@ -733,6 +837,19 @@ const GameDetailView = ({ gameId }) => {
           />
         )}
       </div>
+      
+      {/* Additional CSS for animations */}
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-10px); opacity: 0.8; }
+          100% { transform: translateX(10px); opacity: 1; }
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(180deg); }
+        }
+      `}</style>
     </div>
   );
 };

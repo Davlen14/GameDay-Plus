@@ -436,3 +436,36 @@ body {
 .hover\:brand-gradient-bg:hover {
   background: linear-gradient(135deg, rgb(220,0,30), rgb(175,0,22), rgb(130,0,15), rgb(175,0,22), rgb(220,0,30));
 }
+
+/* Enhanced glassy hover effects */
+.glassy-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glassy-hover:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(25px) saturate(200%);
+  -webkit-backdrop-filter: blur(25px) saturate(200%);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 15px 40px rgba(0, 0, 0, 0.15),
+    inset 0 2px 8px rgba(255, 255, 255, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+/* Card hover effects - no pink */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  background: rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.15),
+    inset 0 2px 10px rgba(255, 255, 255, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
