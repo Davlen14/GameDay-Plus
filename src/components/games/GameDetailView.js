@@ -183,13 +183,12 @@ const GameDetailView = ({ gameId }) => {
       />
 
       {/* Floating Header */}
-      {headerMode !== 'dynamicIsland' || !isDynamicIslandActive ? (
-        <FloatingHeader 
+      {headerMode !== 'dynamicIsland' || !isDynamicIslandActive ? (        <FloatingHeader
           game={currentGame}
           awayTeam={awayTeam}
           homeTeam={homeTeam}
           headerMode={headerMode}
-          onBack={() => navigate(-1)}
+          onBack={() => window.history.back()}
           formatDate={formatDate}
           getTeamLogo={getTeamLogo}
           getGameStatus={getGameStatus}
@@ -198,7 +197,7 @@ const GameDetailView = ({ gameId }) => {
         />
       ) : (
         <DynamicIslandStatus 
-          onBack={() => navigate(-1)}
+          onBack={() => window.history.back()}
           isDynamicIslandActive={isDynamicIslandActive}
         />
       )}
