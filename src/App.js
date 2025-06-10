@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 // Layout Components
 import Header from './components/layout/Header';
@@ -75,26 +77,18 @@ function App() {
   const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
+    // Initialize AOS (Animate On Scroll)
+    AOS.init({
+      duration: 1000,
+      once: true,
+      offset: 100
+    });
+
     // Load particles.js script
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
     script.async = true;
     document.body.appendChild(script);
-
-    // Simple AOS (Animate On Scroll) implementation
-    const aosElements = document.querySelectorAll('[data-aos]');
-
-    const aosObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('aos-animate');
-        }
-      });
-    }, { threshold: 0.1 });
-
-    aosElements.forEach(el => {
-      aosObserver.observe(el);
-    });
 
     // Handle hash changes for simple routing
     const handleHashChange = () => {
@@ -111,9 +105,6 @@ function App() {
 
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
-      aosElements.forEach(el => {
-        aosObserver.unobserve(el);
-      });
     };
   }, []);
 

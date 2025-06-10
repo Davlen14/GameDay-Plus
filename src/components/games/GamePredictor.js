@@ -14,7 +14,7 @@ const GamePredictor = () => {
         <div className="text-center mb-16" data-aos="fade-up">
           <div className="flex items-center justify-center mb-6">
             <div className={`w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center ${animateShine ? 'metallic-3d-logo-enhanced' : ''}`}>
-              <i className="fas fa-crystal-ball text-3xl icon-gradient"></i>
+              <i className="fas fa-brain text-3xl icon-gradient"></i>
             </div>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6">

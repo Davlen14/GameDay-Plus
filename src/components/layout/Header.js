@@ -103,7 +103,7 @@ const Header = () => {
             </button>
             <div className="dropdown-content">
               <a href="#schedule-2024-recap"><i className="fas fa-calendar-alt icon-gradient"></i> <span>2024 Season Recap</span></a>
-              <a href="#game-predictor"><i className="fas fa-crystal-ball icon-gradient"></i> <span>Game Predictor</span></a>
+              <a href="#game-predictor"><i className="fas fa-brain icon-gradient"></i> <span>Game Predictor</span></a>
               <a href="#live-games"><i className="fas fa-broadcast-tower icon-gradient"></i> <span>Live Games</span> <span className="ml-auto text-xs text-red-600">●</span></a>
             </div>
           </div>
