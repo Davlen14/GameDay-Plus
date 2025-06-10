@@ -1,139 +1,131 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { gameService, teamService, rankingsService } from '../../services';
 
-// Enhanced Weather Icon Component with futuristic HD animations and modern gradients
+// Enhanced Weather Icon Component with HD animations and temperature gradients
 const WeatherIcon = ({ condition, temperature }) => {
   const getWeatherIcon = () => {
-    if (!condition) return 'fas fa-microchip';
+    if (!condition) return 'fas fa-thermometer-half';
     const cond = condition.toLowerCase();
-    if (cond.includes('clear') || cond.includes('sunny')) return 'fas fa-circle';
-    if (cond.includes('partly') || cond.includes('scattered')) return 'fas fa-adjust';
-    if (cond.includes('cloud') || cond.includes('overcast')) return 'fas fa-wifi';
-    if (cond.includes('rain') || cond.includes('shower')) return 'fas fa-grip-lines';
+    if (cond.includes('clear') || cond.includes('sunny')) return 'fas fa-sun';
+    if (cond.includes('partly') || cond.includes('scattered')) return 'fas fa-cloud-sun';
+    if (cond.includes('cloud') || cond.includes('overcast')) return 'fas fa-cloud';
+    if (cond.includes('rain') || cond.includes('shower')) return 'fas fa-cloud-rain';
     if (cond.includes('snow') || cond.includes('blizzard')) return 'fas fa-snowflake';
     if (cond.includes('storm') || cond.includes('thunder')) return 'fas fa-bolt';
-    if (cond.includes('fog') || cond.includes('mist')) return 'fas fa-cloud';
-    if (cond.includes('wind')) return 'fas fa-hurricane';
+    if (cond.includes('fog') || cond.includes('mist')) return 'fas fa-smog';
+    if (cond.includes('wind')) return 'fas fa-wind';
     if (cond.includes('night')) return 'fas fa-moon';
-    return 'fas fa-satellite';
+    return 'fas fa-cloud-sun';
   };
 
   const getTemperatureGradient = () => {
-    if (!temperature) return 'from-slate-400 to-slate-600';
+    if (!temperature) return 'from-gray-400 to-gray-600';
     
-    if (temperature >= 90) return 'brand-gradient-bg'; // Hot - Brand gradient
-    if (temperature >= 80) return 'from-amber-400 via-orange-500 to-red-500'; // Warm
-    if (temperature >= 70) return 'from-emerald-400 via-teal-500 to-cyan-500'; // Perfect
-    if (temperature >= 50) return 'from-sky-400 via-blue-500 to-indigo-500'; // Cool
-    if (temperature >= 32) return 'from-blue-500 via-purple-500 to-violet-600'; // Cold
-    return 'from-indigo-600 via-purple-700 to-blue-800'; // Very Cold
+    if (temperature >= 90) return 'from-red-500 via-orange-500 to-yellow-400'; // Hot - Fiery
+    if (temperature >= 80) return 'from-orange-400 via-yellow-400 to-green-400'; // Warm
+    if (temperature >= 70) return 'from-green-400 via-emerald-400 to-teal-400'; // Perfect - Green
+    if (temperature >= 50) return 'from-blue-400 via-sky-400 to-cyan-400'; // Cool
+    if (temperature >= 32) return 'from-blue-500 via-indigo-500 to-purple-500'; // Cold - Blue
+    return 'from-blue-600 via-purple-600 to-indigo-700'; // Very Cold
   };
 
   const getWeatherAnimation = () => {
-    if (!condition) return 'animate-pulse';
+    if (!condition) return '';
     const cond = condition.toLowerCase();
-    if (cond.includes('sunny') || cond.includes('clear')) return 'animate-spin';
-    if (cond.includes('rain')) return 'animate-pulse';
-    if (cond.includes('snow')) return 'animate-ping';
-    if (cond.includes('storm')) return 'animate-bounce';
+    if (cond.includes('sunny') || cond.includes('clear')) return 'animate-pulse';
+    if (cond.includes('rain')) return 'animate-bounce';
+    if (cond.includes('snow')) return 'animate-spin';
+    if (cond.includes('storm')) return 'animate-ping';
     if (cond.includes('cloud')) return 'animate-pulse';
-    return 'animate-pulse';
+    return '';
   };
 
   const getWeatherGlow = () => {
-    if (!condition) return 'drop-shadow-[0_0_15px_rgba(100,116,139,0.6)]';
+    if (!condition) return '';
     const cond = condition.toLowerCase();
     if (cond.includes('sunny') || cond.includes('clear')) return 'drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]';
     if (cond.includes('rain')) return 'drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]';
     if (cond.includes('snow')) return 'drop-shadow-[0_0_15px_rgba(219,234,254,0.8)]';
     if (cond.includes('storm')) return 'drop-shadow-[0_0_20px_rgba(168,85,247,0.7)]';
-    return 'drop-shadow-[0_0_12px_rgba(100,116,139,0.5)]';
+    return 'drop-shadow-lg';
+  };
+
+  const getTimeOfDayEffect = () => {
+    if (!condition) return '';
+    const cond = condition.toLowerCase();
+    if (cond.includes('night')) return 'from-indigo-600 via-purple-600 to-blue-800';
+    return '';
   };
 
   return (
     <div className="relative">
-      {/* Futuristic Weather Icon Container */}
+      {/* Weather Icon Container */}
       <div className="relative flex items-center space-x-4">
-        {/* Modern Weather Icon */}
+        {/* Animated Weather Icon */}
         <div className="relative">
           <div 
-            className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${getTemperatureGradient()} p-4 shadow-2xl backdrop-blur-xl border border-white/20`}
+            className={`w-12 h-12 rounded-full bg-gradient-to-br ${getTemperatureGradient()} p-3 shadow-2xl backdrop-blur-xl`}
             style={{
               boxShadow: `
-                0 10px 40px rgba(0,0,0,0.15),
-                inset 0 2px 10px rgba(255,255,255,0.3),
-                0 0 0 1px rgba(255,255,255,0.1)
+                0 8px 32px rgba(0,0,0,0.12),
+                inset 0 2px 8px rgba(255,255,255,0.2),
+                0 0 0 1px rgba(255,255,255,0.05)
               `
             }}
           >
             <i 
               className={`${getWeatherIcon()} text-white text-lg ${getWeatherAnimation()} ${getWeatherGlow()}`}
-              style={{ 
-                filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
-                transform: 'scale(1.1)'
-              }}
+              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
             />
-            
-            {/* Futuristic corner accents */}
-            <div className="absolute top-1 left-1 w-2 h-2 border-l-2 border-t-2 border-white/40 rounded-tl"></div>
-            <div className="absolute top-1 right-1 w-2 h-2 border-r-2 border-t-2 border-white/40 rounded-tr"></div>
-            <div className="absolute bottom-1 left-1 w-2 h-2 border-l-2 border-b-2 border-white/40 rounded-bl"></div>
-            <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-white/40 rounded-br"></div>
           </div>
           
-          {/* Modern weather effects */}
+          {/* Animated Weather Effects */}
           {condition?.toLowerCase().includes('rain') && (
             <div className="absolute -top-1 -right-1">
-              <div className="w-1 h-4 bg-blue-400/80 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
-              <div className="absolute top-1 left-2 w-1 h-3 bg-blue-300/60 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
+              <div className="w-2 h-6 bg-blue-400 rounded-full opacity-60 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="absolute top-1 left-1 w-1 h-4 bg-blue-300 rounded-full opacity-40 animate-bounce" style={{ animationDelay: '200ms' }}></div>
             </div>
           )}
           
           {condition?.toLowerCase().includes('snow') && (
-            <div className="absolute -top-2 -right-2 w-2 h-2 bg-white/90 rounded-full animate-ping"></div>
+            <div className="absolute -top-2 -right-2 w-3 h-3 bg-white rounded-full opacity-70 animate-ping"></div>
           )}
           
           {(condition?.toLowerCase().includes('sunny') || condition?.toLowerCase().includes('clear')) && (
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-300/80 rounded-full animate-pulse"></div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-300 rounded-full opacity-60 animate-pulse"></div>
           )}
         </div>
 
-        {/* Futuristic Temperature Display */}
+        {/* Temperature Display */}
         {temperature && (
           <div className="relative">
             <div 
-              className={`px-5 py-3 rounded-xl bg-gradient-to-r ${getTemperatureGradient()} text-white font-black text-lg shadow-xl backdrop-blur-xl border border-white/20`}
+              className={`px-4 py-2 rounded-2xl bg-gradient-to-r ${getTemperatureGradient()} text-white font-black text-lg shadow-xl backdrop-blur-xl`}
               style={{
                 boxShadow: `
-                  0 10px 30px rgba(0,0,0,0.2),
-                  inset 0 1px 6px rgba(255,255,255,0.3)
+                  0 8px 25px rgba(0,0,0,0.15),
+                  inset 0 1px 4px rgba(255,255,255,0.2)
                 `
               }}
             >
-              <span className="drop-shadow-lg font-mono tracking-wider">{Math.round(temperature)}°</span>
-              
-              {/* Futuristic UI elements */}
-              <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
-              <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+              <span className="drop-shadow-sm">{Math.round(temperature)}°F</span>
             </div>
             
-            {/* Temperature status indicators */}
+            {/* Temperature indicators */}
             {temperature >= 90 && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-400/80 rounded-full animate-pulse border border-white/30"></div>
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
             )}
             {temperature <= 32 && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-200/80 rounded-full animate-pulse border border-white/30"></div>
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-200 rounded-full animate-pulse"></div>
             )}
           </div>
         )}
       </div>
 
-      {/* Modern condition display */}
+      {/* Weather condition text */}
       {condition && (
-        <div className="mt-3 text-xs font-medium text-gray-600 capitalize text-center tracking-wide">
-          <span className="bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/30">
-            {condition}
-          </span>
+        <div className="mt-2 text-xs font-medium text-gray-600 capitalize text-center">
+          {condition}
         </div>
       )}
     </div>
@@ -144,34 +136,26 @@ const WeatherIcon = ({ condition, temperature }) => {
 const ExcitementStars = ({ excitementIndex = 0 }) => {
   const stars = Math.min(Math.max(Math.round(excitementIndex / 2), 0), 5);
   const getStarGradient = () => {
-    if (excitementIndex >= 8) return 'from-amber-300 via-orange-400 to-red-500';
-    if (excitementIndex >= 6) return 'from-yellow-400 via-amber-500 to-orange-500';
-    if (excitementIndex >= 4) return 'from-emerald-400 via-teal-500 to-cyan-500';
-    return 'from-slate-300 to-slate-500';
-  };
-
-  const getGlow = () => {
-    if (excitementIndex >= 8) return 'drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]';
-    if (excitementIndex >= 6) return 'drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]';
-    if (excitementIndex >= 4) return 'drop-shadow-[0_0_4px_rgba(20,184,166,0.4)]';
-    return '';
+    if (excitementIndex >= 8) return 'from-yellow-300 via-yellow-400 to-orange-400';
+    if (excitementIndex >= 6) return 'from-yellow-400 via-yellow-500 to-orange-500';
+    if (excitementIndex >= 4) return 'from-yellow-500 via-yellow-600 to-orange-600';
+    return 'from-gray-300 to-gray-400';
   };
 
   return (
-    <div className="flex items-center space-x-3">
+    <div className="flex items-center space-x-2">
       <div className="flex space-x-1">
         {[...Array(5)].map((_, i) => (
           <div
             key={i}
-            className={`w-4 h-4 rounded-sm ${i < stars ? `bg-gradient-to-br ${getStarGradient()}` : 'bg-slate-200/60'} shadow-lg transition-all duration-300 hover:scale-110 border border-white/20`}
+            className={`w-4 h-4 rounded-sm transform rotate-45 ${i < stars ? `bg-gradient-to-br ${getStarGradient()}` : 'bg-gray-200'} shadow-lg transition-all duration-300 hover:scale-110`}
             style={i < stars ? {
-              boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.3)',
-              filter: getGlow()
+              boxShadow: '0 4px 15px rgba(251, 191, 36, 0.4), inset 0 1px 2px rgba(255,255,255,0.2)'
             } : {}}
           />
         ))}
       </div>
-      <span className="text-sm font-bold bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent font-mono">
+      <span className="text-sm font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
         {excitementIndex ? excitementIndex.toFixed(1) : 'N/A'}
       </span>
     </div>
@@ -200,7 +184,7 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
       
       <div className="relative z-10">
         <div className="text-sm font-bold text-gray-700 mb-4 text-center flex items-center justify-center space-x-2">
-          <div className="w-6 h-6 rounded-full brand-gradient-to-br flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
             <i className="fas fa-chart-line text-white text-xs"></i>
           </div>
           <span>Win Probability</span>
@@ -254,7 +238,7 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
             <div className="flex-1">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-bold text-gray-800">{homeTeam}</span>
-                <span className="text-lg font-black gradient-text">{homePct}%</span>
+                <span className="text-lg font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">{homePct}%</span>
               </div>
               <div className="h-2 bg-gray-200/50 rounded-full overflow-hidden">
                 <div 
@@ -285,7 +269,7 @@ const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) =>
   return (
     <div className="relative">
       <div 
-        className="bg-white/25 backdrop-blur-xl px-3 py-2 rounded-xl text-xs cursor-help glassy-hover border border-white/30"
+        className="bg-white/25 backdrop-blur-xl px-3 py-2 rounded-xl text-xs cursor-help hover:bg-white/35 transition-all duration-300 border border-white/30"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         style={{
@@ -363,57 +347,46 @@ const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) =>
 
 const MediaIcon = ({ outlet, mediaType }) => {
   const getNetworkIcon = () => {
-    if (!outlet) return 'fas fa-broadcast-tower';
+    if (!outlet) return 'fas fa-tv';
     const network = outlet.toLowerCase();
     if (network.includes('espn')) return 'fas fa-satellite-dish';
-    if (network.includes('fox')) return 'fas fa-signal';
-    if (network.includes('cbs')) return 'fas fa-wifi';
-    if (network.includes('nbc')) return 'fas fa-tower-broadcast';
-    if (network.includes('peacock')) return 'fas fa-circle-dot';
-    if (network.includes('paramount')) return 'fas fa-mountain';
-    if (network.includes('hulu')) return 'fas fa-play';
+    if (network.includes('fox')) return 'fas fa-broadcast-tower';
+    if (network.includes('cbs')) return 'fas fa-tv';
+    if (network.includes('nbc')) return 'fas fa-tv';
+    if (network.includes('peacock')) return 'fas fa-play-circle';
+    if (network.includes('paramount')) return 'fas fa-video';
+    if (network.includes('hulu')) return 'fas fa-play-circle';
     if (network.includes('netflix')) return 'fas fa-film';
     if (mediaType === 'web') return 'fas fa-globe';
-    return 'fas fa-broadcast-tower';
+    return 'fas fa-tv';
   };
 
   const getNetworkGradient = () => {
-    if (!outlet) return 'from-slate-500 to-slate-700';
+    if (!outlet) return 'from-gray-500 to-gray-700';
     const network = outlet.toLowerCase();
-    if (network.includes('espn')) return 'brand-gradient-bg';
+    if (network.includes('espn')) return 'from-red-500 to-red-700';
     if (network.includes('fox')) return 'from-blue-500 to-blue-700';
     if (network.includes('cbs')) return 'from-blue-600 to-blue-800';
     if (network.includes('nbc')) return 'from-purple-500 to-purple-700';
     if (network.includes('peacock')) return 'from-blue-400 to-blue-600';
     if (mediaType === 'web') return 'from-purple-500 to-purple-700';
-    return 'from-slate-500 to-slate-700';
+    return 'from-gray-500 to-gray-700';
   };
 
   return (
     <div className="relative">
       <div 
-        className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${getNetworkGradient()} p-4 shadow-xl backdrop-blur-xl flex items-center justify-center border border-white/20`}
+        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getNetworkGradient()} p-3 shadow-xl backdrop-blur-xl flex items-center justify-center`}
         style={{
           boxShadow: `
-            0 10px 30px rgba(0,0,0,0.2),
-            inset 0 1px 6px rgba(255,255,255,0.3)
+            0 8px 25px rgba(0,0,0,0.15),
+            inset 0 1px 4px rgba(255,255,255,0.2)
           `
         }}
       >
-        <i className={`${getNetworkIcon()} text-white text-lg drop-shadow-lg`} />
-        
-        {/* Futuristic corner accents */}
-        <div className="absolute top-1 left-1 w-2 h-2 border-l border-t border-white/40"></div>
-        <div className="absolute top-1 right-1 w-2 h-2 border-r border-t border-white/40"></div>
-        <div className="absolute bottom-1 left-1 w-2 h-2 border-l border-b border-white/40"></div>
-        <div className="absolute bottom-1 right-1 w-2 h-2 border-r border-b border-white/40"></div>
+        <i className={`${getNetworkIcon()} text-white text-lg`} />
       </div>
-      
-      {/* Live indicator */}
-      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400/90 rounded-full animate-pulse shadow-lg border border-white/30"></div>
-      
-      {/* Pulse effect */}
-      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400/30 rounded-full animate-ping"></div>
+      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
     </div>
   );
 };
@@ -647,13 +620,13 @@ const Schedule = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
         <div className="text-center">
           <div className="relative mb-8">
-            <div className="w-20 h-20 rounded-full brand-gradient-via animate-spin mx-auto flex items-center justify-center" style={{ boxShadow: '0 10px 30px rgba(204, 0, 28, 0.3)' }}>
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 animate-spin mx-auto flex items-center justify-center" style={{ boxShadow: '0 10px 30px rgba(220, 38, 38, 0.3)' }}>
               <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center">
                 <i className="fas fa-football-ball text-white text-2xl"></i>
               </div>
             </div>
           </div>
-          <h2 className="text-2xl font-black gradient-text mb-2">
+          <h2 className="text-2xl font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent mb-2">
             {isPostseason ? 'Loading Postseason Games...' : `Loading Week ${selectedWeek} Games...`}
           </h2>
           <p className="text-gray-600">Fetching college football schedule</p>
@@ -674,14 +647,14 @@ const Schedule = () => {
             `
           }}
         >
-          <div className="w-16 h-16 rounded-full brand-gradient-to-br mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-700 mx-auto mb-4 flex items-center justify-center">
             <i className="fas fa-exclamation-triangle text-white text-2xl"></i>
           </div>
           <h3 className="font-black text-gray-800 text-xl mb-2">Error Loading Schedule</h3>
           <p className="text-gray-600 mb-6">{errorMessage}</p>
           <button 
             onClick={loadDataIfNeeded}
-            className="px-6 py-3 brand-gradient-to-r text-white font-bold rounded-2xl hover:brand-gradient-bg transition-all duration-300 shadow-lg"
+            className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg"
           >
             Try Again
           </button>
@@ -724,43 +697,35 @@ const Schedule = () => {
         }
         
         .floating-orb {
-          background: linear-gradient(135deg, rgba(204,0,28,0.08), rgba(255,255,255,0.05), rgba(204,0,28,0.04));
-          animation: float 8s ease-in-out infinite;
+          background: linear-gradient(135deg, rgba(220,38,38,0.1), rgba(185,28,28,0.08), rgba(153,27,27,0.06));
+          animation: float 6s ease-in-out infinite;
         }
         
         @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
-          50% { transform: translateY(-30px) rotate(180deg) scale(1.1); }
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(180deg); }
         }
         
-        .cyber-pulse {
-          background: radial-gradient(circle, rgba(204,0,28,0.1) 0%, transparent 70%);
-          animation: pulse 4s ease-in-out infinite;
+        .digital-grid {
+          background-image: 
+            radial-gradient(circle at 25% 25%, rgba(220,38,38,0.1) 2px, transparent 2px),
+            radial-gradient(circle at 75% 75%, rgba(220,38,38,0.1) 2px, transparent 2px);
+          background-size: 50px 50px;
+          animation: gridMove 10s linear infinite;
         }
         
-        @keyframes pulse {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.2); }
+        @keyframes gridMove {
+          0% { background-position: 0 0, 0 0; }
+          100% { background-position: 50px 50px, 50px 50px; }
         }
       `}</style>
 
-      {/* Futuristic Cyber Background */}
+      {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Multiple layered network backgrounds */}
-        <div className="absolute inset-0 cyber-network opacity-60"></div>
-        <div className="absolute inset-0 connection-lines opacity-40"></div>
-        <div className="absolute inset-0 data-nodes opacity-30"></div>
-        
-        {/* Floating orbs with cyber effect */}
-        <div className="absolute top-20 left-10 w-96 h-96 floating-orb rounded-full blur-3xl"></div>
-        <div className="absolute top-60 right-20 w-80 h-80 cyber-pulse rounded-full blur-2xl" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-72 h-72 floating-orb rounded-full blur-3xl" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute bottom-20 right-1/3 w-64 h-64 cyber-pulse rounded-full blur-2xl" style={{ animationDelay: '3s' }}></div>
-        
-        {/* Network connection nodes */}
-        <div className="absolute top-1/4 left-1/2 w-4 h-4 bg-gradient-to-br from-red-500/60 to-white/40 rounded-full animate-ping"></div>
-        <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-gradient-to-br from-white/50 to-red-400/50 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/3 left-1/3 w-2 h-2 bg-gradient-to-br from-red-600/70 to-white/30 rounded-full animate-ping" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute inset-0 digital-grid opacity-40"></div>
+        <div className="absolute top-20 left-10 w-72 h-72 floating-orb rounded-full blur-3xl"></div>
+        <div className="absolute top-60 right-20 w-56 h-56 floating-orb rounded-full blur-3xl" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-64 h-64 floating-orb rounded-full blur-3xl" style={{ animationDelay: '4s' }}></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -778,8 +743,8 @@ const Schedule = () => {
                 `
               }}
             >
-              <i className="fas fa-calendar-check text-4xl gradient-text group-hover:scale-110 transition-transform duration-300"></i>
-              <div className="absolute -top-1 -right-1 w-4 h-4 brand-gradient-to-br rounded-full animate-pulse"></div>
+              <i className="fas fa-calendar-check text-4xl bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300"></i>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-red-400 to-red-600 rounded-full animate-pulse"></div>
             </div>
           </div>
           
@@ -789,7 +754,7 @@ const Schedule = () => {
               College Football
             </span>
             <br />
-            <span className="gradient-text drop-shadow-2xl">
+            <span className="bg-gradient-to-br from-red-600 via-red-700 to-red-800 bg-clip-text text-transparent drop-shadow-2xl">
               Schedule
             </span>
           </h1>
@@ -805,8 +770,8 @@ const Schedule = () => {
             }}
           >
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full brand-gradient-to-r animate-pulse"></div>
-              <span className="text-xl font-black gradient-text">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-700 animate-pulse"></div>
+              <span className="text-xl font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
                 {filteredGames.length} Games
               </span>
             </div>
@@ -843,7 +808,7 @@ const Schedule = () => {
                 >
                   {selectedCategory === category && (
                     <div 
-                      className="absolute inset-0 rounded-2xl brand-gradient-to-br"
+                      className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600 to-red-800"
                       style={{
                         boxShadow: '0 8px 32px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
                       }}
@@ -851,7 +816,7 @@ const Schedule = () => {
                   )}
                   
                   {selectedCategory !== category && (
-                    <div className="absolute inset-0 liquid-glass rounded-2xl glassy-hover"></div>
+                    <div className="absolute inset-0 liquid-glass rounded-2xl hover:bg-white/40 transition-all duration-300"></div>
                   )}
                   
                   <span className="relative z-10">{category}</span>
@@ -894,7 +859,7 @@ const Schedule = () => {
                     setShowWeekPicker(false);
                     setShowConferencePicker(false);
                   }}
-                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl glassy-hover font-semibold text-gray-700"
+                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700"
                 >
                   <i className="fas fa-calendar-alt"></i>
                   <span>{selectedYear}</span>
@@ -916,7 +881,7 @@ const Schedule = () => {
                           setSelectedYear(year);
                           setShowYearPicker(false);
                         }}
-                        className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
+                        className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
                       >
                         {year}
                       </button>
@@ -934,7 +899,7 @@ const Schedule = () => {
                     setShowYearPicker(false);
                     setShowWeekPicker(false);
                   }}
-                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl glassy-hover font-semibold text-gray-700"
+                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700"
                 >
                   <i className="fas fa-layer-group"></i>
                   <span>{selectedConference || 'All Conferences'}</span>
@@ -954,7 +919,7 @@ const Schedule = () => {
                         setSelectedConference(null);
                         setShowConferencePicker(false);
                       }}
-                      className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
+                      className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
                     >
                       All Conferences
                     </button>
@@ -966,7 +931,7 @@ const Schedule = () => {
                           setSelectedConference(conf.name);
                           setShowConferencePicker(false);
                         }}
-                        className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
+                        className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
                       >
                         {conf.name}
                       </button>
@@ -984,7 +949,7 @@ const Schedule = () => {
                     setShowYearPicker(false);
                     setShowConferencePicker(false);
                   }}
-                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl glassy-hover font-semibold text-gray-700"
+                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700"
                 >
                   <i className="fas fa-calendar-week"></i>
                   <span>{isPostseason ? 'Postseason' : `Week ${selectedWeek}`}</span>
@@ -1007,7 +972,7 @@ const Schedule = () => {
                           setIsPostseason(false);
                           setShowWeekPicker(false);
                         }}
-                        className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
+                        className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
                       >
                         Week {week}
                       </button>
@@ -1018,7 +983,7 @@ const Schedule = () => {
                         setIsPostseason(true);
                         setShowWeekPicker(false);
                       }}
-                      className="block w-full text-left px-6 py-3 glassy-hover font-medium text-gray-700"
+                      className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
                     >
                       Postseason
                     </button>
@@ -1126,7 +1091,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
     >
       {/* Apple Liquid Glass Card */}
       <div 
-        className="relative liquid-glass card-hover rounded-3xl p-10 transition-all duration-700"
+        className="relative liquid-glass rounded-3xl p-10 transition-all duration-700"
         style={{
           boxShadow: `
             0 25px 50px rgba(0,0,0,0.1),
@@ -1137,7 +1102,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
         }}
       >
         {/* Enhanced hover glow */}
-        <div className="absolute -inset-0.5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 brand-gradient-opacity-20 blur-xl"></div>
+        <div className="absolute -inset-0.5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-r from-red-600/20 via-red-500/10 to-red-600/20 blur-xl"></div>
         
         <div className="relative z-10 space-y-10">
           
@@ -1156,7 +1121,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   />
                   {getTeamRank(awayTeamId) && (
                     <div 
-                      className="absolute -top-2 -right-2 w-8 h-8 rounded-full brand-gradient-to-br flex items-center justify-center shadow-2xl"
+                      className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-2xl"
                       style={{
                         boxShadow: '0 8px 25px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
                       }}
@@ -1171,7 +1136,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                     {getTeamAbbreviation(awayTeamId, awayTeam)}
                   </h3>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-5xl font-black gradient-text mb-3 group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-5xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300">
                       {awayPoints}
                     </div>
                   )}
@@ -1197,7 +1162,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                     `
                   }}
                 >
-                  <span className="text-3xl font-black gradient-text">
+                  <span className="text-3xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent">
                     @
                   </span>
                 </div>
@@ -1210,7 +1175,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                     {getTeamAbbreviation(homeTeamId, homeTeam)}
                   </h3>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-5xl font-black gradient-text mb-3 group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-5xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300">
                       {homePoints}
                     </div>
                   )}
@@ -1233,9 +1198,9 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   />
                   {getTeamRank(homeTeamId) && (
                     <div 
-                      className="absolute -top-2 -left-2 w-8 h-8 rounded-full brand-gradient-to-br flex items-center justify-center shadow-2xl"
+                      className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-2xl"
                       style={{
-                        boxShadow: '0 8px 25px rgba(204, 0, 28, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                        boxShadow: '0 8px 25px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
                       }}
                     >
                       <span className="text-white text-sm font-black">{getTeamRank(homeTeamId)}</span>
@@ -1250,10 +1215,10 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               className={`relative px-8 py-4 rounded-2xl font-black text-lg backdrop-blur-xl border shadow-2xl ${
                 isCompleted 
                   ? 'bg-green-500/20 border-green-400/30 text-green-700' 
-                  : 'brand-gradient-to-br border-white/30 text-white'
+                  : 'bg-gradient-to-br from-red-600 to-red-800 border-white/30 text-white'
               }`}
               style={!isCompleted ? {
-                boxShadow: '0 8px 32px rgba(204, 0, 28, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                boxShadow: '0 8px 32px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
               } : {}}
             >
               <div className="flex items-center space-x-3">
@@ -1408,9 +1373,9 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
 
             {game.rivalry && (
               <div 
-                className="px-6 py-3 rounded-full brand-gradient-to-br text-white font-bold text-sm shadow-2xl"
+                className="px-6 py-3 rounded-full bg-gradient-to-br from-red-600 to-red-800 text-white font-bold text-sm shadow-2xl"
                 style={{
-                  boxShadow: '0 4px 15px rgba(204, 0, 28, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                  boxShadow: '0 4px 15px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
                 }}
               >
                 <i className="fas fa-fire mr-2"></i>
