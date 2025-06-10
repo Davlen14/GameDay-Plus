@@ -96,6 +96,18 @@ const Header = () => {
             </div>
           </div>
 
+          {/* Games Dropdown */}
+          <div className="dropdown">
+            <button className="dropdown-button gradient-text hover:opacity-80 transition duration-300">
+              Games <FontAwesomeIcon icon={faChevronDown} className="text-xs icon-gradient" />
+            </button>
+            <div className="dropdown-content">
+              <a href="#schedule-2024-recap"><i className="fas fa-calendar-alt icon-gradient"></i> <span>2024 Season Recap</span></a>
+              <a href="#game-predictor"><i className="fas fa-crystal-ball icon-gradient"></i> <span>Game Predictor</span></a>
+              <a href="#live-games"><i className="fas fa-broadcast-tower icon-gradient"></i> <span>Live Games</span> <span className="ml-auto text-xs text-red-600">●</span></a>
+            </div>
+          </div>
+
           {/* Analytics Dropdown */}
           <div className="dropdown">
             <button className="dropdown-button gradient-text hover:opacity-80 transition duration-300">
@@ -254,9 +266,21 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Analytics */}
+        {/* Mobile Games */}
         <div className={`mobile-dropdown ${activeDropdowns.includes(1) ? 'active' : ''}`}>
           <button onClick={() => toggleMobileDropdown(1)} className="mobile-dropdown-toggle w-full text-left gradient-text py-2 px-4 flex items-center justify-between">
+            Games <i className="fas fa-chevron-down text-xs icon-gradient"></i>
+          </button>
+          <div className="mobile-dropdown-content px-4">
+            <a href="#schedule-2024-recap" className="block text-gray-600 hover:gradient-text py-1 px-4">2024 Season Recap</a>
+            <a href="#game-predictor" className="block text-gray-600 hover:gradient-text py-1 px-4">Game Predictor</a>
+            <a href="#live-games" className="block text-gray-600 hover:gradient-text py-1 px-4">Live Games</a>
+          </div>
+        </div>
+
+        {/* Mobile Analytics */}
+        <div className={`mobile-dropdown ${activeDropdowns.includes(2) ? 'active' : ''}`}>
+          <button onClick={() => toggleMobileDropdown(2)} className="mobile-dropdown-toggle w-full text-left gradient-text py-2 px-4 flex items-center justify-between">
             Analytics <i className="fas fa-chevron-down text-xs icon-gradient"></i>
           </button>
           <div className="mobile-dropdown-content px-4">
@@ -279,8 +303,8 @@ const Header = () => {
         </div>
 
         {/* Mobile Betting */}
-        <div className={`mobile-dropdown ${activeDropdowns.includes(2) ? 'active' : ''}`}>
-          <button onClick={() => toggleMobileDropdown(2)} className="mobile-dropdown-toggle w-full text-left gradient-text py-2 px-4 flex items-center justify-between">
+        <div className={`mobile-dropdown ${activeDropdowns.includes(3) ? 'active' : ''}`}>
+          <button onClick={() => toggleMobileDropdown(3)} className="mobile-dropdown-toggle w-full text-left gradient-text py-2 px-4 flex items-center justify-between">
             Betting <i className="fas fa-chevron-down text-xs icon-gradient"></i>
           </button>
           <div className="mobile-dropdown-content px-4">
@@ -293,8 +317,8 @@ const Header = () => {
         </div>
 
         {/* Mobile News & Media */}
-        <div className={`mobile-dropdown ${activeDropdowns.includes(3) ? 'active' : ''}`}>
-          <button onClick={() => toggleMobileDropdown(3)} className="mobile-dropdown-toggle w-full text-left gradient-text py-2 px-4 flex items-center justify-between">
+        <div className={`mobile-dropdown ${activeDropdowns.includes(4) ? 'active' : ''}`}>
+          <button onClick={() => toggleMobileDropdown(4)} className="mobile-dropdown-toggle w-full text-left gradient-text py-2 px-4 flex items-center justify-between">
             News & Media <i className="fas fa-chevron-down text-xs icon-gradient"></i>
           </button>
           <div className="mobile-dropdown-content px-4">
@@ -320,8 +344,8 @@ const Header = () => {
         </div>
 
         {/* Mobile FanHub */}
-        <div className={`mobile-dropdown ${activeDropdowns.includes(4) ? 'active' : ''}`}>
-          <button onClick={() => toggleMobileDropdown(4)} className="mobile-dropdown-toggle w-full text-left gradient-text py-2 px-4 flex items-center justify-between">
+        <div className={`mobile-dropdown ${activeDropdowns.includes(5) ? 'active' : ''}`}>
+          <button onClick={() => toggleMobileDropdown(5)} className="mobile-dropdown-toggle w-full text-left gradient-text py-2 px-4 flex items-center justify-between">
             FanHub <i className="fas fa-chevron-down text-xs icon-gradient"></i>
           </button>
           <div className="mobile-dropdown-content px-4">

@@ -62,6 +62,11 @@ import Polls from './components/fanhub/Polls';
 import SocialFeed from './components/fanhub/SocialFeed';
 import FanStats from './components/fanhub/FanStats';
 
+// Games Components
+import Schedule2024Recap from './components/games/Schedule2024Recap';
+import GamePredictor from './components/games/GamePredictor';
+import LiveGames from './components/games/LiveGames';
+
 // Testing Component
 import APITester from './components/APITester';
 import GraphQLDemo from './components/GraphQLDemo';
@@ -226,6 +231,14 @@ function App() {
         return <SocialFeed />;
       case 'fan-stats':
         return <FanStats />;
+      
+      // Games routes
+      case 'schedule-2024-recap':
+        return <Schedule2024Recap />;
+      case 'game-predictor':
+        return <GamePredictor />;
+      case 'live-games':
+        return <LiveGames />;
       
       // Testing route
       case 'api-tester':
