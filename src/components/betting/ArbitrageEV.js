@@ -285,43 +285,6 @@ const ArbitrageEV = () => {
     </div>
   );
 
-  const EVBettingView = ({ evGames }) => (
-    <div className="space-y-4">
-      {evGames.length === 0 ? (
-        <div className="text-center py-12">
-          <i className="fas fa-search text-4xl text-gray-400 mb-4"></i>
-          <p className="text-gray-600">No EV opportunities found for this week.</p>
-        </div>
-      ) : (
-        evGames.map(game => (
-          <div key={game.id} className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-green-500">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-bold text-lg">{game.awayTeam} @ {game.homeTeam}</h3>
-                <p className="text-sm text-gray-600">Week {game.week}</p>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-green-600">+{game.maxEV.toFixed(1)}%</div>
-                <div className="text-sm text-gray-600">Max EV</div>
-              </div>
-            </div>
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
-              {game.lines.slice(0, 4).map((line, idx) => (
-                <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <span className="text-sm font-medium">{line.provider}</span>
-                  <div className="text-sm">
-                    <span className="mr-2">{BettingCalculations.formatAmericanOdds(line.homeMoneyline)}</span>
-                    <span>{BettingCalculations.formatAmericanOdds(line.awayMoneyline)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
-
   const ArbitrageViewComponent = ({ arbitrageGames }) => (
     <ArbitrageView 
       arbitrageGames={arbitrageGames} 
