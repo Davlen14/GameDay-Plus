@@ -27,7 +27,7 @@ const GamePredictor = () => {
 
         {/* Coming Soon Card */}
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-12" data-aos="fade-up" data-aos-delay="200">
-          <div className="relative bg-gradient-to-br from-red-600 via-red-700 to-red-800 p-12 text-white">
+          <div className="relative p-12 text-white gradient-bg">
             {/* Tech Pattern Overlay */}
             <div className="absolute inset-0 opacity-10">
               <div className="grid grid-cols-12 h-full">
@@ -80,7 +80,7 @@ const GamePredictor = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {/* Matchup Predictor */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2" data-aos="fade-up" data-aos-delay="300">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 metallic-3d-logo gradient-bg">
               <i className="fas fa-vs text-white text-2xl"></i>
             </div>
             <h3 className="text-2xl font-bold mb-4 gradient-text">Matchup Predictor</h3>
@@ -105,7 +105,7 @@ const GamePredictor = () => {
 
           {/* Weekly Predictions */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2" data-aos="fade-up" data-aos-delay="400">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 metallic-3d-logo gradient-bg">
               <i className="fas fa-calendar-week text-white text-2xl"></i>
             </div>
             <h3 className="text-2xl font-bold mb-4 gradient-text">Weekly Predictions</h3>
@@ -130,7 +130,7 @@ const GamePredictor = () => {
 
           {/* Advanced Models */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2" data-aos="fade-up" data-aos-delay="500">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 metallic-3d-logo gradient-bg">
               <i className="fas fa-cogs text-white text-2xl"></i>
             </div>
             <h3 className="text-2xl font-bold mb-4 gradient-text">Advanced Models</h3>
@@ -190,11 +190,11 @@ const GamePredictor = () => {
               Get early access when we launch!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-red-700 hover:to-red-800 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl">
+              <button className="gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl">
                 <i className="fas fa-rocket mr-2"></i>
                 Join Beta Program
               </button>
-              <button className="border-2 border-red-600 text-red-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-600 hover:text-white transform hover:-translate-y-1 transition-all duration-300">
+              <button className="border-2 gradient-text px-8 py-4 rounded-xl font-bold text-lg hover:gradient-bg hover:text-white transform hover:-translate-y-1 transition-all duration-300" style={{borderColor: 'rgb(204,0,28)'}}>
                 <i className="fas fa-chart-line mr-2"></i>
                 View Sample Predictions
               </button>

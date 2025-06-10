@@ -27,7 +27,7 @@ const Schedule2024Recap = () => {
 
         {/* Coming Soon Card */}
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-12" data-aos="fade-up" data-aos-delay="200">
-          <div className="relative bg-gradient-to-br from-red-600 via-red-700 to-red-800 p-12 text-white">
+          <div className="relative p-12 text-white gradient-bg">
             {/* Particle Effect Overlay */}
             <div className="absolute inset-0 opacity-20">
               <div className="absolute top-10 left-10 w-2 h-2 bg-white rounded-full animate-pulse"></div>
@@ -71,7 +71,7 @@ const Schedule2024Recap = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {/* Season Highlights */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2" data-aos="fade-up" data-aos-delay="300">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 metallic-3d-logo gradient-bg">
               <i className="fas fa-star text-white text-2xl"></i>
             </div>
             <h3 className="text-2xl font-bold mb-4 gradient-text">Season Highlights</h3>
@@ -80,15 +80,15 @@ const Schedule2024Recap = () => {
             </p>
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-500">
-                <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                <i className="fas fa-check-circle gradient-text mr-2"></i>
                 Game-changing moments
               </div>
               <div className="flex items-center text-sm text-gray-500">
-                <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                <i className="fas fa-check-circle gradient-text mr-2"></i>
                 Record performances
               </div>
               <div className="flex items-center text-sm text-gray-500">
-                <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                <i className="fas fa-check-circle gradient-text mr-2"></i>
                 Upset alerts
               </div>
             </div>
@@ -96,7 +96,7 @@ const Schedule2024Recap = () => {
 
           {/* Conference Championships */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2" data-aos="fade-up" data-aos-delay="400">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 metallic-3d-logo gradient-bg">
               <i className="fas fa-medal text-white text-2xl"></i>
             </div>
             <h3 className="text-2xl font-bold mb-4 gradient-text">Conference Championships</h3>
@@ -105,15 +105,15 @@ const Schedule2024Recap = () => {
             </p>
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-500">
-                <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                <i className="fas fa-check-circle gradient-text mr-2"></i>
                 All conference results
               </div>
               <div className="flex items-center text-sm text-gray-500">
-                <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                <i className="fas fa-check-circle gradient-text mr-2"></i>
                 Playoff implications
               </div>
               <div className="flex items-center text-sm text-gray-500">
-                <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                <i className="fas fa-check-circle gradient-text mr-2"></i>
                 Championship analysis
               </div>
             </div>
@@ -121,7 +121,7 @@ const Schedule2024Recap = () => {
 
           {/* Bowl & Playoff Games */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2" data-aos="fade-up" data-aos-delay="500">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 metallic-3d-logo gradient-bg">
               <i className="fas fa-trophy text-white text-2xl"></i>
             </div>
             <h3 className="text-2xl font-bold mb-4 gradient-text">Bowl & Playoff Games</h3>
@@ -130,15 +130,15 @@ const Schedule2024Recap = () => {
             </p>
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-500">
-                <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                <i className="fas fa-check-circle gradient-text mr-2"></i>
                 All bowl game results
               </div>
               <div className="flex items-center text-sm text-gray-500">
-                <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                <i className="fas fa-check-circle gradient-text mr-2"></i>
                 Playoff bracket analysis
               </div>
               <div className="flex items-center text-sm text-gray-500">
-                <i className="fas fa-check-circle text-green-500 mr-2"></i>
+                <i className="fas fa-check-circle gradient-text mr-2"></i>
                 Championship game recap
               </div>
             </div>
@@ -153,7 +153,7 @@ const Schedule2024Recap = () => {
               We're working hard to bring you the most comprehensive 2024 season recap experience. 
               Get notified when it launches!
             </p>
-            <button className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-red-700 hover:to-red-800 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl">
+            <button className="gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl">
               <i className="fas fa-bell mr-2"></i>
               Notify Me When Ready
             </button>

@@ -102,9 +102,10 @@ const Header = () => {
               Games <FontAwesomeIcon icon={faChevronDown} className="text-xs icon-gradient" />
             </button>
             <div className="dropdown-content">
+              <a href="#schedule"><i className="fas fa-calendar-check icon-gradient"></i> <span>Schedule</span></a>
               <a href="#schedule-2024-recap"><i className="fas fa-calendar-alt icon-gradient"></i> <span>2024 Season Recap</span></a>
               <a href="#game-predictor"><i className="fas fa-brain icon-gradient"></i> <span>Game Predictor</span></a>
-              <a href="#live-games"><i className="fas fa-broadcast-tower icon-gradient"></i> <span>Live Games</span> <span className="ml-auto text-xs text-red-600">●</span></a>
+              <a href="#live-games"><i className="fas fa-broadcast-tower icon-gradient"></i> <span>Live Games</span> <span className="ml-auto text-xs gradient-text">●</span></a>
             </div>
           </div>
 
@@ -272,6 +273,7 @@ const Header = () => {
             Games <i className="fas fa-chevron-down text-xs icon-gradient"></i>
           </button>
           <div className="mobile-dropdown-content px-4">
+            <a href="#schedule" className="block text-gray-600 hover:gradient-text py-1 px-4">Schedule</a>
             <a href="#schedule-2024-recap" className="block text-gray-600 hover:gradient-text py-1 px-4">2024 Season Recap</a>
             <a href="#game-predictor" className="block text-gray-600 hover:gradient-text py-1 px-4">Game Predictor</a>
             <a href="#live-games" className="block text-gray-600 hover:gradient-text py-1 px-4">Live Games</a>

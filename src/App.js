@@ -65,6 +65,7 @@ import SocialFeed from './components/fanhub/SocialFeed';
 import FanStats from './components/fanhub/FanStats';
 
 // Games Components
+import Schedule from './components/games/Schedule';
 import Schedule2024Recap from './components/games/Schedule2024Recap';
 import GamePredictor from './components/games/GamePredictor';
 import LiveGames from './components/games/LiveGames';
@@ -224,6 +225,8 @@ function App() {
         return <FanStats />;
       
       // Games routes
+      case 'schedule':
+        return <Schedule />;
       case 'schedule-2024-recap':
         return <Schedule2024Recap />;
       case 'game-predictor':
