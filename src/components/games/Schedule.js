@@ -752,23 +752,6 @@ const Schedule = () => {
     { name: 'Sun Belt', logo: 'SBC' }
   ];
 
-  useEffect(() => {
-    loadDataIfNeeded();
-  }, [loadDataIfNeeded]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.dropdown-container')) {
-        setShowWeekPicker(false);
-        setShowYearPicker(false);
-        setShowConferencePicker(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const loadDataIfNeeded = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -832,6 +815,23 @@ const Schedule = () => {
       setIsLoading(false);
     }
   }, [selectedWeek, selectedYear, isPostseason, teams, rankings]);
+
+  useEffect(() => {
+    loadDataIfNeeded();
+  }, [loadDataIfNeeded]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown-container')) {
+        setShowWeekPicker(false);
+        setShowYearPicker(false);
+        setShowConferencePicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Optimized filtered games with useMemo for performance
   const filteredGames = useMemo(() => {
