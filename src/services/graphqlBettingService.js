@@ -1,12 +1,12 @@
 // GraphQL Betting Service for College Football Data API
-import { API_CONFIG } from './api';
 
 class GraphQLBettingService {
   constructor() {
     this.baseURL = 'https://graphql.collegefootballdata.com/v1/graphql';
+    this.apiKey = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY;
     this.headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_CONFIG.key}`
+      'Authorization': `Bearer ${this.apiKey}`
     };
   }
 
