@@ -6,14 +6,11 @@ const GameDetailView = ({ gameId }) => {
   
   // State management
   const [currentGame, setCurrentGame] = useState(null);
-  const [games, setGames] = useState([]);
   const [teams, setTeams] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('overview');
   const [headerMode, setHeaderMode] = useState('expanded'); // expanded, compact, dynamicIsland
-  const [scrollOffset, setScrollOffset] = useState(0);
   const [isDynamicIslandActive, setIsDynamicIslandActive] = useState(false);
-  const [isLoadingStandings, setIsLoadingStandings] = useState(false);
 
   // Tab configuration
   const tabs = [
@@ -52,7 +49,6 @@ const GameDetailView = ({ gameId }) => {
             const weekGames = await gameService.getGamesByWeek(currentYear, week, 'regular', false);
             foundGame = weekGames?.find(game => game.id?.toString() === gameId);
             if (foundGame) {
-              setGames(weekGames || []);
               break;
             }
           } catch (error) {
@@ -65,9 +61,6 @@ const GameDetailView = ({ gameId }) => {
           try {
             const postseasonGames = await gameService.getPostseasonGames(currentYear, false);
             foundGame = postseasonGames?.find(game => game.id?.toString() === gameId);
-            if (foundGame) {
-              setGames(postseasonGames || []);
-            }
           } catch (error) {
             console.warn('Error loading postseason games:', error);
           }
@@ -84,10 +77,10 @@ const GameDetailView = ({ gameId }) => {
     loadGameData();
   }, [gameId]);
 
-  // Get team data
+  // Get team data - with null checks
   const getTeam = (teamId) => teams.find(team => team.id === teamId) || {};
-  const awayTeam = getTeam(currentGame.away_id || currentGame.awayId);
-  const homeTeam = getTeam(currentGame.home_id || currentGame.homeId);
+  const awayTeam = currentGame ? getTeam(currentGame.away_id || currentGame.awayId) : {};
+  const homeTeam = currentGame ? getTeam(currentGame.home_id || currentGame.homeId) : {};
 
   // Get team colors (you can implement this based on your team data structure)
   const getTeamColor = (teamId) => {
@@ -95,11 +88,11 @@ const GameDetailView = ({ gameId }) => {
     if (team.color) {
       return team.color;
     }
-    return teamId === currentGame.away_id || teamId === currentGame.awayId ? '#3B82F6' : '#EF4444';
+    return teamId === (currentGame?.away_id || currentGame?.awayId) ? '#3B82F6' : '#EF4444';
   };
 
-  const awayColor = getTeamColor(currentGame.away_id || currentGame.awayId);
-  const homeColor = getTeamColor(currentGame.home_id || currentGame.homeId);
+  const awayColor = currentGame ? getTeamColor(currentGame.away_id || currentGame.awayId) : '#3B82F6';
+  const homeColor = currentGame ? getTeamColor(currentGame.home_id || currentGame.homeId) : '#EF4444';
 
   // Format date
   const formatDate = (dateString) => {
@@ -137,15 +130,9 @@ const GameDetailView = ({ gameId }) => {
     return team?.logos?.[0] || '/photos/ncaaf.png';
   };
 
-  // Handle scroll
-  const handleScroll = () => {
-    if (scrollRef.current) {
-      setScrollOffset(scrollRef.current.scrollTop);
-    }
-  };
-
   // Game status
   const getGameStatus = () => {
+    if (!currentGame) return 'UPCOMING';
     if (currentGame.completed) return 'FINAL';
     if (currentGame.home_points !== null || currentGame.away_points !== null) return 'LIVE';
     return 'UPCOMING';
@@ -155,7 +142,7 @@ const GameDetailView = ({ gameId }) => {
   const startDynamicIsland = () => {
     setIsDynamicIslandActive(true);
     // In a real app, you would start live activity here
-    console.log('Starting Dynamic Island for game:', currentGame.id);
+    console.log('Starting Dynamic Island for game:', currentGame?.id);
   };
 
   const stopDynamicIsland = () => {
@@ -171,6 +158,47 @@ const GameDetailView = ({ gameId }) => {
       stopDynamicIsland();
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent gradient-bg mx-auto"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-300 border-t-transparent absolute top-0 left-1/2 transform -translate-x-1/2"></div>
+          </div>
+          <div className="mt-6 space-y-2">
+            <p className="text-xl gradient-text font-bold">Loading Game Details...</p>
+            <p className="text-gray-600">Fetching game information</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state - no game found
+  if (!currentGame) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-6">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i className="fas fa-exclamation-triangle text-3xl text-red-500"></i>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">Game Not Found</h3>
+          <p className="text-gray-600 mb-8">
+            We couldn't find the game you're looking for. It may have been moved or doesn't exist.
+          </p>
+          <button 
+            onClick={() => window.history.back()}
+            className="px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition-opacity"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 relative overflow-hidden">
@@ -205,7 +233,6 @@ const GameDetailView = ({ gameId }) => {
       {/* Main Content */}
       <div 
         ref={scrollRef}
-        onScroll={handleScroll}
         className="h-screen overflow-y-auto pt-0"
         style={{
           paddingTop: headerMode === 'dynamicIsland' && isDynamicIslandActive ? '80px' : 
@@ -232,7 +259,6 @@ const GameDetailView = ({ gameId }) => {
               game={currentGame}
               awayTeam={awayTeam}
               homeTeam={homeTeam}
-              isLoadingStandings={isLoadingStandings}
             />
           </div>
 
@@ -447,7 +473,7 @@ const ModernTabSelector = ({ tabs, selectedTab, onTabChange, awayColor, homeColo
 );
 
 // Tab Content
-const TabContent = ({ selectedTab, game, awayTeam, homeTeam, isLoadingStandings }) => {
+const TabContent = ({ selectedTab, game, awayTeam, homeTeam }) => {
   const ComingSoonContent = ({ title, description, icon }) => (
     <div className="text-center py-16">
       <div className="w-20 h-20 gradient-bg rounded-full flex items-center justify-center mx-auto mb-6">
