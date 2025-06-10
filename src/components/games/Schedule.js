@@ -21,7 +21,7 @@ const WeatherIcon = ({ condition, temperature }) => {
   const getTemperatureGradient = () => {
     if (!temperature) return 'from-gray-400 to-gray-600';
     
-    if (temperature >= 90) return 'from-red-500 via-orange-500 to-yellow-400'; // Hot - Fiery
+    if (temperature >= 90) return 'brand-gradient-bg'; // Hot - Brand gradient
     if (temperature >= 80) return 'from-orange-400 via-yellow-400 to-green-400'; // Warm
     if (temperature >= 70) return 'from-green-400 via-emerald-400 to-teal-400'; // Perfect - Green
     if (temperature >= 50) return 'from-blue-400 via-sky-400 to-cyan-400'; // Cool
@@ -184,7 +184,7 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
       
       <div className="relative z-10">
         <div className="text-sm font-bold text-gray-700 mb-4 text-center flex items-center justify-center space-x-2">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full brand-gradient-to-br flex items-center justify-center">
             <i className="fas fa-chart-line text-white text-xs"></i>
           </div>
           <span>Win Probability</span>
@@ -238,7 +238,7 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
             <div className="flex-1">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-bold text-gray-800">{homeTeam}</span>
-                <span className="text-lg font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">{homePct}%</span>
+                <span className="text-lg font-black gradient-text">{homePct}%</span>
               </div>
               <div className="h-2 bg-gray-200/50 rounded-full overflow-hidden">
                 <div 
@@ -364,7 +364,7 @@ const MediaIcon = ({ outlet, mediaType }) => {
   const getNetworkGradient = () => {
     if (!outlet) return 'from-gray-500 to-gray-700';
     const network = outlet.toLowerCase();
-    if (network.includes('espn')) return 'from-red-500 to-red-700';
+    if (network.includes('espn')) return 'brand-gradient-bg';
     if (network.includes('fox')) return 'from-blue-500 to-blue-700';
     if (network.includes('cbs')) return 'from-blue-600 to-blue-800';
     if (network.includes('nbc')) return 'from-purple-500 to-purple-700';
@@ -620,13 +620,13 @@ const Schedule = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
         <div className="text-center">
           <div className="relative mb-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 animate-spin mx-auto flex items-center justify-center" style={{ boxShadow: '0 10px 30px rgba(220, 38, 38, 0.3)' }}>
+            <div className="w-20 h-20 rounded-full brand-gradient-via animate-spin mx-auto flex items-center justify-center" style={{ boxShadow: '0 10px 30px rgba(204, 0, 28, 0.3)' }}>
               <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center">
                 <i className="fas fa-football-ball text-white text-2xl"></i>
               </div>
             </div>
           </div>
-          <h2 className="text-2xl font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent mb-2">
+          <h2 className="text-2xl font-black gradient-text mb-2">
             {isPostseason ? 'Loading Postseason Games...' : `Loading Week ${selectedWeek} Games...`}
           </h2>
           <p className="text-gray-600">Fetching college football schedule</p>
@@ -647,14 +647,14 @@ const Schedule = () => {
             `
           }}
         >
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-700 mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full brand-gradient-to-br mx-auto mb-4 flex items-center justify-center">
             <i className="fas fa-exclamation-triangle text-white text-2xl"></i>
           </div>
           <h3 className="font-black text-gray-800 text-xl mb-2">Error Loading Schedule</h3>
           <p className="text-gray-600 mb-6">{errorMessage}</p>
           <button 
             onClick={loadDataIfNeeded}
-            className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg"
+            className="px-6 py-3 brand-gradient-to-r text-white font-bold rounded-2xl hover:brand-gradient-bg transition-all duration-300 shadow-lg"
           >
             Try Again
           </button>
@@ -743,8 +743,8 @@ const Schedule = () => {
                 `
               }}
             >
-              <i className="fas fa-calendar-check text-4xl bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300"></i>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-red-400 to-red-600 rounded-full animate-pulse"></div>
+              <i className="fas fa-calendar-check text-4xl gradient-text group-hover:scale-110 transition-transform duration-300"></i>
+              <div className="absolute -top-1 -right-1 w-4 h-4 brand-gradient-to-br rounded-full animate-pulse"></div>
             </div>
           </div>
           
@@ -754,7 +754,7 @@ const Schedule = () => {
               College Football
             </span>
             <br />
-            <span className="bg-gradient-to-br from-red-600 via-red-700 to-red-800 bg-clip-text text-transparent drop-shadow-2xl">
+            <span className="gradient-text drop-shadow-2xl">
               Schedule
             </span>
           </h1>
@@ -770,8 +770,8 @@ const Schedule = () => {
             }}
           >
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-700 animate-pulse"></div>
-              <span className="text-xl font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
+              <div className="w-3 h-3 rounded-full brand-gradient-to-r animate-pulse"></div>
+              <span className="text-xl font-black gradient-text">
                 {filteredGames.length} Games
               </span>
             </div>
@@ -808,7 +808,7 @@ const Schedule = () => {
                 >
                   {selectedCategory === category && (
                     <div 
-                      className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600 to-red-800"
+                      className="absolute inset-0 rounded-2xl brand-gradient-to-br"
                       style={{
                         boxShadow: '0 8px 32px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
                       }}
@@ -1102,7 +1102,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
         }}
       >
         {/* Enhanced hover glow */}
-        <div className="absolute -inset-0.5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-r from-red-600/20 via-red-500/10 to-red-600/20 blur-xl"></div>
+        <div className="absolute -inset-0.5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 brand-gradient-opacity-20 blur-xl"></div>
         
         <div className="relative z-10 space-y-10">
           
@@ -1121,7 +1121,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   />
                   {getTeamRank(awayTeamId) && (
                     <div 
-                      className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-2xl"
+                      className="absolute -top-2 -right-2 w-8 h-8 rounded-full brand-gradient-to-br flex items-center justify-center shadow-2xl"
                       style={{
                         boxShadow: '0 8px 25px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
                       }}
@@ -1136,7 +1136,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                     {getTeamAbbreviation(awayTeamId, awayTeam)}
                   </h3>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-5xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-5xl font-black gradient-text mb-3 group-hover:scale-110 transition-transform duration-300">
                       {awayPoints}
                     </div>
                   )}
@@ -1162,7 +1162,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                     `
                   }}
                 >
-                  <span className="text-3xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent">
+                  <span className="text-3xl font-black gradient-text">
                     @
                   </span>
                 </div>
@@ -1175,7 +1175,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                     {getTeamAbbreviation(homeTeamId, homeTeam)}
                   </h3>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-5xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-5xl font-black gradient-text mb-3 group-hover:scale-110 transition-transform duration-300">
                       {homePoints}
                     </div>
                   )}

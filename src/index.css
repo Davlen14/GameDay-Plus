@@ -409,3 +409,30 @@ body {
   letter-spacing: normal !important;
   padding-right: 0.25rem;
 }
+
+/* Brand Gradient Utility Classes */
+.brand-gradient-bg {
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+}
+
+.brand-gradient-to-br {
+  background: linear-gradient(to bottom right, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13));
+}
+
+.brand-gradient-to-r {
+  background: linear-gradient(to right, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+}
+
+.brand-gradient-via {
+  background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+}
+
+/* Brand gradient with opacity variations */
+.brand-gradient-opacity-20 {
+  background: linear-gradient(135deg, rgba(204,0,28,0.2), rgba(161,0,20,0.1), rgba(204,0,28,0.2));
+}
+
+/* Brand gradient for hover states */
+.hover\:brand-gradient-bg:hover {
+  background: linear-gradient(135deg, rgb(220,0,30), rgb(175,0,22), rgb(130,0,15), rgb(175,0,22), rgb(220,0,30));
+}
