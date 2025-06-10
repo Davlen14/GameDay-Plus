@@ -27,25 +27,39 @@ const EVBettingView = ({ evGames = [] }) => {
     rgb(255, 46, 74)
   )`;
 
-  // Metallic EV gradient based on EV value
+  // Helper function for EV color determination (MOVED BEFORE metallicEVGradient)
+  const getEVColor = (ev) => {
+    if (ev < 0) return 'rgb(156, 163, 175)';
+    if (ev < 5) return mediumEVColor;
+    if (ev < 10) return positiveColor;
+    return 'rgb(250, 204, 21)'; // Yellow for highest EV
+  };
+
+  // Metallic EV gradient based on EV value (FIXED - no longer calls getEVColor)
   const metallicEVGradient = (ev) => {
-    const baseColor = getEVColor(ev);
-    
-    if (baseColor === positiveColor) {
+    if (ev < 0) {
       return `linear-gradient(135deg, 
-        rgb(34, 197, 94), 
-        rgb(22, 163, 74), 
-        rgb(15, 118, 54), 
-        rgb(22, 163, 74), 
-        rgb(34, 197, 94)
+        rgb(156, 163, 175), 
+        rgb(107, 114, 128), 
+        rgb(75, 85, 99), 
+        rgb(107, 114, 128), 
+        rgb(156, 163, 175)
       )`;
-    } else if (baseColor === mediumEVColor) {
+    } else if (ev < 5) {
       return `linear-gradient(135deg, 
         rgb(251, 146, 60), 
         rgb(249, 115, 22), 
         rgb(234, 88, 12), 
         rgb(249, 115, 22), 
         rgb(251, 146, 60)
+      )`;
+    } else if (ev < 10) {
+      return `linear-gradient(135deg, 
+        rgb(34, 197, 94), 
+        rgb(22, 163, 74), 
+        rgb(15, 118, 54), 
+        rgb(22, 163, 74), 
+        rgb(34, 197, 94)
       )`;
     } else {
       return `linear-gradient(135deg, 
@@ -114,13 +128,6 @@ const EVBettingView = ({ evGames = [] }) => {
     return odds > 0 ? `+${odds}` : `${odds}`;
   };
 
-  const getEVColor = (ev) => {
-    if (ev < 0) return 'rgb(156, 163, 175)';
-    if (ev < 5) return mediumEVColor;
-    if (ev < 10) return positiveColor;
-    return 'rgb(250, 204, 21)'; // Yellow for highest EV
-  };
-
   const toggleExpanded = (gameId) => {
     const newExpanded = new Set(expandedGames);
     if (newExpanded.has(gameId)) {
@@ -143,16 +150,23 @@ const EVBettingView = ({ evGames = [] }) => {
     setSelectedBetTypes(newTypes);
   };
 
+  // UPDATED to use BettingCalculations utility
   const calculateEstimatedEV = (odds, game, isHome) => {
-    const allTeamOdds = game.lines.map(line => isHome ? line.homeMoneyline : line.awayMoneyline);
+    // Get all odds for the same bet type from different sportsbooks
+    const allTeamOdds = game.lines
+      .map(line => isHome ? line.homeMoneyline : line.awayMoneyline)
+      .filter(o => o && o !== 0);
     
-    if (odds <= 0) return 1.0;
+    if (allTeamOdds.length === 0 || !odds) return 0;
     
-    const average = allTeamOdds.reduce((sum, o) => sum + o, 0) / allTeamOdds.length;
-    const edge = (odds - average) / Math.abs(average);
-    const scaledEV = edge * 5.0;
+    // Calculate fair odds using market average (remove vig estimation)
+    const avgOdds = allTeamOdds.reduce((sum, o) => sum + o, 0) / allTeamOdds.length;
     
-    return Math.max(0.0, Math.min(scaledEV, 15.0));
+    // Use BettingCalculations to get proper EV
+    const ev = BettingCalculations.calculateEV(odds, avgOdds);
+    
+    // Return EV as positive percentage or 0 if negative/null
+    return Math.max(ev || 0, 0);
   };
 
   const calculateBestBets = (line, game) => {
@@ -178,38 +192,73 @@ const EVBettingView = ({ evGames = [] }) => {
     }
 
     if (selectedBetTypes.has('spread')) {
-      const homeSpreadEV = 1.8;
-      const awaySpreadEV = 1.5;
+      // UPDATED to use BettingCalculations for spread EV
+      const homeSpreadOdds = line.homeSpreadOdds || -110;
+      const awaySpreadOdds = line.awaySpreadOdds || -110;
+      
+      // Get average spread odds from all lines for fair value estimation
+      const allHomeSpreadOdds = game.lines
+        .map(l => l.homeSpreadOdds || -110)
+        .filter(o => o && o !== 0);
+      const allAwaySpreadOdds = game.lines
+        .map(l => l.awaySpreadOdds || -110)
+        .filter(o => o && o !== 0);
+      
+      const avgHomeSpreadOdds = allHomeSpreadOdds.length ? 
+        allHomeSpreadOdds.reduce((sum, o) => sum + o, 0) / allHomeSpreadOdds.length : -110;
+      const avgAwaySpreadOdds = allAwaySpreadOdds.length ? 
+        allAwaySpreadOdds.reduce((sum, o) => sum + o, 0) / allAwaySpreadOdds.length : -110;
+      
+      const homeSpreadEV = Math.max(BettingCalculations.calculateEV(homeSpreadOdds, avgHomeSpreadOdds) || 0, 0);
+      const awaySpreadEV = Math.max(BettingCalculations.calculateEV(awaySpreadOdds, avgAwaySpreadOdds) || 0, 0);
 
       if (homeSpreadEV >= minEV) {
         bets.push({
-          description: `${game.homeTeam} ${line.homeSpread} (${formatOdds(line.homeSpreadOdds)})`,
+          description: `${game.homeTeam} ${line.homeSpread || line.spread} (${formatOdds(homeSpreadOdds)})`,
           evValue: homeSpreadEV
         });
       }
 
       if (awaySpreadEV >= minEV) {
+        const awaySpread = line.awaySpread || (line.spread ? -line.spread : '+' + Math.abs(line.spread || 0));
         bets.push({
-          description: `${game.awayTeam} ${line.awaySpread} (${formatOdds(line.awaySpreadOdds)})`,
+          description: `${game.awayTeam} ${awaySpread} (${formatOdds(awaySpreadOdds)})`,
           evValue: awaySpreadEV
         });
       }
     }
 
     if (selectedBetTypes.has('overUnder')) {
-      const overEV = 1.2;
-      const underEV = 2.0;
+      // UPDATED to use BettingCalculations for over/under EV
+      const overOdds = line.overOdds || -110;
+      const underOdds = line.underOdds || -110;
+      
+      // Get average over/under odds from all lines for fair value estimation
+      const allOverOdds = game.lines
+        .map(l => l.overOdds || -110)
+        .filter(o => o && o !== 0);
+      const allUnderOdds = game.lines
+        .map(l => l.underOdds || -110)
+        .filter(o => o && o !== 0);
+      
+      const avgOverOdds = allOverOdds.length ? 
+        allOverOdds.reduce((sum, o) => sum + o, 0) / allOverOdds.length : -110;
+      const avgUnderOdds = allUnderOdds.length ? 
+        allUnderOdds.reduce((sum, o) => sum + o, 0) / allUnderOdds.length : -110;
+      
+      const overEV = Math.max(BettingCalculations.calculateEV(overOdds, avgOverOdds) || 0, 0);
+      const underEV = Math.max(BettingCalculations.calculateEV(underOdds, avgUnderOdds) || 0, 0);
 
       if (overEV >= minEV) {
         bets.push({
-          description: `Over ${line.overUnder} (${formatOdds(line.overOdds)})`,
+          description: `Over ${line.overUnder} (${formatOdds(overOdds)})`,
           evValue: overEV
         });
       }
 
       if (underEV >= minEV) {
         bets.push({
-          description: `Under ${line.overUnder} (${formatOdds(line.underOdds)})`,
+          description: `Under ${line.overUnder} (${formatOdds(underOdds)})`,
           evValue: underEV
         });
       }
@@ -702,6 +751,8 @@ const EVBettingView = ({ evGames = [] }) => {
               {Array.from(selectedBetTypes).map(betType => {
                 const title = betType === 'moneyline' ? 'Moneyline' : 
                              betType === 'spread' ? 'Spread' : 'Over/Under';
+
+                             
                 
                 return (
                   <div
