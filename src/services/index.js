@@ -3,6 +3,7 @@ export { teamService } from './teamService';
 export { playerService } from './playerService';
 export { gameService } from './gameService';
 export { bettingService } from './bettingService';
+export { graphqlBettingService } from './graphqlBettingService';
 export { newsService } from './newsService';
 export { analyticsService } from './analyticsService';
 export { fanService } from './fanService';
