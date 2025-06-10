@@ -3,7 +3,7 @@ import { fetchCollegeFootballData } from './core';
 // Betting and odds-related API functions using College Football Data API
 export const bettingService = {
   // GET /lines - Get betting lines data
-  getBettingLines: async (gameId = null, year = null, week = null, seasonType = 'regular', team = null, home = null, away = null, conference = null) => {
+  getBettingLines: async (gameId = null, year = 2024, week = null, seasonType = 'regular', team = null, home = null, away = null, conference = null) => {
     const params = {};
     if (gameId) params.gameId = gameId;
     if (year) params.year = year;

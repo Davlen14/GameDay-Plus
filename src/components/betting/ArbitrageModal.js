@@ -148,27 +148,24 @@ const ArbitrageModal = ({ game, onClose }) => {
   };
 
   // Components
-  const TeamLogo = ({ teamName, size = 70 }) => {
+  const TeamLogo = ({ teamName, size = 70, showCoverage = false }) => {
     const logoUrl = getTeamLogo(teamName);
     const firstLetter = teamName.charAt(0).toUpperCase();
+    const isCovered = isTeamCovered(teamName);
 
-    if (logoUrl) {
-      return (
-        <img
-          src={logoUrl}
-          alt={teamName}
-          className="rounded shadow-lg"
-          style={{
-            width: size,
-            height: size,
-            objectFit: 'contain',
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))'
-          }}
-        />
-      );
-    }
-
-    return (
+    const logoElement = logoUrl ? (
+      <img
+        src={logoUrl}
+        alt={teamName}
+        className="rounded shadow-lg"
+        style={{
+          width: size,
+          height: size,
+          objectFit: 'contain',
+          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))'
+        }}
+      />
+    ) : (
       <div
         className="rounded-full flex items-center justify-center font-bold text-white shadow-lg"
         style={{
@@ -189,6 +186,39 @@ const ArbitrageModal = ({ game, onClose }) => {
         >
           {firstLetter}
         </span>
+      </div>
+    );
+
+    if (!showCoverage) {
+      return logoElement;
+    }
+
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        {logoElement}
+        <div
+          style={{
+            position: 'absolute',
+            top: -2,
+            right: -2,
+            width: size * 0.25,
+            height: size * 0.25,
+            minWidth: 12,
+            minHeight: 12,
+            borderRadius: '50%',
+            backgroundColor: isCovered ? '#22c55e' : '#ef4444',
+            border: '2px solid white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: size * 0.12,
+            color: 'white',
+            fontWeight: 'bold',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          }}
+        >
+          {isCovered ? '✓' : '✗'}
+        </div>
       </div>
     );
   };
@@ -253,14 +283,14 @@ const ArbitrageModal = ({ game, onClose }) => {
       {/* Team matchup */}
       <div className="flex items-center justify-center space-x-10 mb-6">
         <div className="text-center">
-          <TeamLogo teamName={game.awayTeam} />
+          <TeamLogo teamName={game.awayTeam} showCoverage={true} />
           <div className="mt-2 text-sm font-medium">{game.awayTeam}</div>
         </div>
 
         <div className="text-lg font-bold text-gray-500">VS</div>
 
         <div className="text-center">
-          <TeamLogo teamName={game.homeTeam} />
+          <TeamLogo teamName={game.homeTeam} showCoverage={true} />
           <div className="mt-2 text-sm font-medium">{game.homeTeam}</div>
         </div>
       </div>
@@ -345,7 +375,7 @@ const ArbitrageModal = ({ game, onClose }) => {
 
       {/* Team info */}
       <div className="flex items-center space-x-2 mb-3">
-        {!showSpread && <TeamLogo teamName={team.split(' ')[0]} size={20} />}
+        {!showSpread && <TeamLogo teamName={team.split(' ')[0]} size={20} showCoverage={true} />}
         <span className="text-sm font-medium">{team}</span>
       </div>
 
@@ -796,7 +826,7 @@ const ArbitrageModal = ({ game, onClose }) => {
               {/* Home row */}
               <div className="grid grid-cols-3 gap-4 text-sm mb-2">
                 <div className="flex items-center space-x-2">
-                  <TeamLogo teamName={game.homeTeam} size={16} />
+                  <TeamLogo teamName={game.homeTeam} size={16} showCoverage={true} />
                   <span className="truncate">{game.homeTeam}</span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -811,7 +841,7 @@ const ArbitrageModal = ({ game, onClose }) => {
               {/* Away row */}
               <div className="grid grid-cols-3 gap-4 text-sm mb-2 pb-2 border-b">
                 <div className="flex items-center space-x-2">
-                  <TeamLogo teamName={game.awayTeam} size={16} />
+                  <TeamLogo teamName={game.awayTeam} size={16} showCoverage={true} />
                   <span className="truncate">{game.awayTeam}</span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -866,7 +896,7 @@ const ArbitrageModal = ({ game, onClose }) => {
               {/* Home win scenario */}
               <div className="grid grid-cols-3 gap-4 text-sm mb-2">
                 <div className="flex items-center space-x-2">
-                  <TeamLogo teamName={game.homeTeam} size={16} />
+                  <TeamLogo teamName={game.homeTeam} size={16} showCoverage={true} />
                   <span>If {game.homeTeam} wins</span>
                 </div>
                 <div>${(moneylineStakes.home * bestMoneylinePair.homeDecimal).toFixed(2)}</div>
@@ -886,7 +916,7 @@ const ArbitrageModal = ({ game, onClose }) => {
               {/* Away win scenario */}
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center space-x-2">
-                  <TeamLogo teamName={game.awayTeam} size={16} />
+                  <TeamLogo teamName={game.awayTeam} size={16} showCoverage={true} />
                   <span>If {game.awayTeam} wins</span>
                 </div>
                 <div>${(moneylineStakes.away * bestMoneylinePair.awayDecimal).toFixed(2)}</div>
@@ -932,6 +962,28 @@ const ArbitrageModal = ({ game, onClose }) => {
       </button>
     </div>
   );
+
+  // Team coverage information for 2024 season
+  const teamCoverage2024 = {
+    'Alabama': true, 'Auburn': true, 'Georgia': true, 'Tennessee': true, 'Florida': true,
+    'LSU': true, 'Arkansas': true, 'Kentucky': true, 'Mississippi State': true, 'Missouri': true,
+    'Ole Miss': true, 'South Carolina': true, 'Texas A&M': true, 'Vanderbilt': true,
+    'Texas': true, 'Oklahoma': true, 'Ohio State': true, 'Michigan': true, 'Penn State': true,
+    'Wisconsin': true, 'Iowa': true, 'Minnesota': true, 'Illinois': true, 'Indiana': true,
+    'Maryland': true, 'Michigan State': true, 'Nebraska': true, 'Northwestern': true,
+    'Purdue': true, 'Rutgers': true, 'Oregon': true, 'Washington': true, 'UCLA': true,
+    'USC': true, 'Utah': true, 'Arizona': true, 'Arizona State': true, 'California': true,
+    'Colorado': true, 'Oregon State': true, 'Stanford': true, 'Washington State': true,
+    'Clemson': true, 'Florida State': true, 'Miami': true, 'NC State': true, 'North Carolina': true,
+    'Virginia': true, 'Virginia Tech': true, 'Boston College': true, 'Duke': true, 'Georgia Tech': true,
+    'Louisville': true, 'Pittsburgh': true, 'Syracuse': true, 'Wake Forest': true,
+    'Notre Dame': true, 'BYU': true, 'Army': true, 'Navy': true, 'Liberty': true,
+    'UConn': true, 'UMass': true
+  };
+
+  const isTeamCovered = (teamName) => {
+    return teamCoverage2024[teamName] || false;
+  };
 
   // Main render
   return (

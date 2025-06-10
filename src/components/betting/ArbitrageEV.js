@@ -24,6 +24,15 @@ const ArbitrageEV = () => {
   const gradientEnd = 'rgb(115,0,13)';
   const accentColor = 'rgb(204,0,28)';
 
+  // Metallic gradient CSS - matching EVBettingView
+  const metallicGradient = `linear-gradient(135deg, 
+    rgb(255, 46, 74), 
+    rgb(204, 0, 28), 
+    rgb(161, 0, 20), 
+    rgb(204, 0, 28), 
+    rgb(255, 46, 74)
+  )`;
+
   // Tab options
   const tabs = ['EV+', 'Arbitrage', 'Boosts', 'Middles'];
   const tabIcons = ['fas fa-chart-line', 'fas fa-exchange-alt', 'fas fa-arrow-up', 'fas fa-arrows-alt-v'];
@@ -436,21 +445,27 @@ const ArbitrageEV = () => {
 
   const TabSelection = () => (
     <div className="flex justify-center mb-6">
-      <div className="flex bg-gray-100 rounded-lg p-1">
-        {tabs.map((tab, index) => (
-          <button
-            key={index}
-            onClick={() => setSelectedTab(index)}
-            className={`flex items-center px-4 py-2 rounded-md transition-all ${
-              selectedTab === index
-                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            <i className={`${tabIcons[index]} mr-2`}></i>
-            {tab}
-          </button>
-        ))}
+      <div style={{ width: '97%', maxWidth: '1200px' }}>
+        <div className="flex bg-gray-100 rounded-lg p-1">
+          {tabs.map((tab, index) => (
+            <button
+              key={index}
+              onClick={() => setSelectedTab(index)}
+              className={`flex-1 flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                selectedTab === index
+                  ? 'text-white shadow-md'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+              style={selectedTab === index ? {
+                background: metallicGradient,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              } : {}}
+            >
+              <i className={`${tabIcons[index]} mr-2`}></i>
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

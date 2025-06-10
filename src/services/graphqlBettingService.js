@@ -365,10 +365,9 @@ class GraphQLBettingService {
     return Math.max(1, Math.min(weeksSinceStart + 1, 15));
   }
 
-  // Get current year
+  // Get current year - forced to 2024 for historical data
   getCurrentYear() {
-    const now = new Date();
-    return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+    return 2024;
   }
 }
 

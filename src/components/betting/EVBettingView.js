@@ -267,51 +267,113 @@ const EVBettingView = ({ evGames = [] }) => {
     return bets.sort((a, b) => b.evValue - a.evValue);
   };
 
+  // Team coverage information for 2024 season
+  const teamCoverage2024 = {
+    'Alabama': true, 'Auburn': true, 'Georgia': true, 'Tennessee': true, 'Florida': true,
+    'LSU': true, 'Arkansas': true, 'Kentucky': true, 'Mississippi State': true, 'Missouri': true,
+    'Ole Miss': true, 'South Carolina': true, 'Texas A&M': true, 'Vanderbilt': true,
+    'Texas': true, 'Oklahoma': true, 'Ohio State': true, 'Michigan': true, 'Penn State': true,
+    'Wisconsin': true, 'Iowa': true, 'Minnesota': true, 'Illinois': true, 'Indiana': true,
+    'Maryland': true, 'Michigan State': true, 'Nebraska': true, 'Northwestern': true,
+    'Purdue': true, 'Rutgers': true, 'Oregon': true, 'Washington': true, 'UCLA': true,
+    'USC': true, 'Utah': true, 'Arizona': true, 'Arizona State': true, 'California': true,
+    'Colorado': true, 'Oregon State': true, 'Stanford': true, 'Washington State': true,
+    'Clemson': true, 'Florida State': true, 'Miami': true, 'NC State': true, 'North Carolina': true,
+    'Virginia': true, 'Virginia Tech': true, 'Boston College': true, 'Duke': true, 'Georgia Tech': true,
+    'Louisville': true, 'Pittsburgh': true, 'Syracuse': true, 'Wake Forest': true,
+    'Notre Dame': true, 'BYU': true, 'Army': true, 'Navy': true, 'Liberty': true,
+    'UConn': true, 'UMass': true
+  };
+
+  const isTeamCovered = (teamName) => {
+    return teamCoverage2024[teamName] || false;
+  };
+
+  // Best bet indicator component
+  const BestBetArrow = ({ isVisible }) => (
+    isVisible ? (
+      <div 
+        className="flex items-center ml-2"
+        style={{ filter: 'drop-shadow(0 1px 2px rgba(34, 197, 94, 0.4))' }}
+      >
+        <div
+          className="w-0 h-0"
+          style={{
+            borderLeft: '6px solid transparent',
+            borderRight: '6px solid transparent', 
+            borderBottom: '8px solid rgb(34, 197, 94)',
+            transform: 'rotate(-90deg)'
+          }}
+        />
+      </div>
+    ) : null
+  );
+
   // Component sections
-  const TeamLogo = ({ teamName, size = 40 }) => {
+  const TeamLogo = ({ teamName, size = 40, showCoverage = false }) => {
     const logoUrl = getTeamLogo(teamName);
     const firstLetter = teamName.charAt(0).toUpperCase();
+    const isCovered = isTeamCovered(teamName);
 
-    if (logoUrl) {
-      return (
-        <img
-          src={logoUrl}
-          alt={teamName}
-          className="rounded shadow-lg"
+    return (
+      <div className="relative">
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt={teamName}
+            className="rounded shadow-lg"
+            style={{
+              width: size,
+              height: size,
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.4))'
+            }}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        
+        <div
+          className="rounded-full flex items-center justify-center font-bold text-white shadow-lg"
           style={{
             width: size,
             height: size,
-            objectFit: 'contain',
-            filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.4))'
-          }}
-          onError={(e) => {
-            e.target.style.display = 'none';
-            e.target.nextSibling.style.display = 'flex';
-          }}
-        />
-      );
-    }
-
-    return (
-      <div
-        className="rounded-full flex items-center justify-center font-bold text-white shadow-lg"
-        style={{
-          width: size,
-          height: size,
-          background: 'linear-gradient(135deg, rgba(156,163,175,0.8), rgba(107,114,128,0.5), rgba(156,163,175,0.7))',
-          border: '1px solid rgba(255,255,255,0.4)'
-        }}
-      >
-        <span 
-          style={{
-            background: `linear-gradient(135deg, ${accentColor}, ${accentColor}CC)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
+            background: 'linear-gradient(135deg, rgba(156,163,175,0.8), rgba(107,114,128,0.5), rgba(156,163,175,0.7))',
+            border: '1px solid rgba(255,255,255,0.4)',
+            display: logoUrl ? 'none' : 'flex'
           }}
         >
-          {firstLetter}
-        </span>
+          <span 
+            style={{
+              background: `linear-gradient(135deg, ${accentColor}, ${accentColor}CC)`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          >
+            {firstLetter}
+          </span>
+        </div>
+
+        {/* Coverage indicator */}
+        {showCoverage && (
+          <div
+            className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold"
+            style={{
+              background: isCovered 
+                ? 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))'
+                : 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))',
+              color: 'white',
+              fontSize: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+            }}
+            title={isCovered ? 'Team covered in 2024' : 'Team not covered in 2024'}
+          >
+            {isCovered ? '✓' : '✗'}
+          </div>
+        )}
       </div>
     );
   };
@@ -539,8 +601,11 @@ const EVBettingView = ({ evGames = [] }) => {
               </div>
               
               <div className="flex-1 text-center">
-                <div className="text-sm font-semibold" style={{ color: line.homeMoneyline > 0 ? positiveColor : accentColor }}>
-                  {formatOdds(line.homeMoneyline)}
+                <div className="flex items-center justify-center">
+                  <div className="text-sm font-semibold" style={{ color: line.homeMoneyline > 0 ? positiveColor : accentColor }}>
+                    {formatOdds(line.homeMoneyline)}
+                  </div>
+                  <BestBetArrow isVisible={homeEV >= 3} />
                 </div>
                 <div 
                   className="text-xs font-bold"
@@ -556,8 +621,11 @@ const EVBettingView = ({ evGames = [] }) => {
               </div>
               
               <div className="flex-1 text-center">
-                <div className="text-sm font-semibold" style={{ color: line.awayMoneyline > 0 ? positiveColor : accentColor }}>
-                  {formatOdds(line.awayMoneyline)}
+                <div className="flex items-center justify-center">
+                  <div className="text-sm font-semibold" style={{ color: line.awayMoneyline > 0 ? positiveColor : accentColor }}>
+                    {formatOdds(line.awayMoneyline)}
+                  </div>
+                  <BestBetArrow isVisible={awayEV >= 3} />
                 </div>
                 <div 
                   className="text-xs font-bold"
@@ -643,7 +711,16 @@ const EVBettingView = ({ evGames = [] }) => {
     const isExpanded = expandedGames.has(game.id);
 
     return (
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div 
+        className="rounded-xl shadow-lg overflow-hidden border"
+        style={{
+          background: 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+        }}
+      >
         {/* Game Header */}
         <button
           onClick={() => toggleExpanded(game.id)}
@@ -654,7 +731,7 @@ const EVBettingView = ({ evGames = [] }) => {
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-3">
-                  <TeamLogo teamName={game.awayTeam} />
+                  <TeamLogo teamName={game.awayTeam} showCoverage={true} />
                   <div>
                     <div className="font-medium text-sm">{game.awayTeam}</div>
                     <div className="text-xs text-gray-500">Away</div>
@@ -664,7 +741,7 @@ const EVBettingView = ({ evGames = [] }) => {
                 <span className="text-gray-400 text-sm">@</span>
 
                 <div className="flex items-center space-x-3">
-                  <TeamLogo teamName={game.homeTeam} />
+                  <TeamLogo teamName={game.homeTeam} showCoverage={true} />
                   <div>
                     <div className="font-medium text-sm">{game.homeTeam}</div>
                     <div className="text-xs text-gray-500">Home</div>
@@ -752,7 +829,7 @@ const EVBettingView = ({ evGames = [] }) => {
                 const title = betType === 'moneyline' ? 'Moneyline' : 
                              betType === 'spread' ? 'Spread' : 'Over/Under';
 
-                             
+
                 
                 return (
                   <div
