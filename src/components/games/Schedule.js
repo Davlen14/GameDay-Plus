@@ -1,392 +1,28 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Calendar, 
-  ChevronDown, 
-  Search, 
-  Tv, 
-  MapPin, 
-  Users, 
-  Trophy, 
-  Star, 
-  Flame,
-  TrendingUp,
-  Wifi,
-  Play,
-  Globe,
-  Zap,
-  Award,
-  Clock,
-  CheckCircle,
-  Sun,
-  Moon,
-  Cloud,
-  CloudRain,
-  Snowflake,
-  Wind,
-  Eye,
-  Thermometer,
-  Home
-} from 'lucide-react';
 import { gameService, teamService, rankingsService } from '../../services';
 
-// Enhanced Weather Icon Component with HD animations and interactive effects
-const WeatherIcon = ({ condition, temperature }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  const getWeatherData = () => {
-    if (!condition) return { icon: Thermometer, color: 'gray', animation: 'pulse' };
-    
-    const cond = condition.toLowerCase();
-    if (cond.includes('clear') || cond.includes('sunny')) {
-      return { icon: Sun, color: 'yellow', animation: 'rotate', effect: 'sun-rays' };
-    }
-    if (cond.includes('partly') || cond.includes('scattered')) {
-      return { icon: Cloud, color: 'blue', animation: 'float', effect: 'partial-clouds' };
-    }
-    if (cond.includes('cloud') || cond.includes('overcast')) {
-      return { icon: Cloud, color: 'gray', animation: 'drift', effect: 'moving-clouds' };
-    }
-    if (cond.includes('rain') || cond.includes('shower')) {
-      return { icon: CloudRain, color: 'blue', animation: 'bounce', effect: 'rain-drops' };
-    }
-    if (cond.includes('snow') || cond.includes('blizzard')) {
-      return { icon: Snowflake, color: 'cyan', animation: 'spin', effect: 'snowfall' };
-    }
-    if (cond.includes('storm') || cond.includes('thunder')) {
-      return { icon: Zap, color: 'purple', animation: 'flash', effect: 'lightning' };
-    }
-    if (cond.includes('wind')) {
-      return { icon: Wind, color: 'teal', animation: 'sway', effect: 'wind-lines' };
-    }
-    if (cond.includes('night')) {
-      return { icon: Moon, color: 'indigo', animation: 'glow', effect: 'stars' };
-    }
-    return { icon: Cloud, color: 'blue', animation: 'float', effect: 'default' };
-  };
-
-  const getTemperatureGradient = () => {
-    if (!temperature) return 'from-gray-400 to-gray-600';
-    
-    if (temperature >= 90) return 'from-red-500 via-orange-500 to-yellow-400';
-    if (temperature >= 80) return 'from-orange-400 via-yellow-400 to-green-400';
-    if (temperature >= 70) return 'from-green-400 via-emerald-400 to-teal-400';
-    if (temperature >= 50) return 'from-blue-400 via-sky-400 to-cyan-400';
-    if (temperature >= 32) return 'from-blue-500 via-indigo-500 to-purple-500';
-    return 'from-blue-600 via-purple-600 to-indigo-700';
-  };
-
-  const weatherData = getWeatherData();
-  const WeatherIconComponent = weatherData.icon;
-
-  return (
-    <div className="relative group">
-      <style jsx>{`
-        @keyframes sun-rays {
-          0%, 100% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 20px rgba(251,191,36,0.8)); }
-          50% { transform: rotate(180deg) scale(1.1); filter: drop-shadow(0 0 30px rgba(251,191,36,1)); }
-        }
-        
-        @keyframes moving-clouds {
-          0% { transform: translateX(-10px); opacity: 0.7; }
-          50% { transform: translateX(10px); opacity: 1; }
-          100% { transform: translateX(-10px); opacity: 0.7; }
-        }
-        
-        @keyframes rain-drops {
-          0% { transform: translateY(-20px); opacity: 0; }
-          50% { transform: translateY(0px); opacity: 1; }
-          100% { transform: translateY(20px); opacity: 0; }
-        }
-        
-        @keyframes snowfall {
-          0% { transform: translateY(-30px) rotate(0deg); opacity: 0; }
-          50% { transform: translateY(0px) rotate(180deg); opacity: 1; }
-          100% { transform: translateY(30px) rotate(360deg); opacity: 0; }
-        }
-        
-        @keyframes lightning {
-          0%, 90%, 100% { opacity: 0; }
-          5%, 10% { opacity: 1; filter: drop-shadow(0 0 15px rgba(168,85,247,0.9)); }
-        }
-        
-        @keyframes wind-lines {
-          0% { transform: translateX(-15px); opacity: 0; }
-          50% { transform: translateX(15px); opacity: 1; }
-          100% { transform: translateX(30px); opacity: 0; }
-        }
-        
-        @keyframes stars-twinkle {
-          0%, 100% { opacity: 0.3; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.2); }
-        }
-        
-        .weather-icon-container {
-          animation: ${weatherData.animation} 3s ease-in-out infinite;
-        }
-        
-        .sun-effect { animation: sun-rays 4s linear infinite; }
-        .cloud-effect { animation: moving-clouds 6s ease-in-out infinite; }
-        .rain-effect { animation: rain-drops 1s linear infinite; }
-        .snow-effect { animation: snowfall 3s linear infinite; }
-        .lightning-effect { animation: lightning 2s infinite; }
-        .wind-effect { animation: wind-lines 2s ease-in-out infinite; }
-        .stars-effect { animation: stars-twinkle 2s ease-in-out infinite; }
-      `}</style>
-
-      {/* Weather Icon Container */}
-      <motion.div 
-        className="relative flex items-center space-x-4"
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-        whileHover={{ scale: 1.05 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      >
-        {/* Animated Weather Icon */}
-        <div className="relative weather-icon-container">
-          <motion.div 
-            className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getTemperatureGradient()} p-2 shadow-lg backdrop-blur-xl border border-white/20`}
-            style={{
-              boxShadow: `
-                0 4px 12px rgba(0,0,0,0.1),
-                inset 0 1px 2px rgba(255,255,255,0.2),
-                0 0 0 1px rgba(255,255,255,0.05)
-              `
-            }}
-            whileHover={{ 
-              boxShadow: `
-                0 6px 16px rgba(0,0,0,0.15),
-                inset 0 1px 3px rgba(255,255,255,0.3),
-                0 0 8px rgba(255,255,255,0.2)
-              `
-            }}
-          >
-            <WeatherIconComponent 
-              className="w-full h-full text-white drop-shadow-sm"
-              strokeWidth={1.5}
-            />
-          </motion.div>
-          
-          {/* Weather Effects */}
-          <AnimatePresence>
-            {weatherData.effect === 'rain-drops' && (
-              <div className="absolute -top-2 -right-2 pointer-events-none">
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-1 h-8 bg-blue-400 rounded-full rain-effect"
-                    style={{ 
-                      left: `${i * 4}px`,
-                      animationDelay: `${i * 200}ms`,
-                      opacity: 0.6 
-                    }}
-                    initial={{ y: -30, opacity: 0 }}
-                    animate={{ y: 30, opacity: [0, 1, 0] }}
-                    transition={{ 
-                      duration: 1.5, 
-                      repeat: Infinity, 
-                      delay: i * 0.2,
-                      ease: "easeInOut"
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-            
-            {weatherData.effect === 'snowfall' && (
-              <div className="absolute -top-3 -right-3 pointer-events-none">
-                {[...Array(4)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-2 h-2 bg-white rounded-full"
-                    style={{ 
-                      left: `${i * 3}px`,
-                      top: `${Math.random() * 10}px`
-                    }}
-                    animate={{ 
-                      y: [0, 40],
-                      x: [0, Math.random() * 10 - 5],
-                      rotate: [0, 360],
-                      opacity: [0, 1, 0]
-                    }}
-                    transition={{ 
-                      duration: 3, 
-                      repeat: Infinity, 
-                      delay: i * 0.5,
-                      ease: "easeInOut"
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-            
-            {weatherData.effect === 'sun-rays' && (
-              <div className="absolute inset-0 pointer-events-none">
-                {[...Array(8)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-0.5 h-6 bg-yellow-300 rounded-full"
-                    style={{
-                      top: '50%',
-                      left: '50%',
-                      transformOrigin: '50% 32px',
-                      transform: `rotate(${i * 45}deg) translateY(-32px)`
-                    }}
-                    animate={{ 
-                      opacity: [0.4, 1, 0.4],
-                      scale: [0.8, 1.2, 0.8]
-                    }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity, 
-                      delay: i * 0.1
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-            
-            {weatherData.effect === 'lightning' && (
-              <motion.div
-                className="absolute -top-1 -right-1 w-3 h-6 bg-purple-300 rounded-sm lightning-effect"
-                style={{ clipPath: 'polygon(20% 0%, 40% 20%, 30% 30%, 70% 100%, 50% 80%, 60% 70%, 30% 0%)' }}
-                animate={{ opacity: [0, 1, 0] }}
-                transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 3 }}
-              />
-            )}
-            
-            {weatherData.effect === 'wind-lines' && (
-              <div className="absolute -right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-8 h-0.5 bg-teal-300 rounded-full"
-                    style={{ top: `${i * 4}px` }}
-                    animate={{ 
-                      x: [-20, 20],
-                      opacity: [0, 1, 0]
-                    }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity, 
-                      delay: i * 0.3
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-            
-            {weatherData.effect === 'stars' && (
-              <div className="absolute -top-2 -right-2 pointer-events-none">
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-1 h-1 bg-indigo-200 rounded-full stars-effect"
-                    style={{ 
-                      left: `${i * 6}px`,
-                      top: `${i * 3}px`
-                    }}
-                    animate={{ 
-                      opacity: [0.3, 1, 0.3],
-                      scale: [0.8, 1.2, 0.8]
-                    }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity, 
-                      delay: i * 0.7
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Temperature Display */}
-        {temperature && (
-          <motion.div 
-            className="relative"
-            whileHover={{ scale: 1.05 }}
-          >
-            <div 
-              className={`px-2 py-1 rounded-lg bg-gradient-to-r ${getTemperatureGradient()} text-white font-bold text-xs shadow-lg backdrop-blur-xl border border-white/20`}
-              style={{
-                boxShadow: `
-                  0 4px 12px rgba(0,0,0,0.1),
-                  inset 0 1px 2px rgba(255,255,255,0.2)
-                `
-              }}
-            >
-              <span className="drop-shadow-sm">{Math.round(temperature)}°F</span>
-            </div>
-            
-            {/* Temperature indicators */}
-            {temperature >= 90 && (
-              <motion.div 
-                className="absolute -top-1 -right-1 w-2 h-2 bg-red-400 rounded-full"
-                animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-            )}
-            {temperature <= 32 && (
-              <motion.div 
-                className="absolute -top-1 -right-1 w-2 h-2 bg-blue-200 rounded-full"
-                animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-            )}
-          </motion.div>
-        )}
-      </motion.div>
-
-      {/* Weather condition text */}
-      {condition && (
-        <motion.div 
-          className="mt-1 text-xs font-medium text-gray-600 capitalize text-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          {condition}
-        </motion.div>
-      )}
-    </div>
-  );
-};
-
-// Enhanced Utility Components
+// Utility Components for Enhanced Game Cards
 const ExcitementStars = ({ excitementIndex = 0 }) => {
   const stars = Math.min(Math.max(Math.round(excitementIndex / 2), 0), 5);
-  
-  const getStarGradient = () => {
-    if (excitementIndex >= 8) return 'from-yellow-300 via-yellow-400 to-orange-400';
-    if (excitementIndex >= 6) return 'from-yellow-400 via-yellow-500 to-orange-500';
-    if (excitementIndex >= 4) return 'from-yellow-500 via-yellow-600 to-orange-600';
-    return 'from-gray-300 to-gray-400';
+  const getStarColor = () => {
+    if (excitementIndex >= 8) return 'text-yellow-400';
+    if (excitementIndex >= 6) return 'text-yellow-400';
+    if (excitementIndex >= 4) return 'text-yellow-500';
+    return 'text-gray-400';
   };
 
   return (
-    <div className="flex items-center space-x-3">
-      <div className="flex space-x-1">
-        {[...Array(5)].map((_, i) => (
-          <motion.div
-            key={i}
-            className={`relative ${i < stars ? `bg-gradient-to-br ${getStarGradient()}` : 'bg-gray-200'} shadow-lg transition-all duration-300`}
-            style={{
-              width: '18px',
-              height: '18px',
-              clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-              ...(i < stars ? {
-                boxShadow: '0 4px 15px rgba(251, 191, 36, 0.4), inset 0 1px 2px rgba(255,255,255,0.2)'
-              } : {})
-            }}
-            whileHover={{ scale: 1.2, rotate: 180 }}
-            whileTap={{ scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 300, damping: 15 }}
-          />
-        ))}
-      </div>
-      <span className="text-lg font-black bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
+    <div className="flex items-center space-x-1">
+      {[...Array(5)].map((_, i) => (
+        <i 
+          key={i} 
+          className={`fas fa-star text-sm ${i < stars ? getStarColor() : 'text-gray-300'} drop-shadow-lg filter`}
+          style={i < stars && excitementIndex >= 4 ? { 
+            filter: 'drop-shadow(0 0 4px rgba(234, 179, 8, 0.6))' 
+          } : {}}
+        />
+      ))}
+      <span className="text-xs font-bold text-gray-700 ml-2">
         {excitementIndex ? excitementIndex.toFixed(1) : 'N/A'}
       </span>
     </div>
@@ -400,111 +36,55 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
   const awayPct = awayProb ? Math.round(awayProb * 100) : 50;
   
   return (
-    <motion.div 
-      className="relative bg-white/25 backdrop-blur-2xl rounded-3xl border border-white/30 p-8 shadow-2xl overflow-hidden"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      style={{
-        boxShadow: `
-          0 25px 50px rgba(0,0,0,0.1),
-          inset 0 1px 6px rgba(255,255,255,0.2),
-          0 0 0 1px rgba(255,255,255,0.05)
-        `
-      }}
-    >
-      {/* Animated background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent"></div>
+    <div className="bg-white/40 backdrop-blur-xl rounded-2xl border border-white/50 p-4 shadow-[0_8px_25px_rgba(0,0,0,0.1)]">
+      {/* Glass highlight */}
+      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
       
       <div className="relative z-10">
-        <div className="text-lg font-black text-gray-700 mb-6 text-center flex items-center justify-center space-x-3">
-          <motion.div 
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center"
-            whileHover={{ rotate: 360 }}
-            transition={{ duration: 0.5 }}
-          >
-            <TrendingUp className="w-4 h-4 text-white" strokeWidth={2} />
-          </motion.div>
+        <div className="text-xs font-bold text-gray-700 mb-3 text-center flex items-center justify-center space-x-2">
+          <i className="fas fa-chart-line" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
           <span>Win Probability</span>
         </div>
-        
-        <div className="space-y-6">
+        <div className="flex items-center space-x-3">
           {/* Away Team */}
-          <div className="flex items-center space-x-4">
-            <motion.div 
-              className="w-12 h-12 rounded-2xl bg-white/30 backdrop-blur-xl border border-white/40 p-2 flex items-center justify-center"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
+          <div className="flex items-center space-x-2 flex-1">
+            <div className="w-6 h-6 rounded-full bg-white/40 backdrop-blur-sm border border-white/50 flex items-center justify-center overflow-hidden">
               <img 
                 src={getTeamLogo(awayTeamId)} 
                 alt={awayTeam}
-                className="w-full h-full object-contain"
-                style={{
-                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.3) contrast(1.2) brightness(1.1)'
-                }}
+                className="w-4 h-4 object-contain"
                 onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
               />
-            </motion.div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-lg font-black text-gray-800">{awayTeam}</span>
-                <span className="text-2xl font-black bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">{awayPct}%</span>
-              </div>
-              <div className="h-3 bg-gray-200/50 rounded-full overflow-hidden">
-                <motion.div 
-                  className="h-full rounded-full"
-                  style={{ 
-                    background: `linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)`,
-                    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
-                  }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${awayPct}%` }}
-                  transition={{ duration: 1.5, ease: "easeOut" }}
-                />
-              </div>
             </div>
+            <span className="text-sm font-bold text-gray-800">{awayPct}%</span>
+          </div>
+          
+          {/* Enhanced Probability Bar */}
+          <div className="flex-1 h-3 bg-gray-200/50 rounded-full overflow-hidden shadow-inner">
+            <div 
+              className="h-full rounded-full transition-all duration-700 ease-out shadow-lg"
+              style={{ 
+                width: `${awayPct}%`,
+                background: `linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)`
+              }}
+            />
           </div>
           
           {/* Home Team */}
-          <div className="flex items-center space-x-4">
-            <motion.div 
-              className="w-12 h-12 rounded-2xl bg-white/30 backdrop-blur-xl border border-white/40 p-2 flex items-center justify-center"
-              whileHover={{ scale: 1.1, rotate: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
+          <div className="flex items-center space-x-2 flex-1 justify-end">
+            <span className="text-sm font-bold text-gray-800">{homePct}%</span>
+            <div className="w-6 h-6 rounded-full bg-white/40 backdrop-blur-sm border border-white/50 flex items-center justify-center overflow-hidden">
               <img 
                 src={getTeamLogo(homeTeamId)} 
                 alt={homeTeam}
-                className="w-full h-full object-contain"
-                style={{
-                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.3) contrast(1.2) brightness(1.1)'
-                }}
+                className="w-4 h-4 object-contain"
                 onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
               />
-            </motion.div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-lg font-black text-gray-800">{homeTeam}</span>
-                <span className="text-2xl font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">{homePct}%</span>
-              </div>
-              <div className="h-3 bg-gray-200/50 rounded-full overflow-hidden">
-                <motion.div 
-                  className="h-full rounded-full"
-                  style={{ 
-                    background: `linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)`,
-                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
-                  }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${homePct}%` }}
-                  transition={{ duration: 1.5, ease: "easeOut" }}
-                />
-              </div>
             </div>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -518,211 +98,171 @@ const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) =>
   
   return (
     <div className="relative">
-      <motion.div 
-        className="bg-white/20 backdrop-blur-xl px-4 py-2 rounded-xl text-sm cursor-help border border-white/20 hover:bg-white/30 transition-all duration-300"
+      <div 
+        className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-xs cursor-help hover:bg-white/30 transition-all duration-200"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        whileHover={{ scale: 1.05 }}
-        style={{
-          boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.2), 0 4px 12px rgba(0,0,0,0.1)'
-        }}
       >
-        <div className="flex items-center space-x-2">
-          <TrendingUp className="w-4 h-4 text-blue-600" strokeWidth={2} />
-          <span className="font-black text-gray-700">{preGameElo}</span>
+        <div className="flex items-center space-x-1">
+          <i className="fas fa-chart-line text-blue-500 mr-1" />
+          <span className="font-bold text-gray-700">{preGameElo}</span>
           <span className="text-gray-500">({eloLevel})</span>
           {isCompleted && eloChange !== 0 && (
-            <motion.span 
-              className={`font-black ${eloChange > 0 ? 'text-green-600' : 'text-red-600'}`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-            >
+            <span className={`font-bold ${eloChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
               {eloChange > 0 ? '+' : ''}{eloChange}
-            </motion.span>
+            </span>
           )}
         </div>
-      </motion.div>
+      </div>
       
-      <AnimatePresence>
-        {showTooltip && (
-          <motion.div 
-            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 z-[10000] w-80"
-            initial={{ opacity: 0, y: 10, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          >
-            <div 
-              className="bg-white/90 backdrop-blur-2xl border border-white/50 rounded-2xl p-6 shadow-2xl"
-              style={{
-                boxShadow: `
-                  0 25px 50px rgba(0,0,0,0.15),
-                  inset 0 1px 6px rgba(255,255,255,0.2),
-                  0 0 0 1px rgba(255,255,255,0.1)
-                `
-              }}
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                  <Eye className="w-4 h-4 text-white" strokeWidth={2} />
-                </div>
-                <h4 className="font-black text-gray-800 text-lg">ELO Rating System</h4>
+      {/* ELO Explanation Tooltip */}
+      {showTooltip && (
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-[10000] w-72">
+          <div className="bg-white/95 backdrop-blur-xl border border-white/50 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] p-4">
+            {/* Glass highlight */}
+            <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center space-x-2 mb-2">
+                <i className="fas fa-info-circle text-blue-500" />
+                <h4 className="font-bold text-gray-800">ELO Rating System</h4>
               </div>
               
-              <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+              <p className="text-sm text-gray-700 mb-3">
                 ELO is a rating system that measures team strength based on game results and opponent quality. 
                 Teams gain/lose points based on wins/losses and the strength of their opponents.
               </p>
               
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center p-3 rounded-xl bg-green-50 border border-green-100">
-                  <span className="text-gray-600 font-semibold">Elite:</span>
-                  <span className="font-black text-green-600">2000+</span>
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Elite:</span>
+                  <span className="font-bold text-green-600">2000+</span>
                 </div>
-                <div className="flex justify-between items-center p-3 rounded-xl bg-blue-50 border border-blue-100">
-                  <span className="text-gray-600 font-semibold">Strong:</span>
-                  <span className="font-black text-blue-600">1800-1999</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Strong:</span>
+                  <span className="font-bold text-blue-600">1800-1999</span>
                 </div>
-                <div className="flex justify-between items-center p-3 rounded-xl bg-yellow-50 border border-yellow-100">
-                  <span className="text-gray-600 font-semibold">Good:</span>
-                  <span className="font-black text-yellow-600">1600-1799</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Good:</span>
+                  <span className="font-bold text-yellow-600">1600-1799</span>
                 </div>
-                <div className="flex justify-between items-center p-3 rounded-xl bg-gray-50 border border-gray-100">
-                  <span className="text-gray-600 font-semibold">Developing:</span>
-                  <span className="font-black text-gray-600">Below 1600</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Developing:</span>
+                  <span className="font-bold text-gray-600">Below 1600</span>
                 </div>
+              </div>
+              
+              <div className="mt-3 pt-2 border-t border-gray-200">
+                <p className="text-xs text-gray-600">
+                  <i className="fas fa-lightbulb text-yellow-500 mr-1" />
+                  Higher ratings indicate stronger teams. Changes show performance impact.
+                </p>
               </div>
             </div>
             
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white/90 border-r border-b border-white/50 rotate-45"></div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {/* Tooltip arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white/95 border-r border-b border-white/50 rotate-45"></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const WeatherIcon = ({ condition, temperature }) => {
+  const getWeatherIcon = () => {
+    if (!condition) return 'fas fa-question-circle';
+    const cond = condition.toLowerCase();
+    if (cond.includes('clear') || cond.includes('sunny')) return 'fas fa-sun';
+    if (cond.includes('cloud')) return 'fas fa-cloud';
+    if (cond.includes('rain') || cond.includes('shower')) return 'fas fa-cloud-rain';
+    if (cond.includes('snow')) return 'fas fa-snowflake';
+    if (cond.includes('storm') || cond.includes('thunder')) return 'fas fa-bolt';
+    if (cond.includes('fog') || cond.includes('mist')) return 'fas fa-smog';
+    return 'fas fa-cloud-sun';
+  };
+
+  const getWeatherColor = () => {
+    if (!condition) return 'text-gray-500';
+    const cond = condition.toLowerCase();
+    if (cond.includes('clear') || cond.includes('sunny')) return 'text-yellow-500';
+    if (cond.includes('rain') || cond.includes('storm')) return 'text-blue-500';
+    if (cond.includes('snow')) return 'text-blue-200';
+    if (cond.includes('cloud')) return 'text-gray-400';
+    return 'text-gray-500';
+  };
+
+  const getWeatherGlow = () => {
+    if (!condition) return '';
+    const cond = condition.toLowerCase();
+    if (cond.includes('clear') || cond.includes('sunny')) return 'drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]';
+    if (cond.includes('rain') || cond.includes('storm')) return 'drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]';
+    return 'drop-shadow-lg';
+  };
+
+  return (
+    <div className="flex items-center space-x-2">
+      <i className={`${getWeatherIcon()} ${getWeatherColor()} text-lg ${getWeatherGlow()}`} />
+      {temperature && (
+        <span className="text-sm font-bold text-gray-800">
+          {Math.round(temperature)}°F
+        </span>
+      )}
     </div>
   );
 };
 
 const MediaIcon = ({ outlet, mediaType }) => {
-  const getNetworkData = () => {
-    if (!outlet) return { icon: Tv, color: 'gray' };
-    
+  const getNetworkIcon = () => {
+    if (!outlet) return 'fas fa-tv';
     const network = outlet.toLowerCase();
-    if (network.includes('espn')) return { icon: Wifi, color: 'red' };
-    if (network.includes('fox')) return { icon: Tv, color: 'blue' };
-    if (network.includes('cbs')) return { icon: Tv, color: 'blue' };
-    if (network.includes('nbc')) return { icon: Tv, color: 'purple' };
-    if (network.includes('peacock')) return { icon: Play, color: 'blue' };
-    if (network.includes('paramount')) return { icon: Play, color: 'blue' };
-    if (network.includes('hulu')) return { icon: Play, color: 'green' };
-    if (network.includes('netflix')) return { icon: Play, color: 'red' };
-    if (mediaType === 'web') return { icon: Globe, color: 'purple' };
-    return { icon: Tv, color: 'gray' };
+    if (network.includes('espn')) return 'fab fa-youtube'; // Using YouTube as ESPN placeholder
+    if (network.includes('fox')) return 'fas fa-broadcast-tower';
+    if (network.includes('cbs')) return 'fas fa-tv';
+    if (network.includes('nbc')) return 'fas fa-tv';
+    if (network.includes('peacock')) return 'fas fa-feather';
+    if (network.includes('paramount')) return 'fas fa-mountain';
+    if (network.includes('hulu')) return 'fas fa-play-circle';
+    if (network.includes('netflix')) return 'fas fa-film';
+    if (mediaType === 'web') return 'fas fa-globe';
+    return 'fas fa-tv';
   };
 
-  const getNetworkGradient = () => {
-    if (!outlet) return 'from-gray-500 to-gray-700';
+  const getNetworkColor = () => {
+    if (!outlet) return 'text-gray-600';
     const network = outlet.toLowerCase();
-    if (network.includes('espn')) return 'from-red-500 to-red-700';
-    if (network.includes('fox')) return 'from-blue-500 to-blue-700';
-    if (network.includes('cbs')) return 'from-blue-600 to-blue-800';
-    if (network.includes('nbc')) return 'from-purple-500 to-purple-700';
-    if (network.includes('peacock')) return 'from-blue-400 to-blue-600';
-    if (mediaType === 'web') return 'from-purple-500 to-purple-700';
-    return 'from-gray-500 to-gray-700';
+    if (network.includes('espn')) return 'text-red-600';
+    if (network.includes('fox')) return 'text-blue-600';
+    if (network.includes('cbs')) return 'text-blue-700';
+    if (network.includes('nbc')) return 'text-purple-600';
+    if (network.includes('peacock')) return 'text-blue-500';
+    if (mediaType === 'web') return 'text-purple-500';
+    return 'text-gray-700';
   };
 
-  const networkData = getNetworkData();
-  const NetworkIcon = networkData.icon;
+  const getNetworkGlow = () => {
+    if (!outlet) return 'drop-shadow-lg';
+    const network = outlet.toLowerCase();
+    if (network.includes('espn')) return 'drop-shadow-[0_0_8px_rgba(220,38,38,0.6)]';
+    if (network.includes('nbc') || network.includes('peacock')) return 'drop-shadow-[0_0_8px_rgba(147,51,234,0.6)]';
+    return 'drop-shadow-lg';
+  };
 
-  return (
-    <div className="relative">
-      <motion.div 
-        className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getNetworkGradient()} p-2 shadow-lg backdrop-blur-xl flex items-center justify-center border border-white/20`}
-        whileHover={{ scale: 1.1, rotate: 5 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 300, damping: 15 }}
-        style={{
-          boxShadow: `
-            0 4px 12px rgba(0,0,0,0.1),
-            inset 0 1px 2px rgba(255,255,255,0.2)
-          `
-        }}
-      >
-        <NetworkIcon className="w-full h-full text-white" strokeWidth={1.5} />
-      </motion.div>
-      
-      <motion.div 
-        className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-green-400 to-green-600 rounded-full shadow-lg border border-white"
-        animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      />
-    </div>
-  );
+  return <i className={`${getNetworkIcon()} ${getNetworkColor()} text-lg ${getNetworkGlow()}`} />;
 };
 
 const Schedule = () => {
-  // State persistence helper functions
-  const getStoredState = useCallback((key, defaultValue) => {
-    try {
-      const stored = localStorage.getItem(`schedule_${key}`);
-      return stored ? JSON.parse(stored) : defaultValue;
-    } catch {
-      return defaultValue;
-    }
-  }, []);
-
-  const setStoredState = useCallback((key, value) => {
-    try {
-      localStorage.setItem(`schedule_${key}`, JSON.stringify(value));
-    } catch {
-      // Silently ignore localStorage errors
-    }
-  }, []);
-
-  // Core state management with persistence
-  const [selectedWeek, setSelectedWeekState] = useState(() => getStoredState('selectedWeek', 1));
-  const [isPostseason, setIsPostseasonState] = useState(() => getStoredState('isPostseason', false));
-  const [selectedConference, setSelectedConferenceState] = useState(() => getStoredState('selectedConference', null));
-  const [selectedYear, setSelectedYearState] = useState(() => getStoredState('selectedYear', 2024));
-  const [selectedCategory, setSelectedCategoryState] = useState(() => getStoredState('selectedCategory', 'Top 25'));
-  const [searchText, setSearchTextState] = useState(() => getStoredState('searchText', ''));
-  
+  // Core state management
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [isPostseason, setIsPostseason] = useState(false);
+  const [selectedConference, setSelectedConference] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(2024);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-
-  // Enhanced state setters that persist to localStorage
-  const setSelectedWeek = useCallback((value) => {
-    setSelectedWeekState(value);
-    setStoredState('selectedWeek', value);
-  }, [setStoredState]);
-
-  const setIsPostseason = useCallback((value) => {
-    setIsPostseasonState(value);
-    setStoredState('isPostseason', value);
-  }, [setStoredState]);
-
-  const setSelectedConference = useCallback((value) => {
-    setSelectedConferenceState(value);
-    setStoredState('selectedConference', value);
-  }, [setStoredState]);
-
-  const setSelectedYear = useCallback((value) => {
-    setSelectedYearState(value);
-    setStoredState('selectedYear', value);
-  }, [setStoredState]);
-
-  const setSelectedCategory = useCallback((value) => {
-    setSelectedCategoryState(value);
-    setStoredState('selectedCategory', value);
-  }, [setStoredState]);
-
-  const setSearchText = useCallback((value) => {
-    setSearchTextState(value);
-    setStoredState('searchText', value);
-  }, [setStoredState]);
+  const [searchText, setSearchText] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Top 25');
   
-  // UI state
+  // UI state - removed animateShine to improve performance
   const [showWeekPicker, setShowWeekPicker] = useState(false);
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showConferencePicker, setShowConferencePicker] = useState(false);
@@ -734,10 +274,11 @@ const Schedule = () => {
   const [games, setGames] = useState([]);
   const [teams, setTeams] = useState([]);
   const [rankings, setRankings] = useState([]);
+  const [filteredGames, setFilteredGames] = useState([]);
   const [gameMedia, setGameMedia] = useState(new Map());
   const [gameWeather, setGameWeather] = useState(new Map());
 
-  // Conference data
+  // Conference data matching your app structure
   const conferences = [
     { name: 'ACC', logo: 'ACC' },
     { name: 'American Athletic', logo: 'American Athletic' },
@@ -752,17 +293,45 @@ const Schedule = () => {
     { name: 'Sun Belt', logo: 'SBC' }
   ];
 
-  const loadDataIfNeeded = useCallback(async () => {
+  useEffect(() => {
+    loadDataIfNeeded();
+  }, [selectedWeek, selectedYear, isPostseason]);
+
+  // Search debouncing effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateFilteredGames();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchText, selectedConference, selectedCategory, games, rankings]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown-container')) {
+        setShowWeekPicker(false);
+        setShowYearPicker(false);
+        setShowConferencePicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const loadDataIfNeeded = async () => {
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
+      // Load teams if not cached
       let loadedTeams = teams;
       if (loadedTeams.length === 0) {
         loadedTeams = await teamService.getFBSTeams(true);
         setTeams(loadedTeams);
       }
 
+      // Load games based on selections
       let loadedGames = [];
       if (isPostseason) {
         loadedGames = await gameService.getPostseasonGames(selectedYear, false);
@@ -771,11 +340,13 @@ const Schedule = () => {
       }
       setGames(loadedGames || []);
 
+      // Load enhanced media and weather data in parallel
       const [mediaData, weatherData] = await Promise.all([
         gameService.getEnhancedGameMedia(selectedYear, selectedWeek, isPostseason ? 'postseason' : 'regular').catch(() => []),
         gameService.getEnhancedGameWeather(null, selectedYear, selectedWeek, isPostseason ? 'postseason' : 'regular').catch(() => [])
       ]);
 
+      // Create lookup maps for quick access
       const mediaMap = new Map();
       const weatherMap = new Map();
 
@@ -790,6 +361,7 @@ const Schedule = () => {
       setGameMedia(mediaMap);
       setGameWeather(weatherMap);
 
+      // Load rankings if not cached
       let loadedRankings = rankings;
       if (loadedRankings.length === 0) {
         try {
@@ -814,29 +386,12 @@ const Schedule = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedWeek, selectedYear, isPostseason, teams, rankings]);
+  };
 
-  useEffect(() => {
-    loadDataIfNeeded();
-  }, [loadDataIfNeeded]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.dropdown-container')) {
-        setShowWeekPicker(false);
-        setShowYearPicker(false);
-        setShowConferencePicker(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Optimized filtered games with useMemo for performance
-  const filteredGames = useMemo(() => {
+  const updateFilteredGames = () => {
     let filtered = [...games];
 
+    // Filter by conference if selected
     if (selectedConference) {
       const conferenceTeamIds = new Set(
         teams.filter(team => team.conference === selectedConference).map(team => team.id)
@@ -847,6 +402,7 @@ const Schedule = () => {
       );
     }
 
+    // Category filtering (Top 25 vs FBS)
     if (selectedCategory === 'Top 25') {
       const rankedSchools = new Set(rankings.map(rank => rank.school.toLowerCase()));
       filtered = filtered.filter(game => {
@@ -857,6 +413,7 @@ const Schedule = () => {
       });
     }
 
+    // Search filter
     if (searchText.trim()) {
       const query = searchText.toLowerCase();
       const matchingTeamIds = new Set(
@@ -873,8 +430,8 @@ const Schedule = () => {
       );
     }
 
-    return filtered;
-  }, [games, selectedConference, selectedCategory, searchText, teams, rankings]);
+    setFilteredGames(filtered);
+  };
 
   const getTeamRank = (teamId) => {
     if (!teamId) return null;
@@ -930,61 +487,20 @@ const Schedule = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center">
-        {/* Animated Network Background */}
-        <div className="absolute inset-0">
-          <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="network" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-                <circle cx="50" cy="50" r="2" fill="rgba(220, 38, 38, 0.1)">
-                  <animate attributeName="r" values="1;3;1" dur="4s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="20" cy="20" r="1" fill="rgba(220, 38, 38, 0.08)">
-                  <animate attributeName="r" values="0.5;2;0.5" dur="3s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="80" cy="30" r="1.5" fill="rgba(220, 38, 38, 0.06)">
-                  <animate attributeName="r" values="1;2.5;1" dur="5s" repeatCount="indefinite" />
-                </circle>
-                <line x1="50" y1="50" x2="20" y2="20" stroke="rgba(220, 38, 38, 0.05)" strokeWidth="0.5">
-                  <animate attributeName="stroke-opacity" values="0.1;0.3;0.1" dur="4s" repeatCount="indefinite" />
-                </line>
-                <line x1="50" y1="50" x2="80" y2="30" stroke="rgba(220, 38, 38, 0.05)" strokeWidth="0.5">
-                  <animate attributeName="stroke-opacity" values="0.1;0.3;0.1" dur="3s" repeatCount="indefinite" />
-                </line>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#network)" />
-          </svg>
-        </div>
-
-        <div className="text-center relative z-10">
-          <motion.div 
-            className="relative mb-8"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          >
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 mx-auto flex items-center justify-center shadow-2xl">
-              <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center">
-                <Calendar className="w-10 h-10 text-white" strokeWidth={1.5} />
-              </div>
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent mx-auto" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-300 border-t-transparent absolute top-0 left-1/2 transform -translate-x-1/2"></div>
             </div>
-          </motion.div>
-          <motion.h2 
-            className="text-4xl font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent mb-3"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            {isPostseason ? 'Loading Postseason Games...' : `Loading Week ${selectedWeek} Games...`}
-          </motion.h2>
-          <motion.p 
-            className="text-gray-600 text-lg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            Fetching college football schedule
-          </motion.p>
+            <div className="mt-6 space-y-2">
+              <p className="text-xl font-bold" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                {isPostseason ? 'Loading Postseason Games...' : `Loading Week ${selectedWeek} Games...`}
+              </p>
+              <p className="text-gray-600">Fetching college football schedule</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -992,504 +508,357 @@ const Schedule = () => {
 
   if (errorMessage) {
     return (
-      <div className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center">
-        {/* Network Background */}
-        <div className="absolute inset-0">
-          <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="error-network" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-                <circle cx="50" cy="50" r="2" fill="rgba(220, 38, 38, 0.3)" />
-                <circle cx="20" cy="20" r="1" fill="rgba(220, 38, 38, 0.2)" />
-                <circle cx="80" cy="30" r="1.5" fill="rgba(220, 38, 38, 0.25)" />
-                <line x1="50" y1="50" x2="20" y2="20" stroke="rgba(220, 38, 38, 0.15)" strokeWidth="1" />
-                <line x1="50" y1="50" x2="80" y2="30" stroke="rgba(220, 38, 38, 0.15)" strokeWidth="1" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#error-network)" />
-          </svg>
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-md mx-auto">
+              <h3 className="font-bold">Error Loading Schedule</h3>
+              <p className="text-sm mt-2">{errorMessage}</p>
+              <button 
+                onClick={loadDataIfNeeded}
+                className="mt-4 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+                style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
         </div>
-
-        <motion.div 
-          className="max-w-md mx-auto bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/40 p-10 text-center shadow-2xl relative z-10"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.div 
-            className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-700 mx-auto mb-6 flex items-center justify-center"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <Zap className="w-8 h-8 text-white" strokeWidth={1.5} />
-          </motion.div>
-          <h3 className="font-black text-gray-800 text-2xl mb-3">Error Loading Schedule</h3>
-          <p className="text-gray-600 mb-8 leading-relaxed">{errorMessage}</p>
-          <motion.button 
-            onClick={loadDataIfNeeded}
-            className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white font-black rounded-2xl shadow-2xl border border-white/20"
-            whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(220, 38, 38, 0.3)" }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            Try Again
-          </motion.button>
-        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
-      {/* Enhanced Animated Network Background */}
-      <div className="fixed inset-0 z-0">
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="networkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgba(220, 38, 38, 0.08)">
-                <animate attributeName="stop-opacity" values="0.05;0.12;0.05" dur="4s" repeatCount="indefinite" />
-              </stop>
-              <stop offset="50%" stopColor="rgba(185, 28, 28, 0.06)">
-                <animate attributeName="stop-opacity" values="0.03;0.09;0.03" dur="3s" repeatCount="indefinite" />
-              </stop>
-              <stop offset="100%" stopColor="rgba(153, 27, 27, 0.04)">
-                <animate attributeName="stop-opacity" values="0.02;0.06;0.02" dur="5s" repeatCount="indefinite" />
-              </stop>
-            </linearGradient>
-            
-            <pattern id="dynamicNetwork" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
-              <circle cx="60" cy="60" r="3" fill="url(#networkGrad)">
-                <animate attributeName="r" values="2;5;2" dur="6s" repeatCount="indefinite" />
-                <animate attributeName="fill-opacity" values="0.3;0.8;0.3" dur="4s" repeatCount="indefinite" />
-              </circle>
-              <circle cx="20" cy="30" r="2" fill="rgba(220, 38, 38, 0.1)">
-                <animate attributeName="r" values="1;3;1" dur="4s" repeatCount="indefinite" />
-              </circle>
-              <circle cx="100" cy="20" r="2.5" fill="rgba(220, 38, 38, 0.08)">
-                <animate attributeName="r" values="1.5;4;1.5" dur="5s" repeatCount="indefinite" />
-              </circle>
-              <circle cx="90" cy="90" r="2" fill="rgba(220, 38, 38, 0.06)">
-                <animate attributeName="r" values="1;3.5;1" dur="3s" repeatCount="indefinite" />
-              </circle>
-              
-              <line x1="60" y1="60" x2="20" y2="30" stroke="rgba(220, 38, 38, 0.08)" strokeWidth="1">
-                <animate attributeName="stroke-opacity" values="0.1;0.4;0.1" dur="4s" repeatCount="indefinite" />
-                <animate attributeName="stroke-width" values="0.5;2;0.5" dur="6s" repeatCount="indefinite" />
-              </line>
-              <line x1="60" y1="60" x2="100" y2="20" stroke="rgba(220, 38, 38, 0.06)" strokeWidth="1">
-                <animate attributeName="stroke-opacity" values="0.1;0.3;0.1" dur="5s" repeatCount="indefinite" />
-              </line>
-              <line x1="60" y1="60" x2="90" y2="90" stroke="rgba(220, 38, 38, 0.07)" strokeWidth="0.8">
-                <animate attributeName="stroke-opacity" values="0.1;0.35;0.1" dur="3s" repeatCount="indefinite" />
-              </line>
-              <line x1="20" y1="30" x2="100" y2="20" stroke="rgba(220, 38, 38, 0.04)" strokeWidth="0.5">
-                <animate attributeName="stroke-opacity" values="0.05;0.2;0.05" dur="7s" repeatCount="indefinite" />
-              </line>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#dynamicNetwork)">
-            <animateTransform 
-              attributeName="transform" 
-              type="translate" 
-              values="0,0;30,20;0,0" 
-              dur="20s" 
-              repeatCount="indefinite" 
-            />
-          </rect>
-        </svg>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Custom Tailwind CSS Styles */}
+      <style jsx>{`
+        .gradient-bg {
+          background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+        }
+        .gradient-text {
+          background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .icon-gradient {
+          background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .animation-delay-1000 {
+          animation-delay: 1s;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-3000 {
+          animation-delay: 3s;
+        }
+        .animation-delay-500 {
+          animation-delay: 0.5s;
+        }
+      `}</style>
+
+      {/* Floating Orbs Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '2s' }}></div>
+        <div className="absolute bottom-20 right-1/3 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '3s' }}></div>
       </div>
 
-      <div className="relative z-10 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Futuristic Header */}
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          >
-            {/* Iconic Header Logo */}
-            <motion.div 
-              className="flex items-center justify-center mb-8 relative"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <div 
-                className="relative w-28 h-28 rounded-3xl bg-white/20 backdrop-blur-2xl border border-white/30 flex items-center justify-center group cursor-pointer shadow-2xl"
-                style={{
-                  boxShadow: `
-                    0 25px 50px rgba(0,0,0,0.1),
-                    inset 0 1px 6px rgba(255,255,255,0.3),
-                    0 0 0 1px rgba(255,255,255,0.1)
-                  `
-                }}
-              >
-                <Calendar className="w-12 h-12 text-red-600 group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
-                <motion.div 
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-red-400 to-red-600 rounded-full"
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Enhanced Liquid Glass Header Section */}
+        <div className="text-center mb-20">
+          <div className="flex items-center justify-center mb-8 relative">
+            {/* Liquid Glass Icon Container */}
+            <div className="relative">
+              {/* Outer glass ring */}
+              <div className="absolute inset-0 w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-2xl animate-pulse"></div>
+              {/* Inner glass container */}
+              <div className="relative w-16 h-16 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_10px_30px_rgba(0,0,0,0.1)] flex items-center justify-center">
+                {/* Liquid glass highlight */}
+                <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/60 via-transparent to-transparent"></div>
+                <i className="fas fa-calendar-check text-3xl relative z-10 drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
               </div>
-            </motion.div>
-            
-            {/* Futuristic Typography */}
-            <motion.h1 
-              className="text-8xl md:text-9xl font-black mb-8 relative"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.2 }}
-            >
-              <span className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent drop-shadow-2xl">
-                College Football
-              </span>
+              {/* Floating particles */}
+              <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+              <div className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full opacity-40 animate-ping animation-delay-500" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+            </div>
+          </div>
+          
+          {/* Enhanced Title with Liquid Glass Effect */}
+          <div className="relative mb-8">
+            <h1 className="text-6xl md:text-7xl font-black mb-6 relative">
+              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>College Football</span>
               <br />
-              <span className="bg-gradient-to-br from-red-600 via-red-700 to-red-800 bg-clip-text text-transparent drop-shadow-2xl">
-                Schedule
-              </span>
-            </motion.h1>
-            
-            {/* Enhanced Stats Display */}
-            <motion.div 
-              className="inline-flex items-center space-x-8 px-10 py-5 rounded-full bg-white/20 backdrop-blur-2xl border border-white/30"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              style={{
-                boxShadow: `
-                  0 15px 35px rgba(0,0,0,0.1),
-                  inset 0 1px 4px rgba(255,255,255,0.3)
-                `
-              }}
-            >
-              <div className="flex items-center space-x-4">
-                <motion.div 
-                  className="w-4 h-4 rounded-full bg-gradient-to-r from-red-500 to-red-700"
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-                <span className="text-2xl font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
-                  {filteredGames.length} Games
-                </span>
-              </div>
-              <div className="w-px h-8 bg-gradient-to-b from-transparent via-gray-400 to-transparent"></div>
-              <span className="text-2xl text-gray-700 font-bold">
-                {isPostseason ? 'Bowl Season & Playoffs' : `Week ${selectedWeek} • 2024`}
-              </span>
-            </motion.div>
-          </motion.div>
+              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Schedule</span>
+              {/* Animated underline */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-1 rounded-full opacity-60 animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+            </h1>
+          </div>
+          
+          {/* Stats Badge with Liquid Glass */}
+          <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2),0_15px_35px_rgba(0,0,0,0.1)]">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+              <span className="text-lg font-bold" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{filteredGames.length} Games</span>
+            </div>
+            <div className="w-px h-6 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+            <span className="text-lg text-gray-700 font-medium">
+              {isPostseason ? 'Bowl Season & Playoffs' : `Week ${selectedWeek} • 2024`}
+            </span>
+          </div>
+        </div>
 
-          {/* Enhanced Filter Controls */}
-          <motion.div 
-            className="relative mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <div 
-              className="bg-white/25 backdrop-blur-2xl rounded-3xl border border-white/30 p-10 shadow-2xl"
-              style={{
-                boxShadow: `
-                  0 25px 50px rgba(0,0,0,0.1),
-                  inset 0 1px 6px rgba(255,255,255,0.3),
-                  0 0 0 1px rgba(255,255,255,0.1)
-                `
-              }}
-            >
-              {/* Category Selection */}
-              <div className="flex flex-wrap items-center gap-8 mb-10">
+        {/* Liquid Glass Filter Controls */}
+        <div className="relative mb-8">
+          {/* Liquid Glass Container */}
+          <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
+            {/* Highlight overlay */}
+            <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            
+            {/* Content */}
+            <div className="relative z-10">
+              {/* Category Pills with Liquid Glass */}
+              <div className="flex flex-wrap items-center gap-4 mb-8">
                 {['Top 25', 'FBS'].map(category => (
-                  <motion.button
+                  <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`relative px-10 py-5 rounded-2xl font-black text-xl transition-all duration-500 ${
+                    className={`relative px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-500 transform hover:scale-105 ${
                       selectedCategory === category
                         ? 'text-white shadow-2xl'
-                        : 'text-gray-700 hover:text-gray-900'
+                        : 'text-gray-700 hover:text-white'
                     }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    style={selectedCategory === category ? {} : {}}
                   >
+                    {/* Active gradient background */}
                     {selectedCategory === category && (
-                      <motion.div 
-                        className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600 to-red-800"
-                        layoutId="activeCategory"
-                        style={{
-                          boxShadow: '0 8px 32px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
-                        }}
-                      />
+                      <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(204,0,28,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
                     )}
                     
+                    {/* Inactive glass background */}
                     {selectedCategory !== category && (
-                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xl rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
+                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
                     )}
+                    
+                    {/* Glass highlight */}
+                    <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
                     
                     <span className="relative z-10">{category}</span>
-                  </motion.button>
+                  </button>
                 ))}
                 
-                {/* Enhanced Search Box */}
-                <div className="flex-1 min-w-96 relative">
-                  <motion.div 
-                    className="relative bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 overflow-hidden"
-                    whileFocus={{ boxShadow: "0 15px 35px rgba(220, 38, 38, 0.2)" }}
-                    style={{
-                      boxShadow: `
-                        inset 0 2px 8px rgba(0,0,0,0.1),
-                        0 4px 12px rgba(0,0,0,0.05)
-                      `
-                    }}
-                  >
+                {/* Liquid Glass Search Box */}
+                <div className="flex-1 min-w-80 relative">
+                  <div className="relative bg-white/30 backdrop-blur-xl rounded-2xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.2)] overflow-hidden">
+                    {/* Glass highlight */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                    
                     <div className="relative flex items-center">
-                      <Search className="absolute left-6 w-6 h-6 text-gray-500 z-10" strokeWidth={1.5} />
+                      <i className="fas fa-search absolute left-4 text-gray-500 z-10"></i>
                       <input
                         type="text"
                         placeholder="Search teams..."
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
-                        className="w-full pl-16 pr-8 py-5 bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none font-semibold text-xl"
+                        className="w-full pl-12 pr-6 py-4 bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 font-medium text-lg"
                       />
                     </div>
-                  </motion.div>
+                  </div>
                 </div>
               </div>
 
-              {/* Enhanced Time Frame Controls */}
-              <div className="flex flex-wrap items-center gap-6">
+              {/* Liquid Glass Time Frame Controls */}
+              <div className="flex flex-wrap items-center gap-4">
                 {/* Year Selector */}
                 <div className="relative dropdown-container">
-                  <motion.button
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowYearPicker(!showYearPicker);
                       setShowWeekPicker(false);
                       setShowConferencePicker(false);
                     }}
-                    className="flex items-center gap-4 px-8 py-4 bg-white/20 backdrop-blur-xl rounded-xl border border-white/30 hover:bg-white/30 transition-all duration-300 font-bold text-gray-700"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
-                    <Calendar className="w-5 h-5" strokeWidth={1.5} />
-                    <span>{selectedYear}</span>
-                    <motion.div
-                      animate={{ rotate: showYearPicker ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="w-5 h-5" strokeWidth={1.5} />
-                    </motion.div>
-                  </motion.button>
-                  
-                  <AnimatePresence>
-                    {showYearPicker && (
-                      <motion.div 
-                        className="absolute top-full mt-3 bg-white/25 backdrop-blur-2xl rounded-2xl border border-white/30 z-[9999] min-w-36 overflow-hidden shadow-2xl"
-                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        {[2024, 2025].map(year => (
-                          <motion.button
-                            key={year}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedYear(year);
-                              setShowYearPicker(false);
-                            }}
-                            className="block w-full text-left px-8 py-4 hover:bg-white/30 transition-all duration-200 font-semibold text-gray-700"
-                            whileHover={{ backgroundColor: "rgba(255,255,255,0.3)" }}
-                          >
-                            {year}
-                          </motion.button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                    {/* Glass highlight */}
+                    <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                    
+                    <i className="fas fa-calendar-alt relative z-10"></i>
+                    <span className="relative z-10">{selectedYear}</span>
+                    <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showYearPicker ? 'rotate-180' : ''}`}></i>
+                  </button>
+                  {showYearPicker && (
+                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-[9999] min-w-32 overflow-hidden">
+                      {/* Glass highlight */}
+                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+                      
+                      {[2024, 2025].map(year => (
+                        <button
+                          key={year}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedYear(year);
+                            setShowYearPicker(false);
+                          }}
+                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
+                        >
+                          {year}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Conference Selector */}
                 <div className="relative dropdown-container">
-                  <motion.button
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowConferencePicker(!showConferencePicker);
                       setShowYearPicker(false);
                       setShowWeekPicker(false);
                     }}
-                    className="flex items-center gap-4 px-8 py-4 bg-white/20 backdrop-blur-xl rounded-xl border border-white/30 hover:bg-white/30 transition-all duration-300 font-bold text-gray-700"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
-                    <Trophy className="w-5 h-5" strokeWidth={1.5} />
-                    <span>{selectedConference || 'All Conferences'}</span>
-                    <motion.div
-                      animate={{ rotate: showConferencePicker ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="w-5 h-5" strokeWidth={1.5} />
-                    </motion.div>
-                  </motion.button>
-                  
-                  <AnimatePresence>
-                    {showConferencePicker && (
-                      <motion.div 
-                        className="absolute top-full mt-3 bg-white/25 backdrop-blur-2xl rounded-2xl border border-white/30 z-[9999] min-w-52 max-h-64 overflow-y-auto shadow-2xl"
-                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
+                    {/* Glass highlight */}
+                    <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                    
+                    <i className="fas fa-layer-group relative z-10"></i>
+                    <span className="relative z-10">{selectedConference || 'All Conferences'}</span>
+                    <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showConferencePicker ? 'rotate-180' : ''}`}></i>
+                  </button>
+                  {showConferencePicker && (
+                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-[9999] min-w-48 max-h-64 overflow-y-auto">
+                      {/* Glass highlight */}
+                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedConference(null);
+                          setShowConferencePicker(false);
+                        }}
+                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                       >
-                        <motion.button
+                        All Conferences
+                      </button>
+                      {conferences.map(conf => (
+                        <button
+                          key={conf.name}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedConference(null);
+                            setSelectedConference(conf.name);
                             setShowConferencePicker(false);
                           }}
-                          className="block w-full text-left px-8 py-4 hover:bg-white/30 transition-all duration-200 font-semibold text-gray-700"
-                          whileHover={{ backgroundColor: "rgba(255,255,255,0.3)" }}
+                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                         >
-                          All Conferences
-                        </motion.button>
-                        {conferences.map(conf => (
-                          <motion.button
-                            key={conf.name}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedConference(conf.name);
-                              setShowConferencePicker(false);
-                            }}
-                            className="block w-full text-left px-8 py-4 hover:bg-white/30 transition-all duration-200 font-semibold text-gray-700"
-                            whileHover={{ backgroundColor: "rgba(255,255,255,0.3)" }}
-                          >
-                            {conf.name}
-                          </motion.button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                          {conf.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Week Selector */}
                 <div className="relative dropdown-container">
-                  <motion.button
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowWeekPicker(!showWeekPicker);
                       setShowYearPicker(false);
                       setShowConferencePicker(false);
                     }}
-                    className="flex items-center gap-4 px-8 py-4 bg-white/20 backdrop-blur-xl rounded-xl border border-white/30 hover:bg-white/30 transition-all duration-300 font-bold text-gray-700"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
-                    <Clock className="w-5 h-5" strokeWidth={1.5} />
-                    <span>{isPostseason ? 'Postseason' : `Week ${selectedWeek}`}</span>
-                    <motion.div
-                      animate={{ rotate: showWeekPicker ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="w-5 h-5" strokeWidth={1.5} />
-                    </motion.div>
-                  </motion.button>
-                  
-                  <AnimatePresence>
-                    {showWeekPicker && (
-                      <motion.div 
-                        className="absolute top-full mt-3 bg-white/25 backdrop-blur-2xl rounded-2xl border border-white/30 z-[9999] min-w-36 max-h-64 overflow-y-auto shadow-2xl"
-                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        {Array.from({length: 15}, (_, i) => i + 1).map(week => (
-                          <motion.button
-                            key={week}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedWeek(week);
-                              setIsPostseason(false);
-                              setShowWeekPicker(false);
-                            }}
-                            className="block w-full text-left px-8 py-4 hover:bg-white/30 transition-all duration-200 font-semibold text-gray-700"
-                            whileHover={{ backgroundColor: "rgba(255,255,255,0.3)" }}
-                          >
-                            Week {week}
-                          </motion.button>
-                        ))}
-                        <motion.button
+                    {/* Glass highlight */}
+                    <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                    
+                    <i className="fas fa-calendar-week relative z-10"></i>
+                    <span className="relative z-10">{isPostseason ? 'Postseason' : `Week ${selectedWeek}`}</span>
+                    <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showWeekPicker ? 'rotate-180' : ''}`}></i>
+                  </button>
+                  {showWeekPicker && (
+                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-[9999] min-w-32 max-h-64 overflow-y-auto">
+                      {/* Glass highlight */}
+                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+                      
+                      {Array.from({length: 15}, (_, i) => i + 1).map(week => (
+                        <button
+                          key={week}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setIsPostseason(true);
+                            setSelectedWeek(week);
+                            setIsPostseason(false);
                             setShowWeekPicker(false);
                           }}
-                          className="block w-full text-left px-8 py-4 hover:bg-white/30 transition-all duration-200 font-semibold text-gray-700"
-                          whileHover={{ backgroundColor: "rgba(255,255,255,0.3)" }}
+                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                         >
-                          Postseason
-                        </motion.button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                          Week {week}
+                        </button>
+                      ))}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsPostseason(true);
+                          setShowWeekPicker(false);
+                        }}
+                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
+                      >
+                        Postseason
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </motion.div>
-
-          {/* Games List */}
-          <div className="relative">
-            <AnimatePresence>
-              {isAnyDropdownOpen && (
-                <motion.div 
-                  className="absolute inset-0 bg-gray-900/10 backdrop-blur-sm z-10 rounded-3xl pointer-events-none"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                />
-              )}
-            </AnimatePresence>
-            
-            {filteredGames.length === 0 ? (
-              <motion.div 
-                className="text-center py-24"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <motion.div 
-                  className="w-28 h-28 rounded-3xl bg-white/20 backdrop-blur-xl border border-white/30 mx-auto mb-8 flex items-center justify-center"
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  <Search className="w-12 h-12 text-gray-400" strokeWidth={1.5} />
-                </motion.div>
-                <h3 className="text-4xl font-black text-gray-600 mb-5">No Games Found</h3>
-                <p className="text-gray-500 text-xl">Try adjusting your filters or selecting a different week.</p>
-              </motion.div>
-            ) : (
-              <div className="space-y-10">
-                {filteredGames.map((game, index) => (
-                  <GameCard
-                    key={game.id}
-                    game={game}
-                    getTeamRank={getTeamRank}
-                    getTeamLogo={getTeamLogo}
-                    getTeamAbbreviation={getTeamAbbreviation}
-                    formatGameDate={formatGameDate}
-                    index={index}
-                    gameMedia={gameMedia}
-                    gameWeather={gameWeather}
-                    isAnyDropdownOpen={isAnyDropdownOpen}
-                  />
-                ))}
-              </div>
-            )}
           </div>
+        </div>
+
+        {/* Games List */}
+        <div className="relative">
+          {/* Overlay when dropdowns are open */}
+          {isAnyDropdownOpen && (
+            <div className="absolute inset-0 bg-black/5 backdrop-blur-[1px] z-10 rounded-3xl pointer-events-none"></div>
+          )}
+          
+          {filteredGames.length === 0 ? (
+            <div className="text-center py-16">
+              <i className="fas fa-calendar-times text-6xl text-gray-300 mb-6"></i>
+              <h3 className="text-2xl font-bold text-gray-600 mb-4">No Games Found</h3>
+              <p className="text-gray-500">
+                Try adjusting your filters or selecting a different week.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredGames.map((game, index) => (
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  getTeamRank={getTeamRank}
+                  getTeamLogo={getTeamLogo}
+                  getTeamAbbreviation={getTeamAbbreviation}
+                  formatGameDate={formatGameDate}
+                  index={index}
+                  gameMedia={gameMedia}
+                  gameWeather={gameWeather}
+                  isAnyDropdownOpen={isAnyDropdownOpen}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-// Enhanced Futuristic Game Card Component
+// Game Card Component - Enhanced with comprehensive game information
 const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatGameDate, index, gameMedia, gameWeather, isAnyDropdownOpen }) => {
   const homeTeamId = game.home_id || game.homeId;
   const awayTeamId = game.away_id || game.awayId;
@@ -1499,6 +868,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const awayPoints = game.away_points || game.awayPoints;
   const isCompleted = game.completed === true;
 
+  // Enhanced game data extraction
   const excitementIndex = game.excitement_index || game.excitementIndex || 0;
   const homePreElo = game.home_pregame_elo || game.homePregameElo;
   const awayPreElo = game.away_pregame_elo || game.awayPregameElo;
@@ -1508,265 +878,199 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const awayWinProb = game.away_postgame_win_probability || game.awayPostgameWinProbability;
   const attendance = game.attendance;
 
+  // Get enhanced media and weather data
   const mediaData = gameMedia.get(game.id);
   const weatherData = gameWeather.get(game.id);
 
+  // Extract real weather data - check multiple sources
   const temperature = weatherData?.temperature || game.temperature;
   const weatherCondition = weatherData?.condition || weatherData?.weather_condition || game.weather_condition || game.weatherCondition;
   const windSpeed = weatherData?.wind_speed || game.wind_speed || game.windSpeed;
   const gameIndoors = weatherData?.indoors || game.game_indoors || game.gameIndoors;
 
+  // Extract real media data
   const tvOutlet = mediaData?.outlet || game.tv_outlet;
   const streamingOutlet = mediaData?.streamingOutlet;
   const mediaType = mediaData?.mediaType || game.media_type;
 
   const handleCardClick = (e) => {
+    // If any dropdown is open, prevent navigation
     if (isAnyDropdownOpen) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
+    
+    // Navigate to game detail view using hash routing
     window.location.hash = `#game-detail-${game.id}`;
   };
 
   return (
-    <motion.div 
-      className={`group relative transition-all duration-700 ${
+    <div 
+      className={`group relative overflow-hidden transition-all duration-500 ${
         isAnyDropdownOpen 
-          ? 'cursor-not-allowed opacity-50 pointer-events-none' 
-          : 'cursor-pointer'
+          ? 'cursor-not-allowed opacity-75 pointer-events-none' 
+          : 'cursor-pointer hover:scale-[1.01] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]'
       }`}
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
       onClick={handleCardClick}
-      whileHover={{ 
-        scale: isAnyDropdownOpen ? 1 : 1.02, 
-        y: isAnyDropdownOpen ? 0 : -10 
+      style={{
+        animationDelay: `${index * 100}ms`
       }}
     >
-      {/* Compact Glass Card */}
-      <div 
-        className="relative bg-white/25 backdrop-blur-2xl rounded-xl border border-white/30 p-4 shadow-lg overflow-hidden"
-        style={{
-          boxShadow: `
-            0 10px 25px rgba(0,0,0,0.08),
-            inset 0 1px 3px rgba(255,255,255,0.2),
-            0 0 0 1px rgba(255,255,255,0.05)
-          `
-        }}
-      >
-        {/* Enhanced hover effects */}
-        <motion.div 
-          className="absolute -inset-0.5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-r from-red-600/20 via-red-500/10 to-red-600/20 blur-xl"
-          animate={{ 
-            background: [
-              "linear-gradient(90deg, rgba(220,38,38,0.2) 0%, rgba(239,68,68,0.1) 50%, rgba(220,38,38,0.2) 100%)",
-              "linear-gradient(180deg, rgba(220,38,38,0.15) 0%, rgba(239,68,68,0.05) 50%, rgba(220,38,38,0.15) 100%)",
-              "linear-gradient(270deg, rgba(220,38,38,0.2) 0%, rgba(239,68,68,0.1) 50%, rgba(220,38,38,0.2) 100%)"
-            ]
-          }}
-          transition={{ duration: 4, repeat: Infinity }}
-        />
+      {/* Enhanced Liquid Glass Container */}
+      <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70">
+        {/* Liquid Glass Highlight */}
+        <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
         
-        <div className="relative z-10 space-y-4">
+        {/* Dynamic Glow Effect */}
+        <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(220,38,38,0.1) 0%, rgba(185,28,28,0.1) 50%, rgba(153,27,27,0.1) 100%)' }}></div>
+        
+        <div className="relative z-10 space-y-6">
           
-          {/* Main Team Matchup */}
+          {/* Top Row: Teams and Core Info */}
           <div className="flex items-center justify-between">
+            {/* Teams Section */}
             <div className="flex items-center space-x-6 flex-1">
-              
               {/* Away Team */}
-              <motion.div 
-                className="flex items-center space-x-3"
-                whileHover={{ scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="relative group/logo">
-                  <motion.img
+              <div className="flex items-center space-x-4">
+                {/* Enhanced Logo Container */}
+                <div className="relative w-16 h-16 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                  <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
+                  <img
                     src={getTeamLogo(awayTeamId)}
                     alt={`${awayTeam} logo`}
-                    className="w-12 h-12 object-contain"
-                    style={{
-                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2)) saturate(1.2) contrast(1.1) brightness(1.1)'
-                    }}
-                    whileHover={{ 
-                      scale: 1.1, 
-                      rotate: 5,
-                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.3) contrast(1.2) brightness(1.2)'
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                    className="w-12 h-12 object-contain relative z-10 drop-shadow-xl"
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
-                  {getTeamRank(awayTeamId) && (
-                    <motion.div 
-                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg border border-white"
-                      whileHover={{ scale: 1.2, rotate: 360 }}
-                      transition={{ duration: 0.5 }}
-                      style={{
-                        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3), inset 0 1px 2px rgba(255,255,255,0.2)'
-                      }}
-                    >
-                      <span className="text-white text-xs font-black">{getTeamRank(awayTeamId)}</span>
-                    </motion.div>
-                  )}
                 </div>
                 
-                <div className="text-left">
-                  <h3 className="text-sm font-black text-gray-900 mb-1">
-                    {getTeamAbbreviation(awayTeamId, awayTeam)}
-                  </h3>
+                <div className="min-w-0">
+                  <div className="flex items-center space-x-3 mb-2">
+                    {getTeamRank(awayTeamId) && (
+                      <div className="relative">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(220,38,38,0.4)] group-hover:shadow-[0_6px_25px_rgba(220,38,38,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
+                          <span className="text-white text-sm font-black">{getTeamRank(awayTeamId)}</span>
+                        </div>
+                      </div>
+                    )}
+                    <span className="font-black text-gray-900 text-lg truncate drop-shadow-sm">
+                      {getTeamAbbreviation(awayTeamId, awayTeam)}
+                    </span>
+                  </div>
                   {homePoints !== null && awayPoints !== null && (
-                    <motion.div 
-                      className="text-lg font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent"
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
+                    <div className="text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       {awayPoints}
-                    </motion.div>
+                    </div>
                   )}
+                  {/* Away Team ELO */}
                   {awayPreElo && (
-                    <EloRatingDisplay 
-                      preGameElo={awayPreElo} 
-                      postGameElo={awayPostElo}
-                      teamName={awayTeam}
-                      isCompleted={isCompleted}
-                    />
+                    <div className="mt-2">
+                      <EloRatingDisplay 
+                        preGameElo={awayPreElo} 
+                        postGameElo={awayPostElo}
+                        teamName={awayTeam}
+                        isCompleted={isCompleted}
+                      />
+                    </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
 
-              {/* VS Indicator */}
+              {/* VS Separator */}
               <div className="flex items-center justify-center">
-                <motion.div 
-                  className="w-8 h-8 rounded-full bg-white/25 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-lg"
-                  whileHover={{ scale: 1.15, rotate: 180 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  style={{
-                    boxShadow: `
-                      0 4px 12px rgba(0,0,0,0.08),
-                      inset 0 1px 2px rgba(255,255,255,0.2)
-                    `
-                  }}
-                >
-                  <span className="text-xs font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent">
-                    @
-                  </span>
-                </motion.div>
+                <div className="w-12 h-12 rounded-full bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                  <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
+                  <span className="relative z-10 text-lg font-black drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>@</span>
+                </div>
               </div>
 
               {/* Home Team */}
-              <motion.div 
-                className="flex items-center space-x-3"
-                whileHover={{ scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="text-right">
-                  <h3 className="text-sm font-black text-gray-900 mb-1">
-                    {getTeamAbbreviation(homeTeamId, homeTeam)}
-                  </h3>
+              <div className="flex items-center space-x-4">
+                <div className="min-w-0 text-right">
+                  <div className="flex items-center justify-end space-x-3 mb-2">
+                    <span className="font-black text-gray-900 text-lg truncate drop-shadow-sm">
+                      {getTeamAbbreviation(homeTeamId, homeTeam)}
+                    </span>
+                    {getTeamRank(homeTeamId) && (
+                      <div className="relative">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(220,38,38,0.4)] group-hover:shadow-[0_6px_25px_rgba(220,38,38,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
+                          <span className="text-white text-sm font-black">{getTeamRank(homeTeamId)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   {homePoints !== null && awayPoints !== null && (
-                    <motion.div 
-                      className="text-lg font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent"
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
+                    <div className="text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       {homePoints}
-                    </motion.div>
+                    </div>
                   )}
+                  {/* Home Team ELO */}
                   {homePreElo && (
-                    <EloRatingDisplay 
-                      preGameElo={homePreElo} 
-                      postGameElo={homePostElo}
-                      teamName={homeTeam}
-                      isCompleted={isCompleted}
-                    />
+                    <div className="mt-2">
+                      <EloRatingDisplay 
+                        preGameElo={homePreElo} 
+                        postGameElo={homePostElo}
+                        teamName={homeTeam}
+                        isCompleted={isCompleted}
+                      />
+                    </div>
                   )}
                 </div>
                 
-                <div className="relative group/logo">
-                  <motion.img
+                {/* Enhanced Logo Container */}
+                <div className="relative w-16 h-16 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                  <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
+                  <img
                     src={getTeamLogo(homeTeamId)}
                     alt={`${homeTeam} logo`}
-                    className="w-12 h-12 object-contain"
-                    style={{
-                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2)) saturate(1.2) contrast(1.1) brightness(1.1)'
-                    }}
-                    whileHover={{ 
-                      scale: 1.1, 
-                      rotate: -5,
-                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.3) contrast(1.2) brightness(1.2)'
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                    className="w-12 h-12 object-contain relative z-10 drop-shadow-xl"
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
-                  {getTeamRank(homeTeamId) && (
-                    <motion.div 
-                      className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg border border-white"
-                      whileHover={{ scale: 1.2, rotate: -360 }}
-                      transition={{ duration: 0.5 }}
-                      style={{
-                        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3), inset 0 1px 2px rgba(255,255,255,0.2)'
-                      }}
-                    >
-                      <span className="text-white text-xs font-black">{getTeamRank(homeTeamId)}</span>
-                    </motion.div>
-                  )}
                 </div>
-              </motion.div>
+              </div>
             </div>
 
-            {/* Game Status */}
-            <motion.div 
-              className={`relative px-3 py-2 rounded-lg font-bold text-xs backdrop-blur-xl border shadow-lg ${
+            {/* Status Badge */}
+            <div 
+              className={`relative inline-flex items-center px-4 py-2 rounded-xl font-bold text-sm backdrop-blur-xl border shadow-lg ${
                 isCompleted 
-                  ? 'bg-green-500/20 border-green-400/30 text-green-700' 
-                  : 'bg-gradient-to-br from-red-600 to-red-800 border-white/30 text-white'
+                  ? 'bg-green-500/20 border-green-400/30 text-green-700 shadow-[0_8px_25px_rgba(34,197,94,0.2)]' 
+                  : 'border-white/30 text-white shadow-[0_8px_25px_rgba(204,0,28,0.3)]'
               }`}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 300 }}
-              style={!isCompleted ? {
-                boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3), inset 0 1px 2px rgba(255,255,255,0.2)'
-              } : {}}
+              style={!isCompleted ? { background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' } : {}}
             >
-              <div className="flex items-center space-x-2">
+              <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
+              <div className="relative z-10 flex items-center space-x-2">
                 {isCompleted ? (
                   <>
-                    <CheckCircle className="w-3 h-3" strokeWidth={1.5} />
+                    <i className="fas fa-check-circle"></i>
                     <span>FINAL</span>
                   </>
                 ) : (
                   <>
-                    <motion.div 
-                      className="w-2 h-2 bg-white rounded-full"
-                      animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    />
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                     <span>{formatGameDate(game.start_date || game.startDate)}</span>
                   </>
                 )}
               </div>
-            </motion.div>
+            </div>
           </div>
 
-          {/* Compact Game Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Second Row: Enhanced Game Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             
             {/* Media Coverage */}
             {(tvOutlet || streamingOutlet) && (
-              <motion.div 
-                className="bg-white/20 backdrop-blur-xl rounded-lg border border-white/20 p-3 shadow-lg"
-                whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.25)" }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="flex items-center space-x-3">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                <div className="flex items-center space-x-2 text-sm">
                   <MediaIcon outlet={tvOutlet || streamingOutlet} mediaType={mediaType} />
                   <div>
-                    <div className="font-bold text-gray-800 text-sm mb-1">{tvOutlet || streamingOutlet}</div>
+                    <div className="font-bold text-gray-700">{tvOutlet || streamingOutlet}</div>
                     {streamingOutlet && tvOutlet && (
-                      <div className="text-xs text-gray-600 mb-1">+ {streamingOutlet}</div>
+                      <div className="text-xs text-gray-500">+ {streamingOutlet}</div>
                     )}
                     {mediaType && (
-                      <span className={`text-xs px-2 py-1 rounded-full font-bold inline-block ${
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
                         mediaType === 'web' ? 'bg-purple-500/20 text-purple-700' : 'bg-blue-500/20 text-blue-700'
                       }`}>
                         {mediaType.toUpperCase()}
@@ -1774,83 +1078,69 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
 
-            {/* Compact Weather */}
+            {/* Weather Information - Show with fallback data */}
             {(temperature || weatherCondition || game.venue_details?.climate) && (
-              <motion.div 
-                className="bg-white/20 backdrop-blur-xl rounded-lg border border-white/20 p-3 shadow-lg"
-                whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.25)" }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <WeatherIcon 
-                  condition={weatherCondition || game.venue_details?.climate || 'Unknown'} 
-                  temperature={temperature || (game.venue_details?.temperature_avg)} 
-                />
-                {windSpeed && windSpeed > 10 && (
-                  <div className="mt-2 text-xs text-gray-600 flex items-center space-x-2">
-                    <Wind className="w-3 h-3 text-emerald-500" strokeWidth={1.5} />
-                    <span>Wind: {Math.round(windSpeed)} mph</span>
-                  </div>
-                )}
-                {(gameIndoors || game.venue_details?.dome) && (
-                  <div className="mt-2">
-                    <span className="text-xs bg-gray-500/20 text-gray-700 px-2 py-1 rounded-full font-bold inline-flex items-center space-x-1">
-                      <Home className="w-3 h-3" strokeWidth={1.5} />
-                      <span>Indoor</span>
-                    </span>
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* Excitement Level */}
-            {excitementIndex > 0 && (
-              <motion.div 
-                className="bg-white/20 backdrop-blur-xl rounded-lg border border-white/20 p-3 shadow-lg"
-                whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.25)" }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="text-xs font-bold text-gray-600 mb-2">Excitement Level</div>
-                <ExcitementStars excitementIndex={excitementIndex} />
-                <div className="text-xs text-gray-500 mt-2 font-semibold">
-                  {excitementIndex >= 8 ? 'Thriller!' : 
-                   excitementIndex >= 6 ? 'Great Game' : 
-                   excitementIndex >= 4 ? 'Good Game' : 'Standard'}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Venue */}
-            {game.venue && (
-              <motion.div 
-                className="bg-white/20 backdrop-blur-xl rounded-lg border border-white/20 p-3 shadow-lg"
-                whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.25)" }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="flex items-center space-x-3">
-                  <motion.div 
-                    className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 p-2 flex items-center justify-center shadow-lg border border-white/20"
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <MapPin className="w-full h-full text-white" strokeWidth={1.5} />
-                  </motion.div>
-                  <div>
-                    <div className="font-bold text-gray-800 text-sm mb-1">{game.venue}</div>
-                    {attendance && (
-                      <div className="text-xs text-gray-600 flex items-center space-x-1 mt-1">
-                        <Users className="w-3 h-3" strokeWidth={1.5} />
-                        <span>{attendance.toLocaleString()} fans</span>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                <div className="flex items-center justify-between">
+                  <WeatherIcon 
+                    condition={weatherCondition || game.venue_details?.climate || 'Unknown'} 
+                    temperature={temperature || (game.venue_details?.temperature_avg)} 
+                  />
+                  <div className="text-right">
+                    {(weatherCondition || game.venue_details?.climate) && (
+                      <div className="text-xs font-bold text-gray-700 capitalize">
+                        {weatherCondition || game.venue_details?.climate || 'Check Local Weather'}
+                      </div>
+                    )}
+                    {windSpeed && windSpeed > 10 && (
+                      <div className="text-xs text-gray-500">
+                        Wind: {Math.round(windSpeed)} mph
+                      </div>
+                    )}
+                    {(gameIndoors || game.venue_details?.dome) && (
+                      <div className="text-xs bg-gray-500/20 text-gray-700 px-2 py-0.5 rounded-full font-bold">
+                        Indoor
                       </div>
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
 
-            {/* Win Probability */}
+            {/* Excitement Level */}
+            {excitementIndex > 0 && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                <div className="text-xs font-bold text-gray-600 mb-1">Excitement Level</div>
+                <ExcitementStars excitementIndex={excitementIndex} />
+                <div className="text-xs text-gray-500 mt-1">
+                  {excitementIndex >= 8 ? 'Thriller!' : 
+                   excitementIndex >= 6 ? 'Great Game' : 
+                   excitementIndex >= 4 ? 'Good Game' : 'Standard'}
+                </div>
+              </div>
+            )}
+
+            {/* Venue Information */}
+            {game.venue && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                <div className="flex items-center space-x-2">
+                  <i className="fas fa-map-marker-alt text-gray-500"></i>
+                  <div>
+                    <div className="text-xs font-bold text-gray-700">{game.venue}</div>
+                    {attendance && (
+                      <div className="text-xs text-gray-500">
+                        {attendance.toLocaleString()} fans
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Win Probability Chart */}
             {(homeWinProb || awayWinProb) && (
               <div className="md:col-span-2 lg:col-span-1">
                 <WinProbabilityChart 
@@ -1864,68 +1154,48 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                 />
               </div>
             )}
+
           </div>
 
-          {/* Game Type Badges */}
-          <motion.div 
-            className="flex flex-wrap gap-6"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
+          {/* Third Row: Game Type Badges */}
+          <div className="flex flex-wrap gap-2">
             {(game.conference_game || game.conferenceGame) && (
-              <motion.div 
-                className="px-8 py-4 rounded-full bg-blue-500/20 backdrop-blur-xl text-blue-700 font-black text-lg border border-blue-400/30 shadow-lg"
-                whileHover={{ scale: 1.05, backgroundColor: "rgba(59, 130, 246, 0.25)" }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <Trophy className="inline w-5 h-5 mr-3" strokeWidth={1.5} />
+              <div className="inline-block text-xs bg-blue-500/20 backdrop-blur-sm text-blue-700 font-bold px-3 py-1 rounded-full border border-blue-400/30">
+                <i className="fas fa-trophy mr-1"></i>
                 Conference Game
-              </motion.div>
+              </div>
             )}
             
             {(game.neutral_site || game.neutralSite) && (
-              <motion.div 
-                className="px-8 py-4 rounded-full bg-purple-500/20 backdrop-blur-xl text-purple-700 font-black text-lg border border-purple-400/30 shadow-lg"
-                whileHover={{ scale: 1.05, backgroundColor: "rgba(147, 51, 234, 0.25)" }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <MapPin className="inline w-5 h-5 mr-3" strokeWidth={1.5} />
+              <div className="inline-block text-xs bg-purple-500/20 backdrop-blur-sm text-purple-700 font-bold px-3 py-1 rounded-full border border-purple-400/30">
+                <i className="fas fa-balance-scale mr-1"></i>
                 Neutral Site
-              </motion.div>
+              </div>
             )}
 
             {game.rivalry && (
-              <motion.div 
-                className="px-8 py-4 rounded-full bg-gradient-to-br from-red-600 to-red-800 text-white font-black text-lg shadow-2xl border border-white/20"
-                whileHover={{ 
-                  scale: 1.05, 
-                  boxShadow: "0 15px 35px rgba(220, 38, 38, 0.4)" 
-                }}
-                transition={{ type: "spring", stiffness: 300 }}
-                style={{
-                  boxShadow: '0 4px 15px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
-                }}
-              >
-                <Flame className="inline w-5 h-5 mr-3" strokeWidth={1.5} />
-                Rivalry Game
-              </motion.div>
+              <div className="relative inline-block text-xs font-bold px-3 py-1 rounded-full border border-white/40 text-white shadow-[0_4px_15px_rgba(220,38,38,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
+                <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                <span className="relative z-10 flex items-center">
+                  <i className="fas fa-fire mr-1"></i>
+                  Rivalry Game
+                </span>
+              </div>
             )}
 
             {isCompleted && excitementIndex >= 8 && (
-              <motion.div 
-                className="px-8 py-4 rounded-full bg-yellow-500/20 backdrop-blur-xl text-yellow-700 font-black text-lg border border-yellow-400/30 shadow-lg"
-                whileHover={{ scale: 1.05, backgroundColor: "rgba(234, 179, 8, 0.25)" }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <Star className="inline w-5 h-5 mr-3" strokeWidth={1.5} />
+              <div className="inline-block text-xs bg-yellow-500/20 backdrop-blur-sm text-yellow-700 font-bold px-3 py-1 rounded-full border border-yellow-400/30">
+                <i className="fas fa-star mr-1"></i>
                 Game of the Week
-              </motion.div>
+              </div>
             )}
-          </motion.div>
+          </div>
         </div>
+        
+        {/* Hover effect overlay */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
