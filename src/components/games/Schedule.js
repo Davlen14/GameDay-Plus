@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { gameService, teamService, rankingsService } from '../../services';
 
 const Schedule = () => {
@@ -12,17 +12,18 @@ const Schedule = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Top 25');
   
-  // UI state
-  const [animateShine, setAnimateShine] = useState(false);
+  // UI state - removed animateShine to improve performance
   const [showWeekPicker, setShowWeekPicker] = useState(false);
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showConferencePicker, setShowConferencePicker] = useState(false);
 
-  // Data state (similar to SwiftUI's cache manager)
+  // Data state with enhanced media and weather
   const [games, setGames] = useState([]);
   const [teams, setTeams] = useState([]);
   const [rankings, setRankings] = useState([]);
   const [filteredGames, setFilteredGames] = useState([]);
+  const [gameMedia, setGameMedia] = useState(new Map());
+  const [gameWeather, setGameWeather] = useState(new Map());
 
   // Conference data matching your app structure
   const conferences = [
@@ -40,7 +41,6 @@ const Schedule = () => {
   ];
 
   useEffect(() => {
-    setAnimateShine(true);
     loadDataIfNeeded();
   }, [selectedWeek, selectedYear, isPostseason]);
 
@@ -51,6 +51,20 @@ const Schedule = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchText, selectedConference, selectedCategory, games, rankings]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown-container')) {
+        setShowWeekPicker(false);
+        setShowYearPicker(false);
+        setShowConferencePicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const loadDataIfNeeded = async () => {
     setIsLoading(true);
@@ -72,6 +86,27 @@ const Schedule = () => {
         loadedGames = await gameService.getGamesByWeek(selectedYear, selectedWeek, 'regular', false);
       }
       setGames(loadedGames || []);
+
+      // Load enhanced media and weather data in parallel
+      const [mediaData, weatherData] = await Promise.all([
+        gameService.getEnhancedGameMedia(selectedYear, selectedWeek, isPostseason ? 'postseason' : 'regular').catch(() => []),
+        gameService.getEnhancedGameWeather(null, selectedYear, selectedWeek, isPostseason ? 'postseason' : 'regular').catch(() => [])
+      ]);
+
+      // Create lookup maps for quick access
+      const mediaMap = new Map();
+      const weatherMap = new Map();
+
+      mediaData.forEach(media => {
+        mediaMap.set(media.id, media);
+      });
+
+      weatherData.forEach(weather => {
+        weatherMap.set(weather.id, weather);
+      });
+
+      setGameMedia(mediaMap);
+      setGameWeather(weatherMap);
 
       // Load rankings if not cached
       let loadedRankings = rankings;
@@ -251,14 +286,14 @@ const Schedule = () => {
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Enhanced Liquid Glass Header Section */}
-        <div className="text-center mb-20" data-aos="fade-up">
+        <div className="text-center mb-20">
           <div className="flex items-center justify-center mb-8 relative">
             {/* Liquid Glass Icon Container */}
             <div className="relative">
               {/* Outer glass ring */}
               <div className="absolute inset-0 w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-2xl animate-pulse"></div>
               {/* Inner glass container */}
-              <div className={`relative w-16 h-16 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_10px_30px_rgba(0,0,0,0.1)] flex items-center justify-center ${animateShine ? 'animate-bounce' : ''}`}>
+              <div className="relative w-16 h-16 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_10px_30px_rgba(0,0,0,0.1)] flex items-center justify-center">
                 {/* Liquid glass highlight */}
                 <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/60 via-transparent to-transparent"></div>
                 <i className="fas fa-calendar-check text-3xl icon-gradient relative z-10 drop-shadow-lg"></i>
@@ -281,7 +316,7 @@ const Schedule = () => {
           </div>
           
           {/* Stats Badge with Liquid Glass */}
-          <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2),0_15px_35px_rgba(0,0,0,0.1)]" data-aos="fade-up" data-aos-delay="200">
+          <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2),0_15px_35px_rgba(0,0,0,0.1)]">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 gradient-bg rounded-full animate-pulse"></div>
               <span className="text-lg font-bold gradient-text">{filteredGames.length} Games</span>
@@ -294,7 +329,7 @@ const Schedule = () => {
         </div>
 
         {/* Liquid Glass Filter Controls */}
-        <div className="relative mb-8" data-aos="fade-up" data-aos-delay="300">
+        <div className="relative mb-8">
           {/* Liquid Glass Container */}
           <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
             {/* Highlight overlay */}
@@ -355,9 +390,14 @@ const Schedule = () => {
               {/* Liquid Glass Time Frame Controls */}
               <div className="flex flex-wrap items-center gap-4">
                 {/* Year Selector */}
-                <div className="relative">
+                <div className="relative dropdown-container">
                   <button
-                    onClick={() => setShowYearPicker(!showYearPicker)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowYearPicker(!showYearPicker);
+                      setShowWeekPicker(false);
+                      setShowConferencePicker(false);
+                    }}
                     className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
                     {/* Glass highlight */}
@@ -365,21 +405,22 @@ const Schedule = () => {
                     
                     <i className="fas fa-calendar-alt relative z-10"></i>
                     <span className="relative z-10">{selectedYear}</span>
-                    <i className="fas fa-chevron-down relative z-10"></i>
+                    <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showYearPicker ? 'rotate-180' : ''}`}></i>
                   </button>
                   {showYearPicker && (
-                    <div className="absolute top-full mt-2 bg-white/80 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-20 min-w-32 overflow-hidden">
+                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-50 min-w-32 overflow-hidden">
                       {/* Glass highlight */}
                       <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                       
                       {[2024, 2025].map(year => (
                         <button
                           key={year}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedYear(year);
                             setShowYearPicker(false);
                           }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
                         >
                           {year}
                         </button>
@@ -389,9 +430,14 @@ const Schedule = () => {
                 </div>
 
                 {/* Conference Selector */}
-                <div className="relative">
+                <div className="relative dropdown-container">
                   <button
-                    onClick={() => setShowConferencePicker(!showConferencePicker)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowConferencePicker(!showConferencePicker);
+                      setShowYearPicker(false);
+                      setShowWeekPicker(false);
+                    }}
                     className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
                     {/* Glass highlight */}
@@ -399,30 +445,32 @@ const Schedule = () => {
                     
                     <i className="fas fa-layer-group relative z-10"></i>
                     <span className="relative z-10">{selectedConference || 'All Conferences'}</span>
-                    <i className="fas fa-chevron-down relative z-10"></i>
+                    <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showConferencePicker ? 'rotate-180' : ''}`}></i>
                   </button>
                   {showConferencePicker && (
-                    <div className="absolute top-full mt-2 bg-white/80 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-20 min-w-48 max-h-64 overflow-y-auto">
+                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-50 min-w-48 max-h-64 overflow-y-auto">
                       {/* Glass highlight */}
                       <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                       
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedConference(null);
                           setShowConferencePicker(false);
                         }}
-                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
                       >
                         All Conferences
                       </button>
                       {conferences.map(conf => (
                         <button
                           key={conf.name}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedConference(conf.name);
                             setShowConferencePicker(false);
                           }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
                         >
                           {conf.name}
                         </button>
@@ -432,9 +480,14 @@ const Schedule = () => {
                 </div>
 
                 {/* Week Selector */}
-                <div className="relative">
+                <div className="relative dropdown-container">
                   <button
-                    onClick={() => setShowWeekPicker(!showWeekPicker)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowWeekPicker(!showWeekPicker);
+                      setShowYearPicker(false);
+                      setShowConferencePicker(false);
+                    }}
                     className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
                     {/* Glass highlight */}
@@ -442,32 +495,34 @@ const Schedule = () => {
                     
                     <i className="fas fa-calendar-week relative z-10"></i>
                     <span className="relative z-10">{isPostseason ? 'Postseason' : `Week ${selectedWeek}`}</span>
-                    <i className="fas fa-chevron-down relative z-10"></i>
+                    <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showWeekPicker ? 'rotate-180' : ''}`}></i>
                   </button>
                   {showWeekPicker && (
-                    <div className="absolute top-full mt-2 bg-white/80 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-20 min-w-32 max-h-64 overflow-y-auto">
+                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-50 min-w-32 max-h-64 overflow-y-auto">
                       {/* Glass highlight */}
                       <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                       
                       {Array.from({length: 15}, (_, i) => i + 1).map(week => (
                         <button
                           key={week}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedWeek(week);
                             setIsPostseason(false);
                             setShowWeekPicker(false);
                           }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
                         >
                           Week {week}
                         </button>
                       ))}
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setIsPostseason(true);
                           setShowWeekPicker(false);
                         }}
-                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
                       >
                         Postseason
                       </button>
@@ -499,6 +554,8 @@ const Schedule = () => {
                 getTeamAbbreviation={getTeamAbbreviation}
                 formatGameDate={formatGameDate}
                 index={index}
+                gameMedia={gameMedia}
+                gameWeather={gameWeather}
               />
             ))}
           </div>
@@ -508,8 +565,8 @@ const Schedule = () => {
   );
 };
 
-// Game Card Component - Similar to SwiftUI ModernScheduleGameCard
-const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatGameDate, index }) => {
+// Game Card Component - Enhanced with media and weather data
+const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatGameDate, index, gameMedia, gameWeather }) => {
   const homeTeamId = game.home_id || game.homeId;
   const awayTeamId = game.away_id || game.awayId;
   const homeTeam = game.home_team || game.homeTeam;
@@ -517,6 +574,10 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const homePoints = game.home_points || game.homePoints;
   const awayPoints = game.away_points || game.awayPoints;
   const isCompleted = game.completed === true;
+
+  // Get enhanced media and weather data
+  const mediaData = gameMedia.get(game.id);
+  const weatherData = gameWeather.get(game.id);
 
   const handleCardClick = () => {
     // Navigate to game detail view using hash routing
@@ -526,8 +587,6 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   return (
     <div 
       className="group relative overflow-hidden cursor-pointer"
-      data-aos="fade-up"
-      data-aos-delay={index * 50}
       onClick={handleCardClick}
     >
       {/* Liquid Glass Container */}
@@ -664,6 +723,36 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
             
             {/* Additional Info with Glass Morphism */}
             <div className="space-y-2">
+              {/* TV/Media Information */}
+              {mediaData && (
+                <div className="flex items-center space-x-2 text-sm text-gray-600 font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
+                  <i className={`${mediaData.icon} mr-1 text-gray-500`}></i>
+                  <span>{mediaData.outlet}</span>
+                  {mediaData.broadcastType && (
+                    <span className="text-xs bg-blue-500/20 text-blue-700 px-2 py-0.5 rounded">
+                      {mediaData.broadcastType}
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {/* Weather Information */}
+              {weatherData && (
+                <div className="flex items-center space-x-2 text-sm text-gray-600 font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
+                  <i className={`${weatherData.icon} mr-1 text-gray-500`}></i>
+                  <span>{weatherData.summary}</span>
+                  {weatherData.impact && weatherData.impact !== 'None' && (
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      weatherData.impact === 'High' ? 'bg-red-500/20 text-red-700' :
+                      weatherData.impact === 'Medium' ? 'bg-yellow-500/20 text-yellow-700' :
+                      'bg-green-500/20 text-green-700'
+                    }`}>
+                      {weatherData.impact} Impact
+                    </span>
+                  )}
+                </div>
+              )}
+              
               {game.venue && (
                 <div className="text-sm text-gray-600 font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
                   <i className="fas fa-map-marker-alt mr-1 text-gray-500"></i>

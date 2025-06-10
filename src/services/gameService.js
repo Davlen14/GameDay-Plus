@@ -365,4 +365,177 @@ export const gameService = {
       return [];
     }
   },
+
+  // Enhanced GET /games/media - Get game media information with caching
+  getEnhancedGameMedia: async (year, week = null, seasonType = 'regular', team = null, conference = null, classification = 'fbs', mediaType = null) => {
+    const params = { year, seasonType };
+    if (classification) params.classification = classification;
+    if (week) params.week = week;
+    if (team) params.team = team;
+    if (conference) params.conference = conference;
+    if (mediaType) params.mediaType = mediaType;
+    
+    try {
+      const mediaData = await fetchCollegeFootballData('/games/media', params);
+      
+      // Transform and enrich media data for easier consumption
+      const enrichedMedia = mediaData.map(media => ({
+        id: media.id,
+        season: media.season,
+        week: media.week,
+        seasonType: media.seasonType,
+        startTime: media.startTime,
+        homeTeam: media.homeTeam,
+        homeConference: media.homeConference,
+        awayTeam: media.awayTeam,
+        awayConference: media.awayConference,
+        mediaType: media.mediaType,
+        outlet: media.outlet,
+        // Enhanced fields for UI
+        displayOutlet: media.outlet || 'TBD',
+        mediaIcon: gameService.getMediaIcon(media.mediaType, media.outlet),
+        isStreamingOnly: media.mediaType === 'web' || media.mediaType === 'mobile'
+      }));
+      
+      return enrichedMedia;
+    } catch (error) {
+      console.warn('Enhanced media fetch failed:', error);
+      return [];
+    }
+  },
+
+  // Enhanced GET /games/weather - Get game weather data with analysis
+  getEnhancedGameWeather: async (gameId = null, year = null, week = null, seasonType = 'regular', team = null, conference = null) => {
+    const params = {};
+    if (gameId) params.gameId = gameId;
+    if (year) params.year = year;
+    if (week) params.week = week;
+    if (seasonType) params.seasonType = seasonType;
+    if (team) params.team = team;
+    if (conference) params.conference = conference;
+    
+    try {
+      const weatherData = await fetchCollegeFootballData('/games/weather', params);
+      
+      // Transform and enrich weather data for UI display
+      const enrichedWeather = weatherData.map(weather => ({
+        id: weather.id,
+        season: weather.season,
+        week: weather.week,
+        seasonType: weather.seasonType,
+        startTime: weather.startTime,
+        gameIndoors: weather.gameIndoors,
+        homeTeam: weather.homeTeam,
+        homeConference: weather.homeConference,
+        awayTeam: weather.awayTeam,
+        awayConference: weather.awayConference,
+        venueId: weather.venueId,
+        venue: weather.venue,
+        temperature: weather.temperature,
+        dewPoint: weather.dewPoint,
+        humidity: weather.humidity,
+        precipitation: weather.precipitation,
+        snowfall: weather.snowfall,
+        windDirection: weather.windDirection,
+        windSpeed: weather.windSpeed,
+        pressure: weather.pressure,
+        weatherConditionCode: weather.weatherConditionCode,
+        weatherCondition: weather.weatherCondition,
+        // Enhanced fields for UI
+        displayTemp: weather.temperature ? `${Math.round(weather.temperature)}°F` : 'N/A',
+        weatherIcon: gameService.getWeatherIcon(weather.weatherConditionCode, weather.weatherCondition, weather.gameIndoors),
+        conditionSummary: gameService.getWeatherSummary(weather),
+        gameImpact: gameService.analyzeWeatherImpact(weather)
+      }));
+      
+      return enrichedWeather;
+    } catch (error) {
+      console.warn('Enhanced weather fetch failed:', error);
+      return [];
+    }
+  },
+
+  // Helper function to get media icon based on type and outlet
+  getMediaIcon: (mediaType, outlet) => {
+    if (mediaType === 'tv') {
+      if (outlet?.includes('ESPN')) return 'fas fa-tv';
+      if (outlet?.includes('FOX')) return 'fas fa-tv';
+      if (outlet?.includes('CBS')) return 'fas fa-tv';
+      if (outlet?.includes('ABC')) return 'fas fa-tv';
+      if (outlet?.includes('NBC')) return 'fas fa-tv';
+      return 'fas fa-tv';
+    }
+    if (mediaType === 'web') return 'fas fa-globe';
+    if (mediaType === 'radio') return 'fas fa-radio';
+    if (mediaType === 'mobile') return 'fas fa-mobile-alt';
+    return 'fas fa-broadcast-tower';
+  },
+
+  // Helper function to get weather icon
+  getWeatherIcon: (conditionCode, condition, gameIndoors) => {
+    if (gameIndoors) return 'fas fa-building';
+    
+    if (condition) {
+      const lowerCondition = condition.toLowerCase();
+      if (lowerCondition.includes('rain') || lowerCondition.includes('shower')) return 'fas fa-cloud-rain';
+      if (lowerCondition.includes('snow')) return 'fas fa-snowflake';
+      if (lowerCondition.includes('cloud')) return 'fas fa-cloud';
+      if (lowerCondition.includes('clear') || lowerCondition.includes('fair')) return 'fas fa-sun';
+    }
+    
+    // Fallback based on condition code
+    switch (conditionCode) {
+      case 0: return 'fas fa-sun';
+      case 1: return 'fas fa-sun';
+      case 2: return 'fas fa-sun';
+      case 3: return 'fas fa-cloud';
+      case 7: return 'fas fa-cloud-rain';
+      case 8: return 'fas fa-cloud-rain';
+      case 18: return 'fas fa-cloud-rain';
+      default: return 'fas fa-cloud-sun';
+    }
+  },
+
+  // Helper function to get weather summary
+  getWeatherSummary: (weather) => {
+    if (weather.gameIndoors) return 'Indoor Game';
+    
+    const conditions = [];
+    if (weather.temperature) {
+      if (weather.temperature < 32) conditions.push('Cold');
+      else if (weather.temperature > 85) conditions.push('Hot');
+      else conditions.push('Mild');
+    }
+    
+    if (weather.windSpeed && weather.windSpeed > 15) conditions.push('Windy');
+    if (weather.precipitation && weather.precipitation > 0) conditions.push('Wet');
+    if (weather.weatherCondition && weather.weatherCondition !== 'null') {
+      conditions.push(weather.weatherCondition);
+    }
+    
+    return conditions.length > 0 ? conditions.join(', ') : 'Good Conditions';
+  },
+
+  // Helper function to analyze weather impact on game
+  analyzeWeatherImpact: (weather) => {
+    if (weather.gameIndoors) return 'neutral';
+    
+    let impactScore = 0;
+    
+    if (weather.temperature) {
+      if (weather.temperature < 25 || weather.temperature > 95) impactScore += 2;
+      else if (weather.temperature < 35 || weather.temperature > 85) impactScore += 1;
+    }
+    
+    if (weather.windSpeed && weather.windSpeed > 20) impactScore += 2;
+    else if (weather.windSpeed && weather.windSpeed > 15) impactScore += 1;
+    
+    if (weather.precipitation && weather.precipitation > 0.1) impactScore += 2;
+    
+    if (weather.weatherCondition && weather.weatherCondition.toLowerCase().includes('storm')) impactScore += 2;
+    
+    if (impactScore >= 4) return 'high';
+    if (impactScore >= 2) return 'moderate';
+    return 'low';
+  },
 };
