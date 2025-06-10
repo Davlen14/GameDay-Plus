@@ -62,28 +62,11 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4" style={{
-      fontFamily: 'Titillium Web, sans-serif',
-      background: 'linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 30%, #dee2e6 100%)'
+    <div className="flex items-center justify-center p-8" style={{
+      fontFamily: 'Titillium Web, sans-serif'
     }}>
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Titillium+Web:wght@200;300;400;600;700;900&display=swap');
-        
-        /* Stadium lighting effect */
-        .stadium-lighting::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: 
-            radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(ellipse at 70% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
-            linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 30%, #dee2e6 100%);
-          z-index: 0;
-          pointer-events: none;
-        }
 
         .football-field {
           position: relative;
@@ -94,10 +77,9 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             0 15px 30px rgba(0, 0, 0, 0.2),
             inset 0 0 0 2px rgba(255, 255, 255, 0.1);
           display: flex;
-          width: 90vw;
-          max-width: 1400px;
+          width: 100%;
+          max-width: 1200px;
           aspect-ratio: 2.2 / 1;
-          margin: 20px;
           z-index: 1;
           backdrop-filter: blur(5px);
           overflow: hidden;
@@ -388,15 +370,14 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         }
       `}</style>
 
-      <div className="stadium-lighting">
-        <div className="football-field">
-          {/* Away Team End Zone */}
-          <div className="endzone away-endzone">
-            <span className="endzone-text away-text">{awayData.name}</span>
-          </div>
+      <div className="football-field">
+        {/* Away Team End Zone */}
+        <div className="endzone away-endzone">
+          <span className="endzone-text away-text">{awayData.name}</span>
+        </div>
 
-          {/* Main Field */}
-          <div className="main-field" id="mainField">
+        {/* Main Field */}
+        <div className="main-field" id="mainField">
             {/* Field Lighting */}
             <div className="field-lighting"></div>
             
@@ -453,14 +434,13 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             </div>
           </div>
 
-          {/* Home Team End Zone */}
-          <div className="endzone home-endzone">
-            <span className="endzone-text home-text">{homeData.name}</span>
-          </div>
-
-          {/* Field Shadow */}
-          <div className="field-shadow"></div>
+        {/* Home Team End Zone */}
+        <div className="endzone home-endzone">
+          <span className="endzone-text home-text">{homeData.name}</span>
         </div>
+
+        {/* Field Shadow */}
+        <div className="field-shadow"></div>
       </div>
     </div>
   );
