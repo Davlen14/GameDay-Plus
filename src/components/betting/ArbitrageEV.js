@@ -84,18 +84,19 @@ const ArbitrageEV = () => {
   };
 
   const getEVGames = () => {
-    const processedGames = processGameLines(gameLines);
+    // GraphQL service already returns processed games, so work with gameLines directly
+    if (!gameLines || gameLines.length === 0) return [];
     
-    return processedGames.map(game => {
+    return gameLines.map(game => {
       const validLines = game.lines.filter(line => 
-        line.homeMoneyline && line.awayMoneyline
+        line.moneylineHome && line.moneylineAway
       );
 
       if (validLines.length === 0) return null;
 
       // Calculate fair odds using market average
-      const homeOdds = validLines.map(l => l.homeMoneyline).filter(o => o > 0);
-      const awayOdds = validLines.map(l => l.awayMoneyline).filter(o => o > 0);
+      const homeOdds = validLines.map(l => l.moneylineHome).filter(o => o > 0);
+      const awayOdds = validLines.map(l => l.moneylineAway).filter(o => o > 0);
       
       const avgHomeOdds = homeOdds.length ? Math.round(homeOdds.reduce((sum, o) => sum + o, 0) / homeOdds.length) : 0;
       const avgAwayOdds = awayOdds.length ? Math.round(awayOdds.reduce((sum, o) => sum + o, 0) / awayOdds.length) : 0;
@@ -113,7 +114,13 @@ const ArbitrageEV = () => {
         homeTeam: game.homeTeam,
         awayTeam: game.awayTeam,
         week: game.week,
-        lines: validLines,
+        lines: validLines.map(line => ({
+          provider: line.provider,
+          homeMoneyline: line.moneylineHome,
+          awayMoneyline: line.moneylineAway,
+          spread: line.spread,
+          overUnder: line.overUnder
+        })),
         maxEV: Math.max(maxEV, 0)
       };
     }).filter(Boolean);
