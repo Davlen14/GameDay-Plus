@@ -1,131 +1,139 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { gameService, teamService, rankingsService } from '../../services';
 
-// Enhanced Weather Icon Component with HD animations and temperature gradients
+// Enhanced Weather Icon Component with futuristic HD animations and modern gradients
 const WeatherIcon = ({ condition, temperature }) => {
   const getWeatherIcon = () => {
-    if (!condition) return 'fas fa-thermometer-half';
+    if (!condition) return 'fas fa-microchip';
     const cond = condition.toLowerCase();
-    if (cond.includes('clear') || cond.includes('sunny')) return 'fas fa-sun';
-    if (cond.includes('partly') || cond.includes('scattered')) return 'fas fa-cloud-sun';
-    if (cond.includes('cloud') || cond.includes('overcast')) return 'fas fa-cloud';
-    if (cond.includes('rain') || cond.includes('shower')) return 'fas fa-cloud-rain';
+    if (cond.includes('clear') || cond.includes('sunny')) return 'fas fa-circle';
+    if (cond.includes('partly') || cond.includes('scattered')) return 'fas fa-adjust';
+    if (cond.includes('cloud') || cond.includes('overcast')) return 'fas fa-wifi';
+    if (cond.includes('rain') || cond.includes('shower')) return 'fas fa-grip-lines';
     if (cond.includes('snow') || cond.includes('blizzard')) return 'fas fa-snowflake';
     if (cond.includes('storm') || cond.includes('thunder')) return 'fas fa-bolt';
-    if (cond.includes('fog') || cond.includes('mist')) return 'fas fa-smog';
-    if (cond.includes('wind')) return 'fas fa-wind';
+    if (cond.includes('fog') || cond.includes('mist')) return 'fas fa-cloud';
+    if (cond.includes('wind')) return 'fas fa-hurricane';
     if (cond.includes('night')) return 'fas fa-moon';
-    return 'fas fa-cloud-sun';
+    return 'fas fa-satellite';
   };
 
   const getTemperatureGradient = () => {
-    if (!temperature) return 'from-gray-400 to-gray-600';
+    if (!temperature) return 'from-slate-400 to-slate-600';
     
     if (temperature >= 90) return 'brand-gradient-bg'; // Hot - Brand gradient
-    if (temperature >= 80) return 'from-orange-400 via-yellow-400 to-green-400'; // Warm
-    if (temperature >= 70) return 'from-green-400 via-emerald-400 to-teal-400'; // Perfect - Green
-    if (temperature >= 50) return 'from-blue-400 via-sky-400 to-cyan-400'; // Cool
-    if (temperature >= 32) return 'from-blue-500 via-indigo-500 to-purple-500'; // Cold - Blue
-    return 'from-blue-600 via-purple-600 to-indigo-700'; // Very Cold
+    if (temperature >= 80) return 'from-amber-400 via-orange-500 to-red-500'; // Warm
+    if (temperature >= 70) return 'from-emerald-400 via-teal-500 to-cyan-500'; // Perfect
+    if (temperature >= 50) return 'from-sky-400 via-blue-500 to-indigo-500'; // Cool
+    if (temperature >= 32) return 'from-blue-500 via-purple-500 to-violet-600'; // Cold
+    return 'from-indigo-600 via-purple-700 to-blue-800'; // Very Cold
   };
 
   const getWeatherAnimation = () => {
-    if (!condition) return '';
+    if (!condition) return 'animate-pulse';
     const cond = condition.toLowerCase();
-    if (cond.includes('sunny') || cond.includes('clear')) return 'animate-pulse';
-    if (cond.includes('rain')) return 'animate-bounce';
-    if (cond.includes('snow')) return 'animate-spin';
-    if (cond.includes('storm')) return 'animate-ping';
+    if (cond.includes('sunny') || cond.includes('clear')) return 'animate-spin';
+    if (cond.includes('rain')) return 'animate-pulse';
+    if (cond.includes('snow')) return 'animate-ping';
+    if (cond.includes('storm')) return 'animate-bounce';
     if (cond.includes('cloud')) return 'animate-pulse';
-    return '';
+    return 'animate-pulse';
   };
 
   const getWeatherGlow = () => {
-    if (!condition) return '';
+    if (!condition) return 'drop-shadow-[0_0_15px_rgba(100,116,139,0.6)]';
     const cond = condition.toLowerCase();
     if (cond.includes('sunny') || cond.includes('clear')) return 'drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]';
     if (cond.includes('rain')) return 'drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]';
     if (cond.includes('snow')) return 'drop-shadow-[0_0_15px_rgba(219,234,254,0.8)]';
     if (cond.includes('storm')) return 'drop-shadow-[0_0_20px_rgba(168,85,247,0.7)]';
-    return 'drop-shadow-lg';
-  };
-
-  const getTimeOfDayEffect = () => {
-    if (!condition) return '';
-    const cond = condition.toLowerCase();
-    if (cond.includes('night')) return 'from-indigo-600 via-purple-600 to-blue-800';
-    return '';
+    return 'drop-shadow-[0_0_12px_rgba(100,116,139,0.5)]';
   };
 
   return (
     <div className="relative">
-      {/* Weather Icon Container */}
+      {/* Futuristic Weather Icon Container */}
       <div className="relative flex items-center space-x-4">
-        {/* Animated Weather Icon */}
+        {/* Modern Weather Icon */}
         <div className="relative">
           <div 
-            className={`w-12 h-12 rounded-full bg-gradient-to-br ${getTemperatureGradient()} p-3 shadow-2xl backdrop-blur-xl`}
+            className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${getTemperatureGradient()} p-4 shadow-2xl backdrop-blur-xl border border-white/20`}
             style={{
               boxShadow: `
-                0 8px 32px rgba(0,0,0,0.12),
-                inset 0 2px 8px rgba(255,255,255,0.2),
-                0 0 0 1px rgba(255,255,255,0.05)
+                0 10px 40px rgba(0,0,0,0.15),
+                inset 0 2px 10px rgba(255,255,255,0.3),
+                0 0 0 1px rgba(255,255,255,0.1)
               `
             }}
           >
             <i 
               className={`${getWeatherIcon()} text-white text-lg ${getWeatherAnimation()} ${getWeatherGlow()}`}
-              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+              style={{ 
+                filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
+                transform: 'scale(1.1)'
+              }}
             />
+            
+            {/* Futuristic corner accents */}
+            <div className="absolute top-1 left-1 w-2 h-2 border-l-2 border-t-2 border-white/40 rounded-tl"></div>
+            <div className="absolute top-1 right-1 w-2 h-2 border-r-2 border-t-2 border-white/40 rounded-tr"></div>
+            <div className="absolute bottom-1 left-1 w-2 h-2 border-l-2 border-b-2 border-white/40 rounded-bl"></div>
+            <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-white/40 rounded-br"></div>
           </div>
           
-          {/* Animated Weather Effects */}
+          {/* Modern weather effects */}
           {condition?.toLowerCase().includes('rain') && (
             <div className="absolute -top-1 -right-1">
-              <div className="w-2 h-6 bg-blue-400 rounded-full opacity-60 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="absolute top-1 left-1 w-1 h-4 bg-blue-300 rounded-full opacity-40 animate-bounce" style={{ animationDelay: '200ms' }}></div>
+              <div className="w-1 h-4 bg-blue-400/80 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+              <div className="absolute top-1 left-2 w-1 h-3 bg-blue-300/60 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
             </div>
           )}
           
           {condition?.toLowerCase().includes('snow') && (
-            <div className="absolute -top-2 -right-2 w-3 h-3 bg-white rounded-full opacity-70 animate-ping"></div>
+            <div className="absolute -top-2 -right-2 w-2 h-2 bg-white/90 rounded-full animate-ping"></div>
           )}
           
           {(condition?.toLowerCase().includes('sunny') || condition?.toLowerCase().includes('clear')) && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-300 rounded-full opacity-60 animate-pulse"></div>
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-300/80 rounded-full animate-pulse"></div>
           )}
         </div>
 
-        {/* Temperature Display */}
+        {/* Futuristic Temperature Display */}
         {temperature && (
           <div className="relative">
             <div 
-              className={`px-4 py-2 rounded-2xl bg-gradient-to-r ${getTemperatureGradient()} text-white font-black text-lg shadow-xl backdrop-blur-xl`}
+              className={`px-5 py-3 rounded-xl bg-gradient-to-r ${getTemperatureGradient()} text-white font-black text-lg shadow-xl backdrop-blur-xl border border-white/20`}
               style={{
                 boxShadow: `
-                  0 8px 25px rgba(0,0,0,0.15),
-                  inset 0 1px 4px rgba(255,255,255,0.2)
+                  0 10px 30px rgba(0,0,0,0.2),
+                  inset 0 1px 6px rgba(255,255,255,0.3)
                 `
               }}
             >
-              <span className="drop-shadow-sm">{Math.round(temperature)}°F</span>
+              <span className="drop-shadow-lg font-mono tracking-wider">{Math.round(temperature)}°</span>
+              
+              {/* Futuristic UI elements */}
+              <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
             </div>
             
-            {/* Temperature indicators */}
+            {/* Temperature status indicators */}
             {temperature >= 90 && (
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-400/80 rounded-full animate-pulse border border-white/30"></div>
             )}
             {temperature <= 32 && (
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-200 rounded-full animate-pulse"></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-200/80 rounded-full animate-pulse border border-white/30"></div>
             )}
           </div>
         )}
       </div>
 
-      {/* Weather condition text */}
+      {/* Modern condition display */}
       {condition && (
-        <div className="mt-2 text-xs font-medium text-gray-600 capitalize text-center">
-          {condition}
+        <div className="mt-3 text-xs font-medium text-gray-600 capitalize text-center tracking-wide">
+          <span className="bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/30">
+            {condition}
+          </span>
         </div>
       )}
     </div>
@@ -136,26 +144,34 @@ const WeatherIcon = ({ condition, temperature }) => {
 const ExcitementStars = ({ excitementIndex = 0 }) => {
   const stars = Math.min(Math.max(Math.round(excitementIndex / 2), 0), 5);
   const getStarGradient = () => {
-    if (excitementIndex >= 8) return 'from-yellow-300 via-yellow-400 to-orange-400';
-    if (excitementIndex >= 6) return 'from-yellow-400 via-yellow-500 to-orange-500';
-    if (excitementIndex >= 4) return 'from-yellow-500 via-yellow-600 to-orange-600';
-    return 'from-gray-300 to-gray-400';
+    if (excitementIndex >= 8) return 'from-amber-300 via-orange-400 to-red-500';
+    if (excitementIndex >= 6) return 'from-yellow-400 via-amber-500 to-orange-500';
+    if (excitementIndex >= 4) return 'from-emerald-400 via-teal-500 to-cyan-500';
+    return 'from-slate-300 to-slate-500';
+  };
+
+  const getGlow = () => {
+    if (excitementIndex >= 8) return 'drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]';
+    if (excitementIndex >= 6) return 'drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]';
+    if (excitementIndex >= 4) return 'drop-shadow-[0_0_4px_rgba(20,184,166,0.4)]';
+    return '';
   };
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center space-x-3">
       <div className="flex space-x-1">
         {[...Array(5)].map((_, i) => (
           <div
             key={i}
-            className={`w-4 h-4 rounded-sm transform rotate-45 ${i < stars ? `bg-gradient-to-br ${getStarGradient()}` : 'bg-gray-200'} shadow-lg transition-all duration-300 hover:scale-110`}
+            className={`w-4 h-4 rounded-sm ${i < stars ? `bg-gradient-to-br ${getStarGradient()}` : 'bg-slate-200/60'} shadow-lg transition-all duration-300 hover:scale-110 border border-white/20`}
             style={i < stars ? {
-              boxShadow: '0 4px 15px rgba(251, 191, 36, 0.4), inset 0 1px 2px rgba(255,255,255,0.2)'
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.3)',
+              filter: getGlow()
             } : {}}
           />
         ))}
       </div>
-      <span className="text-sm font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
+      <span className="text-sm font-bold bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent font-mono">
         {excitementIndex ? excitementIndex.toFixed(1) : 'N/A'}
       </span>
     </div>
@@ -347,22 +363,22 @@ const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) =>
 
 const MediaIcon = ({ outlet, mediaType }) => {
   const getNetworkIcon = () => {
-    if (!outlet) return 'fas fa-tv';
+    if (!outlet) return 'fas fa-broadcast-tower';
     const network = outlet.toLowerCase();
     if (network.includes('espn')) return 'fas fa-satellite-dish';
-    if (network.includes('fox')) return 'fas fa-broadcast-tower';
-    if (network.includes('cbs')) return 'fas fa-tv';
-    if (network.includes('nbc')) return 'fas fa-tv';
-    if (network.includes('peacock')) return 'fas fa-play-circle';
-    if (network.includes('paramount')) return 'fas fa-video';
-    if (network.includes('hulu')) return 'fas fa-play-circle';
+    if (network.includes('fox')) return 'fas fa-signal';
+    if (network.includes('cbs')) return 'fas fa-wifi';
+    if (network.includes('nbc')) return 'fas fa-tower-broadcast';
+    if (network.includes('peacock')) return 'fas fa-circle-dot';
+    if (network.includes('paramount')) return 'fas fa-mountain';
+    if (network.includes('hulu')) return 'fas fa-play';
     if (network.includes('netflix')) return 'fas fa-film';
     if (mediaType === 'web') return 'fas fa-globe';
-    return 'fas fa-tv';
+    return 'fas fa-broadcast-tower';
   };
 
   const getNetworkGradient = () => {
-    if (!outlet) return 'from-gray-500 to-gray-700';
+    if (!outlet) return 'from-slate-500 to-slate-700';
     const network = outlet.toLowerCase();
     if (network.includes('espn')) return 'brand-gradient-bg';
     if (network.includes('fox')) return 'from-blue-500 to-blue-700';
@@ -370,23 +386,34 @@ const MediaIcon = ({ outlet, mediaType }) => {
     if (network.includes('nbc')) return 'from-purple-500 to-purple-700';
     if (network.includes('peacock')) return 'from-blue-400 to-blue-600';
     if (mediaType === 'web') return 'from-purple-500 to-purple-700';
-    return 'from-gray-500 to-gray-700';
+    return 'from-slate-500 to-slate-700';
   };
 
   return (
     <div className="relative">
       <div 
-        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getNetworkGradient()} p-3 shadow-xl backdrop-blur-xl flex items-center justify-center`}
+        className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${getNetworkGradient()} p-4 shadow-xl backdrop-blur-xl flex items-center justify-center border border-white/20`}
         style={{
           boxShadow: `
-            0 8px 25px rgba(0,0,0,0.15),
-            inset 0 1px 4px rgba(255,255,255,0.2)
+            0 10px 30px rgba(0,0,0,0.2),
+            inset 0 1px 6px rgba(255,255,255,0.3)
           `
         }}
       >
-        <i className={`${getNetworkIcon()} text-white text-lg`} />
+        <i className={`${getNetworkIcon()} text-white text-lg drop-shadow-lg`} />
+        
+        {/* Futuristic corner accents */}
+        <div className="absolute top-1 left-1 w-2 h-2 border-l border-t border-white/40"></div>
+        <div className="absolute top-1 right-1 w-2 h-2 border-r border-t border-white/40"></div>
+        <div className="absolute bottom-1 left-1 w-2 h-2 border-l border-b border-white/40"></div>
+        <div className="absolute bottom-1 right-1 w-2 h-2 border-r border-b border-white/40"></div>
       </div>
-      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
+      
+      {/* Live indicator */}
+      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400/90 rounded-full animate-pulse shadow-lg border border-white/30"></div>
+      
+      {/* Pulse effect */}
+      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400/30 rounded-full animate-ping"></div>
     </div>
   );
 };
@@ -697,35 +724,43 @@ const Schedule = () => {
         }
         
         .floating-orb {
-          background: linear-gradient(135deg, rgba(220,38,38,0.1), rgba(185,28,28,0.08), rgba(153,27,27,0.06));
-          animation: float 6s ease-in-out infinite;
+          background: linear-gradient(135deg, rgba(204,0,28,0.08), rgba(255,255,255,0.05), rgba(204,0,28,0.04));
+          animation: float 8s ease-in-out infinite;
         }
         
         @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
+          0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+          50% { transform: translateY(-30px) rotate(180deg) scale(1.1); }
         }
         
-        .digital-grid {
-          background-image: 
-            radial-gradient(circle at 25% 25%, rgba(220,38,38,0.1) 2px, transparent 2px),
-            radial-gradient(circle at 75% 75%, rgba(220,38,38,0.1) 2px, transparent 2px);
-          background-size: 50px 50px;
-          animation: gridMove 10s linear infinite;
+        .cyber-pulse {
+          background: radial-gradient(circle, rgba(204,0,28,0.1) 0%, transparent 70%);
+          animation: pulse 4s ease-in-out infinite;
         }
         
-        @keyframes gridMove {
-          0% { background-position: 0 0, 0 0; }
-          100% { background-position: 50px 50px, 50px 50px; }
+        @keyframes pulse {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.2); }
         }
       `}</style>
 
-      {/* Background Elements */}
+      {/* Futuristic Cyber Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 digital-grid opacity-40"></div>
-        <div className="absolute top-20 left-10 w-72 h-72 floating-orb rounded-full blur-3xl"></div>
-        <div className="absolute top-60 right-20 w-56 h-56 floating-orb rounded-full blur-3xl" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-64 h-64 floating-orb rounded-full blur-3xl" style={{ animationDelay: '4s' }}></div>
+        {/* Multiple layered network backgrounds */}
+        <div className="absolute inset-0 cyber-network opacity-60"></div>
+        <div className="absolute inset-0 connection-lines opacity-40"></div>
+        <div className="absolute inset-0 data-nodes opacity-30"></div>
+        
+        {/* Floating orbs with cyber effect */}
+        <div className="absolute top-20 left-10 w-96 h-96 floating-orb rounded-full blur-3xl"></div>
+        <div className="absolute top-60 right-20 w-80 h-80 cyber-pulse rounded-full blur-2xl" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-72 h-72 floating-orb rounded-full blur-3xl" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute bottom-20 right-1/3 w-64 h-64 cyber-pulse rounded-full blur-2xl" style={{ animationDelay: '3s' }}></div>
+        
+        {/* Network connection nodes */}
+        <div className="absolute top-1/4 left-1/2 w-4 h-4 bg-gradient-to-br from-red-500/60 to-white/40 rounded-full animate-ping"></div>
+        <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-gradient-to-br from-white/50 to-red-400/50 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-1/3 left-1/3 w-2 h-2 bg-gradient-to-br from-red-600/70 to-white/30 rounded-full animate-ping" style={{ animationDelay: '2s' }}></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">

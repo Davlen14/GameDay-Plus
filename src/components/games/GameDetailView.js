@@ -238,89 +238,163 @@ const GameDetailView = ({ gameId }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Fixed Height Game Header - Team Colors Meeting in Middle */}
+      {/* Rich Team Color Header with Dynamic Motion */}
       <div 
         className="relative overflow-hidden"
         style={{ 
           height: '415px',
           background: `linear-gradient(to right, 
-            rgba(${awayColorRgb}, 0.95) 0%, 
-            rgba(${awayColorRgb}, 0.8) 25%, 
-            rgba(${awayColorRgb}, 0.4) 45%, 
-            rgba(${awayColorRgb}, 0.2) 48%, 
-            rgba(${homeColorRgb}, 0.2) 52%, 
-            rgba(${homeColorRgb}, 0.4) 55%, 
-            rgba(${homeColorRgb}, 0.8) 75%, 
-            rgba(${homeColorRgb}, 0.95) 100%)`,
+            rgba(${awayColorRgb}, 1) 0%, 
+            rgba(${awayColorRgb}, 0.95) 20%, 
+            rgba(${awayColorRgb}, 0.8) 35%, 
+            rgba(${awayColorRgb}, 0.7) 45%, 
+            rgba(${awayColorRgb}, 0.6) 48%, 
+            rgba(${homeColorRgb}, 0.6) 52%, 
+            rgba(${homeColorRgb}, 0.7) 55%, 
+            rgba(${homeColorRgb}, 0.8) 65%, 
+            rgba(${homeColorRgb}, 0.95) 80%, 
+            rgba(${homeColorRgb}, 1) 100%)`,
         }}
       >
-        {/* Dynamic Team Color Particles - Team Specific */}
+        {/* Layered Dynamic Color Effects */}
         <div className="absolute inset-0">
-          {/* Away Team Side - Left */}
+          {/* Away Team Color Waves - Left Side */}
           <div 
-            className="absolute w-80 h-80 rounded-full opacity-40 blur-3xl"
+            className="absolute inset-0"
             style={{
-              background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.8) 0%, transparent 70%)`,
-              top: '10%',
-              left: '5%',
-              animation: 'float 8s ease-in-out infinite',
-            }}
-          />
-          <div 
-            className="absolute w-64 h-64 rounded-full opacity-30 blur-2xl"
-            style={{
-              background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.6) 0%, transparent 70%)`,
-              top: '60%',
-              left: '10%',
-              animation: 'float 12s ease-in-out infinite reverse',
+              background: `linear-gradient(45deg, 
+                rgba(${awayColorRgb}, 0.9) 0%, 
+                rgba(${awayColorRgb}, 0.7) 30%, 
+                rgba(${awayColorRgb}, 0.4) 50%, 
+                transparent 70%)`,
+              animation: 'waveLeft 8s ease-in-out infinite alternate',
             }}
           />
           
-          {/* Home Team Side - Right */}
+          {/* Home Team Color Waves - Right Side */}
           <div 
-            className="absolute w-80 h-80 rounded-full opacity-40 blur-3xl"
+            className="absolute inset-0"
             style={{
-              background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.8) 0%, transparent 70%)`,
-              top: '10%',
-              right: '5%',
-              animation: 'float 10s ease-in-out infinite',
-            }}
-          />
-          <div 
-            className="absolute w-64 h-64 rounded-full opacity-30 blur-2xl"
-            style={{
-              background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.6) 0%, transparent 70%)`,
-              bottom: '15%',
-              right: '10%',
-              animation: 'float 14s ease-in-out infinite reverse',
+              background: `linear-gradient(-45deg, 
+                rgba(${homeColorRgb}, 0.9) 0%, 
+                rgba(${homeColorRgb}, 0.7) 30%, 
+                rgba(${homeColorRgb}, 0.4) 50%, 
+                transparent 70%)`,
+              animation: 'waveRight 8s ease-in-out infinite alternate-reverse',
             }}
           />
           
-          {/* Central Meeting Effect */}
+          {/* Central Collision Effect */}
           <div 
             className="absolute inset-0"
             style={{
               background: `radial-gradient(ellipse at center, 
-                transparent 0%,
-                rgba(${awayColorRgb}, 0.1) 30%,
-                rgba(${homeColorRgb}, 0.1) 70%,
+                rgba(${awayColorRgb}, 0.8) 0%,
+                rgba(${awayColorRgb}, 0.6) 25%,
+                rgba(${homeColorRgb}, 0.6) 50%,
+                rgba(${homeColorRgb}, 0.8) 75%,
                 transparent 100%)`,
-              animation: 'pulse 6s ease-in-out infinite',
+              animation: 'centralPulse 6s ease-in-out infinite',
             }}
           />
           
-          {/* Moving Energy Connection */}
+          {/* Floating Color Orbs - Away Team */}
           <div 
-            className="absolute top-1/2 left-0 right-0 h-32 transform -translate-y-1/2"
+            className="absolute w-96 h-96 rounded-full opacity-60"
+            style={{
+              background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.8) 0%, rgba(${awayColorRgb}, 0.4) 40%, transparent 70%)`,
+              top: '5%',
+              left: '0%',
+              animation: 'floatAway 12s ease-in-out infinite',
+            }}
+          />
+          <div 
+            className="absolute w-72 h-72 rounded-full opacity-50"
+            style={{
+              background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.7) 0%, rgba(${awayColorRgb}, 0.3) 50%, transparent 70%)`,
+              top: '50%',
+              left: '5%',
+              animation: 'floatAway 16s ease-in-out infinite reverse',
+            }}
+          />
+          
+          {/* Floating Color Orbs - Home Team */}
+          <div 
+            className="absolute w-96 h-96 rounded-full opacity-60"
+            style={{
+              background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.8) 0%, rgba(${homeColorRgb}, 0.4) 40%, transparent 70%)`,
+              top: '5%',
+              right: '0%',
+              animation: 'floatHome 12s ease-in-out infinite',
+            }}
+          />
+          <div 
+            className="absolute w-72 h-72 rounded-full opacity-50"
+            style={{
+              background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.7) 0%, rgba(${homeColorRgb}, 0.3) 50%, transparent 70%)`,
+              bottom: '10%',
+              right: '5%',
+              animation: 'floatHome 16s ease-in-out infinite reverse',
+            }}
+          />
+          
+          {/* Dynamic Swirling Energy */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: `conic-gradient(from 0deg at 30% 50%, 
+                rgba(${awayColorRgb}, 0.6) 0deg,
+                transparent 60deg,
+                rgba(${awayColorRgb}, 0.4) 120deg,
+                transparent 180deg,
+                rgba(${awayColorRgb}, 0.3) 240deg,
+                transparent 300deg,
+                rgba(${awayColorRgb}, 0.5) 360deg)`,
+              animation: 'swirl 20s linear infinite',
+              filter: 'blur(2px)',
+            }}
+          />
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: `conic-gradient(from 180deg at 70% 50%, 
+                rgba(${homeColorRgb}, 0.6) 0deg,
+                transparent 60deg,
+                rgba(${homeColorRgb}, 0.4) 120deg,
+                transparent 180deg,
+                rgba(${homeColorRgb}, 0.3) 240deg,
+                transparent 300deg,
+                rgba(${homeColorRgb}, 0.5) 360deg)`,
+              animation: 'swirl 20s linear infinite reverse',
+              filter: 'blur(2px)',
+            }}
+          />
+          
+          {/* Moving Energy Rivers */}
+          <div 
+            className="absolute top-1/4 left-0 right-0 h-24"
             style={{
               background: `linear-gradient(90deg, 
-                rgba(${awayColorRgb}, 0.3) 0%,
+                rgba(${awayColorRgb}, 0.8) 0%,
+                rgba(${awayColorRgb}, 0.6) 25%,
+                rgba(${homeColorRgb}, 0.6) 75%,
+                rgba(${homeColorRgb}, 0.8) 100%)`,
+              filter: 'blur(15px)',
+              animation: 'riverFlow 5s ease-in-out infinite alternate',
+              transform: 'skewY(-2deg)',
+            }}
+          />
+          <div 
+            className="absolute bottom-1/4 left-0 right-0 h-24"
+            style={{
+              background: `linear-gradient(90deg, 
+                rgba(${awayColorRgb}, 0.7) 0%,
                 rgba(${awayColorRgb}, 0.5) 25%,
-                rgba(255,255,255, 0.2) 50%,
                 rgba(${homeColorRgb}, 0.5) 75%,
-                rgba(${homeColorRgb}, 0.3) 100%)`,
-              filter: 'blur(20px)',
-              animation: 'shimmer 4s ease-in-out infinite alternate',
+                rgba(${homeColorRgb}, 0.7) 100%)`,
+              filter: 'blur(15px)',
+              animation: 'riverFlow 7s ease-in-out infinite alternate-reverse',
+              transform: 'skewY(2deg)',
             }}
           />
         </div>
@@ -348,9 +422,9 @@ const GameDetailView = ({ gameId }) => {
               background: currentGame?.completed
                 ? 'linear-gradient(135deg, rgba(34,197,94,0.3) 0%, rgba(22,163,74,0.4) 50%, rgba(34,197,94,0.3) 100%)'
                 : `linear-gradient(135deg, 
-                    rgba(${awayColorRgb}, 0.2) 0%, 
-                    rgba(${homeColorRgb}, 0.3) 50%, 
-                    rgba(${awayColorRgb}, 0.2) 100%)`,
+                    rgba(${awayColorRgb}, 0.3) 0%, 
+                    rgba(${homeColorRgb}, 0.4) 50%, 
+                    rgba(${awayColorRgb}, 0.3) 100%)`,
               border: currentGame?.completed 
                 ? '2px solid rgba(34,197,94,0.4)'
                 : `2px solid rgba(255,255,255,0.3)`,
@@ -530,14 +604,13 @@ const GameDetailView = ({ gameId }) => {
                 className="w-20 h-20 rounded-full flex items-center justify-center mb-3 relative overflow-hidden"
                 style={{
                   background: `linear-gradient(135deg, 
-                    rgba(255,255,255,0.2) 0%,
-                    rgba(255,255,255,0.1) 50%,
-                    rgba(255,255,255,0.2) 100%)`,
-                  border: '2px solid rgba(255,255,255,0.3)',
+                    rgba(${awayColorRgb}, 0.3) 0%,
+                    rgba(${homeColorRgb}, 0.3) 50%,
+                    rgba(${awayColorRgb}, 0.3) 100%)`,
+                  border: `2px solid rgba(255,255,255,0.4)`,
                   boxShadow: `
-                    0 8px 32px rgba(0,0,0,0.3),
-                    inset 0 1px 0 rgba(255,255,255,0.4),
-                    inset 0 -1px 0 rgba(0,0,0,0.1)
+                    0 8px 32px rgba(0,0,0,0.4),
+                    inset 0 1px 0 rgba(255,255,255,0.4)
                   `,
                   backdropFilter: 'blur(20px)',
                 }}
@@ -547,11 +620,9 @@ const GameDetailView = ({ gameId }) => {
                   className="absolute inset-0 rounded-full"
                   style={{
                     background: `conic-gradient(from 0deg, 
-                      rgba(${awayColorRgb}, 0.3) 0deg,
-                      transparent 90deg,
-                      rgba(${homeColorRgb}, 0.3) 180deg,
-                      transparent 270deg,
-                      rgba(${awayColorRgb}, 0.3) 360deg)`,
+                      rgba(${awayColorRgb}, 0.4) 0deg,
+                      rgba(${homeColorRgb}, 0.4) 180deg,
+                      rgba(${awayColorRgb}, 0.4) 360deg)`,
                     animation: 'spin 15s linear infinite reverse',
                   }}
                 />
@@ -571,7 +642,9 @@ const GameDetailView = ({ gameId }) => {
                 <div 
                   className="text-center px-4 py-2 rounded-full"
                   style={{
-                    background: 'rgba(0,0,0,0.3)',
+                    background: `linear-gradient(90deg, 
+                      rgba(${awayColorRgb}, 0.3) 0%, 
+                      rgba(${homeColorRgb}, 0.3) 100%)`,
                     border: '1px solid rgba(255,255,255,0.2)',
                     backdropFilter: 'blur(20px)',
                   }}
@@ -733,34 +806,35 @@ const GameDetailView = ({ gameId }) => {
           </div>
         </div>
 
-        {/* Enhanced Team Color Shadow with Meeting Effect */}
+        {/* Enhanced Rich Color Bottom Effects */}
         <div 
-          className="absolute bottom-0 left-0 right-0 h-8"
+          className="absolute bottom-0 left-0 right-0 h-12"
           style={{
             background: `linear-gradient(90deg, 
-              rgba(${awayColorRgb}, 0.8) 0%, 
-              rgba(${awayColorRgb}, 0.6) 25%,
-              rgba(${awayColorRgb}, 0.3) 45%,
-              rgba(255,255,255, 0.2) 50%,
-              rgba(${homeColorRgb}, 0.3) 55%,
-              rgba(${homeColorRgb}, 0.6) 75%,
-              rgba(${homeColorRgb}, 0.8) 100%)`,
-            filter: 'blur(8px) brightness(1.2)',
-            animation: 'shimmer 6s ease-in-out infinite alternate',
+              rgba(${awayColorRgb}, 1) 0%, 
+              rgba(${awayColorRgb}, 0.9) 20%,
+              rgba(${awayColorRgb}, 0.7) 40%,
+              rgba(${homeColorRgb}, 0.7) 60%,
+              rgba(${homeColorRgb}, 0.9) 80%,
+              rgba(${homeColorRgb}, 1) 100%)`,
+            filter: 'blur(8px) brightness(1.3)',
+            animation: 'intensePulse 4s ease-in-out infinite alternate',
           }}
         />
         
-        {/* Meeting Point Glow */}
+        {/* Intense Meeting Point Glow */}
         <div 
-          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-2 w-32"
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-4 w-40"
           style={{
             background: `radial-gradient(ellipse, 
-              rgba(255,255,255, 0.6) 0%, 
-              rgba(${awayColorRgb}, 0.4) 30%,
-              rgba(${homeColorRgb}, 0.4) 70%,
-              transparent 100%)`,
-            boxShadow: `0 0 20px rgba(255,255,255, 0.4)`,
-            animation: 'pulse 4s ease-in-out infinite',
+              rgba(${awayColorRgb}, 0.9) 0%, 
+              rgba(${homeColorRgb}, 0.9) 50%,
+              rgba(${awayColorRgb}, 0.7) 100%)`,
+            boxShadow: `
+              0 0 30px rgba(${awayColorRgb}, 0.8),
+              0 0 60px rgba(${homeColorRgb}, 0.6)
+            `,
+            animation: 'intensePulse 3s ease-in-out infinite',
           }}
         />
       </div>
@@ -838,16 +912,56 @@ const GameDetailView = ({ gameId }) => {
         )}
       </div>
       
-      {/* Additional CSS for animations */}
+      {/* Enhanced CSS for Rich Color Animations */}
       <style jsx>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-10px); opacity: 0.8; }
-          100% { transform: translateX(10px); opacity: 1; }
+        @keyframes waveLeft {
+          0% { transform: translateX(-20px) skewX(-5deg); opacity: 0.8; }
+          50% { transform: translateX(0px) skewX(0deg); opacity: 1; }
+          100% { transform: translateX(-10px) skewX(-2deg); opacity: 0.9; }
         }
         
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
+        @keyframes waveRight {
+          0% { transform: translateX(20px) skewX(5deg); opacity: 0.8; }
+          50% { transform: translateX(0px) skewX(0deg); opacity: 1; }
+          100% { transform: translateX(10px) skewX(2deg); opacity: 0.9; }
+        }
+        
+        @keyframes centralPulse {
+          0% { transform: scale(1) rotate(0deg); opacity: 0.6; }
+          50% { transform: scale(1.1) rotate(180deg); opacity: 0.9; }
+          100% { transform: scale(1) rotate(360deg); opacity: 0.7; }
+        }
+        
+        @keyframes floatAway {
+          0% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+          33% { transform: translateY(-30px) translateX(-15px) rotate(120deg); }
+          66% { transform: translateY(-10px) translateX(10px) rotate(240deg); }
+          100% { transform: translateY(0px) translateX(0px) rotate(360deg); }
+        }
+        
+        @keyframes floatHome {
+          0% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+          33% { transform: translateY(-25px) translateX(15px) rotate(-120deg); }
+          66% { transform: translateY(-15px) translateX(-10px) rotate(-240deg); }
+          100% { transform: translateY(0px) translateX(0px) rotate(-360deg); }
+        }
+        
+        @keyframes swirl {
+          0% { transform: rotate(0deg) scale(1); }
+          50% { transform: rotate(180deg) scale(1.1); }
+          100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        @keyframes riverFlow {
+          0% { transform: translateY(0px) skewY(-2deg) scaleX(1); }
+          50% { transform: translateY(-10px) skewY(0deg) scaleX(1.05); }
+          100% { transform: translateY(0px) skewY(2deg) scaleX(1); }
+        }
+        
+        @keyframes intensePulse {
+          0% { opacity: 0.8; transform: scaleY(1); }
+          50% { opacity: 1; transform: scaleY(1.2); }
+          100% { opacity: 0.9; transform: scaleY(1.1); }
         }
       `}</style>
     </div>

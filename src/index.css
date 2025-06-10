@@ -439,33 +439,79 @@ body {
 
 /* Enhanced glassy hover effects */
 .glassy-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glassy-hover:hover {
-  background: rgba(255, 255, 255, 0.15) !important;
-  backdrop-filter: blur(25px) saturate(200%);
-  -webkit-backdrop-filter: blur(25px) saturate(200%);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 
-    0 15px 40px rgba(0, 0, 0, 0.15),
-    inset 0 2px 8px rgba(255, 255, 255, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.15);
-}
-
-/* Card hover effects - no pink */
-.card-hover {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.card-hover:hover {
-  background: rgba(255, 255, 255, 0.35) !important;
+.glassy-hover:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
   backdrop-filter: blur(30px) saturate(200%);
   -webkit-backdrop-filter: blur(30px) saturate(200%);
   border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-3px) scale(1.02);
   box-shadow: 
-    0 30px 60px rgba(0, 0, 0, 0.15),
-    inset 0 2px 10px rgba(255, 255, 255, 0.5),
+    0 20px 50px rgba(0, 0, 0, 0.15),
+    inset 0 2px 10px rgba(255, 255, 255, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Card hover effects - enhanced clarity */
+.card-hover {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  background: rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(35px) saturate(200%);
+  -webkit-backdrop-filter: blur(35px) saturate(200%);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 
+    0 35px 70px rgba(0, 0, 0, 0.18),
+    inset 0 2px 12px rgba(255, 255, 255, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+/* Futuristic cyber network background */
+.cyber-network {
+  background-image: 
+    linear-gradient(90deg, rgba(204,0,28,0.03) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(204,0,28,0.03) 1px, transparent 1px),
+    radial-gradient(circle at 25% 25%, rgba(204,0,28,0.08) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 60px 60px, 60px 60px, 120px 120px, 80px 80px;
+  animation: cyberMove 20s linear infinite;
+}
+
+@keyframes cyberMove {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 60px 60px, 60px 60px, 120px 120px, 80px 80px; }
+}
+
+/* Futuristic connection lines */
+.connection-lines {
+  background-image: 
+    linear-gradient(45deg, rgba(204,0,28,0.05) 1px, transparent 1px),
+    linear-gradient(-45deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px;
+  animation: connectionFlow 15s linear infinite;
+}
+
+@keyframes connectionFlow {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 40px 40px, -40px 40px; }
+}
+
+/* Floating data nodes */
+.data-nodes {
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(204,0,28,0.06) 2px, transparent 2px),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.04) 1px, transparent 1px),
+    radial-gradient(circle at 40% 40%, rgba(204,0,28,0.04) 1px, transparent 1px);
+  background-size: 100px 100px, 150px 150px, 200px 200px;
+  animation: dataFlow 25s linear infinite;
+}
+
+@keyframes dataFlow {
+  0% { background-position: 0 0, 0 0, 0 0; }
+  100% { background-position: 100px 100px, -150px 150px, 200px -200px; }
 }
