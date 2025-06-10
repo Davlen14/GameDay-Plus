@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { bettingService, graphqlBettingService, gameService, teamService } from '../../services';
+import { bettingService, gameService, teamService } from '../../services';
 import { BettingCalculations } from '../../utils';
 import ArbitrageView from './ArbitrageView';
 import ArbitrageModal from './ArbitrageModal';
@@ -43,25 +43,63 @@ const ArbitrageEV = () => {
       return { hasArbitrage: false, bestProfit: 0, bestCombination: null };
     }
 
-    // For now, just return mock values to get the UI working
+    // Get moneyline odds for all providers
+    const homeOdds = lines.map(l => l.moneylineHome).filter(o => o && o !== 0);
+    const awayOdds = lines.map(l => l.moneylineAway).filter(o => o && o !== 0);
+    
+    if (homeOdds.length === 0 || awayOdds.length === 0) {
+      return { hasArbitrage: false, bestProfit: 0, bestCombination: null };
+    }
+
+    // Find best odds for each side
+    const bestHomeOdds = Math.max(...homeOdds);
+    const bestAwayOdds = Math.max(...awayOdds);
+
+    // Convert to implied probabilities
+    const homeImplied = BettingCalculations.americanToImpliedProbability(bestHomeOdds) / 100;
+    const awayImplied = BettingCalculations.americanToImpliedProbability(bestAwayOdds) / 100;
+    
+    // Check for arbitrage opportunity
+    const totalImplied = homeImplied + awayImplied;
+    const hasArbitrage = totalImplied < 1.0;
+    const profit = hasArbitrage ? ((1 / totalImplied) - 1) * 100 : 0;
+
+    const bestCombination = hasArbitrage ? {
+      type: 'moneyline',
+      homeBet: { 
+        provider: lines.find(l => l.moneylineHome === bestHomeOdds)?.provider || 'Unknown', 
+        odds: bestHomeOdds, 
+        stake: (1 / totalImplied) * homeImplied * 100 
+      },
+      awayBet: { 
+        provider: lines.find(l => l.moneylineAway === bestAwayOdds)?.provider || 'Unknown', 
+        odds: bestAwayOdds, 
+        stake: (1 / totalImplied) * awayImplied * 100 
+      }
+    } : null;
+
     return {
-      hasArbitrage: Math.random() > 0.7, // 30% chance of arbitrage
-      bestProfit: Math.random() * 5, // 0-5% profit
-      bestCombination: null
+      hasArbitrage,
+      bestProfit: profit,
+      bestCombination
     };
   };
 
   const processRestAPILines = (restLines) => {
     if (!restLines || restLines.length === 0) return [];
     
+    console.log('Processing REST API lines:', restLines);
+    
     // Group lines by game
     const gameMap = {};
     
     restLines.forEach(line => {
+      // Handle the nested structure from the REST API
       const gameKey = `${line.homeTeam}_${line.awayTeam}_${line.week}`;
+      
       if (!gameMap[gameKey]) {
         gameMap[gameKey] = {
-          id: line.id || `${line.homeTeam}_${line.awayTeam}`,
+          id: line.id || `${line.homeTeam}_${line.awayTeam}_week${line.week}`,
           homeTeam: line.homeTeam,
           awayTeam: line.awayTeam,
           week: line.week,
@@ -72,23 +110,50 @@ const ArbitrageEV = () => {
         };
       }
       
-      gameMap[gameKey].lines.push({
-        provider: line.provider || 'Unknown',
-        moneylineHome: line.homeMoneyline,
-        moneylineAway: line.awayMoneyline,
-        spread: line.spread,
-        overUnder: line.overUnder
-      });
+      // Process the lines array if it exists
+      if (line.lines && Array.isArray(line.lines)) {
+        line.lines.forEach(providerLine => {
+          gameMap[gameKey].lines.push({
+            provider: providerLine.provider || 'Unknown',
+            moneylineHome: providerLine.homeMoneyline,
+            moneylineAway: providerLine.awayMoneyline, 
+            spread: providerLine.spread,
+            overUnder: providerLine.overUnder || providerLine.total
+          });
+        });
+      } else {
+        // Handle direct line data format
+        gameMap[gameKey].lines.push({
+          provider: line.provider || 'Unknown',
+          moneylineHome: line.homeMoneyline,
+          moneylineAway: line.awayMoneyline,
+          spread: line.spread,
+          overUnder: line.overUnder || line.total
+        });
+      }
     });
 
     // Calculate arbitrage for each game
-    return Object.values(gameMap).map(game => {
-      const arbitrageData = calculateSimpleArbitrage(game.lines);
-      return {
-        ...game,
-        ...arbitrageData
-      };
-    });
+    const processedGames = Object.values(gameMap).map(game => {
+      // Filter out lines with missing data
+      game.lines = game.lines.filter(line => 
+        line.moneylineHome && line.moneylineAway && 
+        line.moneylineHome !== 0 && line.moneylineAway !== 0
+      );
+      
+      if (game.lines.length >= 2) {
+        const arbitrageData = calculateSimpleArbitrage(game.lines);
+        return {
+          ...game,
+          ...arbitrageData
+        };
+      }
+      
+      return game;
+    }).filter(game => game.lines.length > 0);
+
+    console.log('Processed games with arbitrage data:', processedGames);
+    return processedGames;
   };
 
   // Data processing functions - defined before useMemo hooks
@@ -295,29 +360,20 @@ const ArbitrageEV = () => {
         setTeams(fbsTeams || []);
       }
 
-      // Try GraphQL service first, fallback to REST API
+      // Use REST API as primary method
       let lines = [];
       
       try {
-        const currentYear = graphqlBettingService.getCurrentYear();
-        console.log('Trying GraphQL service for year:', currentYear, 'week:', selectedWeek);
-        lines = await graphqlBettingService.getArbitrageGames(currentYear, selectedWeek, 'regular');
-        console.log('GraphQL response:', lines);
-      } catch (graphqlError) {
-        console.warn('GraphQL service failed, falling back to REST API:', graphqlError);
+        const currentYear = 2024; // Using 2024 data as specified
+        console.log('Fetching betting lines for year:', currentYear, 'week:', selectedWeek);
+        const restLines = await bettingService.getBettingLines(null, currentYear, selectedWeek, 'regular');
         
-        // Fallback to REST API
-        try {
-          const currentYear = new Date().getFullYear();
-          const restLines = await bettingService.getBettingLines(null, currentYear, selectedWeek, 'regular');
-          
-          // Convert REST format to expected format
-          lines = processRestAPILines(restLines || []);
-          console.log('REST API fallback response:', lines);
-        } catch (restError) {
-          console.error('Both GraphQL and REST API failed:', restError);
-          throw new Error('Unable to fetch betting data from any source');
-        }
+        // Convert REST format to expected format
+        lines = processRestAPILines(restLines || []);
+        console.log('REST API response:', lines);
+      } catch (restError) {
+        console.error('REST API failed:', restError);
+        throw new Error('Unable to fetch betting data from REST API');
       }
       
       setGameLines(lines || []);

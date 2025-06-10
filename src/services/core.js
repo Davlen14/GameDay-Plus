@@ -1,5 +1,5 @@
 // Core API utility functions
-const COLLEGE_FOOTBALL_API_BASE = 'https://api.collegefootballdata.com';
+const COLLEGE_FOOTBALL_API_BASE = 'https://apinext.collegefootballdata.com';
 const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY;
 const GNEWS_API_KEY = process.env.REACT_APP_GNEWS_API_KEY;
 const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
