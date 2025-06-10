@@ -458,11 +458,14 @@ export const gameService = {
   // Helper function to get media icon based on type and outlet
   getMediaIcon: (mediaType, outlet) => {
     if (mediaType === 'tv') {
-      if (outlet?.includes('ESPN')) return 'fas fa-tv';
+      if (outlet?.includes('ESPN')) return 'fab fa-espn';
       if (outlet?.includes('FOX')) return 'fas fa-tv';
-      if (outlet?.includes('CBS')) return 'fas fa-tv';
+      if (outlet?.includes('CBS')) return 'fas fa-eye';
       if (outlet?.includes('ABC')) return 'fas fa-tv';
       if (outlet?.includes('NBC')) return 'fas fa-tv';
+      if (outlet?.includes('SEC Network')) return 'fas fa-tv';
+      if (outlet?.includes('Big Ten Network')) return 'fas fa-tv';
+      if (outlet?.includes('ACC Network')) return 'fas fa-tv';
       return 'fas fa-tv';
     }
     if (mediaType === 'web') return 'fas fa-globe';
@@ -478,20 +481,26 @@ export const gameService = {
     if (condition) {
       const lowerCondition = condition.toLowerCase();
       if (lowerCondition.includes('rain') || lowerCondition.includes('shower')) return 'fas fa-cloud-rain';
-      if (lowerCondition.includes('snow')) return 'fas fa-snowflake';
-      if (lowerCondition.includes('cloud')) return 'fas fa-cloud';
-      if (lowerCondition.includes('clear') || lowerCondition.includes('fair')) return 'fas fa-sun';
+      if (lowerCondition.includes('thunderstorm') || lowerCondition.includes('storm')) return 'fas fa-bolt';
+      if (lowerCondition.includes('snow') || lowerCondition.includes('blizzard')) return 'fas fa-snowflake';
+      if (lowerCondition.includes('fog') || lowerCondition.includes('mist')) return 'fas fa-smog';
+      if (lowerCondition.includes('wind')) return 'fas fa-wind';
+      if (lowerCondition.includes('cloud') || lowerCondition.includes('overcast')) return 'fas fa-cloud';
+      if (lowerCondition.includes('clear') || lowerCondition.includes('fair') || lowerCondition.includes('sunny')) return 'fas fa-sun';
+      if (lowerCondition.includes('partly') || lowerCondition.includes('scattered')) return 'fas fa-cloud-sun';
     }
     
     // Fallback based on condition code
     switch (conditionCode) {
-      case 0: return 'fas fa-sun';
-      case 1: return 'fas fa-sun';
-      case 2: return 'fas fa-sun';
-      case 3: return 'fas fa-cloud';
-      case 7: return 'fas fa-cloud-rain';
-      case 8: return 'fas fa-cloud-rain';
-      case 18: return 'fas fa-cloud-rain';
+      case 0: case 1: case 2: return 'fas fa-sun'; // Clear/Fair
+      case 3: case 4: return 'fas fa-cloud-sun'; // Partly Cloudy
+      case 5: case 6: return 'fas fa-cloud'; // Cloudy/Overcast
+      case 7: case 8: case 9: return 'fas fa-cloud-rain'; // Rain/Showers
+      case 10: case 11: return 'fas fa-bolt'; // Thunderstorms
+      case 12: case 13: case 14: return 'fas fa-snowflake'; // Snow/Sleet
+      case 15: case 16: return 'fas fa-smog'; // Fog/Mist
+      case 17: return 'fas fa-wind'; // Windy
+      case 18: return 'fas fa-cloud-rain'; // Drizzle
       default: return 'fas fa-cloud-sun';
     }
   },
@@ -501,19 +510,44 @@ export const gameService = {
     if (weather.gameIndoors) return 'Indoor Game';
     
     const conditions = [];
-    if (weather.temperature) {
-      if (weather.temperature < 32) conditions.push('Cold');
-      else if (weather.temperature > 85) conditions.push('Hot');
-      else conditions.push('Mild');
+    
+    // Temperature description
+    if (weather.temperature !== null && weather.temperature !== undefined) {
+      if (weather.temperature < 32) conditions.push('Freezing');
+      else if (weather.temperature < 45) conditions.push('Cold');
+      else if (weather.temperature < 60) conditions.push('Cool');
+      else if (weather.temperature < 75) conditions.push('Mild');
+      else if (weather.temperature < 85) conditions.push('Warm');
+      else conditions.push('Hot');
     }
     
-    if (weather.windSpeed && weather.windSpeed > 15) conditions.push('Windy');
-    if (weather.precipitation && weather.precipitation > 0) conditions.push('Wet');
-    if (weather.weatherCondition && weather.weatherCondition !== 'null') {
-      conditions.push(weather.weatherCondition);
+    // Wind conditions
+    if (weather.windSpeed && weather.windSpeed > 25) conditions.push('Very Windy');
+    else if (weather.windSpeed && weather.windSpeed > 15) conditions.push('Windy');
+    else if (weather.windSpeed && weather.windSpeed > 10) conditions.push('Breezy');
+    
+    // Precipitation
+    if (weather.precipitation && weather.precipitation > 0.5) conditions.push('Heavy Rain');
+    else if (weather.precipitation && weather.precipitation > 0.1) conditions.push('Light Rain');
+    
+    // Snow
+    if (weather.snowfall && weather.snowfall > 0) conditions.push('Snow');
+    
+    // Weather condition override
+    if (weather.weatherCondition && weather.weatherCondition !== 'null' && weather.weatherCondition !== null) {
+      const condition = weather.weatherCondition.trim();
+      if (condition.length > 0) {
+        // Replace generic temperature with specific condition if available
+        const tempIndex = conditions.findIndex(c => ['Freezing', 'Cold', 'Cool', 'Mild', 'Warm', 'Hot'].includes(c));
+        if (tempIndex >= 0) {
+          conditions[tempIndex] = condition;
+        } else {
+          conditions.unshift(condition);
+        }
+      }
     }
     
-    return conditions.length > 0 ? conditions.join(', ') : 'Good Conditions';
+    return conditions.length > 0 ? conditions.join(', ') : 'Fair Conditions';
   },
 
   // Helper function to analyze weather impact on game

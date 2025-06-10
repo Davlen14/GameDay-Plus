@@ -752,11 +752,13 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               {/* TV/Media Information */}
               {mediaData && (
                 <div className="flex items-center space-x-2 text-sm text-gray-600 font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
-                  <i className={`${mediaData.icon} mr-1 text-gray-500`}></i>
-                  <span>{mediaData.outlet}</span>
-                  {mediaData.broadcastType && (
-                    <span className="text-xs bg-blue-500/20 text-blue-700 px-2 py-0.5 rounded">
-                      {mediaData.broadcastType}
+                  <i className={`${mediaData.mediaIcon} mr-1 text-gray-500`}></i>
+                  <span>{mediaData.displayOutlet}</span>
+                  {mediaData.mediaType && (
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      mediaData.isStreamingOnly ? 'bg-purple-500/20 text-purple-700' : 'bg-blue-500/20 text-blue-700'
+                    }`}>
+                      {mediaData.mediaType.toUpperCase()}
                     </span>
                   )}
                 </div>
@@ -765,15 +767,20 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               {/* Weather Information */}
               {weatherData && (
                 <div className="flex items-center space-x-2 text-sm text-gray-600 font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
-                  <i className={`${weatherData.icon} mr-1 text-gray-500`}></i>
-                  <span>{weatherData.summary}</span>
-                  {weatherData.impact && weatherData.impact !== 'None' && (
+                  <i className={`${weatherData.weatherIcon} mr-1 text-gray-500`}></i>
+                  <span>{weatherData.conditionSummary}</span>
+                  {weatherData.displayTemp && (
+                    <span className="text-xs bg-gray-500/20 text-gray-700 px-2 py-0.5 rounded">
+                      {weatherData.displayTemp}
+                    </span>
+                  )}
+                  {weatherData.gameImpact && weatherData.gameImpact !== 'low' && (
                     <span className={`text-xs px-2 py-0.5 rounded ${
-                      weatherData.impact === 'High' ? 'bg-red-500/20 text-red-700' :
-                      weatherData.impact === 'Medium' ? 'bg-yellow-500/20 text-yellow-700' :
+                      weatherData.gameImpact === 'high' ? 'bg-red-500/20 text-red-700' :
+                      weatherData.gameImpact === 'moderate' ? 'bg-yellow-500/20 text-yellow-700' :
                       'bg-green-500/20 text-green-700'
                     }`}>
-                      {weatherData.impact} Impact
+                      {weatherData.gameImpact} Impact
                     </span>
                   )}
                 </div>
