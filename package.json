@@ -13,6 +13,8 @@
     "@testing-library/user-event": "^13.5.0",
     "aos": "^2.3.4",
     "autoprefixer": "^10.4.21",
+    "framer-motion": "^12.16.0",
+    "lucide-react": "^0.513.0",
     "postcss": "^8.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
