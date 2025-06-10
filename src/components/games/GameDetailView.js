@@ -249,15 +249,15 @@ const GameDetailView = ({ gameId }) => {
           filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
         }}
       >
-        {/* Dynamic Team Color Particles - Adjusted Flow */}
+        {/* Dynamic Team Color Particles */}
         <div className="absolute inset-0">
-          {/* Away Team Color Orbs - Flow from left side toward center */}
+          {/* Away Team Color Orbs */}
           <div 
             className="absolute w-96 h-96 rounded-full opacity-30 blur-3xl"
             style={{
               background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.6) 0%, transparent 70%)`,
               top: '10%',
-              left: '0%',
+              left: '5%',
               animation: 'float 8s ease-in-out infinite',
             }}
           />
@@ -266,18 +266,18 @@ const GameDetailView = ({ gameId }) => {
             style={{
               background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.4) 0%, transparent 70%)`,
               top: '50%',
-              left: '10%',
+              left: '15%',
               animation: 'float 12s ease-in-out infinite reverse',
             }}
           />
           
-          {/* Home Team Color Orbs - Flow from right side toward center */}
+          {/* Home Team Color Orbs */}
           <div 
             className="absolute w-80 h-80 rounded-full opacity-25 blur-3xl"
             style={{
               background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.5) 0%, transparent 70%)`,
               top: '20%',
-              right: '0%',
+              right: '10%',
               animation: 'float 10s ease-in-out infinite',
             }}
           />
@@ -286,19 +286,19 @@ const GameDetailView = ({ gameId }) => {
             style={{
               background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.6) 0%, transparent 70%)`,
               bottom: '15%',
-              right: '10%',
+              right: '5%',
               animation: 'float 14s ease-in-out infinite reverse',
             }}
           />
           
-          {/* Central Energy Field - Enhanced center convergence */}
+          {/* Central Energy Field */}
           <div 
             className="absolute inset-0"
             style={{
               background: `conic-gradient(from 180deg at center, 
                 transparent 0deg,
-                rgba(${awayColorRgb}, 0.15) 60deg,
-                rgba(${homeColorRgb}, 0.15) 180deg,
+                rgba(${awayColorRgb}, 0.1) 90deg,
+                rgba(${homeColorRgb}, 0.1) 180deg,
                 rgba(${awayColorRgb}, 0.1) 270deg,
                 transparent 360deg)`,
               animation: 'spin 30s linear infinite',
@@ -317,134 +317,77 @@ const GameDetailView = ({ gameId }) => {
           </button>
         </div>
 
-        {/* Game Date */}
-        {currentGame?.start_date && (
-          <div className="absolute top-8 right-5 z-50">
-            <div className="text-white px-4 py-2.5 bg-black/20 rounded-lg backdrop-blur-sm border border-white/20 shadow-lg">
-              <span className="font-medium text-sm tracking-wide" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                {formatDate(currentGame.start_date)}
-              </span>
+        {/* Game Status - Top Right */}
+        <div className="absolute top-8 right-5 z-50">
+          <div 
+            className={`inline-flex items-center px-4 py-2.5 rounded-lg font-bold text-sm backdrop-blur-xl border shadow-lg ${
+              currentGame?.completed 
+                ? 'text-green-100 shadow-[0_8px_32px_rgba(34,197,94,0.4)]' 
+                : 'text-white shadow-[0_8px_32px_rgba(255,255,255,0.3)]'
+            }`}
+            style={{
+              background: currentGame?.completed
+                ? 'linear-gradient(135deg, rgba(34,197,94,0.3) 0%, rgba(22,163,74,0.4) 50%, rgba(34,197,94,0.3) 100%)'
+                : `linear-gradient(135deg, 
+                    rgba(${awayColorRgb}, 0.2) 0%, 
+                    rgba(${homeColorRgb}, 0.3) 50%, 
+                    rgba(${awayColorRgb}, 0.2) 100%)`,
+              border: currentGame?.completed 
+                ? '2px solid rgba(34,197,94,0.4)'
+                : `2px solid rgba(255,255,255,0.3)`,
+            }}
+          >
+            <div className="flex items-center space-x-2">
+              {currentGame?.completed ? (
+                <>
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span style={{ fontFamily: 'Orbitron, sans-serif' }}>FINAL</span>
+                </>
+              ) : (
+                <>
+                  <div 
+                    className="w-3 h-3 rounded-full animate-pulse shadow-lg"
+                    style={{ 
+                      background: `linear-gradient(45deg, ${awayColor}, ${homeColor})`,
+                      boxShadow: `0 0 8px rgba(${awayColorRgb}, 0.6)`
+                    }}
+                  ></div>
+                  <span style={{ fontFamily: 'Orbitron, sans-serif' }}>{getGameStatus()}</span>
+                </>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Header Content - Game Scoreboard */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 pt-6">
-          {/* Enhanced Game Status Badge */}
-          <div className="mb-8">
-            <div 
-              className={`inline-flex items-center px-8 py-4 rounded-3xl font-bold text-lg backdrop-blur-xl border shadow-2xl relative overflow-hidden ${
-                currentGame?.completed 
-                  ? 'text-green-100 shadow-[0_12px_40px_rgba(34,197,94,0.4)]' 
-                  : 'text-white shadow-[0_12px_40px_rgba(255,255,255,0.3)]'
-              }`}
-              style={{
-                background: currentGame?.completed
-                  ? 'linear-gradient(135deg, rgba(34,197,94,0.3) 0%, rgba(22,163,74,0.4) 50%, rgba(34,197,94,0.3) 100%)'
-                  : `linear-gradient(135deg, 
-                      rgba(${awayColorRgb}, 0.2) 0%, 
-                      rgba(${homeColorRgb}, 0.3) 50%, 
-                      rgba(${awayColorRgb}, 0.2) 100%)`,
-                border: currentGame?.completed 
-                  ? '2px solid rgba(34,197,94,0.4)'
-                  : `2px solid rgba(255,255,255,0.3)`,
-                backgroundSize: '400% 400%',
-                animation: 'gradientShift 6s ease infinite',
-              }}
-            >
-              {/* Animated background overlay */}
-              <div 
-                className="absolute inset-0 opacity-30"
-                style={{
-                  background: currentGame?.completed
-                    ? 'linear-gradient(45deg, transparent 30%, rgba(34,197,94,0.4) 50%, transparent 70%)'
-                    : `linear-gradient(45deg, transparent 30%, rgba(${awayColorRgb}, 0.3) 50%, transparent 70%)`,
-                  animation: 'shimmer 3s ease-in-out infinite',
-                }}
-              />
-              
-              <div className="relative z-10 flex items-center space-x-3">
-                {currentGame?.completed ? (
-                  <>
-                    <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
-                    <span style={{ fontFamily: 'Orbitron, sans-serif' }}>FINAL SCORE</span>
-                  </>
-                ) : (
-                  <>
-                    <div 
-                      className="w-4 h-4 rounded-full animate-pulse shadow-lg"
-                      style={{ 
-                        background: `linear-gradient(45deg, ${awayColor}, ${homeColor})`,
-                        boxShadow: `0 0 12px rgba(${awayColorRgb}, 0.6)`
-                      }}
-                    ></div>
-                    <span style={{ fontFamily: 'Orbitron, sans-serif' }}>{getGameStatus()}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Teams and Score - Enhanced Swift-like Design */}
           <div className="flex items-center justify-center space-x-16 mb-8">
             {/* Away Team - Enhanced Premium Design */}
             <div className="flex flex-col items-center group">
-              {/* Standalone Apple Liquid Glass Team Logo */}
+              {/* Enhanced Team Logo */}
               <div className="relative mb-6">
                 <img
                   src={getTeamLogo(currentGame?.away_id || currentGame?.awayId)}
                   alt={awayTeam?.school || 'Away Team'}
-                  className="w-32 h-32 object-contain apple-liquid-glass-logo group-hover:scale-110 transition-all duration-500"
+                  className="w-32 h-32 object-contain relative z-10 group-hover:scale-110 transition-transform duration-500"
                   style={{
                     filter: `
-                      contrast(1.2) 
-                      saturate(1.3) 
-                      brightness(1.1)
-                      drop-shadow(0 0 20px rgba(${awayColorRgb}, 0.6))
-                      drop-shadow(0 8px 32px rgba(${awayColorRgb}, 0.4))
-                      drop-shadow(0 0 40px rgba(255,255,255,0.2))
-                    `,
-                    borderRadius: '24px',
-                    background: `
-                      linear-gradient(135deg, 
-                        rgba(255,255,255,0.25) 0%,
-                        rgba(255,255,255,0.1) 25%,
-                        rgba(${awayColorRgb}, 0.05) 50%,
-                        rgba(255,255,255,0.1) 75%,
-                        rgba(255,255,255,0.25) 100%)
-                    `,
-                    backdropFilter: 'blur(40px) saturate(180%)',
-                    border: `1px solid rgba(255,255,255,0.3)`,
-                    boxShadow: `
-                      0 8px 32px rgba(${awayColorRgb}, 0.3),
-                      0 0 80px rgba(${awayColorRgb}, 0.2),
-                      inset 0 1px 0 rgba(255,255,255,0.5),
-                      inset 0 -1px 0 rgba(0,0,0,0.1),
-                      0 0 0 1px rgba(255,255,255,0.1)
+                      contrast(1.3) 
+                      saturate(1.4) 
+                      brightness(1.2)
+                      drop-shadow(0 0 20px rgba(${awayColorRgb}, 0.8))
+                      drop-shadow(0 8px 32px rgba(${awayColorRgb}, 0.6))
+                      drop-shadow(0 0 40px rgba(255,255,255,0.3))
                     `,
                   }}
                   onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                />
-                
-                {/* Apple Liquid Glass Shine Effect */}
-                <div 
-                  className="absolute inset-0 rounded-3xl pointer-events-none opacity-70"
-                  style={{
-                    background: `
-                      linear-gradient(135deg, 
-                        rgba(255,255,255,0.6) 0%,
-                        transparent 30%,
-                        transparent 70%,
-                        rgba(255,255,255,0.3) 100%)
-                    `,
-                    mixBlendMode: 'overlay',
-                  }}
                 />
               </div>
               
               {/* Team Name with Enhanced Styling */}
               <div className="text-center mb-4">
-                <div className="flex items-center justify-center space-x-2 mb-1">
+                <div className="flex items-center justify-center space-x-2 mb-2">
                   {/* Team Ranking Badge if available */}
                   {awayTeam?.ranking && (
                     <div 
@@ -469,9 +412,22 @@ const GameDetailView = ({ gameId }) => {
                   </span>
                 </div>
                 
+                {/* Conference under team name */}
+                {awayTeam?.conference && (
+                  <div 
+                    className="text-white/80 text-sm font-medium mb-1"
+                    style={{ 
+                      fontFamily: 'Orbitron, sans-serif',
+                      textShadow: '0 1px 4px rgba(0,0,0,0.3)'
+                    }}
+                  >
+                    {awayTeam.conference}
+                  </div>
+                )}
+                
                 {awayTeam?.mascot && (
                   <span 
-                    className="text-white/80 text-sm font-medium"
+                    className="text-white/70 text-xs font-medium"
                     style={{ 
                       fontFamily: 'Orbitron, sans-serif',
                       textShadow: '0 1px 4px rgba(0,0,0,0.3)'
@@ -572,62 +528,29 @@ const GameDetailView = ({ gameId }) => {
             
             {/* Home Team - Enhanced Premium Design */}
             <div className="flex flex-col items-center group">
-              {/* Standalone Apple Liquid Glass Team Logo */}
+              {/* Enhanced Team Logo */}
               <div className="relative mb-6">
                 <img
                   src={getTeamLogo(currentGame?.home_id || currentGame?.homeId)}
                   alt={homeTeam?.school || 'Home Team'}
-                  className="w-32 h-32 object-contain apple-liquid-glass-logo group-hover:scale-110 transition-all duration-500"
+                  className="w-32 h-32 object-contain relative z-10 group-hover:scale-110 transition-transform duration-500"
                   style={{
                     filter: `
-                      contrast(1.2) 
-                      saturate(1.3) 
-                      brightness(1.1)
-                      drop-shadow(0 0 20px rgba(${homeColorRgb}, 0.6))
-                      drop-shadow(0 8px 32px rgba(${homeColorRgb}, 0.4))
-                      drop-shadow(0 0 40px rgba(255,255,255,0.2))
-                    `,
-                    borderRadius: '24px',
-                    background: `
-                      linear-gradient(135deg, 
-                        rgba(255,255,255,0.25) 0%,
-                        rgba(255,255,255,0.1) 25%,
-                        rgba(${homeColorRgb}, 0.05) 50%,
-                        rgba(255,255,255,0.1) 75%,
-                        rgba(255,255,255,0.25) 100%)
-                    `,
-                    backdropFilter: 'blur(40px) saturate(180%)',
-                    border: `1px solid rgba(255,255,255,0.3)`,
-                    boxShadow: `
-                      0 8px 32px rgba(${homeColorRgb}, 0.3),
-                      0 0 80px rgba(${homeColorRgb}, 0.2),
-                      inset 0 1px 0 rgba(255,255,255,0.5),
-                      inset 0 -1px 0 rgba(0,0,0,0.1),
-                      0 0 0 1px rgba(255,255,255,0.1)
+                      contrast(1.3) 
+                      saturate(1.4) 
+                      brightness(1.2)
+                      drop-shadow(0 0 20px rgba(${homeColorRgb}, 0.8))
+                      drop-shadow(0 8px 32px rgba(${homeColorRgb}, 0.6))
+                      drop-shadow(0 0 40px rgba(255,255,255,0.3))
                     `,
                   }}
                   onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                />
-                
-                {/* Apple Liquid Glass Shine Effect */}
-                <div 
-                  className="absolute inset-0 rounded-3xl pointer-events-none opacity-70"
-                  style={{
-                    background: `
-                      linear-gradient(135deg, 
-                        rgba(255,255,255,0.6) 0%,
-                        transparent 30%,
-                        transparent 70%,
-                        rgba(255,255,255,0.3) 100%)
-                    `,
-                    mixBlendMode: 'overlay',
-                  }}
                 />
               </div>
               
               {/* Team Name with Enhanced Styling */}
               <div className="text-center mb-4">
-                <div className="flex items-center justify-center space-x-2 mb-1">
+                <div className="flex items-center justify-center space-x-2 mb-2">
                   {/* Team Ranking Badge if available */}
                   {homeTeam?.ranking && (
                     <div 
@@ -652,9 +575,22 @@ const GameDetailView = ({ gameId }) => {
                   </span>
                 </div>
                 
+                {/* Conference under team name */}
+                {homeTeam?.conference && (
+                  <div 
+                    className="text-white/80 text-sm font-medium mb-1"
+                    style={{ 
+                      fontFamily: 'Orbitron, sans-serif',
+                      textShadow: '0 1px 4px rgba(0,0,0,0.3)'
+                    }}
+                  >
+                    {homeTeam.conference}
+                  </div>
+                )}
+                
                 {homeTeam?.mascot && (
                   <span 
-                    className="text-white/80 text-sm font-medium"
+                    className="text-white/70 text-xs font-medium"
                     style={{ 
                       fontFamily: 'Orbitron, sans-serif',
                       textShadow: '0 1px 4px rgba(0,0,0,0.3)'
@@ -686,144 +622,6 @@ const GameDetailView = ({ gameId }) => {
                   --
                 </div>
               )}
-            </div>
-          </div>
-          
-          {/* Enhanced Team Information Cards - Maximum Visibility */}
-          <div className="relative z-50 flex justify-center items-center space-x-6 mb-8">
-            {/* Away Team Info Card */}
-            <div 
-              className="backdrop-blur-xl border border-white/30 px-6 py-4 rounded-2xl min-w-[140px] relative z-50"
-              style={{
-                background: `linear-gradient(135deg, 
-                  rgba(${awayColorRgb}, 0.35) 0%,
-                  rgba(${awayColorRgb}, 0.25) 50%,
-                  rgba(${awayColorRgb}, 0.35) 100%)`,
-                boxShadow: `
-                  0 12px 40px rgba(${awayColorRgb}, 0.4),
-                  inset 0 1px 0 rgba(255,255,255,0.3),
-                  0 0 0 1px rgba(${awayColorRgb}, 0.3),
-                  0 0 30px rgba(${awayColorRgb}, 0.2)
-                `,
-              }}
-            >
-              <div className="text-center relative z-10">
-                <div 
-                  className="text-white font-bold text-sm mb-1"
-                  style={{ 
-                    fontFamily: 'Orbitron, sans-serif',
-                    textShadow: '0 2px 8px rgba(0,0,0,0.6)'
-                  }}
-                >
-                  {awayTeam?.conference || 'Conference'}
-                </div>
-                <div 
-                  className="text-white/90 text-xs mb-1"
-                  style={{ 
-                    fontFamily: 'Orbitron, sans-serif',
-                    textShadow: '0 1px 4px rgba(0,0,0,0.5)'
-                  }}
-                >
-                  {getGameStatus() === 'FINAL' ? 'FINAL' : 'AWAY'}
-                </div>
-                {(awayTeam?.wins !== undefined && awayTeam?.losses !== undefined) && (
-                  <div 
-                    className="text-white font-medium text-xs"
-                    style={{ 
-                      fontFamily: 'Orbitron, sans-serif',
-                      textShadow: '0 1px 4px rgba(0,0,0,0.5)'
-                    }}
-                  >
-                    {awayTeam.wins}-{awayTeam.losses}
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Game Details Center */}
-            <div 
-              className="backdrop-blur-xl border border-white/40 px-8 py-4 rounded-2xl min-w-[120px] relative z-50"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%)',
-                boxShadow: `
-                  0 12px 40px rgba(0,0,0,0.3),
-                  inset 0 1px 0 rgba(255,255,255,0.4),
-                  0 0 0 1px rgba(255,255,255,0.2),
-                  0 0 30px rgba(255,255,255,0.1)
-                `,
-              }}
-            >
-              <div className="text-center relative z-10">
-                {currentGame?.week && (
-                  <div 
-                    className="text-white font-bold text-sm mb-1"
-                    style={{ 
-                      fontFamily: 'Orbitron, sans-serif',
-                      textShadow: '0 2px 8px rgba(0,0,0,0.6)'
-                    }}
-                  >
-                    Week {currentGame.week}
-                  </div>
-                )}
-                <div 
-                  className="text-white/90 text-xs"
-                  style={{ 
-                    fontFamily: 'Orbitron, sans-serif',
-                    textShadow: '0 1px 4px rgba(0,0,0,0.5)'
-                  }}
-                >
-                  {currentGame?.season || '2024'}
-                </div>
-              </div>
-            </div>
-            
-            {/* Home Team Info Card */}
-            <div 
-              className="backdrop-blur-xl border border-white/30 px-6 py-4 rounded-2xl min-w-[140px] relative z-50"
-              style={{
-                background: `linear-gradient(135deg, 
-                  rgba(${homeColorRgb}, 0.35) 0%,
-                  rgba(${homeColorRgb}, 0.25) 50%,
-                  rgba(${homeColorRgb}, 0.35) 100%)`,
-                boxShadow: `
-                  0 12px 40px rgba(${homeColorRgb}, 0.4),
-                  inset 0 1px 0 rgba(255,255,255,0.3),
-                  0 0 0 1px rgba(${homeColorRgb}, 0.3),
-                  0 0 30px rgba(${homeColorRgb}, 0.2)
-                `,
-              }}
-            >
-              <div className="text-center relative z-10">
-                <div 
-                  className="text-white font-bold text-sm mb-1"
-                  style={{ 
-                    fontFamily: 'Orbitron, sans-serif',
-                    textShadow: '0 2px 8px rgba(0,0,0,0.6)'
-                  }}
-                >
-                  {homeTeam?.conference || 'Conference'}
-                </div>
-                <div 
-                  className="text-white/90 text-xs mb-1"
-                  style={{ 
-                    fontFamily: 'Orbitron, sans-serif',
-                    textShadow: '0 1px 4px rgba(0,0,0,0.5)'
-                  }}
-                >
-                  {getGameStatus() === 'FINAL' ? 'FINAL' : 'HOME'}
-                </div>
-                {(homeTeam?.wins !== undefined && homeTeam?.losses !== undefined) && (
-                  <div 
-                    className="text-white font-medium text-xs"
-                    style={{ 
-                      fontFamily: 'Orbitron, sans-serif',
-                      textShadow: '0 1px 4px rgba(0,0,0,0.5)'
-                    }}
-                  >
-                    {homeTeam.wins}-{homeTeam.losses}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>
