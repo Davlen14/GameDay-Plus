@@ -17,6 +17,9 @@ const Schedule = () => {
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showConferencePicker, setShowConferencePicker] = useState(false);
 
+  // Check if any dropdown is open
+  const isAnyDropdownOpen = showWeekPicker || showYearPicker || showConferencePicker;
+
   // Data state with enhanced media and weather
   const [games, setGames] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -408,7 +411,7 @@ const Schedule = () => {
                     <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showYearPicker ? 'rotate-180' : ''}`}></i>
                   </button>
                   {showYearPicker && (
-                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-50 min-w-32 overflow-hidden">
+                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-[9999] min-w-32 overflow-hidden">
                       {/* Glass highlight */}
                       <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                       
@@ -420,7 +423,7 @@ const Schedule = () => {
                             setSelectedYear(year);
                             setShowYearPicker(false);
                           }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
+                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                         >
                           {year}
                         </button>
@@ -448,7 +451,7 @@ const Schedule = () => {
                     <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showConferencePicker ? 'rotate-180' : ''}`}></i>
                   </button>
                   {showConferencePicker && (
-                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-50 min-w-48 max-h-64 overflow-y-auto">
+                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-[9999] min-w-48 max-h-64 overflow-y-auto">
                       {/* Glass highlight */}
                       <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                       
@@ -458,7 +461,7 @@ const Schedule = () => {
                           setSelectedConference(null);
                           setShowConferencePicker(false);
                         }}
-                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
+                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                       >
                         All Conferences
                       </button>
@@ -470,7 +473,7 @@ const Schedule = () => {
                             setSelectedConference(conf.name);
                             setShowConferencePicker(false);
                           }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
+                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                         >
                           {conf.name}
                         </button>
@@ -498,7 +501,7 @@ const Schedule = () => {
                     <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showWeekPicker ? 'rotate-180' : ''}`}></i>
                   </button>
                   {showWeekPicker && (
-                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-50 min-w-32 max-h-64 overflow-y-auto">
+                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-[9999] min-w-32 max-h-64 overflow-y-auto">
                       {/* Glass highlight */}
                       <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                       
@@ -511,7 +514,7 @@ const Schedule = () => {
                             setIsPostseason(false);
                             setShowWeekPicker(false);
                           }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
+                          className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                         >
                           Week {week}
                         </button>
@@ -522,7 +525,7 @@ const Schedule = () => {
                           setIsPostseason(true);
                           setShowWeekPicker(false);
                         }}
-                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-10"
+                        className="relative block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
                       >
                         Postseason
                       </button>
@@ -535,38 +538,46 @@ const Schedule = () => {
         </div>
 
         {/* Games List */}
-        {filteredGames.length === 0 ? (
-          <div className="text-center py-16">
-            <i className="fas fa-calendar-times text-6xl text-gray-300 mb-6"></i>
-            <h3 className="text-2xl font-bold text-gray-600 mb-4">No Games Found</h3>
-            <p className="text-gray-500">
-              Try adjusting your filters or selecting a different week.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredGames.map((game, index) => (
-              <GameCard
-                key={game.id}
-                game={game}
-                getTeamRank={getTeamRank}
-                getTeamLogo={getTeamLogo}
-                getTeamAbbreviation={getTeamAbbreviation}
-                formatGameDate={formatGameDate}
-                index={index}
-                gameMedia={gameMedia}
-                gameWeather={gameWeather}
-              />
-            ))}
-          </div>
-        )}
+        <div className="relative">
+          {/* Overlay when dropdowns are open */}
+          {isAnyDropdownOpen && (
+            <div className="absolute inset-0 bg-black/5 backdrop-blur-[1px] z-10 rounded-3xl pointer-events-none"></div>
+          )}
+          
+          {filteredGames.length === 0 ? (
+            <div className="text-center py-16">
+              <i className="fas fa-calendar-times text-6xl text-gray-300 mb-6"></i>
+              <h3 className="text-2xl font-bold text-gray-600 mb-4">No Games Found</h3>
+              <p className="text-gray-500">
+                Try adjusting your filters or selecting a different week.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredGames.map((game, index) => (
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  getTeamRank={getTeamRank}
+                  getTeamLogo={getTeamLogo}
+                  getTeamAbbreviation={getTeamAbbreviation}
+                  formatGameDate={formatGameDate}
+                  index={index}
+                  gameMedia={gameMedia}
+                  gameWeather={gameWeather}
+                  isAnyDropdownOpen={isAnyDropdownOpen}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 // Game Card Component - Enhanced with media and weather data
-const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatGameDate, index, gameMedia, gameWeather }) => {
+const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatGameDate, index, gameMedia, gameWeather, isAnyDropdownOpen }) => {
   const homeTeamId = game.home_id || game.homeId;
   const awayTeamId = game.away_id || game.awayId;
   const homeTeam = game.home_team || game.homeTeam;
@@ -579,18 +590,33 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const mediaData = gameMedia.get(game.id);
   const weatherData = gameWeather.get(game.id);
 
-  const handleCardClick = () => {
+  const handleCardClick = (e) => {
+    // If any dropdown is open, prevent navigation
+    if (isAnyDropdownOpen) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    
     // Navigate to game detail view using hash routing
     window.location.hash = `#game-detail-${game.id}`;
   };
 
   return (
     <div 
-      className="group relative overflow-hidden cursor-pointer"
+      className={`group relative overflow-hidden transition-all duration-300 ${
+        isAnyDropdownOpen 
+          ? 'cursor-not-allowed opacity-75 pointer-events-none' 
+          : 'cursor-pointer hover:scale-[1.02]'
+      }`}
       onClick={handleCardClick}
     >
       {/* Liquid Glass Container */}
-      <div className="relative bg-white/60 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_15px_rgba(255,255,255,0.4),0_25px_50px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 hover:scale-[1.02] hover:shadow-[inset_0_2px_20px_rgba(255,255,255,0.5),0_35px_70px_rgba(0,0,0,0.15)] hover:bg-white/70">
+      <div className={`relative bg-white/60 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_15px_rgba(255,255,255,0.4),0_25px_50px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 ${
+        isAnyDropdownOpen 
+          ? '' 
+          : 'hover:scale-[1.02] hover:shadow-[inset_0_2px_20px_rgba(255,255,255,0.5),0_35px_70px_rgba(0,0,0,0.15)] hover:bg-white/70'
+      }`}>
         {/* Glass highlight overlay */}
         <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/20 to-transparent pointer-events-none"></div>
         

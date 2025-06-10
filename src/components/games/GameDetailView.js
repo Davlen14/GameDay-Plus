@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gameService, teamService } from '../../services';
+import GameOverview from './GameOverview';
+import GameStats from './GameStats';
+import GamePlayByPlay from './GamePlayByPlay';
+import GameStandings from './GameStandings';
+import GameChat from './GameChat';
 
 const GameDetailView = ({ gameId }) => {
   const scrollRef = useRef(null);
@@ -692,85 +697,44 @@ const GameDetailView = ({ gameId }) => {
 
       {/* Content Area */}
       <div className="px-4 py-8 max-w-6xl mx-auto">
-        <TabContent 
-          selectedTab={selectedTab}
-          game={currentGame}
-          awayTeam={awayTeam}
-          homeTeam={homeTeam}
-        />
+        {selectedTab === 'overview' && (
+          <GameOverview 
+            game={currentGame}
+            awayTeam={awayTeam}
+            homeTeam={homeTeam}
+          />
+        )}
+        {selectedTab === 'stats' && (
+          <GameStats 
+            game={currentGame}
+            awayTeam={awayTeam}
+            homeTeam={homeTeam}
+          />
+        )}
+        {selectedTab === 'playByPlay' && (
+          <GamePlayByPlay 
+            game={currentGame}
+            awayTeam={awayTeam}
+            homeTeam={homeTeam}
+          />
+        )}
+        {selectedTab === 'standings' && (
+          <GameStandings 
+            game={currentGame}
+            awayTeam={awayTeam}
+            homeTeam={homeTeam}
+          />
+        )}
+        {selectedTab === 'chat' && (
+          <GameChat 
+            game={currentGame}
+            awayTeam={awayTeam}
+            homeTeam={homeTeam}
+          />
+        )}
       </div>
     </div>
   );
-};
-
-// Tab Content
-const TabContent = ({ selectedTab, game, awayTeam, homeTeam }) => {
-  const ComingSoonContent = ({ title, description, icon }) => (
-    <div className="text-center py-16">
-      <div className="w-20 h-20 gradient-bg rounded-full flex items-center justify-center mx-auto mb-6">
-        <i className={`${icon} text-3xl text-white`}></i>
-      </div>
-      <h3 className="text-2xl font-bold gradient-text mb-4">{title}</h3>
-      <p className="text-gray-600 max-w-md mx-auto">{description}</p>
-      <div className="mt-8">
-        <div className="inline-flex items-center px-6 py-3 gradient-bg text-white rounded-full">
-          <i className="fas fa-rocket mr-2"></i>
-          Coming Soon
-        </div>
-      </div>
-    </div>
-  );
-
-  switch (selectedTab) {
-    case 'overview':
-      return (
-        <ComingSoonContent
-          title="Game Overview"
-          description="Comprehensive game details, key plays, and real-time updates will be available here."
-          icon="fas fa-file-alt"
-        />
-      );
-    case 'stats':
-      return (
-        <ComingSoonContent
-          title="Live Statistics"
-          description="In-depth team and player statistics, analytics, and performance metrics."
-          icon="fas fa-chart-bar"
-        />
-      );
-    case 'playByPlay':
-      return (
-        <ComingSoonContent
-          title="Play-by-Play"
-          description="Real-time play-by-play updates, drive charts, and momentum tracking."
-          icon="fas fa-play-circle"
-        />
-      );
-    case 'standings':
-      return (
-        <ComingSoonContent
-          title="Conference Standings"
-          description="Current conference standings, rankings, and playoff implications."
-          icon="fas fa-list-ol"
-        />
-      );
-    case 'chat':
-      return (
-        <ComingSoonContent
-          title="Live Chat"
-          description="Join the conversation with other fans during the game with real-time chat."
-          icon="fas fa-comments"
-        />
-      );
-    default:
-      return (
-        <ComingSoonContent
-          title="Game Overview"
-          description="Comprehensive game details, key plays, and real-time updates will be available here."
-          icon="fas fa-file-alt"
-        />
-      );
-  }
 };
 
 export default GameDetailView;
