@@ -302,3 +302,81 @@
   z-index: 2;
   pointer-events: none;
 }
+
+/* Enhanced GameDetailView Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+
+/* Enhanced GameDetailView Team Logo Effects */
+.game-detail-team-logo {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.game-detail-team-logo::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.1) 90deg, transparent 180deg, rgba(255,255,255,0.05) 270deg, transparent 360deg);
+  animation: logoRotate 20s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.game-detail-team-logo:hover::before {
+  animation-duration: 2s;
+}
+
+@keyframes logoRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Dynamic team color pulse animation */
+@keyframes teamColorPulse {
+  0%, 100% { 
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* Enhanced gradient animations */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Shimmer animation for premium effects */
+@keyframes shimmer {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  50% { transform: translateX(100%) rotate(45deg); }
+  100% { transform: translateX(-100%) rotate(45deg); }
+}
+
+/* Enhanced pulse for dynamic elements */
+@keyframes enhancedPulse {
+  0%, 100% { 
+    opacity: 0.8;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.1);
+    filter: brightness(1.2);
+  }
+}
