@@ -1,28 +1,161 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { gameService, teamService, rankingsService } from '../../services';
 
-// Utility Components for Enhanced Game Cards
-const ExcitementStars = ({ excitementIndex = 0 }) => {
-  const stars = Math.min(Math.max(Math.round(excitementIndex / 2), 0), 5);
-  const getStarColor = () => {
-    if (excitementIndex >= 8) return 'text-yellow-400';
-    if (excitementIndex >= 6) return 'text-yellow-400';
-    if (excitementIndex >= 4) return 'text-yellow-500';
-    return 'text-gray-400';
+// Enhanced Weather Icon Component with HD animations and temperature gradients
+const WeatherIcon = ({ condition, temperature }) => {
+  const getWeatherIcon = () => {
+    if (!condition) return 'fas fa-thermometer-half';
+    const cond = condition.toLowerCase();
+    if (cond.includes('clear') || cond.includes('sunny')) return 'fas fa-sun';
+    if (cond.includes('partly') || cond.includes('scattered')) return 'fas fa-cloud-sun';
+    if (cond.includes('cloud') || cond.includes('overcast')) return 'fas fa-cloud';
+    if (cond.includes('rain') || cond.includes('shower')) return 'fas fa-cloud-rain';
+    if (cond.includes('snow') || cond.includes('blizzard')) return 'fas fa-snowflake';
+    if (cond.includes('storm') || cond.includes('thunder')) return 'fas fa-bolt';
+    if (cond.includes('fog') || cond.includes('mist')) return 'fas fa-smog';
+    if (cond.includes('wind')) return 'fas fa-wind';
+    if (cond.includes('night')) return 'fas fa-moon';
+    return 'fas fa-cloud-sun';
+  };
+
+  const getTemperatureGradient = () => {
+    if (!temperature) return 'from-gray-400 to-gray-600';
+    
+    if (temperature >= 90) return 'from-red-500 via-orange-500 to-yellow-400'; // Hot - Fiery
+    if (temperature >= 80) return 'from-orange-400 via-yellow-400 to-green-400'; // Warm
+    if (temperature >= 70) return 'from-green-400 via-emerald-400 to-teal-400'; // Perfect - Green
+    if (temperature >= 50) return 'from-blue-400 via-sky-400 to-cyan-400'; // Cool
+    if (temperature >= 32) return 'from-blue-500 via-indigo-500 to-purple-500'; // Cold - Blue
+    return 'from-blue-600 via-purple-600 to-indigo-700'; // Very Cold
+  };
+
+  const getWeatherAnimation = () => {
+    if (!condition) return '';
+    const cond = condition.toLowerCase();
+    if (cond.includes('sunny') || cond.includes('clear')) return 'animate-pulse';
+    if (cond.includes('rain')) return 'animate-bounce';
+    if (cond.includes('snow')) return 'animate-spin';
+    if (cond.includes('storm')) return 'animate-ping';
+    if (cond.includes('cloud')) return 'animate-pulse';
+    return '';
+  };
+
+  const getWeatherGlow = () => {
+    if (!condition) return '';
+    const cond = condition.toLowerCase();
+    if (cond.includes('sunny') || cond.includes('clear')) return 'drop-shadow-[0_0_20px_rgba(251,191,36,0.8)]';
+    if (cond.includes('rain')) return 'drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]';
+    if (cond.includes('snow')) return 'drop-shadow-[0_0_15px_rgba(219,234,254,0.8)]';
+    if (cond.includes('storm')) return 'drop-shadow-[0_0_20px_rgba(168,85,247,0.7)]';
+    return 'drop-shadow-lg';
+  };
+
+  const getTimeOfDayEffect = () => {
+    if (!condition) return '';
+    const cond = condition.toLowerCase();
+    if (cond.includes('night')) return 'from-indigo-600 via-purple-600 to-blue-800';
+    return '';
   };
 
   return (
-    <div className="flex items-center space-x-1">
-      {[...Array(5)].map((_, i) => (
-        <i 
-          key={i} 
-          className={`fas fa-star text-sm ${i < stars ? getStarColor() : 'text-gray-300'} drop-shadow-lg filter`}
-          style={i < stars && excitementIndex >= 4 ? { 
-            filter: 'drop-shadow(0 0 4px rgba(234, 179, 8, 0.6))' 
-          } : {}}
-        />
-      ))}
-      <span className="text-xs font-bold text-gray-700 ml-2">
+    <div className="relative">
+      {/* Weather Icon Container */}
+      <div className="relative flex items-center space-x-4">
+        {/* Animated Weather Icon */}
+        <div className="relative">
+          <div 
+            className={`w-12 h-12 rounded-full bg-gradient-to-br ${getTemperatureGradient()} p-3 shadow-2xl backdrop-blur-xl`}
+            style={{
+              boxShadow: `
+                0 8px 32px rgba(0,0,0,0.12),
+                inset 0 2px 8px rgba(255,255,255,0.2),
+                0 0 0 1px rgba(255,255,255,0.05)
+              `
+            }}
+          >
+            <i 
+              className={`${getWeatherIcon()} text-white text-lg ${getWeatherAnimation()} ${getWeatherGlow()}`}
+              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+            />
+          </div>
+          
+          {/* Animated Weather Effects */}
+          {condition?.toLowerCase().includes('rain') && (
+            <div className="absolute -top-1 -right-1">
+              <div className="w-2 h-6 bg-blue-400 rounded-full opacity-60 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="absolute top-1 left-1 w-1 h-4 bg-blue-300 rounded-full opacity-40 animate-bounce" style={{ animationDelay: '200ms' }}></div>
+            </div>
+          )}
+          
+          {condition?.toLowerCase().includes('snow') && (
+            <div className="absolute -top-2 -right-2 w-3 h-3 bg-white rounded-full opacity-70 animate-ping"></div>
+          )}
+          
+          {(condition?.toLowerCase().includes('sunny') || condition?.toLowerCase().includes('clear')) && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-300 rounded-full opacity-60 animate-pulse"></div>
+          )}
+        </div>
+
+        {/* Temperature Display */}
+        {temperature && (
+          <div className="relative">
+            <div 
+              className={`px-4 py-2 rounded-2xl bg-gradient-to-r ${getTemperatureGradient()} text-white font-black text-lg shadow-xl backdrop-blur-xl`}
+              style={{
+                boxShadow: `
+                  0 8px 25px rgba(0,0,0,0.15),
+                  inset 0 1px 4px rgba(255,255,255,0.2)
+                `
+              }}
+            >
+              <span className="drop-shadow-sm">{Math.round(temperature)}°F</span>
+            </div>
+            
+            {/* Temperature indicators */}
+            {temperature >= 90 && (
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+            )}
+            {temperature <= 32 && (
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-200 rounded-full animate-pulse"></div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Weather condition text */}
+      {condition && (
+        <div className="mt-2 text-xs font-medium text-gray-600 capitalize text-center">
+          {condition}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Utility Components
+const ExcitementStars = ({ excitementIndex = 0 }) => {
+  const stars = Math.min(Math.max(Math.round(excitementIndex / 2), 0), 5);
+  const getStarGradient = () => {
+    if (excitementIndex >= 8) return 'from-yellow-300 via-yellow-400 to-orange-400';
+    if (excitementIndex >= 6) return 'from-yellow-400 via-yellow-500 to-orange-500';
+    if (excitementIndex >= 4) return 'from-yellow-500 via-yellow-600 to-orange-600';
+    return 'from-gray-300 to-gray-400';
+  };
+
+  return (
+    <div className="flex items-center space-x-2">
+      <div className="flex space-x-1">
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={i}
+            className={`w-4 h-4 rounded-sm transform rotate-45 ${i < stars ? `bg-gradient-to-br ${getStarGradient()}` : 'bg-gray-200'} shadow-lg transition-all duration-300 hover:scale-110`}
+            style={i < stars ? {
+              boxShadow: '0 4px 15px rgba(251, 191, 36, 0.4), inset 0 1px 2px rgba(255,255,255,0.2)'
+            } : {}}
+          />
+        ))}
+      </div>
+      <span className="text-sm font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
         {excitementIndex ? excitementIndex.toFixed(1) : 'N/A'}
       </span>
     </div>
@@ -36,55 +169,87 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
   const awayPct = awayProb ? Math.round(awayProb * 100) : 50;
   
   return (
-    <div className="bg-white/30 backdrop-blur-xl rounded-2xl border border-white/40 p-4 shadow-[0_8px_25px_rgba(0,0,0,0.1)]">
-      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+    <div 
+      className="relative bg-white/30 backdrop-blur-2xl rounded-3xl border border-white/40 p-6 shadow-2xl"
+      style={{
+        boxShadow: `
+          0 25px 50px rgba(0,0,0,0.1),
+          inset 0 1px 6px rgba(255,255,255,0.2),
+          0 0 0 1px rgba(255,255,255,0.05)
+        `
+      }}
+    >
+      {/* Liquid glass highlight */}
+      <div className="absolute inset-1 rounded-2xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
       
       <div className="relative z-10">
-        <div className="text-xs font-bold text-gray-700 mb-3 text-center flex items-center justify-center space-x-2">
-          <i className="fas fa-chart-line" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
+        <div className="text-sm font-bold text-gray-700 mb-4 text-center flex items-center justify-center space-x-2">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
+            <i className="fas fa-chart-line text-white text-xs"></i>
+          </div>
           <span>Win Probability</span>
         </div>
-        <div className="flex items-center space-x-3">
+        
+        <div className="space-y-4">
           {/* Away Team */}
-          <div className="flex items-center space-x-2 flex-1">
-            <div className="w-8 h-8 flex items-center justify-center">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 p-2 flex items-center justify-center">
               <img 
                 src={getTeamLogo(awayTeamId)} 
                 alt={awayTeam}
-                className="w-8 h-8 object-contain filter drop-shadow-lg"
+                className="w-full h-full object-contain"
                 style={{
-                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.2) contrast(1.1)',
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.3) contrast(1.2) brightness(1.1)'
                 }}
                 onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
               />
             </div>
-            <span className="text-sm font-bold text-gray-800">{awayPct}%</span>
-          </div>
-          
-          {/* Enhanced Probability Bar */}
-          <div className="flex-1 h-3 bg-gray-200/50 rounded-full overflow-hidden shadow-inner">
-            <div 
-              className="h-full rounded-full transition-all duration-700 ease-out shadow-lg"
-              style={{ 
-                width: `${awayPct}%`,
-                background: `linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)`
-              }}
-            />
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-bold text-gray-800">{awayTeam}</span>
+                <span className="text-lg font-black bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">{awayPct}%</span>
+              </div>
+              <div className="h-2 bg-gray-200/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all duration-1000 ease-out"
+                  style={{ 
+                    width: `${awayPct}%`,
+                    background: `linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)`,
+                    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
+                  }}
+                />
+              </div>
+            </div>
           </div>
           
           {/* Home Team */}
-          <div className="flex items-center space-x-2 flex-1 justify-end">
-            <span className="text-sm font-bold text-gray-800">{homePct}%</span>
-            <div className="w-8 h-8 flex items-center justify-center">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 p-2 flex items-center justify-center">
               <img 
                 src={getTeamLogo(homeTeamId)} 
                 alt={homeTeam}
-                className="w-8 h-8 object-contain filter drop-shadow-lg"
+                className="w-full h-full object-contain"
                 style={{
-                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.2) contrast(1.1)',
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.3) contrast(1.2) brightness(1.1)'
                 }}
                 onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
               />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-bold text-gray-800">{homeTeam}</span>
+                <span className="text-lg font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">{homePct}%</span>
+              </div>
+              <div className="h-2 bg-gray-200/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all duration-1000 ease-out"
+                  style={{ 
+                    width: `${homePct}%`,
+                    background: `linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)`,
+                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -104,12 +269,17 @@ const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) =>
   return (
     <div className="relative">
       <div 
-        className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-xs cursor-help hover:bg-white/30 transition-all duration-200"
+        className="bg-white/25 backdrop-blur-xl px-3 py-2 rounded-xl text-xs cursor-help hover:bg-white/35 transition-all duration-300 border border-white/30"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
+        style={{
+          boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.2), 0 4px 12px rgba(0,0,0,0.1)'
+        }}
       >
-        <div className="flex items-center space-x-1">
-          <i className="fas fa-chart-line text-blue-500 mr-1" />
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+            <i className="fas fa-chart-line text-white text-xs" />
+          </div>
           <span className="font-bold text-gray-700">{preGameElo}</span>
           <span className="text-gray-500">({eloLevel})</span>
           {isCompleted && eloChange !== 0 && (
@@ -120,107 +290,55 @@ const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) =>
         </div>
       </div>
       
-      {/* ELO Explanation Tooltip */}
       {showTooltip && (
-        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-[10000] w-72">
-          <div className="bg-white/95 backdrop-blur-xl border border-white/50 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] p-4">
-            <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-[10000] w-80">
+          <div 
+            className="bg-white/95 backdrop-blur-2xl border border-white/60 rounded-2xl p-6"
+            style={{
+              boxShadow: `
+                0 25px 50px rgba(0,0,0,0.15),
+                inset 0 1px 6px rgba(255,255,255,0.2),
+                0 0 0 1px rgba(255,255,255,0.1)
+              `
+            }}
+          >
+            <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none"></div>
             
             <div className="relative z-10">
-              <div className="flex items-center space-x-2 mb-2">
-                <i className="fas fa-info-circle text-blue-500" />
-                <h4 className="font-bold text-gray-800">ELO Rating System</h4>
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                  <i className="fas fa-info-circle text-white text-sm" />
+                </div>
+                <h4 className="font-black text-gray-800 text-lg">ELO Rating System</h4>
               </div>
               
-              <p className="text-sm text-gray-700 mb-3">
+              <p className="text-sm text-gray-700 mb-4 leading-relaxed">
                 ELO is a rating system that measures team strength based on game results and opponent quality. 
                 Teams gain/lose points based on wins/losses and the strength of their opponents.
               </p>
               
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Elite:</span>
-                  <span className="font-bold text-green-600">2000+</span>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center p-2 rounded-lg bg-green-50">
+                  <span className="text-gray-600 font-medium">Elite:</span>
+                  <span className="font-black text-green-600">2000+</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Strong:</span>
-                  <span className="font-bold text-blue-600">1800-1999</span>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-blue-50">
+                  <span className="text-gray-600 font-medium">Strong:</span>
+                  <span className="font-black text-blue-600">1800-1999</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Good:</span>
-                  <span className="font-bold text-yellow-600">1600-1799</span>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-yellow-50">
+                  <span className="text-gray-600 font-medium">Good:</span>
+                  <span className="font-black text-yellow-600">1600-1799</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Developing:</span>
-                  <span className="font-bold text-gray-600">Below 1600</span>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
+                  <span className="text-gray-600 font-medium">Developing:</span>
+                  <span className="font-black text-gray-600">Below 1600</span>
                 </div>
-              </div>
-              
-              <div className="mt-3 pt-2 border-t border-gray-200">
-                <p className="text-xs text-gray-600">
-                  <i className="fas fa-lightbulb text-yellow-500 mr-1" />
-                  Higher ratings indicate stronger teams. Changes show performance impact.
-                </p>
               </div>
             </div>
             
-            {/* Tooltip arrow */}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white/95 border-r border-b border-white/50 rotate-45"></div>
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white/95 border-r border-b border-white/60 rotate-45"></div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const WeatherIcon = ({ condition, temperature }) => {
-  const getWeatherIcon = () => {
-    if (!condition) return 'fas fa-thermometer-half';
-    const cond = condition.toLowerCase();
-    if (cond.includes('clear') || cond.includes('sunny')) return 'fas fa-sun';
-    if (cond.includes('partly') || cond.includes('scattered')) return 'fas fa-cloud-sun';
-    if (cond.includes('cloud') || cond.includes('overcast')) return 'fas fa-cloud';
-    if (cond.includes('rain') || cond.includes('shower')) return 'fas fa-cloud-rain';
-    if (cond.includes('snow') || cond.includes('blizzard')) return 'fas fa-snowflake';
-    if (cond.includes('storm') || cond.includes('thunder')) return 'fas fa-bolt';
-    if (cond.includes('fog') || cond.includes('mist')) return 'fas fa-smog';
-    if (cond.includes('wind')) return 'fas fa-wind';
-    return 'fas fa-cloud-sun';
-  };
-
-  const getWeatherColor = () => {
-    if (!condition) return 'text-gray-500';
-    const cond = condition.toLowerCase();
-    if (cond.includes('clear') || cond.includes('sunny')) return 'text-amber-500';
-    if (cond.includes('rain') || cond.includes('storm')) return 'text-blue-500';
-    if (cond.includes('snow')) return 'text-cyan-400';
-    if (cond.includes('cloud')) return 'text-slate-500';
-    if (cond.includes('wind')) return 'text-emerald-500';
-    return 'text-gray-500';
-  };
-
-  const getWeatherGlow = () => {
-    if (!condition) return 'drop-shadow-md';
-    const cond = condition.toLowerCase();
-    if (cond.includes('clear') || cond.includes('sunny')) return 'drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]';
-    if (cond.includes('rain') || cond.includes('storm')) return 'drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]';
-    if (cond.includes('snow')) return 'drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]';
-    return 'drop-shadow-md';
-  };
-
-  return (
-    <div className="flex items-center space-x-3">
-      <div className="relative">
-        <i className={`${getWeatherIcon()} ${getWeatherColor()} text-xl ${getWeatherGlow()}`} />
-        {/* Modern weather accent */}
-        <div className="absolute -top-1 -right-1 w-2 h-2 bg-current rounded-full opacity-30 animate-pulse"></div>
-      </div>
-      {temperature && (
-        <div className="text-right">
-          <span className="text-lg font-bold text-gray-800">
-            {Math.round(temperature)}°
-          </span>
-          <div className="text-xs text-gray-500 font-medium">F</div>
         </div>
       )}
     </div>
@@ -243,30 +361,32 @@ const MediaIcon = ({ outlet, mediaType }) => {
     return 'fas fa-tv';
   };
 
-  const getNetworkColor = () => {
-    if (!outlet) return 'text-gray-600';
+  const getNetworkGradient = () => {
+    if (!outlet) return 'from-gray-500 to-gray-700';
     const network = outlet.toLowerCase();
-    if (network.includes('espn')) return 'text-red-600';
-    if (network.includes('fox')) return 'text-blue-600';
-    if (network.includes('cbs')) return 'text-blue-700';
-    if (network.includes('nbc')) return 'text-purple-600';
-    if (network.includes('peacock')) return 'text-blue-500';
-    if (mediaType === 'web') return 'text-purple-500';
-    return 'text-gray-700';
-  };
-
-  const getNetworkGlow = () => {
-    if (!outlet) return 'drop-shadow-md';
-    const network = outlet.toLowerCase();
-    if (network.includes('espn')) return 'drop-shadow-[0_0_8px_rgba(220,38,38,0.6)]';
-    if (network.includes('nbc') || network.includes('peacock')) return 'drop-shadow-[0_0_8px_rgba(147,51,234,0.6)]';
-    return 'drop-shadow-md';
+    if (network.includes('espn')) return 'from-red-500 to-red-700';
+    if (network.includes('fox')) return 'from-blue-500 to-blue-700';
+    if (network.includes('cbs')) return 'from-blue-600 to-blue-800';
+    if (network.includes('nbc')) return 'from-purple-500 to-purple-700';
+    if (network.includes('peacock')) return 'from-blue-400 to-blue-600';
+    if (mediaType === 'web') return 'from-purple-500 to-purple-700';
+    return 'from-gray-500 to-gray-700';
   };
 
   return (
     <div className="relative">
-      <i className={`${getNetworkIcon()} ${getNetworkColor()} text-lg ${getNetworkGlow()}`} />
-      <div className="absolute -top-1 -right-1 w-2 h-2 bg-current rounded-full opacity-40 animate-ping"></div>
+      <div 
+        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getNetworkGradient()} p-3 shadow-xl backdrop-blur-xl flex items-center justify-center`}
+        style={{
+          boxShadow: `
+            0 8px 25px rgba(0,0,0,0.15),
+            inset 0 1px 4px rgba(255,255,255,0.2)
+          `
+        }}
+      >
+        <i className={`${getNetworkIcon()} text-white text-lg`} />
+      </div>
+      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
     </div>
   );
 };
@@ -298,7 +418,7 @@ const Schedule = () => {
   const [gameMedia, setGameMedia] = useState(new Map());
   const [gameWeather, setGameWeather] = useState(new Map());
 
-  // Conference data matching your app structure
+  // Conference data
   const conferences = [
     { name: 'ACC', logo: 'ACC' },
     { name: 'American Athletic', logo: 'American Athletic' },
@@ -317,7 +437,6 @@ const Schedule = () => {
     loadDataIfNeeded();
   }, [selectedWeek, selectedYear, isPostseason]);
 
-  // Search debouncing effect
   useEffect(() => {
     const timer = setTimeout(() => {
       updateFilteredGames();
@@ -325,7 +444,6 @@ const Schedule = () => {
     return () => clearTimeout(timer);
   }, [searchText, selectedConference, selectedCategory, games, rankings]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.dropdown-container')) {
@@ -344,14 +462,12 @@ const Schedule = () => {
     setErrorMessage(null);
 
     try {
-      // Load teams if not cached
       let loadedTeams = teams;
       if (loadedTeams.length === 0) {
         loadedTeams = await teamService.getFBSTeams(true);
         setTeams(loadedTeams);
       }
 
-      // Load games based on selections
       let loadedGames = [];
       if (isPostseason) {
         loadedGames = await gameService.getPostseasonGames(selectedYear, false);
@@ -360,13 +476,11 @@ const Schedule = () => {
       }
       setGames(loadedGames || []);
 
-      // Load enhanced media and weather data in parallel
       const [mediaData, weatherData] = await Promise.all([
         gameService.getEnhancedGameMedia(selectedYear, selectedWeek, isPostseason ? 'postseason' : 'regular').catch(() => []),
         gameService.getEnhancedGameWeather(null, selectedYear, selectedWeek, isPostseason ? 'postseason' : 'regular').catch(() => [])
       ]);
 
-      // Create lookup maps for quick access
       const mediaMap = new Map();
       const weatherMap = new Map();
 
@@ -381,7 +495,6 @@ const Schedule = () => {
       setGameMedia(mediaMap);
       setGameWeather(weatherMap);
 
-      // Load rankings if not cached
       let loadedRankings = rankings;
       if (loadedRankings.length === 0) {
         try {
@@ -411,7 +524,6 @@ const Schedule = () => {
   const updateFilteredGames = () => {
     let filtered = [...games];
 
-    // Filter by conference if selected
     if (selectedConference) {
       const conferenceTeamIds = new Set(
         teams.filter(team => team.conference === selectedConference).map(team => team.id)
@@ -422,7 +534,6 @@ const Schedule = () => {
       );
     }
 
-    // Category filtering (Top 25 vs FBS)
     if (selectedCategory === 'Top 25') {
       const rankedSchools = new Set(rankings.map(rank => rank.school.toLowerCase()));
       filtered = filtered.filter(game => {
@@ -433,7 +544,6 @@ const Schedule = () => {
       });
     }
 
-    // Search filter
     if (searchText.trim()) {
       const query = searchText.toLowerCase();
       const matchingTeamIds = new Set(
@@ -507,20 +617,19 @@ const Schedule = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="relative">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent mx-auto" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-300 border-t-transparent absolute top-0 left-1/2 transform -translate-x-1/2"></div>
-            </div>
-            <div className="mt-6 space-y-2">
-              <p className="text-xl font-bold" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                {isPostseason ? 'Loading Postseason Games...' : `Loading Week ${selectedWeek} Games...`}
-              </p>
-              <p className="text-gray-600">Fetching college football schedule</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative mb-8">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 animate-spin mx-auto flex items-center justify-center" style={{ boxShadow: '0 10px 30px rgba(220, 38, 38, 0.3)' }}>
+              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center">
+                <i className="fas fa-football-ball text-white text-2xl"></i>
+              </div>
             </div>
           </div>
+          <h2 className="text-2xl font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent mb-2">
+            {isPostseason ? 'Loading Postseason Games...' : `Loading Week ${selectedWeek} Games...`}
+          </h2>
+          <p className="text-gray-600">Fetching college football schedule</p>
         </div>
       </div>
     );
@@ -528,328 +637,358 @@ const Schedule = () => {
 
   if (errorMessage) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-md mx-auto">
-              <h3 className="font-bold">Error Loading Schedule</h3>
-              <p className="text-sm mt-2">{errorMessage}</p>
-              <button 
-                onClick={loadDataIfNeeded}
-                className="mt-4 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
-                style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}
-              >
-                Try Again
-              </button>
-            </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div 
+          className="max-w-md mx-auto bg-white/60 backdrop-blur-2xl rounded-3xl border border-white/60 p-8 text-center"
+          style={{
+            boxShadow: `
+              0 25px 50px rgba(0,0,0,0.1),
+              inset 0 1px 6px rgba(255,255,255,0.2)
+            `
+          }}
+        >
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-700 mx-auto mb-4 flex items-center justify-center">
+            <i className="fas fa-exclamation-triangle text-white text-2xl"></i>
           </div>
+          <h3 className="font-black text-gray-800 text-xl mb-2">Error Loading Schedule</h3>
+          <p className="text-gray-600 mb-6">{errorMessage}</p>
+          <button 
+            onClick={loadDataIfNeeded}
+            className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-2xl hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Custom Tailwind CSS Styles */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Enhanced Background Effects */}
       <style jsx>{`
-        .gradient-bg {
-          background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+        .liquid-glass {
+          background: rgba(255, 255, 255, 0.25);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          box-shadow: 
+            0 8px 32px 0 rgba(0, 0, 0, 0.37),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.1);
         }
-        .gradient-text {
-          background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .icon-gradient {
-          background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .digital-lines {
-          background-image: 
-            linear-gradient(90deg, rgba(204,0,28,0.1) 1px, transparent 1px),
-            linear-gradient(0deg, rgba(204,0,28,0.1) 1px, transparent 1px),
-            linear-gradient(45deg, rgba(204,0,28,0.05) 1px, transparent 1px),
-            linear-gradient(-45deg, rgba(204,0,28,0.05) 1px, transparent 1px);
-          background-size: 60px 60px, 60px 60px, 40px 40px, 40px 40px;
-          animation: digitalMove 20s linear infinite;
-        }
-        @keyframes digitalMove {
-          0% { background-position: 0 0, 0 0, 0 0, 0 0; }
-          100% { background-position: 60px 60px, 60px 60px, 40px 40px, 40px 40px; }
-        }
+        
         .metallic-logo {
-          filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4)) saturate(1.3) contrast(1.2) brightness(1.1);
-          transform: perspective(100px) rotateX(2deg);
+          filter: 
+            drop-shadow(0 10px 20px rgba(0,0,0,0.3)) 
+            saturate(1.4) 
+            contrast(1.3) 
+            brightness(1.2);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
         .metallic-logo:hover {
-          filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5)) saturate(1.4) contrast(1.3) brightness(1.2);
-          transform: perspective(100px) rotateX(0deg) scale(1.05);
+          filter: 
+            drop-shadow(0 15px 30px rgba(0,0,0,0.4)) 
+            saturate(1.5) 
+            contrast(1.4) 
+            brightness(1.3);
+          transform: translateY(-2px) scale(1.05);
+        }
+        
+        .floating-orb {
+          background: linear-gradient(135deg, rgba(220,38,38,0.1), rgba(185,28,28,0.08), rgba(153,27,27,0.06));
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .digital-grid {
+          background-image: 
+            radial-gradient(circle at 25% 25%, rgba(220,38,38,0.1) 2px, transparent 2px),
+            radial-gradient(circle at 75% 75%, rgba(220,38,38,0.1) 2px, transparent 2px);
+          background-size: 50px 50px;
+          animation: gridMove 10s linear infinite;
+        }
+        
+        @keyframes gridMove {
+          0% { background-position: 0 0, 0 0; }
+          100% { background-position: 50px 50px, 50px 50px; }
         }
       `}</style>
 
-      {/* Digital Grid Background */}
+      {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50 to-gray-100"></div>
-        
-        {/* Digital lines overlay */}
-        <div className="absolute inset-0 digital-lines opacity-60"></div>
-        
-        {/* Floating digital orbs */}
-        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '2s' }}></div>
-        <div className="absolute bottom-20 right-1/3 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '3s' }}></div>
+        <div className="absolute inset-0 digital-grid opacity-40"></div>
+        <div className="absolute top-20 left-10 w-72 h-72 floating-orb rounded-full blur-3xl"></div>
+        <div className="absolute top-60 right-20 w-56 h-56 floating-orb rounded-full blur-3xl" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-64 h-64 floating-orb rounded-full blur-3xl" style={{ animationDelay: '4s' }}></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Enhanced Liquid Glass Header Section */}
-        <div className="text-center mb-20">
+        {/* Apple-Style Header */}
+        <div className="text-center mb-16">
+          {/* Iconic Header Logo */}
           <div className="flex items-center justify-center mb-8 relative">
-            {/* Liquid Glass Icon Container */}
-            <div className="relative">
-              {/* Outer glass ring */}
-              <div className="absolute inset-0 w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-2xl animate-pulse"></div>
-              {/* Inner glass container */}
-              <div className="relative w-16 h-16 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_10px_30px_rgba(0,0,0,0.1)] flex items-center justify-center">
-                {/* Liquid glass highlight */}
-                <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/60 via-transparent to-transparent"></div>
-                <i className="fas fa-calendar-check text-3xl relative z-10 drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
-              </div>
-              {/* Floating particles */}
-              <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-              <div className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full opacity-40 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '0.5s' }}></div>
+            <div 
+              className="relative w-24 h-24 rounded-3xl liquid-glass flex items-center justify-center group cursor-pointer"
+              style={{
+                boxShadow: `
+                  0 25px 50px rgba(0,0,0,0.1),
+                  inset 0 1px 6px rgba(255,255,255,0.3),
+                  0 0 0 1px rgba(255,255,255,0.1)
+                `
+              }}
+            >
+              <i className="fas fa-calendar-check text-4xl bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300"></i>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-red-400 to-red-600 rounded-full animate-pulse"></div>
             </div>
           </div>
           
-          {/* Enhanced Title with Liquid Glass Effect */}
-          <div className="relative mb-8">
-            <h1 className="text-6xl md:text-7xl font-black mb-6 relative">
-              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>College Football</span>
-              <br />
-              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Schedule</span>
-              {/* Animated underline */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-1 rounded-full opacity-60 animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-            </h1>
-          </div>
+          {/* Apple-Style Typography */}
+          <h1 className="text-7xl md:text-8xl font-black mb-6 relative">
+            <span className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent drop-shadow-2xl">
+              College Football
+            </span>
+            <br />
+            <span className="bg-gradient-to-br from-red-600 via-red-700 to-red-800 bg-clip-text text-transparent drop-shadow-2xl">
+              Schedule
+            </span>
+          </h1>
           
-          {/* Stats Badge with Liquid Glass */}
-          <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2),0_15px_35px_rgba(0,0,0,0.1)]">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-              <span className="text-lg font-bold" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{filteredGames.length} Games</span>
+          {/* Stats Display */}
+          <div 
+            className="inline-flex items-center space-x-6 px-8 py-4 rounded-full liquid-glass"
+            style={{
+              boxShadow: `
+                0 15px 35px rgba(0,0,0,0.1),
+                inset 0 1px 4px rgba(255,255,255,0.3)
+              `
+            }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-700 animate-pulse"></div>
+              <span className="text-xl font-black bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
+                {filteredGames.length} Games
+              </span>
             </div>
-            <div className="w-px h-6 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
-            <span className="text-lg text-gray-700 font-medium">
+            <div className="w-px h-6 bg-gradient-to-b from-transparent via-gray-400 to-transparent"></div>
+            <span className="text-xl text-gray-700 font-semibold">
               {isPostseason ? 'Bowl Season & Playoffs' : `Week ${selectedWeek} • 2024`}
             </span>
           </div>
         </div>
 
-        {/* Liquid Glass Filter Controls */}
-        <div className="relative mb-8">
-          {/* Liquid Glass Container */}
-          <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
-            {/* Highlight overlay */}
-            <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-            
-            {/* Content */}
-            <div className="relative z-10">
-              {/* Category Pills with Liquid Glass */}
-              <div className="flex flex-wrap items-center gap-4 mb-8">
-                {['Top 25', 'FBS'].map(category => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`relative px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-500 transform hover:scale-105 ${
-                      selectedCategory === category
-                        ? 'text-white shadow-2xl'
-                        : 'text-gray-700 hover:text-white'
-                    }`}
-                    style={selectedCategory === category ? {} : {}}
-                  >
-                    {/* Active gradient background */}
-                    {selectedCategory === category && (
-                      <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(204,0,28,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-                    )}
-                    
-                    {/* Inactive glass background */}
-                    {selectedCategory !== category && (
-                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-gray-200/40 transition-all duration-300"></div>
-                    )}
-                    
-                    {/* Glass highlight */}
-                    <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                    
-                    <span className="relative z-10">{category}</span>
-                  </button>
-                ))}
-                
-                {/* Liquid Glass Search Box */}
-                <div className="flex-1 min-w-80 relative">
-                  <div className="relative bg-white/30 backdrop-blur-xl rounded-2xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.2)] overflow-hidden">
-                    {/* Glass highlight */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                    
-                    <div className="relative flex items-center">
-                      <i className="fas fa-search absolute left-4 text-gray-500 z-10"></i>
-                      <input
-                        type="text"
-                        placeholder="Search teams..."
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        className="w-full pl-12 pr-6 py-4 bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 font-medium text-lg"
-                      />
-                    </div>
+        {/* Apple-Style Filter Controls */}
+        <div className="relative mb-12">
+          <div 
+            className="liquid-glass rounded-3xl p-8"
+            style={{
+              boxShadow: `
+                0 25px 50px rgba(0,0,0,0.1),
+                inset 0 1px 6px rgba(255,255,255,0.3),
+                0 0 0 1px rgba(255,255,255,0.1)
+              `
+            }}
+          >
+            {/* Category Selection */}
+            <div className="flex flex-wrap items-center gap-6 mb-8">
+              {['Top 25', 'FBS'].map(category => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`relative px-8 py-4 rounded-2xl font-black text-lg transition-all duration-500 transform hover:scale-105 ${
+                    selectedCategory === category
+                      ? 'text-white shadow-2xl'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  {selectedCategory === category && (
+                    <div 
+                      className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600 to-red-800"
+                      style={{
+                        boxShadow: '0 8px 32px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                      }}
+                    ></div>
+                  )}
+                  
+                  {selectedCategory !== category && (
+                    <div className="absolute inset-0 liquid-glass rounded-2xl hover:bg-white/40 transition-all duration-300"></div>
+                  )}
+                  
+                  <span className="relative z-10">{category}</span>
+                </button>
+              ))}
+              
+              {/* Search Box */}
+              <div className="flex-1 min-w-80 relative">
+                <div 
+                  className="relative liquid-glass rounded-2xl overflow-hidden"
+                  style={{
+                    boxShadow: `
+                      inset 0 2px 8px rgba(0,0,0,0.1),
+                      0 4px 12px rgba(0,0,0,0.05)
+                    `
+                  }}
+                >
+                  <div className="relative flex items-center">
+                    <i className="fas fa-search absolute left-6 text-gray-500 z-10"></i>
+                    <input
+                      type="text"
+                      placeholder="Search teams..."
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      className="w-full pl-14 pr-6 py-4 bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none font-medium text-lg"
+                    />
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Liquid Glass Time Frame Controls */}
-              <div className="flex flex-wrap items-center gap-4">
-                {/* Year Selector */}
-                <div className="relative dropdown-container">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowYearPicker(!showYearPicker);
-                      setShowWeekPicker(false);
-                      setShowConferencePicker(false);
+            {/* Time Frame Controls */}
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Year Selector */}
+              <div className="relative dropdown-container">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowYearPicker(!showYearPicker);
+                    setShowWeekPicker(false);
+                    setShowConferencePicker(false);
+                  }}
+                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700"
+                >
+                  <i className="fas fa-calendar-alt"></i>
+                  <span>{selectedYear}</span>
+                  <i className={`fas fa-chevron-down transition-transform duration-200 ${showYearPicker ? 'rotate-180' : ''}`}></i>
+                </button>
+                
+                {showYearPicker && (
+                  <div 
+                    className="absolute top-full mt-2 liquid-glass rounded-2xl z-[9999] min-w-32 overflow-hidden"
+                    style={{
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.15)'
                     }}
-                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-gray-200/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
-                    {/* Glass highlight */}
-                    <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                    
-                    <i className="fas fa-calendar-alt relative z-10"></i>
-                    <span className="relative z-10">{selectedYear}</span>
-                    <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showYearPicker ? 'rotate-180' : ''}`}></i>
-                  </button>
-                  {showYearPicker && (
-                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-[9999] min-w-32 overflow-hidden">
-                      {/* Glass highlight */}
-                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-                      
-                      {[2024, 2025].map(year => (
-                        <button
-                          key={year}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedYear(year);
-                            setShowYearPicker(false);
-                          }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
-                        >
-                          {year}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Conference Selector */}
-                <div className="relative dropdown-container">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowConferencePicker(!showConferencePicker);
-                      setShowYearPicker(false);
-                      setShowWeekPicker(false);
-                    }}
-                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-gray-200/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
-                  >
-                    {/* Glass highlight */}
-                    <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                    
-                    <i className="fas fa-layer-group relative z-10"></i>
-                    <span className="relative z-10">{selectedConference || 'All Conferences'}</span>
-                    <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showConferencePicker ? 'rotate-180' : ''}`}></i>
-                  </button>
-                  {showConferencePicker && (
-                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-[9999] min-w-48 max-h-64 overflow-y-auto">
-                      {/* Glass highlight */}
-                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-                      
+                    {[2024, 2025].map(year => (
                       <button
+                        key={year}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedConference(null);
+                          setSelectedYear(year);
+                          setShowYearPicker(false);
+                        }}
+                        className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Conference Selector */}
+              <div className="relative dropdown-container">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowConferencePicker(!showConferencePicker);
+                    setShowYearPicker(false);
+                    setShowWeekPicker(false);
+                  }}
+                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700"
+                >
+                  <i className="fas fa-layer-group"></i>
+                  <span>{selectedConference || 'All Conferences'}</span>
+                  <i className={`fas fa-chevron-down transition-transform duration-200 ${showConferencePicker ? 'rotate-180' : ''}`}></i>
+                </button>
+                
+                {showConferencePicker && (
+                  <div 
+                    className="absolute top-full mt-2 liquid-glass rounded-2xl z-[9999] min-w-48 max-h-64 overflow-y-auto"
+                    style={{
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.15)'
+                    }}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedConference(null);
+                        setShowConferencePicker(false);
+                      }}
+                      className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                    >
+                      All Conferences
+                    </button>
+                    {conferences.map(conf => (
+                      <button
+                        key={conf.name}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedConference(conf.name);
                           setShowConferencePicker(false);
                         }}
-                        className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
+                        className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
                       >
-                        All Conferences
+                        {conf.name}
                       </button>
-                      {conferences.map(conf => (
-                        <button
-                          key={conf.name}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedConference(conf.name);
-                            setShowConferencePicker(false);
-                          }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
-                        >
-                          {conf.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                {/* Week Selector */}
-                <div className="relative dropdown-container">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowWeekPicker(!showWeekPicker);
-                      setShowYearPicker(false);
-                      setShowConferencePicker(false);
+              {/* Week Selector */}
+              <div className="relative dropdown-container">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowWeekPicker(!showWeekPicker);
+                    setShowYearPicker(false);
+                    setShowConferencePicker(false);
+                  }}
+                  className="flex items-center gap-3 px-6 py-3 liquid-glass rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700"
+                >
+                  <i className="fas fa-calendar-week"></i>
+                  <span>{isPostseason ? 'Postseason' : `Week ${selectedWeek}`}</span>
+                  <i className={`fas fa-chevron-down transition-transform duration-200 ${showWeekPicker ? 'rotate-180' : ''}`}></i>
+                </button>
+                
+                {showWeekPicker && (
+                  <div 
+                    className="absolute top-full mt-2 liquid-glass rounded-2xl z-[9999] min-w-32 max-h-64 overflow-y-auto"
+                    style={{
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.15)'
                     }}
-                    className="flex items-center gap-3 px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-gray-200/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)]"
                   >
-                    {/* Glass highlight */}
-                    <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                    
-                    <i className="fas fa-calendar-week relative z-10"></i>
-                    <span className="relative z-10">{isPostseason ? 'Postseason' : `Week ${selectedWeek}`}</span>
-                    <i className={`fas fa-chevron-down relative z-10 transition-transform duration-200 ${showWeekPicker ? 'rotate-180' : ''}`}></i>
-                  </button>
-                  {showWeekPicker && (
-                    <div className="absolute top-full mt-2 bg-white/95 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] z-[9999] min-w-32 max-h-64 overflow-y-auto">
-                      {/* Glass highlight */}
-                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-                      
-                      {Array.from({length: 15}, (_, i) => i + 1).map(week => (
-                        <button
-                          key={week}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedWeek(week);
-                            setIsPostseason(false);
-                            setShowWeekPicker(false);
-                          }}
-                          className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
-                        >
-                          Week {week}
-                        </button>
-                      ))}
+                    {Array.from({length: 15}, (_, i) => i + 1).map(week => (
                       <button
+                        key={week}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setIsPostseason(true);
+                          setSelectedWeek(week);
+                          setIsPostseason(false);
                           setShowWeekPicker(false);
                         }}
-                        className="relative block w-full text-left px-6 py-3 hover:bg-gray-200/40 transition-all duration-200 font-medium text-gray-700 z-[9999]"
+                        className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
                       >
-                        Postseason
+                        Week {week}
                       </button>
-                    </div>
-                  )}
-                </div>
+                    ))}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsPostseason(true);
+                        setShowWeekPicker(false);
+                      }}
+                      className="block w-full text-left px-6 py-3 hover:bg-white/40 transition-all duration-200 font-medium text-gray-700"
+                    >
+                      Postseason
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -857,21 +996,25 @@ const Schedule = () => {
 
         {/* Games List */}
         <div className="relative">
-          {/* Overlay when dropdowns are open */}
           {isAnyDropdownOpen && (
-            <div className="absolute inset-0 bg-gray-400/20 backdrop-blur-[2px] z-10 rounded-3xl pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gray-900/10 backdrop-blur-sm z-10 rounded-3xl pointer-events-none"></div>
           )}
           
           {filteredGames.length === 0 ? (
-            <div className="text-center py-16">
-              <i className="fas fa-calendar-times text-6xl text-gray-300 mb-6"></i>
-              <h3 className="text-2xl font-bold text-gray-600 mb-4">No Games Found</h3>
-              <p className="text-gray-500">
-                Try adjusting your filters or selecting a different week.
-              </p>
+            <div className="text-center py-20">
+              <div 
+                className="w-24 h-24 rounded-3xl liquid-glass mx-auto mb-6 flex items-center justify-center"
+                style={{
+                  boxShadow: '0 25px 50px rgba(0,0,0,0.1)'
+                }}
+              >
+                <i className="fas fa-calendar-times text-4xl text-gray-400"></i>
+              </div>
+              <h3 className="text-3xl font-black text-gray-600 mb-4">No Games Found</h3>
+              <p className="text-gray-500 text-lg">Try adjusting your filters or selecting a different week.</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {filteredGames.map((game, index) => (
                 <GameCard
                   key={game.id}
@@ -894,7 +1037,7 @@ const Schedule = () => {
   );
 };
 
-// Game Card Component - Enhanced with comprehensive game information
+// Apple Liquid Glass Game Card Component
 const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatGameDate, index, gameMedia, gameWeather, isAnyDropdownOpen }) => {
   const homeTeamId = game.home_id || game.homeId;
   const awayTeamId = game.away_id || game.awayId;
@@ -904,7 +1047,6 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const awayPoints = game.away_points || game.awayPoints;
   const isCompleted = game.completed === true;
 
-  // Enhanced game data extraction
   const excitementIndex = game.excitement_index || game.excitementIndex || 0;
   const homePreElo = game.home_pregame_elo || game.homePregameElo;
   const awayPreElo = game.away_pregame_elo || game.awayPregameElo;
@@ -914,90 +1056,90 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const awayWinProb = game.away_postgame_win_probability || game.awayPostgameWinProbability;
   const attendance = game.attendance;
 
-  // Get enhanced media and weather data
   const mediaData = gameMedia.get(game.id);
   const weatherData = gameWeather.get(game.id);
 
-  // Extract real weather data - check multiple sources
   const temperature = weatherData?.temperature || game.temperature;
   const weatherCondition = weatherData?.condition || weatherData?.weather_condition || game.weather_condition || game.weatherCondition;
   const windSpeed = weatherData?.wind_speed || game.wind_speed || game.windSpeed;
   const gameIndoors = weatherData?.indoors || game.game_indoors || game.gameIndoors;
 
-  // Extract real media data
   const tvOutlet = mediaData?.outlet || game.tv_outlet;
   const streamingOutlet = mediaData?.streamingOutlet;
   const mediaType = mediaData?.mediaType || game.media_type;
 
   const handleCardClick = (e) => {
-    // If any dropdown is open, prevent navigation
     if (isAnyDropdownOpen) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
-    
-    // Navigate to game detail view using hash routing
     window.location.hash = `#game-detail-${game.id}`;
   };
 
   return (
     <div 
-      className={`group relative overflow-hidden transition-all duration-500 ${
+      className={`group relative transition-all duration-700 transform hover:scale-[1.02] ${
         isAnyDropdownOpen 
-          ? 'cursor-not-allowed opacity-60 pointer-events-none' 
-          : 'cursor-pointer hover:scale-[1.02] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]'
+          ? 'cursor-not-allowed opacity-50 pointer-events-none' 
+          : 'cursor-pointer hover:translate-y-[-8px]'
       }`}
       onClick={handleCardClick}
       style={{
-        animationDelay: `${index * 100}ms`
+        animationDelay: `${index * 150}ms`
       }}
     >
-      {/* Enhanced Liquid Glass Container */}
-      <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70 group-hover:shadow-[0_30px_60px_rgba(0,0,0,0.15)]">
-        {/* Liquid Glass Highlight */}
-        <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
+      {/* Apple Liquid Glass Card */}
+      <div 
+        className="relative liquid-glass rounded-3xl p-10 transition-all duration-700"
+        style={{
+          boxShadow: `
+            0 25px 50px rgba(0,0,0,0.1),
+            inset 0 1px 6px rgba(255,255,255,0.3),
+            0 0 0 1px rgba(255,255,255,0.1)
+          `,
+          transform: 'perspective(1000px) rotateX(1deg)'
+        }}
+      >
+        {/* Enhanced hover glow */}
+        <div className="absolute -inset-0.5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-r from-red-600/20 via-red-500/10 to-red-600/20 blur-xl"></div>
         
-        {/* Gray Glow Effect on Hover */}
-        <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-gray-200/20 via-gray-300/10 to-gray-100/20 blur-xl"></div>
-        
-        <div className="relative z-10 space-y-8">
+        <div className="relative z-10 space-y-10">
           
-          {/* Top Row: Teams and Core Info */}
+          {/* Main Team Matchup */}
           <div className="flex items-center justify-between">
-            {/* Teams Section */}
-            <div className="flex items-center space-x-8 flex-1">
+            <div className="flex items-center space-x-10 flex-1">
+              
               {/* Away Team */}
               <div className="flex items-center space-x-6">
-                {/* Enhanced Metallic Logo */}
-                <div className="relative">
+                <div className="relative group/logo">
                   <img
                     src={getTeamLogo(awayTeamId)}
                     alt={`${awayTeam} logo`}
-                    className="w-20 h-20 object-contain metallic-logo transition-all duration-300"
+                    className="w-24 h-24 object-contain metallic-logo"
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
+                  {getTeamRank(awayTeamId) && (
+                    <div 
+                      className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-2xl"
+                      style={{
+                        boxShadow: '0 8px 25px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                      }}
+                    >
+                      <span className="text-white text-sm font-black">{getTeamRank(awayTeamId)}</span>
+                    </div>
+                  )}
                 </div>
                 
-                <div className="min-w-0">
-                  <div className="flex items-center space-x-4 mb-3">
-                    {getTeamRank(awayTeamId) && (
-                      <div className="relative">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-[0_6px_20px_rgba(204,0,28,0.4)] group-hover:shadow-[0_8px_25px_rgba(204,0,28,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
-                          <span className="text-white text-sm font-black">{getTeamRank(awayTeamId)}</span>
-                        </div>
-                      </div>
-                    )}
-                    <span className="font-black text-gray-900 text-xl drop-shadow-sm">
-                      {getTeamAbbreviation(awayTeamId, awayTeam)}
-                    </span>
-                  </div>
+                <div className="text-left">
+                  <h3 className="text-2xl font-black text-gray-900 mb-2">
+                    {getTeamAbbreviation(awayTeamId, awayTeam)}
+                  </h3>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-4xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300 mb-3" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    <div className="text-5xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300">
                       {awayPoints}
                     </div>
                   )}
-                  {/* Away Team ELO */}
                   {awayPreElo && (
                     <EloRatingDisplay 
                       preGameElo={awayPreElo} 
@@ -1009,35 +1151,34 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                 </div>
               </div>
 
-              {/* VS Separator */}
+              {/* VS Indicator */}
               <div className="flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                  <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
-                  <span className="relative z-10 text-2xl font-black drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>@</span>
+                <div 
+                  className="w-20 h-20 rounded-full liquid-glass flex items-center justify-center group-hover:scale-110 transition-all duration-300"
+                  style={{
+                    boxShadow: `
+                      0 15px 35px rgba(0,0,0,0.1),
+                      inset 0 1px 4px rgba(255,255,255,0.3)
+                    `
+                  }}
+                >
+                  <span className="text-3xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent">
+                    @
+                  </span>
                 </div>
               </div>
 
               {/* Home Team */}
               <div className="flex items-center space-x-6">
-                <div className="min-w-0 text-right">
-                  <div className="flex items-center justify-end space-x-4 mb-3">
-                    <span className="font-black text-gray-900 text-xl drop-shadow-sm">
-                      {getTeamAbbreviation(homeTeamId, homeTeam)}
-                    </span>
-                    {getTeamRank(homeTeamId) && (
-                      <div className="relative">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-[0_6px_20px_rgba(204,0,28,0.4)] group-hover:shadow-[0_8px_25px_rgba(204,0,28,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
-                          <span className="text-white text-sm font-black">{getTeamRank(homeTeamId)}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                <div className="text-right">
+                  <h3 className="text-2xl font-black text-gray-900 mb-2">
+                    {getTeamAbbreviation(homeTeamId, homeTeam)}
+                  </h3>
                   {homePoints !== null && awayPoints !== null && (
-                    <div className="text-4xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300 mb-3" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    <div className="text-5xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-300">
                       {homePoints}
                     </div>
                   )}
-                  {/* Home Team ELO */}
                   {homePreElo && (
                     <EloRatingDisplay 
                       preGameElo={homePreElo} 
@@ -1048,37 +1189,47 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   )}
                 </div>
                 
-                {/* Enhanced Metallic Logo */}
-                <div className="relative">
+                <div className="relative group/logo">
                   <img
                     src={getTeamLogo(homeTeamId)}
                     alt={`${homeTeam} logo`}
-                    className="w-20 h-20 object-contain metallic-logo transition-all duration-300"
+                    className="w-24 h-24 object-contain metallic-logo"
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
+                  {getTeamRank(homeTeamId) && (
+                    <div 
+                      className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-2xl"
+                      style={{
+                        boxShadow: '0 8px 25px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                      }}
+                    >
+                      <span className="text-white text-sm font-black">{getTeamRank(homeTeamId)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Status Badge */}
+            {/* Game Status */}
             <div 
-              className={`relative inline-flex items-center px-6 py-3 rounded-xl font-bold text-base backdrop-blur-xl border shadow-lg ${
+              className={`relative px-8 py-4 rounded-2xl font-black text-lg backdrop-blur-xl border shadow-2xl ${
                 isCompleted 
-                  ? 'bg-green-500/20 border-green-400/30 text-green-700 shadow-[0_8px_25px_rgba(34,197,94,0.2)]' 
-                  : 'border-white/30 text-white shadow-[0_8px_25px_rgba(204,0,28,0.3)]'
+                  ? 'bg-green-500/20 border-green-400/30 text-green-700' 
+                  : 'bg-gradient-to-br from-red-600 to-red-800 border-white/30 text-white'
               }`}
-              style={!isCompleted ? { background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' } : {}}
+              style={!isCompleted ? {
+                boxShadow: '0 8px 32px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+              } : {}}
             >
-              <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
-              <div className="relative z-10 flex items-center space-x-3">
+              <div className="flex items-center space-x-3">
                 {isCompleted ? (
                   <>
-                    <i className="fas fa-check-circle text-lg"></i>
+                    <i className="fas fa-check-circle text-xl"></i>
                     <span>FINAL</span>
                   </>
                 ) : (
                   <>
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
                     <span>{formatGameDate(game.start_date || game.startDate)}</span>
                   </>
                 )}
@@ -1086,21 +1237,26 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
             </div>
           </div>
 
-          {/* Second Row: Enhanced Game Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Enhanced Game Information Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             {/* Media Coverage */}
             {(tvOutlet || streamingOutlet) && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                <div className="flex items-center space-x-3 text-sm">
+              <div 
+                className="liquid-glass rounded-2xl p-6"
+                style={{
+                  boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.2), 0 4px 12px rgba(0,0,0,0.1)'
+                }}
+              >
+                <div className="flex items-center space-x-4">
                   <MediaIcon outlet={tvOutlet || streamingOutlet} mediaType={mediaType} />
                   <div>
-                    <div className="font-bold text-gray-700 text-base">{tvOutlet || streamingOutlet}</div>
+                    <div className="font-black text-gray-800 text-lg">{tvOutlet || streamingOutlet}</div>
                     {streamingOutlet && tvOutlet && (
-                      <div className="text-xs text-gray-500">+ {streamingOutlet}</div>
+                      <div className="text-sm text-gray-600">+ {streamingOutlet}</div>
                     )}
                     {mediaType && (
-                      <span className={`text-xs px-2 py-1 rounded-full font-bold ${
+                      <span className={`text-xs px-3 py-1 rounded-full font-bold mt-2 inline-block ${
                         mediaType === 'web' ? 'bg-purple-500/20 text-purple-700' : 'bg-blue-500/20 text-blue-700'
                       }`}>
                         {mediaType.toUpperCase()}
@@ -1111,43 +1267,46 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               </div>
             )}
 
-            {/* Weather Information */}
+            {/* Enhanced Weather */}
             {(temperature || weatherCondition || game.venue_details?.climate) && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                <div className="flex items-center justify-between">
-                  <WeatherIcon 
-                    condition={weatherCondition || game.venue_details?.climate || 'Unknown'} 
-                    temperature={temperature || (game.venue_details?.temperature_avg)} 
-                  />
-                  <div className="text-right">
-                    {(weatherCondition || game.venue_details?.climate) && (
-                      <div className="text-sm font-bold text-gray-700 capitalize">
-                        {weatherCondition || game.venue_details?.climate || 'Check Local Weather'}
-                      </div>
-                    )}
-                    {windSpeed && windSpeed > 10 && (
-                      <div className="text-xs text-gray-500 flex items-center space-x-1">
-                        <i className="fas fa-wind"></i>
-                        <span>{Math.round(windSpeed)} mph</span>
-                      </div>
-                    )}
-                    {(gameIndoors || game.venue_details?.dome) && (
-                      <div className="text-xs bg-gray-500/20 text-gray-700 px-2 py-1 rounded-full font-bold inline-flex items-center space-x-1">
-                        <i className="fas fa-home"></i>
-                        <span>Indoor</span>
-                      </div>
-                    )}
+              <div 
+                className="liquid-glass rounded-2xl p-6"
+                style={{
+                  boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.2), 0 4px 12px rgba(0,0,0,0.1)'
+                }}
+              >
+                <WeatherIcon 
+                  condition={weatherCondition || game.venue_details?.climate || 'Unknown'} 
+                  temperature={temperature || (game.venue_details?.temperature_avg)} 
+                />
+                {windSpeed && windSpeed > 10 && (
+                  <div className="mt-3 text-sm text-gray-600 flex items-center space-x-2">
+                    <i className="fas fa-wind text-emerald-500"></i>
+                    <span>Wind: {Math.round(windSpeed)} mph</span>
                   </div>
-                </div>
+                )}
+                {(gameIndoors || game.venue_details?.dome) && (
+                  <div className="mt-3">
+                    <span className="text-xs bg-gray-500/20 text-gray-700 px-3 py-1 rounded-full font-bold inline-flex items-center space-x-2">
+                      <i className="fas fa-home"></i>
+                      <span>Indoor</span>
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Excitement Level */}
             {excitementIndex > 0 && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                <div className="text-sm font-bold text-gray-600 mb-2">Excitement Level</div>
+              <div 
+                className="liquid-glass rounded-2xl p-6"
+                style={{
+                  boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.2), 0 4px 12px rgba(0,0,0,0.1)'
+                }}
+              >
+                <div className="text-sm font-bold text-gray-600 mb-3">Excitement Level</div>
                 <ExcitementStars excitementIndex={excitementIndex} />
-                <div className="text-xs text-gray-500 mt-2">
+                <div className="text-sm text-gray-500 mt-3 font-medium">
                   {excitementIndex >= 8 ? 'Thriller!' : 
                    excitementIndex >= 6 ? 'Great Game' : 
                    excitementIndex >= 4 ? 'Good Game' : 'Standard'}
@@ -1155,15 +1314,22 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               </div>
             )}
 
-            {/* Venue Information */}
+            {/* Venue */}
             {game.venue && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                <div className="flex items-center space-x-3">
-                  <i className="fas fa-map-marker-alt text-gray-500 text-lg"></i>
+              <div 
+                className="liquid-glass rounded-2xl p-6"
+                style={{
+                  boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.2), 0 4px 12px rgba(0,0,0,0.1)'
+                }}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-500 to-gray-700 p-3 flex items-center justify-center shadow-xl">
+                    <i className="fas fa-map-marker-alt text-white text-lg"></i>
+                  </div>
                   <div>
-                    <div className="text-sm font-bold text-gray-700">{game.venue}</div>
+                    <div className="font-bold text-gray-800">{game.venue}</div>
                     {attendance && (
-                      <div className="text-xs text-gray-500 flex items-center space-x-1">
+                      <div className="text-sm text-gray-600 flex items-center space-x-2 mt-1">
                         <i className="fas fa-users"></i>
                         <span>{attendance.toLocaleString()} fans</span>
                       </div>
@@ -1173,7 +1339,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               </div>
             )}
 
-            {/* Win Probability Chart */}
+            {/* Win Probability */}
             {(homeWinProb || awayWinProb) && (
               <div className="md:col-span-2 lg:col-span-1">
                 <WinProbabilityChart 
@@ -1187,46 +1353,44 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                 />
               </div>
             )}
-
           </div>
 
-          {/* Third Row: Game Type Badges */}
-          <div className="flex flex-wrap gap-3">
+          {/* Game Type Badges */}
+          <div className="flex flex-wrap gap-4">
             {(game.conference_game || game.conferenceGame) && (
-              <div className="inline-block text-sm bg-blue-500/20 backdrop-blur-sm text-blue-700 font-bold px-4 py-2 rounded-full border border-blue-400/30">
+              <div className="px-6 py-3 rounded-full bg-blue-500/20 backdrop-blur-xl text-blue-700 font-bold text-sm border border-blue-400/30">
                 <i className="fas fa-trophy mr-2"></i>
                 Conference Game
               </div>
             )}
             
             {(game.neutral_site || game.neutralSite) && (
-              <div className="inline-block text-sm bg-purple-500/20 backdrop-blur-sm text-purple-700 font-bold px-4 py-2 rounded-full border border-purple-400/30">
+              <div className="px-6 py-3 rounded-full bg-purple-500/20 backdrop-blur-xl text-purple-700 font-bold text-sm border border-purple-400/30">
                 <i className="fas fa-balance-scale mr-2"></i>
                 Neutral Site
               </div>
             )}
 
             {game.rivalry && (
-              <div className="relative inline-block text-sm font-bold px-4 py-2 rounded-full border border-white/40 text-white shadow-[0_4px_15px_rgba(220,38,38,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
-                <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                <span className="relative z-10 flex items-center">
-                  <i className="fas fa-fire mr-2"></i>
-                  Rivalry Game
-                </span>
+              <div 
+                className="px-6 py-3 rounded-full bg-gradient-to-br from-red-600 to-red-800 text-white font-bold text-sm shadow-2xl"
+                style={{
+                  boxShadow: '0 4px 15px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                }}
+              >
+                <i className="fas fa-fire mr-2"></i>
+                Rivalry Game
               </div>
             )}
 
             {isCompleted && excitementIndex >= 8 && (
-              <div className="inline-block text-sm bg-yellow-500/20 backdrop-blur-sm text-yellow-700 font-bold px-4 py-2 rounded-full border border-yellow-400/30">
+              <div className="px-6 py-3 rounded-full bg-yellow-500/20 backdrop-blur-xl text-yellow-700 font-bold text-sm border border-yellow-400/30">
                 <i className="fas fa-star mr-2"></i>
                 Game of the Week
               </div>
             )}
           </div>
         </div>
-        
-        {/* Hover effect overlay */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-gray-200/10 via-transparent to-gray-200/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
       </div>
     </div>
   );
