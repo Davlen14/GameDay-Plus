@@ -24,6 +24,11 @@ const GameDetailView = ({ gameId }) => {
     { id: 'chat', title: 'Chat', icon: 'fas fa-comments' }
   ];
 
+  // Scroll to top when component mounts or gameId changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [gameId]);
+
   // Load game and team data
   useEffect(() => {
     const loadGameData = async () => {
@@ -402,7 +407,15 @@ const GameDetailView = ({ gameId }) => {
         {/* Back Button */}
         <div className="absolute top-8 left-5 z-50">
           <button
-            onClick={() => window.history.back()}
+            onClick={() => {
+              // Check if there's a previous page in history
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                // Fallback to schedule if no history
+                window.location.hash = '#schedule';
+              }
+            }}
             className="flex items-center gap-2 text-white px-4 py-2.5 bg-black/20 hover:bg-black/30 rounded-lg transition-all duration-300 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-xl"
           >
             <i className="fas fa-chevron-left text-sm font-semibold"></i>

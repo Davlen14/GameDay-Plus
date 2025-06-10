@@ -145,24 +145,24 @@ const WeatherIcon = ({ condition, temperature }) => {
         {/* Animated Weather Icon */}
         <div className="relative weather-icon-container">
           <motion.div 
-            className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getTemperatureGradient()} p-4 shadow-2xl backdrop-blur-xl border border-white/20`}
+            className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getTemperatureGradient()} p-2 shadow-lg backdrop-blur-xl border border-white/20`}
             style={{
               boxShadow: `
-                0 20px 40px rgba(0,0,0,0.15),
-                inset 0 2px 8px rgba(255,255,255,0.3),
-                0 0 0 1px rgba(255,255,255,0.1)
+                0 4px 12px rgba(0,0,0,0.1),
+                inset 0 1px 2px rgba(255,255,255,0.2),
+                0 0 0 1px rgba(255,255,255,0.05)
               `
             }}
             whileHover={{ 
               boxShadow: `
-                0 25px 50px rgba(0,0,0,0.2),
-                inset 0 2px 8px rgba(255,255,255,0.4),
-                0 0 20px rgba(255,255,255,0.3)
+                0 6px 16px rgba(0,0,0,0.15),
+                inset 0 1px 3px rgba(255,255,255,0.3),
+                0 0 8px rgba(255,255,255,0.2)
               `
             }}
           >
             <WeatherIconComponent 
-              className="w-full h-full text-white drop-shadow-lg"
+              className="w-full h-full text-white drop-shadow-sm"
               strokeWidth={1.5}
             />
           </motion.div>
@@ -309,11 +309,11 @@ const WeatherIcon = ({ condition, temperature }) => {
             whileHover={{ scale: 1.05 }}
           >
             <div 
-              className={`px-6 py-3 rounded-2xl bg-gradient-to-r ${getTemperatureGradient()} text-white font-black text-xl shadow-xl backdrop-blur-xl border border-white/20`}
+              className={`px-2 py-1 rounded-lg bg-gradient-to-r ${getTemperatureGradient()} text-white font-bold text-xs shadow-lg backdrop-blur-xl border border-white/20`}
               style={{
                 boxShadow: `
-                  0 15px 35px rgba(0,0,0,0.15),
-                  inset 0 1px 4px rgba(255,255,255,0.3)
+                  0 4px 12px rgba(0,0,0,0.1),
+                  inset 0 1px 2px rgba(255,255,255,0.2)
                 `
               }}
             >
@@ -323,14 +323,14 @@ const WeatherIcon = ({ condition, temperature }) => {
             {/* Temperature indicators */}
             {temperature >= 90 && (
               <motion.div 
-                className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full"
+                className="absolute -top-1 -right-1 w-2 h-2 bg-red-400 rounded-full"
                 animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />
             )}
             {temperature <= 32 && (
               <motion.div 
-                className="absolute -top-1 -right-1 w-3 h-3 bg-blue-200 rounded-full"
+                className="absolute -top-1 -right-1 w-2 h-2 bg-blue-200 rounded-full"
                 animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />
@@ -342,7 +342,7 @@ const WeatherIcon = ({ condition, temperature }) => {
       {/* Weather condition text */}
       {condition && (
         <motion.div 
-          className="mt-3 text-sm font-medium text-gray-600 capitalize text-center"
+          className="mt-1 text-xs font-medium text-gray-600 capitalize text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
@@ -638,14 +638,14 @@ const MediaIcon = ({ outlet, mediaType }) => {
   return (
     <div className="relative">
       <motion.div 
-        className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${getNetworkGradient()} p-3 shadow-xl backdrop-blur-xl flex items-center justify-center border border-white/20`}
+        className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getNetworkGradient()} p-2 shadow-lg backdrop-blur-xl flex items-center justify-center border border-white/20`}
         whileHover={{ scale: 1.1, rotate: 5 }}
         whileTap={{ scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 15 }}
         style={{
           boxShadow: `
-            0 15px 35px rgba(0,0,0,0.15),
-            inset 0 1px 4px rgba(255,255,255,0.2)
+            0 4px 12px rgba(0,0,0,0.1),
+            inset 0 1px 2px rgba(255,255,255,0.2)
           `
         }}
       >
@@ -653,7 +653,7 @@ const MediaIcon = ({ outlet, mediaType }) => {
       </motion.div>
       
       <motion.div 
-        className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-green-400 to-green-600 rounded-full shadow-lg border-2 border-white"
+        className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-green-400 to-green-600 rounded-full shadow-lg border border-white"
         animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
         transition={{ duration: 2, repeat: Infinity }}
       />
@@ -662,15 +662,65 @@ const MediaIcon = ({ outlet, mediaType }) => {
 };
 
 const Schedule = () => {
-  // Core state management
-  const [selectedWeek, setSelectedWeek] = useState(1);
-  const [isPostseason, setIsPostseason] = useState(false);
-  const [selectedConference, setSelectedConference] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(2024);
+  // State persistence helper functions
+  const getStoredState = useCallback((key, defaultValue) => {
+    try {
+      const stored = localStorage.getItem(`schedule_${key}`);
+      return stored ? JSON.parse(stored) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  }, []);
+
+  const setStoredState = useCallback((key, value) => {
+    try {
+      localStorage.setItem(`schedule_${key}`, JSON.stringify(value));
+    } catch {
+      // Silently ignore localStorage errors
+    }
+  }, []);
+
+  // Core state management with persistence
+  const [selectedWeek, setSelectedWeekState] = useState(() => getStoredState('selectedWeek', 1));
+  const [isPostseason, setIsPostseasonState] = useState(() => getStoredState('isPostseason', false));
+  const [selectedConference, setSelectedConferenceState] = useState(() => getStoredState('selectedConference', null));
+  const [selectedYear, setSelectedYearState] = useState(() => getStoredState('selectedYear', 2024));
+  const [selectedCategory, setSelectedCategoryState] = useState(() => getStoredState('selectedCategory', 'Top 25'));
+  const [searchText, setSearchTextState] = useState(() => getStoredState('searchText', ''));
+  
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [searchText, setSearchText] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Top 25');
+
+  // Enhanced state setters that persist to localStorage
+  const setSelectedWeek = useCallback((value) => {
+    setSelectedWeekState(value);
+    setStoredState('selectedWeek', value);
+  }, [setStoredState]);
+
+  const setIsPostseason = useCallback((value) => {
+    setIsPostseasonState(value);
+    setStoredState('isPostseason', value);
+  }, [setStoredState]);
+
+  const setSelectedConference = useCallback((value) => {
+    setSelectedConferenceState(value);
+    setStoredState('selectedConference', value);
+  }, [setStoredState]);
+
+  const setSelectedYear = useCallback((value) => {
+    setSelectedYearState(value);
+    setStoredState('selectedYear', value);
+  }, [setStoredState]);
+
+  const setSelectedCategory = useCallback((value) => {
+    setSelectedCategoryState(value);
+    setStoredState('selectedCategory', value);
+  }, [setStoredState]);
+
+  const setSearchText = useCallback((value) => {
+    setSearchTextState(value);
+    setStoredState('searchText', value);
+  }, [setStoredState]);
   
   // UI state
   const [showWeekPicker, setShowWeekPicker] = useState(false);
@@ -684,7 +734,6 @@ const Schedule = () => {
   const [games, setGames] = useState([]);
   const [teams, setTeams] = useState([]);
   const [rankings, setRankings] = useState([]);
-  const [filteredGames, setFilteredGames] = useState([]);
   const [gameMedia, setGameMedia] = useState(new Map());
   const [gameWeather, setGameWeather] = useState(new Map());
 
@@ -705,14 +754,7 @@ const Schedule = () => {
 
   useEffect(() => {
     loadDataIfNeeded();
-  }, [selectedWeek, selectedYear, isPostseason]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      updateFilteredGames();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchText, selectedConference, selectedCategory, games, rankings]);
+  }, [loadDataIfNeeded]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -727,7 +769,7 @@ const Schedule = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const loadDataIfNeeded = async () => {
+  const loadDataIfNeeded = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -789,9 +831,10 @@ const Schedule = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedWeek, selectedYear, isPostseason, teams, rankings]);
 
-  const updateFilteredGames = () => {
+  // Optimized filtered games with useMemo for performance
+  const filteredGames = useMemo(() => {
     let filtered = [...games];
 
     if (selectedConference) {
@@ -830,8 +873,8 @@ const Schedule = () => {
       );
     }
 
-    setFilteredGames(filtered);
-  };
+    return filtered;
+  }, [games, selectedConference, selectedCategory, searchText, teams, rankings]);
 
   const getTeamRank = (teamId) => {
     if (!teamId) return null;
@@ -1502,14 +1545,14 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
         y: isAnyDropdownOpen ? 0 : -10 
       }}
     >
-      {/* Futuristic Glass Card */}
+      {/* Compact Glass Card */}
       <div 
-        className="relative bg-white/25 backdrop-blur-2xl rounded-3xl border border-white/30 p-12 shadow-2xl overflow-hidden"
+        className="relative bg-white/25 backdrop-blur-2xl rounded-xl border border-white/30 p-4 shadow-lg overflow-hidden"
         style={{
           boxShadow: `
-            0 25px 50px rgba(0,0,0,0.1),
-            inset 0 1px 6px rgba(255,255,255,0.3),
-            0 0 0 1px rgba(255,255,255,0.1)
+            0 10px 25px rgba(0,0,0,0.08),
+            inset 0 1px 3px rgba(255,255,255,0.2),
+            0 0 0 1px rgba(255,255,255,0.05)
           `
         }}
       >
@@ -1526,15 +1569,15 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
           transition={{ duration: 4, repeat: Infinity }}
         />
         
-        <div className="relative z-10 space-y-12">
+        <div className="relative z-10 space-y-4">
           
           {/* Main Team Matchup */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-12 flex-1">
+            <div className="flex items-center space-x-6 flex-1">
               
               {/* Away Team */}
               <motion.div 
-                className="flex items-center space-x-8"
+                className="flex items-center space-x-3"
                 whileHover={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
@@ -1542,39 +1585,39 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   <motion.img
                     src={getTeamLogo(awayTeamId)}
                     alt={`${awayTeam} logo`}
-                    className="w-28 h-28 object-contain"
+                    className="w-12 h-12 object-contain"
                     style={{
-                      filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3)) saturate(1.4) contrast(1.3) brightness(1.2)'
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2)) saturate(1.2) contrast(1.1) brightness(1.1)'
                     }}
                     whileHover={{ 
                       scale: 1.1, 
                       rotate: 5,
-                      filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.4)) saturate(1.5) contrast(1.4) brightness(1.3)'
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.3) contrast(1.2) brightness(1.2)'
                     }}
                     transition={{ type: "spring", stiffness: 300, damping: 15 }}
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
                   {getTeamRank(awayTeamId) && (
                     <motion.div 
-                      className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-2xl border-2 border-white"
+                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg border border-white"
                       whileHover={{ scale: 1.2, rotate: 360 }}
                       transition={{ duration: 0.5 }}
                       style={{
-                        boxShadow: '0 8px 25px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3), inset 0 1px 2px rgba(255,255,255,0.2)'
                       }}
                     >
-                      <span className="text-white text-lg font-black">{getTeamRank(awayTeamId)}</span>
+                      <span className="text-white text-xs font-black">{getTeamRank(awayTeamId)}</span>
                     </motion.div>
                   )}
                 </div>
                 
                 <div className="text-left">
-                  <h3 className="text-3xl font-black text-gray-900 mb-3">
+                  <h3 className="text-sm font-black text-gray-900 mb-1">
                     {getTeamAbbreviation(awayTeamId, awayTeam)}
                   </h3>
                   {homePoints !== null && awayPoints !== null && (
                     <motion.div 
-                      className="text-6xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent mb-4"
+                      className="text-lg font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent"
                       whileHover={{ scale: 1.1 }}
                       transition={{ type: "spring", stiffness: 300 }}
                     >
@@ -1595,17 +1638,17 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               {/* VS Indicator */}
               <div className="flex items-center justify-center">
                 <motion.div 
-                  className="w-24 h-24 rounded-full bg-white/25 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-2xl"
+                  className="w-8 h-8 rounded-full bg-white/25 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-lg"
                   whileHover={{ scale: 1.15, rotate: 180 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
                   style={{
                     boxShadow: `
-                      0 15px 35px rgba(0,0,0,0.1),
-                      inset 0 1px 4px rgba(255,255,255,0.3)
+                      0 4px 12px rgba(0,0,0,0.08),
+                      inset 0 1px 2px rgba(255,255,255,0.2)
                     `
                   }}
                 >
-                  <span className="text-4xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent">
+                  <span className="text-xs font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent">
                     @
                   </span>
                 </motion.div>
@@ -1613,17 +1656,17 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
 
               {/* Home Team */}
               <motion.div 
-                className="flex items-center space-x-8"
+                className="flex items-center space-x-3"
                 whileHover={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <div className="text-right">
-                  <h3 className="text-3xl font-black text-gray-900 mb-3">
+                  <h3 className="text-sm font-black text-gray-900 mb-1">
                     {getTeamAbbreviation(homeTeamId, homeTeam)}
                   </h3>
                   {homePoints !== null && awayPoints !== null && (
                     <motion.div 
-                      className="text-6xl font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent mb-4"
+                      className="text-lg font-black bg-gradient-to-br from-red-600 to-red-800 bg-clip-text text-transparent"
                       whileHover={{ scale: 1.1 }}
                       transition={{ type: "spring", stiffness: 300 }}
                     >
@@ -1644,28 +1687,28 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   <motion.img
                     src={getTeamLogo(homeTeamId)}
                     alt={`${homeTeam} logo`}
-                    className="w-28 h-28 object-contain"
+                    className="w-12 h-12 object-contain"
                     style={{
-                      filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3)) saturate(1.4) contrast(1.3) brightness(1.2)'
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2)) saturate(1.2) contrast(1.1) brightness(1.1)'
                     }}
                     whileHover={{ 
                       scale: 1.1, 
                       rotate: -5,
-                      filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.4)) saturate(1.5) contrast(1.4) brightness(1.3)'
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) saturate(1.3) contrast(1.2) brightness(1.2)'
                     }}
                     transition={{ type: "spring", stiffness: 300, damping: 15 }}
                     onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                   />
                   {getTeamRank(homeTeamId) && (
                     <motion.div 
-                      className="absolute -top-2 -left-2 w-10 h-10 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-2xl border-2 border-white"
+                      className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg border border-white"
                       whileHover={{ scale: 1.2, rotate: -360 }}
                       transition={{ duration: 0.5 }}
                       style={{
-                        boxShadow: '0 8px 25px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3), inset 0 1px 2px rgba(255,255,255,0.2)'
                       }}
                     >
-                      <span className="text-white text-lg font-black">{getTeamRank(homeTeamId)}</span>
+                      <span className="text-white text-xs font-black">{getTeamRank(homeTeamId)}</span>
                     </motion.div>
                   )}
                 </div>
@@ -1674,7 +1717,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
 
             {/* Game Status */}
             <motion.div 
-              className={`relative px-10 py-5 rounded-2xl font-black text-xl backdrop-blur-xl border shadow-2xl ${
+              className={`relative px-3 py-2 rounded-lg font-bold text-xs backdrop-blur-xl border shadow-lg ${
                 isCompleted 
                   ? 'bg-green-500/20 border-green-400/30 text-green-700' 
                   : 'bg-gradient-to-br from-red-600 to-red-800 border-white/30 text-white'
@@ -1682,19 +1725,19 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
               style={!isCompleted ? {
-                boxShadow: '0 8px 32px rgba(220, 38, 38, 0.4), inset 0 1px 4px rgba(255,255,255,0.2)'
+                boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3), inset 0 1px 2px rgba(255,255,255,0.2)'
               } : {}}
             >
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 {isCompleted ? (
                   <>
-                    <CheckCircle className="w-6 h-6" strokeWidth={1.5} />
+                    <CheckCircle className="w-3 h-3" strokeWidth={1.5} />
                     <span>FINAL</span>
                   </>
                 ) : (
                   <>
                     <motion.div 
-                      className="w-4 h-4 bg-white rounded-full"
+                      className="w-2 h-2 bg-white rounded-full"
                       animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     />
@@ -1705,25 +1748,25 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
             </motion.div>
           </div>
 
-          {/* Enhanced Game Information Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Compact Game Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             
             {/* Media Coverage */}
             {(tvOutlet || streamingOutlet) && (
               <motion.div 
-                className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/20 p-8 shadow-xl"
+                className="bg-white/20 backdrop-blur-xl rounded-lg border border-white/20 p-3 shadow-lg"
                 whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.25)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-3">
                   <MediaIcon outlet={tvOutlet || streamingOutlet} mediaType={mediaType} />
                   <div>
-                    <div className="font-black text-gray-800 text-xl mb-1">{tvOutlet || streamingOutlet}</div>
+                    <div className="font-bold text-gray-800 text-sm mb-1">{tvOutlet || streamingOutlet}</div>
                     {streamingOutlet && tvOutlet && (
-                      <div className="text-lg text-gray-600 mb-2">+ {streamingOutlet}</div>
+                      <div className="text-xs text-gray-600 mb-1">+ {streamingOutlet}</div>
                     )}
                     {mediaType && (
-                      <span className={`text-sm px-4 py-2 rounded-full font-bold inline-block ${
+                      <span className={`text-xs px-2 py-1 rounded-full font-bold inline-block ${
                         mediaType === 'web' ? 'bg-purple-500/20 text-purple-700' : 'bg-blue-500/20 text-blue-700'
                       }`}>
                         {mediaType.toUpperCase()}
@@ -1734,10 +1777,10 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               </motion.div>
             )}
 
-            {/* Enhanced Weather */}
+            {/* Compact Weather */}
             {(temperature || weatherCondition || game.venue_details?.climate) && (
               <motion.div 
-                className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/20 p-8 shadow-xl"
+                className="bg-white/20 backdrop-blur-xl rounded-lg border border-white/20 p-3 shadow-lg"
                 whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.25)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
@@ -1746,15 +1789,15 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   temperature={temperature || (game.venue_details?.temperature_avg)} 
                 />
                 {windSpeed && windSpeed > 10 && (
-                  <div className="mt-4 text-lg text-gray-600 flex items-center space-x-3">
-                    <Wind className="w-5 h-5 text-emerald-500" strokeWidth={1.5} />
+                  <div className="mt-2 text-xs text-gray-600 flex items-center space-x-2">
+                    <Wind className="w-3 h-3 text-emerald-500" strokeWidth={1.5} />
                     <span>Wind: {Math.round(windSpeed)} mph</span>
                   </div>
                 )}
                 {(gameIndoors || game.venue_details?.dome) && (
-                  <div className="mt-4">
-                    <span className="text-sm bg-gray-500/20 text-gray-700 px-4 py-2 rounded-full font-bold inline-flex items-center space-x-2">
-                      <Home className="w-4 h-4" strokeWidth={1.5} />
+                  <div className="mt-2">
+                    <span className="text-xs bg-gray-500/20 text-gray-700 px-2 py-1 rounded-full font-bold inline-flex items-center space-x-1">
+                      <Home className="w-3 h-3" strokeWidth={1.5} />
                       <span>Indoor</span>
                     </span>
                   </div>
@@ -1765,13 +1808,13 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
             {/* Excitement Level */}
             {excitementIndex > 0 && (
               <motion.div 
-                className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/20 p-8 shadow-xl"
+                className="bg-white/20 backdrop-blur-xl rounded-lg border border-white/20 p-3 shadow-lg"
                 whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.25)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <div className="text-lg font-bold text-gray-600 mb-4">Excitement Level</div>
+                <div className="text-xs font-bold text-gray-600 mb-2">Excitement Level</div>
                 <ExcitementStars excitementIndex={excitementIndex} />
-                <div className="text-lg text-gray-500 mt-4 font-semibold">
+                <div className="text-xs text-gray-500 mt-2 font-semibold">
                   {excitementIndex >= 8 ? 'Thriller!' : 
                    excitementIndex >= 6 ? 'Great Game' : 
                    excitementIndex >= 4 ? 'Good Game' : 'Standard'}
@@ -1782,23 +1825,23 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
             {/* Venue */}
             {game.venue && (
               <motion.div 
-                className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/20 p-8 shadow-xl"
+                className="bg-white/20 backdrop-blur-xl rounded-lg border border-white/20 p-3 shadow-lg"
                 whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.25)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-3">
                   <motion.div 
-                    className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-500 to-gray-700 p-4 flex items-center justify-center shadow-xl border border-white/20"
+                    className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 p-2 flex items-center justify-center shadow-lg border border-white/20"
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.5 }}
                   >
                     <MapPin className="w-full h-full text-white" strokeWidth={1.5} />
                   </motion.div>
                   <div>
-                    <div className="font-black text-gray-800 text-lg mb-1">{game.venue}</div>
+                    <div className="font-bold text-gray-800 text-sm mb-1">{game.venue}</div>
                     {attendance && (
-                      <div className="text-lg text-gray-600 flex items-center space-x-2 mt-2">
-                        <Users className="w-5 h-5" strokeWidth={1.5} />
+                      <div className="text-xs text-gray-600 flex items-center space-x-1 mt-1">
+                        <Users className="w-3 h-3" strokeWidth={1.5} />
                         <span>{attendance.toLocaleString()} fans</span>
                       </div>
                     )}
