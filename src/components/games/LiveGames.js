@@ -43,7 +43,7 @@ const LiveGames = () => {
           
           {/* Live Time Display */}
           <div className="mt-8 flex items-center justify-center space-x-4">
-            <div className="flex items-center space-x-2 bg-red-600 text-white px-6 py-3 rounded-full">
+            <div className="flex items-center space-x-2 gradient-bg text-white px-6 py-3 rounded-full">
               <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
               <span className="font-bold">LIVE</span>
               <span className="font-mono">{formatTime(currentTime)}</span>
@@ -53,7 +53,7 @@ const LiveGames = () => {
 
         {/* Coming Soon Card */}
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-12" data-aos="fade-up" data-aos-delay="200">
-          <div className="relative bg-gradient-to-br from-red-600 via-red-700 to-red-800 p-12 text-white">
+          <div className="relative gradient-bg p-12 text-white">
             {/* Live Wave Animation */}
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-full">
@@ -107,9 +107,9 @@ const LiveGames = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {/* Live Scoreboard */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2" data-aos="fade-up" data-aos-delay="300">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center mb-6 metallic-3d-logo relative">
+            <div className="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mb-6 metallic-3d-logo relative">
               <i className="fas fa-tv text-white text-2xl"></i>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 gradient-bg rounded-full animate-pulse"></div>
             </div>
             <h3 className="text-2xl font-bold mb-4 gradient-text">Live Scoreboard</h3>
             <p className="text-gray-600 mb-6">
@@ -133,7 +133,7 @@ const LiveGames = () => {
 
           {/* Play-by-Play */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2" data-aos="fade-up" data-aos-delay="400">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
+            <div className="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
               <i className="fas fa-list text-white text-2xl"></i>
             </div>
             <h3 className="text-2xl font-bold mb-4 gradient-text">Play-by-Play</h3>
@@ -158,7 +158,7 @@ const LiveGames = () => {
 
           {/* Live Analytics */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2" data-aos="fade-up" data-aos-delay="500">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
+            <div className="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mb-6 metallic-3d-logo">
               <i className="fas fa-chart-area text-white text-2xl"></i>
             </div>
             <h3 className="text-2xl font-bold mb-4 gradient-text">Live Analytics</h3>
@@ -186,8 +186,8 @@ const LiveGames = () => {
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-16" data-aos="fade-up" data-aos-delay="600">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold gradient-text">Sample Live Game Interface</h2>
-            <div className="flex items-center space-x-2 text-red-600">
-              <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
+            <div className="flex items-center space-x-2 gradient-text">
+              <div className="w-3 h-3 gradient-bg rounded-full animate-pulse"></div>
               <span className="font-bold text-sm">LIVE PREVIEW</span>
             </div>
           </div>
@@ -196,7 +196,7 @@ const LiveGames = () => {
           <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm text-gray-500">SEC Championship • Atlanta, GA</div>
-              <div className="text-sm font-bold text-red-600">Q4 2:47</div>
+              <div className="text-sm font-bold gradient-text">Q4 2:47</div>
             </div>
             
             <div className="grid grid-cols-2 gap-8 mb-4">
@@ -217,7 +217,7 @@ const LiveGames = () => {
             <div className="grid grid-cols-3 gap-4 text-center text-sm">
               <div>
                 <div className="font-bold">Win Probability</div>
-                <div className="text-red-600">UGA 67%</div>
+                <div className="gradient-text">UGA 67%</div>
               </div>
               <div>
                 <div className="font-bold">Total Yards</div>
@@ -240,11 +240,11 @@ const LiveGames = () => {
               Be the first to access our real-time game tracking platform!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-red-700 hover:to-red-800 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl">
+              <button className="gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl">
                 <i className="fas fa-satellite-dish mr-2"></i>
                 Get Live Access
               </button>
-              <button className="border-2 border-red-600 text-red-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-600 hover:text-white transform hover:-translate-y-1 transition-all duration-300">
+              <button className="border-2 border-[rgb(204,0,28)] gradient-text px-8 py-4 rounded-xl font-bold text-lg hover:gradient-bg hover:text-white transform hover:-translate-y-1 transition-all duration-300">
                 <i className="fas fa-bell mr-2"></i>
                 Set Game Alerts
               </button>
