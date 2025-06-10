@@ -519,8 +519,8 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const isCompleted = game.completed === true;
 
   const handleCardClick = () => {
-    // Navigate to game detail view
-    window.location.href = `/game-detail/${game.id}`;
+    // Navigate to game detail view using hash routing
+    window.location.hash = `#game-detail-${game.id}`;
   };
 
   return (

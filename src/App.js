@@ -116,6 +116,12 @@ function App() {
       return <TeamDetailView />;
     }
     
+    // Check for game detail routes (game-detail-{id})
+    if (currentPage.startsWith('game-detail-')) {
+      const gameId = currentPage.split('-')[2];
+      return <GameDetailView gameId={gameId} />;
+    }
+    
     switch (currentPage) {
       // Launch/Main page route
       case 'home':

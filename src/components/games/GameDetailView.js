@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { gameService, teamService } from '../../services';
 
-const GameDetailView = ({ games = [], teams = [], selectedIndex = 0 }) => {
-  const navigate = useNavigate();
+const GameDetailView = ({ gameId }) => {
   const scrollRef = useRef(null);
   
   // State management
-  const [currentIndex, setCurrentIndex] = useState(selectedIndex);
+  const [currentGame, setCurrentGame] = useState(null);
+  const [games, setGames] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('overview');
   const [headerMode, setHeaderMode] = useState('expanded'); // expanded, compact, dynamicIsland
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isDynamicIslandActive, setIsDynamicIslandActive] = useState(false);
   const [isLoadingStandings, setIsLoadingStandings] = useState(false);
-
-  // Get current game
-  const currentGame = games[currentIndex] || {};
 
   // Tab configuration
   const tabs = [
@@ -29,8 +28,61 @@ const GameDetailView = ({ games = [], teams = [], selectedIndex = 0 }) => {
   const headerModes = [
     { id: 'expanded', title: 'Full', icon: 'fas fa-expand-arrows-alt' },
     { id: 'compact', title: 'Compact', icon: 'fas fa-compress-arrows-alt' },
-    { id: 'dynamicIsland', title: 'Island', icon: 'fas fa-circle' }
+    { id: 'dynamicIsland', title: 'Island', icon: 'fas fa-mobile-alt' }
   ];
+
+  // Load game and team data
+  useEffect(() => {
+    const loadGameData = async () => {
+      if (!gameId) return;
+      
+      setIsLoading(true);
+      try {
+        // Load teams first
+        const teamsData = await teamService.getFBSTeams(true);
+        setTeams(teamsData);
+
+        // Try to find the game in recent weeks (we'll check multiple weeks)
+        let foundGame = null;
+        const currentYear = 2024;
+        
+        // Check recent weeks for the game
+        for (let week = 1; week <= 15; week++) {
+          try {
+            const weekGames = await gameService.getGamesByWeek(currentYear, week, 'regular', false);
+            foundGame = weekGames?.find(game => game.id?.toString() === gameId);
+            if (foundGame) {
+              setGames(weekGames || []);
+              break;
+            }
+          } catch (error) {
+            console.warn(`Error loading week ${week}:`, error);
+          }
+        }
+        
+        // If not found in regular season, check postseason
+        if (!foundGame) {
+          try {
+            const postseasonGames = await gameService.getPostseasonGames(currentYear, false);
+            foundGame = postseasonGames?.find(game => game.id?.toString() === gameId);
+            if (foundGame) {
+              setGames(postseasonGames || []);
+            }
+          } catch (error) {
+            console.warn('Error loading postseason games:', error);
+          }
+        }
+        
+        setCurrentGame(foundGame);
+      } catch (error) {
+        console.error('Error loading game data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadGameData();
+  }, [gameId]);
 
   // Get team data
   const getTeam = (teamId) => teams.find(team => team.id === teamId) || {};
