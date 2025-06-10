@@ -28,79 +28,20 @@ const ArbitrageEV = () => {
   const tabs = ['EV+', 'Arbitrage', 'Boosts', 'Middles'];
   const tabIcons = ['fas fa-chart-line', 'fas fa-exchange-alt', 'fas fa-arrow-up', 'fas fa-arrows-alt-v'];
 
-  // Computed stats
-  const arbitrageStats = React.useMemo(() => {
-    const games = getArbitrageGames();
-    const arbitrageGames = games.filter(g => g.hasArbitrage);
-    const bestProfit = arbitrageGames.reduce((max, g) => Math.max(max, g.bestProfit), 0);
-    
-    return {
-      gameCount: games.length,
-      withArbitrageCount: arbitrageGames.length,
-      bestProfit
-    };
-  }, [gameLines]);
-
-  const evStats = React.useMemo(() => {
-    const evGames = getEVGames();
-    const evValues = evGames.map(g => g.maxEV);
-    const avgEV = evValues.length ? evValues.reduce((sum, ev) => sum + ev, 0) / evValues.length : 0;
-    const bestEV = Math.max(...evValues, 0);
-    
-    return {
-      betCount: evGames.length,
-      avgEV,
-      bestEV
-    };
-  }, [gameLines]);
-
-  // Data processing functions
-  const fetchBettingLines = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    
-    try {
-      // Fetch teams if not already loaded
-      if (teams.length === 0) {
-        const fbsTeams = await teamService.getAllTeams();
-        setTeams(fbsTeams || []);
-      }
-
-      // Try GraphQL service first, fallback to REST API
-      let lines = [];
-      
-      try {
-        const currentYear = graphqlBettingService.getCurrentYear();
-        console.log('Trying GraphQL service for year:', currentYear, 'week:', selectedWeek);
-        lines = await graphqlBettingService.getArbitrageGames(currentYear, selectedWeek, 'regular');
-        console.log('GraphQL response:', lines);
-      } catch (graphqlError) {
-        console.warn('GraphQL service failed, falling back to REST API:', graphqlError);
-        
-        // Fallback to REST API
-        try {
-          const currentYear = new Date().getFullYear();
-          const restLines = await bettingService.getBettingLines(null, currentYear, selectedWeek, 'regular');
-          
-          // Convert REST format to expected format
-          lines = processRestAPILines(restLines || []);
-          console.log('REST API fallback response:', lines);
-        } catch (restError) {
-          console.error('Both GraphQL and REST API failed:', restError);
-          throw new Error('Unable to fetch betting data from any source');
-        }
-      }
-      
-      setGameLines(lines || []);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('fetchBettingLines error:', error);
-      setErrorMessage(`Failed to load betting lines: ${error.message}`);
-      setIsLoading(false);
+  // Helper functions
+  const calculateSimpleArbitrage = (lines) => {
+    if (!lines || lines.length < 2) {
+      return { hasArbitrage: false, bestProfit: 0, bestCombination: null };
     }
+
+    // For now, just return mock values to get the UI working
+    return {
+      hasArbitrage: Math.random() > 0.7, // 30% chance of arbitrage
+      bestProfit: Math.random() * 5, // 0-5% profit
+      bestCombination: null
+    };
   };
 
-  // Process REST API lines to match expected format
   const processRestAPILines = (restLines) => {
     if (!restLines || restLines.length === 0) return [];
     
@@ -141,21 +82,8 @@ const ArbitrageEV = () => {
     });
   };
 
-  // Simple arbitrage calculation fallback
-  const calculateSimpleArbitrage = (lines) => {
-    if (!lines || lines.length < 2) {
-      return { hasArbitrage: false, bestProfit: 0, bestCombination: null };
-    }
-
-    // For now, just return mock values to get the UI working
-    return {
-      hasArbitrage: Math.random() > 0.7, // 30% chance of arbitrage
-      bestProfit: Math.random() * 5, // 0-5% profit
-      bestCombination: null
-    };
-  };
-
-  const getArbitrageGames = () => {
+  // Data processing functions - defined before useMemo hooks
+  const getArbitrageGames = React.useCallback(() => {
     // GraphQL service already returns processed games with arbitrage calculations
     if (!gameLines || gameLines.length === 0) {
       // Return mock data for demo purposes
@@ -225,9 +153,9 @@ const ArbitrageEV = () => {
     }
     
     return gameLines || [];
-  };
+  }, [gameLines, selectedWeek]);
 
-  const getEVGames = () => {
+  const getEVGames = React.useCallback(() => {
     // GraphQL service already returns processed games, so work with gameLines directly
     if (!gameLines || gameLines.length === 0) {
       // Return mock data for demo purposes if no real data available
@@ -318,6 +246,78 @@ const ArbitrageEV = () => {
         maxEV: Math.max(maxEV, 0)
       };
     }).filter(Boolean);
+  }, [gameLines, selectedWeek]);
+
+  // Computed stats - now after function definitions
+  const arbitrageStats = React.useMemo(() => {
+    const games = getArbitrageGames();
+    const arbitrageGames = games.filter(g => g.hasArbitrage);
+    const bestProfit = arbitrageGames.reduce((max, g) => Math.max(max, g.bestProfit), 0);
+    
+    return {
+      gameCount: games.length,
+      withArbitrageCount: arbitrageGames.length,
+      bestProfit
+    };
+  }, [getArbitrageGames]);
+
+  const evStats = React.useMemo(() => {
+    const evGames = getEVGames();
+    const evValues = evGames.map(g => g.maxEV);
+    const avgEV = evValues.length ? evValues.reduce((sum, ev) => sum + ev, 0) / evValues.length : 0;
+    const bestEV = Math.max(...evValues, 0);
+    
+    return {
+      betCount: evGames.length,
+      avgEV,
+      bestEV
+    };
+  }, [getEVGames]);
+
+  // Data fetching functions
+  const fetchBettingLines = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    
+    try {
+      // Fetch teams if not already loaded
+      if (teams.length === 0) {
+        const fbsTeams = await teamService.getAllTeams();
+        setTeams(fbsTeams || []);
+      }
+
+      // Try GraphQL service first, fallback to REST API
+      let lines = [];
+      
+      try {
+        const currentYear = graphqlBettingService.getCurrentYear();
+        console.log('Trying GraphQL service for year:', currentYear, 'week:', selectedWeek);
+        lines = await graphqlBettingService.getArbitrageGames(currentYear, selectedWeek, 'regular');
+        console.log('GraphQL response:', lines);
+      } catch (graphqlError) {
+        console.warn('GraphQL service failed, falling back to REST API:', graphqlError);
+        
+        // Fallback to REST API
+        try {
+          const currentYear = new Date().getFullYear();
+          const restLines = await bettingService.getBettingLines(null, currentYear, selectedWeek, 'regular');
+          
+          // Convert REST format to expected format
+          lines = processRestAPILines(restLines || []);
+          console.log('REST API fallback response:', lines);
+        } catch (restError) {
+          console.error('Both GraphQL and REST API failed:', restError);
+          throw new Error('Unable to fetch betting data from any source');
+        }
+      }
+      
+      setGameLines(lines || []);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('fetchBettingLines error:', error);
+      setErrorMessage(`Failed to load betting lines: ${error.message}`);
+      setIsLoading(false);
+    }
   };
 
   // Load data on component mount and week change
@@ -529,6 +529,15 @@ const ArbitrageEV = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
+      <style jsx>{`
+        .gradient-text {
+          background: linear-gradient(135deg, ${gradientStart}, ${gradientEnd});
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+      `}</style>
+      
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
