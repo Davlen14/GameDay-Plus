@@ -1,6 +1,162 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { gameService, teamService, rankingsService } from '../../services';
 
+// Utility Components for Enhanced Game Cards
+const ExcitementStars = ({ excitementIndex = 0 }) => {
+  const stars = Math.min(Math.max(Math.round(excitementIndex / 2), 0), 5);
+  const getStarColor = () => {
+    if (excitementIndex >= 8) return 'text-red-500';
+    if (excitementIndex >= 6) return 'text-orange-500';
+    if (excitementIndex >= 4) return 'text-yellow-500';
+    return 'text-gray-400';
+  };
+
+  return (
+    <div className="flex items-center space-x-1">
+      {[...Array(5)].map((_, i) => (
+        <i 
+          key={i} 
+          className={`fas fa-star text-xs ${i < stars ? getStarColor() : 'text-gray-300'} drop-shadow-sm`} 
+        />
+      ))}
+      <span className="text-xs font-bold text-gray-600 ml-1">
+        {excitementIndex ? excitementIndex.toFixed(1) : 'N/A'}
+      </span>
+    </div>
+  );
+};
+
+const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamId, awayTeamId, getTeamLogo }) => {
+  if (!homeProb && !awayProb) return null;
+  
+  const homePct = homeProb ? Math.round(homeProb * 100) : 50;
+  const awayPct = awayProb ? Math.round(awayProb * 100) : 50;
+  
+  return (
+    <div className="bg-white/30 backdrop-blur-sm rounded-lg border border-white/40 p-3">
+      <div className="text-xs font-bold text-gray-600 mb-2 text-center">Win Probability</div>
+      <div className="flex items-center space-x-2">
+        {/* Away Team */}
+        <div className="flex items-center space-x-1 flex-1">
+          <img 
+            src={getTeamLogo(awayTeamId)} 
+            alt={awayTeam}
+            className="w-4 h-4 object-contain"
+            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+          />
+          <span className="text-xs font-bold text-gray-700">{awayPct}%</span>
+        </div>
+        
+        {/* Probability Bar */}
+        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-blue-500 to-red-500 rounded-full transition-all duration-500"
+            style={{ width: `${awayPct}%` }}
+          />
+        </div>
+        
+        {/* Home Team */}
+        <div className="flex items-center space-x-1 flex-1 justify-end">
+          <span className="text-xs font-bold text-gray-700">{homePct}%</span>
+          <img 
+            src={getTeamLogo(homeTeamId)} 
+            alt={homeTeam}
+            className="w-4 h-4 object-contain"
+            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EloRatingDisplay = ({ preGameElo, postGameElo, teamName, isCompleted }) => {
+  if (!preGameElo) return null;
+  
+  const eloChange = postGameElo && isCompleted ? postGameElo - preGameElo : 0;
+  const eloLevel = preGameElo >= 2000 ? 'Elite' : preGameElo >= 1800 ? 'Strong' : preGameElo >= 1600 ? 'Good' : 'Developing';
+  
+  return (
+    <div className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-xs">
+      <div className="flex items-center space-x-1">
+        <span className="font-bold text-gray-700">{preGameElo}</span>
+        <span className="text-gray-500">({eloLevel})</span>
+        {isCompleted && eloChange !== 0 && (
+          <span className={`font-bold ${eloChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {eloChange > 0 ? '+' : ''}{eloChange}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const WeatherIcon = ({ condition, temperature }) => {
+  const getWeatherIcon = () => {
+    if (!condition) return 'fas fa-question-circle';
+    const cond = condition.toLowerCase();
+    if (cond.includes('clear') || cond.includes('sunny')) return 'fas fa-sun';
+    if (cond.includes('cloud')) return 'fas fa-cloud';
+    if (cond.includes('rain') || cond.includes('shower')) return 'fas fa-cloud-rain';
+    if (cond.includes('snow')) return 'fas fa-snowflake';
+    if (cond.includes('storm') || cond.includes('thunder')) return 'fas fa-bolt';
+    if (cond.includes('fog') || cond.includes('mist')) return 'fas fa-smog';
+    return 'fas fa-cloud-sun';
+  };
+
+  const getWeatherColor = () => {
+    if (!condition) return 'text-gray-500';
+    const cond = condition.toLowerCase();
+    if (cond.includes('clear') || cond.includes('sunny')) return 'text-yellow-500';
+    if (cond.includes('rain') || cond.includes('storm')) return 'text-blue-500';
+    if (cond.includes('snow')) return 'text-blue-200';
+    if (cond.includes('cloud')) return 'text-gray-400';
+    return 'text-gray-500';
+  };
+
+  return (
+    <div className="flex items-center space-x-1">
+      <i className={`${getWeatherIcon()} ${getWeatherColor()}`} />
+      {temperature && (
+        <span className="text-xs font-medium text-gray-700">
+          {Math.round(temperature)}°F
+        </span>
+      )}
+    </div>
+  );
+};
+
+const MediaIcon = ({ outlet, mediaType }) => {
+  const getNetworkIcon = () => {
+    if (!outlet) return 'fas fa-tv';
+    const network = outlet.toLowerCase();
+    if (network.includes('espn')) return 'fab fa-youtube'; // Using YouTube as ESPN placeholder
+    if (network.includes('fox')) return 'fas fa-broadcast-tower';
+    if (network.includes('cbs')) return 'fas fa-tv';
+    if (network.includes('nbc')) return 'fas fa-tv';
+    if (network.includes('peacock')) return 'fas fa-feather';
+    if (network.includes('paramount')) return 'fas fa-mountain';
+    if (network.includes('hulu')) return 'fas fa-play-circle';
+    if (network.includes('netflix')) return 'fas fa-film';
+    if (mediaType === 'web') return 'fas fa-globe';
+    return 'fas fa-tv';
+  };
+
+  const getNetworkColor = () => {
+    if (!outlet) return 'text-gray-500';
+    const network = outlet.toLowerCase();
+    if (network.includes('espn')) return 'text-red-600';
+    if (network.includes('fox')) return 'text-blue-600';
+    if (network.includes('cbs')) return 'text-blue-700';
+    if (network.includes('nbc')) return 'text-purple-600';
+    if (network.includes('peacock')) return 'text-blue-500';
+    if (mediaType === 'web') return 'text-purple-500';
+    return 'text-gray-600';
+  };
+
+  return <i className={`${getNetworkIcon()} ${getNetworkColor()}`} />;
+};
+
 const Schedule = () => {
   // Core state management
   const [selectedWeek, setSelectedWeek] = useState(1);
@@ -241,11 +397,11 @@ const Schedule = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="relative">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent gradient-bg mx-auto"></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent mx-auto" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-300 border-t-transparent absolute top-0 left-1/2 transform -translate-x-1/2"></div>
             </div>
             <div className="mt-6 space-y-2">
-              <p className="text-xl gradient-text font-bold">
+              <p className="text-xl font-bold" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 {isPostseason ? 'Loading Postseason Games...' : `Loading Week ${selectedWeek} Games...`}
               </p>
               <p className="text-gray-600">Fetching college football schedule</p>
@@ -266,7 +422,8 @@ const Schedule = () => {
               <p className="text-sm mt-2">{errorMessage}</p>
               <button 
                 onClick={loadDataIfNeeded}
-                className="mt-4 px-4 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition-opacity"
+                className="mt-4 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+                style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}
               >
                 Try Again
               </button>
@@ -279,12 +436,43 @@ const Schedule = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Custom Tailwind CSS Styles */}
+      <style jsx>{`
+        .gradient-bg {
+          background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+        }
+        .gradient-text {
+          background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .icon-gradient {
+          background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .animation-delay-1000 {
+          animation-delay: 1s;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-3000 {
+          animation-delay: 3s;
+        }
+        .animation-delay-500 {
+          animation-delay: 0.5s;
+        }
+      `}</style>
+
       {/* Floating Orbs Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 gradient-bg rounded-full opacity-5 blur-3xl animate-pulse"></div>
-        <div className="absolute top-60 right-20 w-48 h-48 gradient-bg rounded-full opacity-3 blur-2xl animate-pulse animation-delay-1000"></div>
-        <div className="absolute bottom-40 left-1/4 w-80 h-80 gradient-bg rounded-full opacity-4 blur-3xl animate-pulse animation-delay-2000"></div>
-        <div className="absolute bottom-20 right-1/3 w-56 h-56 gradient-bg rounded-full opacity-3 blur-2xl animate-pulse animation-delay-3000"></div>
+        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
+        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', animationDelay: '1s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', animationDelay: '2s' }}></div>
+        <div className="absolute bottom-20 right-1/3 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', animationDelay: '3s' }}></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -299,30 +487,30 @@ const Schedule = () => {
               <div className="relative w-16 h-16 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_10px_30px_rgba(0,0,0,0.1)] flex items-center justify-center">
                 {/* Liquid glass highlight */}
                 <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/60 via-transparent to-transparent"></div>
-                <i className="fas fa-calendar-check text-3xl icon-gradient relative z-10 drop-shadow-lg"></i>
+                <i className="fas fa-calendar-check text-3xl relative z-10 drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
               </div>
               {/* Floating particles */}
-              <div className="absolute -top-2 -right-2 w-3 h-3 gradient-bg rounded-full opacity-60 animate-ping"></div>
-              <div className="absolute -bottom-2 -left-2 w-2 h-2 gradient-bg rounded-full opacity-40 animate-ping animation-delay-500"></div>
+              <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
+              <div className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full opacity-40 animate-ping animation-delay-500" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
             </div>
           </div>
           
           {/* Enhanced Title with Liquid Glass Effect */}
           <div className="relative mb-8">
             <h1 className="text-6xl md:text-7xl font-black mb-6 relative">
-              <span className="gradient-text drop-shadow-2xl">College Football</span>
+              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>College Football</span>
               <br />
-              <span className="gradient-text drop-shadow-2xl">Schedule</span>
+              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Schedule</span>
               {/* Animated underline */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-1 gradient-bg rounded-full opacity-60 animate-pulse"></div>
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-1 rounded-full opacity-60 animate-pulse" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
             </h1>
           </div>
           
           {/* Stats Badge with Liquid Glass */}
           <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2),0_15px_35px_rgba(0,0,0,0.1)]">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 gradient-bg rounded-full animate-pulse"></div>
-              <span className="text-lg font-bold gradient-text">{filteredGames.length} Games</span>
+              <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
+              <span className="text-lg font-bold" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{filteredGames.length} Games</span>
             </div>
             <div className="w-px h-6 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
             <span className="text-lg text-gray-700 font-medium">
@@ -355,7 +543,7 @@ const Schedule = () => {
                   >
                     {/* Active gradient background */}
                     {selectedCategory === category && (
-                      <div className="absolute inset-0 gradient-bg rounded-2xl shadow-[0_8px_32px_rgba(204,0,28,0.3)]"></div>
+                      <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(204,0,28,0.3)]" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
                     )}
                     
                     {/* Inactive glass background */}
@@ -576,7 +764,7 @@ const Schedule = () => {
   );
 };
 
-// Game Card Component - Enhanced with media and weather data
+// Game Card Component - Enhanced with comprehensive game information
 const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatGameDate, index, gameMedia, gameWeather, isAnyDropdownOpen }) => {
   const homeTeamId = game.home_id || game.homeId;
   const awayTeamId = game.away_id || game.awayId;
@@ -586,9 +774,30 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const awayPoints = game.away_points || game.awayPoints;
   const isCompleted = game.completed === true;
 
+  // Enhanced game data extraction
+  const excitementIndex = game.excitement_index || game.excitementIndex || 0;
+  const homePreElo = game.home_pregame_elo || game.homePregameElo;
+  const awayPreElo = game.away_pregame_elo || game.awayPregameElo;
+  const homePostElo = game.home_postgame_elo || game.homePostgameElo;
+  const awayPostElo = game.away_postgame_elo || game.awayPostgameElo;
+  const homeWinProb = game.home_postgame_win_probability || game.homePostgameWinProbability;
+  const awayWinProb = game.away_postgame_win_probability || game.awayPostgameWinProbability;
+  const attendance = game.attendance;
+
   // Get enhanced media and weather data
   const mediaData = gameMedia.get(game.id);
   const weatherData = gameWeather.get(game.id);
+
+  // Extract real weather data
+  const temperature = game.temperature;
+  const weatherCondition = game.weather_condition || game.weatherCondition;
+  const windSpeed = game.wind_speed || game.windSpeed;
+  const gameIndoors = game.game_indoors || game.gameIndoors;
+
+  // Extract real media data
+  const tvOutlet = mediaData?.outlet || game.tv_outlet;
+  const streamingOutlet = mediaData?.streamingOutlet;
+  const mediaType = mediaData?.mediaType || game.media_type;
 
   const handleCardClick = (e) => {
     // If any dropdown is open, prevent navigation
@@ -612,7 +821,7 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
       onClick={handleCardClick}
     >
       {/* Liquid Glass Container */}
-      <div className={`relative bg-white/60 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_15px_rgba(255,255,255,0.4),0_25px_50px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 ${
+      <div className={`relative bg-white/60 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_15px_rgba(255,255,255,0.4),0_25px_50px_rgba(0,0,0,0.1)] p-6 transition-all duration-500 ${
         isAnyDropdownOpen 
           ? '' 
           : 'hover:scale-[1.02] hover:shadow-[inset_0_2px_20px_rgba(255,255,255,0.5),0_35px_70px_rgba(0,0,0,0.15)] hover:bg-white/70'
@@ -621,190 +830,263 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
         <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/20 to-transparent pointer-events-none"></div>
         
         {/* Floating highlight particles */}
-        <div className="absolute top-4 right-4 w-2 h-2 gradient-bg rounded-full opacity-60 animate-pulse"></div>
-        <div className="absolute bottom-4 left-4 w-1.5 h-1.5 gradient-bg rounded-full opacity-40 animate-pulse animation-delay-1000"></div>
+        <div className="absolute top-4 right-4 w-2 h-2 rounded-full opacity-60 animate-pulse" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
+        <div className="absolute bottom-4 left-4 w-1.5 h-1.5 rounded-full opacity-40 animate-pulse animation-delay-1000" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}></div>
         
-        {/* Content */}
-        <div className="relative z-10 flex items-center justify-between">
-          {/* Teams Section with Glass Morphism */}
-          <div className="flex items-center space-x-8 flex-1">
-            {/* Away Team */}
-            <div className="flex items-center space-x-4 flex-1">
-              {/* Liquid Glass Logo Container */}
-              <div className="relative w-16 h-16 rounded-2xl bg-white/30 backdrop-blur-xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
-                <img
-                  src={getTeamLogo(awayTeamId)}
-                  alt={`${awayTeam} logo`}
-                  className="w-12 h-12 object-contain relative z-10 drop-shadow-lg"
-                  onError={(e) => {
-                    e.target.src = '/photos/ncaaf.png';
-                  }}
-                />
-                {/* Subtle glow effect */}
-                <div className="absolute inset-0 rounded-2xl shadow-[inset_0_0_15px_rgba(255,255,255,0.2)]"></div>
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-3 mb-2">
-                  {getTeamRank(awayTeamId) && (
-                    <div className="relative">
-                      <div className="w-8 h-8 gradient-bg rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(204,0,28,0.4)]">
-                        <span className="text-white text-sm font-black">{getTeamRank(awayTeamId)}</span>
+        {/* Main Content Layout */}
+        <div className="relative z-10 space-y-4">
+          
+          {/* Top Row: Teams and Core Info */}
+          <div className="flex items-center justify-between">
+            {/* Teams Section */}
+            <div className="flex items-center space-x-6 flex-1">
+              {/* Away Team */}
+              <div className="flex items-center space-x-3">
+                {/* Logo Container */}
+                <div className="relative w-14 h-14 rounded-xl bg-white/30 backdrop-blur-xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
+                  <img
+                    src={getTeamLogo(awayTeamId)}
+                    alt={`${awayTeam} logo`}
+                    className="w-10 h-10 object-contain relative z-10 drop-shadow-lg"
+                    onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                  />
+                </div>
+                
+                <div className="min-w-0">
+                  <div className="flex items-center space-x-2 mb-1">
+                    {getTeamRank(awayTeamId) && (
+                      <div className="relative">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(204,0,28,0.4)]" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}>
+                          <span className="text-white text-xs font-black">{getTeamRank(awayTeamId)}</span>
+                        </div>
                       </div>
-                      {/* Rank glow */}
-                      <div className="absolute inset-0 gradient-bg rounded-full opacity-30 blur-sm"></div>
+                    )}
+                    <span className="font-black text-gray-900 text-base truncate drop-shadow-sm">
+                      {getTeamAbbreviation(awayTeamId, awayTeam)}
+                    </span>
+                  </div>
+                  {homePoints !== null && awayPoints !== null && (
+                    <div className="text-2xl font-black drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                      {awayPoints}
                     </div>
                   )}
-                  <span className="font-black text-gray-900 text-lg truncate drop-shadow-sm">
-                    {getTeamAbbreviation(awayTeamId, awayTeam)}
-                  </span>
+                  {/* Away Team ELO */}
+                  {awayPreElo && (
+                    <EloRatingDisplay 
+                      preGameElo={awayPreElo} 
+                      postGameElo={awayPostElo}
+                      teamName={awayTeam}
+                      isCompleted={isCompleted}
+                    />
+                  )}
                 </div>
-                {homePoints !== null && awayPoints !== null && (
-                  <div className="text-3xl font-black gradient-text drop-shadow-lg">
-                    {awayPoints}
+              </div>
+
+              {/* VS Separator */}
+              <div className="flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] flex items-center justify-center">
+                  <span className="text-gray-500 font-black text-sm">@</span>
+                </div>
+              </div>
+
+              {/* Home Team */}
+              <div className="flex items-center space-x-3">
+                <div className="min-w-0 text-right">
+                  <div className="flex items-center justify-end space-x-2 mb-1">
+                    <span className="font-black text-gray-900 text-base truncate drop-shadow-sm">
+                      {getTeamAbbreviation(homeTeamId, homeTeam)}
+                    </span>
+                    {getTeamRank(homeTeamId) && (
+                      <div className="relative">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(204,0,28,0.4)]" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' }}>
+                          <span className="text-white text-xs font-black">{getTeamRank(homeTeamId)}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                  {homePoints !== null && awayPoints !== null && (
+                    <div className="text-2xl font-black drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                      {homePoints}
+                    </div>
+                  )}
+                  {/* Home Team ELO */}
+                  {homePreElo && (
+                    <EloRatingDisplay 
+                      preGameElo={homePreElo} 
+                      postGameElo={homePostElo}
+                      teamName={homeTeam}
+                      isCompleted={isCompleted}
+                    />
+                  )}
+                </div>
+                
+                {/* Logo Container */}
+                <div className="relative w-14 h-14 rounded-xl bg-white/30 backdrop-blur-xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
+                  <img
+                    src={getTeamLogo(homeTeamId)}
+                    alt={`${homeTeam} logo`}
+                    className="w-10 h-10 object-contain relative z-10 drop-shadow-lg"
+                    onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* VS Separator with Glass Effect */}
-            <div className="flex items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] flex items-center justify-center">
-                <span className="text-gray-500 font-black text-lg">@</span>
-                <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 via-transparent to-transparent"></div>
-              </div>
-            </div>
-
-            {/* Home Team */}
-            <div className="flex items-center space-x-4 flex-1">
-              <div className="flex-1 min-w-0 text-right">
-                <div className="flex items-center justify-end space-x-3 mb-2">
-                  <span className="font-black text-gray-900 text-lg truncate drop-shadow-sm">
-                    {getTeamAbbreviation(homeTeamId, homeTeam)}
-                  </span>
-                  {getTeamRank(homeTeamId) && (
-                    <div className="relative">
-                      <div className="w-8 h-8 gradient-bg rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(204,0,28,0.4)]">
-                        <span className="text-white text-sm font-black">{getTeamRank(homeTeamId)}</span>
-                      </div>
-                      {/* Rank glow */}
-                      <div className="absolute inset-0 gradient-bg rounded-full opacity-30 blur-sm"></div>
-                    </div>
-                  )}
-                </div>
-                {homePoints !== null && awayPoints !== null && (
-                  <div className="text-3xl font-black gradient-text drop-shadow-lg">
-                    {homePoints}
-                  </div>
+            {/* Status Badge */}
+            <div 
+              className={`relative inline-flex items-center px-4 py-2 rounded-xl font-bold text-sm backdrop-blur-xl border shadow-lg ${
+                isCompleted 
+                  ? 'bg-green-500/20 border-green-400/30 text-green-700 shadow-[0_8px_25px_rgba(34,197,94,0.2)]' 
+                  : 'border-white/30 text-white shadow-[0_8px_25px_rgba(204,0,28,0.3)]'
+              }`}
+              style={!isCompleted ? { background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)' } : {}}
+            >
+              <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
+              <div className="relative z-10 flex items-center space-x-2">
+                {isCompleted ? (
+                  <>
+                    <i className="fas fa-check-circle"></i>
+                    <span>FINAL</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    <span>{formatGameDate(game.start_date || game.startDate)}</span>
+                  </>
                 )}
-              </div>
-              
-              {/* Liquid Glass Logo Container */}
-              <div className="relative w-16 h-16 rounded-2xl bg-white/30 backdrop-blur-xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.3)] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
-                <img
-                  src={getTeamLogo(homeTeamId)}
-                  alt={`${homeTeam} logo`}
-                  className="w-12 h-12 object-contain relative z-10 drop-shadow-lg"
-                  onError={(e) => {
-                    e.target.src = '/photos/ncaaf.png';
-                  }}
-                />
-                {/* Subtle glow effect */}
-                <div className="absolute inset-0 rounded-2xl shadow-[inset_0_0_15px_rgba(255,255,255,0.2)]"></div>
               </div>
             </div>
           </div>
 
-          {/* Game Info Section with Liquid Glass */}
-          <div className="text-right ml-8">
-            {/* Status Badge with Liquid Glass */}
-            <div className="mb-4">
-              <div 
-                className={`relative inline-flex items-center px-4 py-2 rounded-2xl font-bold text-sm backdrop-blur-xl border shadow-lg ${
-                  isCompleted 
-                    ? 'bg-green-500/20 border-green-400/30 text-green-700 shadow-[0_8px_25px_rgba(34,197,94,0.2)]' 
-                    : 'gradient-bg border-white/30 text-white shadow-[0_8px_25px_rgba(204,0,28,0.3)]'
-                }`}
-              >
-                {/* Glass highlight */}
-                <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
-                
-                <div className="relative z-10 flex items-center space-x-2">
-                  {isCompleted ? (
-                    <>
-                      <i className="fas fa-check-circle"></i>
-                      <span>FINAL</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                      <span>{formatGameDate(game.start_date || game.startDate)}</span>
-                    </>
-                  )}
+          {/* Second Row: Enhanced Game Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            
+            {/* Media Coverage */}
+            {(tvOutlet || streamingOutlet) && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                <div className="flex items-center space-x-2 text-sm">
+                  <MediaIcon outlet={tvOutlet || streamingOutlet} mediaType={mediaType} />
+                  <div>
+                    <div className="font-bold text-gray-700">{tvOutlet || streamingOutlet}</div>
+                    {streamingOutlet && tvOutlet && (
+                      <div className="text-xs text-gray-500">+ {streamingOutlet}</div>
+                    )}
+                    {mediaType && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                        mediaType === 'web' ? 'bg-purple-500/20 text-purple-700' : 'bg-blue-500/20 text-blue-700'
+                      }`}>
+                        {mediaType.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Weather Information */}
+            {(temperature || weatherCondition) && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                <div className="flex items-center justify-between">
+                  <WeatherIcon condition={weatherCondition} temperature={temperature} />
+                  <div className="text-right">
+                    {weatherCondition && (
+                      <div className="text-xs font-bold text-gray-700 capitalize">
+                        {weatherCondition}
+                      </div>
+                    )}
+                    {windSpeed && windSpeed > 10 && (
+                      <div className="text-xs text-gray-500">
+                        Wind: {Math.round(windSpeed)} mph
+                      </div>
+                    )}
+                    {gameIndoors && (
+                      <div className="text-xs bg-gray-500/20 text-gray-700 px-2 py-0.5 rounded-full font-bold">
+                        Indoor
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Excitement Level */}
+            {excitementIndex > 0 && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                <div className="text-xs font-bold text-gray-600 mb-1">Excitement Level</div>
+                <ExcitementStars excitementIndex={excitementIndex} />
+                <div className="text-xs text-gray-500 mt-1">
+                  {excitementIndex >= 8 ? 'Thriller!' : 
+                   excitementIndex >= 6 ? 'Great Game' : 
+                   excitementIndex >= 4 ? 'Good Game' : 'Standard'}
+                </div>
+              </div>
+            )}
+
+            {/* Venue Information */}
+            {game.venue && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                <div className="flex items-center space-x-2">
+                  <i className="fas fa-map-marker-alt text-gray-500"></i>
+                  <div>
+                    <div className="text-xs font-bold text-gray-700">{game.venue}</div>
+                    {attendance && (
+                      <div className="text-xs text-gray-500">
+                        {attendance.toLocaleString()} fans
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Win Probability Chart */}
+            {(homeWinProb || awayWinProb) && (
+              <div className="md:col-span-2 lg:col-span-1">
+                <WinProbabilityChart 
+                  homeTeam={getTeamAbbreviation(homeTeamId, homeTeam)}
+                  awayTeam={getTeamAbbreviation(awayTeamId, awayTeam)}
+                  homeProb={homeWinProb}
+                  awayProb={awayWinProb}
+                  homeTeamId={homeTeamId}
+                  awayTeamId={awayTeamId}
+                  getTeamLogo={getTeamLogo}
+                />
+              </div>
+            )}
+
+          </div>
+
+          {/* Third Row: Game Type Badges */}
+          <div className="flex flex-wrap gap-2">
+            {(game.conference_game || game.conferenceGame) && (
+              <div className="inline-block text-xs bg-blue-500/20 backdrop-blur-sm text-blue-700 font-bold px-3 py-1 rounded-full border border-blue-400/30">
+                <i className="fas fa-trophy mr-1"></i>
+                Conference Game
+              </div>
+            )}
             
-            {/* Additional Info with Glass Morphism */}
-            <div className="space-y-2">
-              {/* TV/Media Information */}
-              {mediaData && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600 font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
-                  <i className={`${mediaData.mediaIcon} mr-1 text-gray-500`}></i>
-                  <span>{mediaData.displayOutlet}</span>
-                  {mediaData.mediaType && (
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      mediaData.isStreamingOnly ? 'bg-purple-500/20 text-purple-700' : 'bg-blue-500/20 text-blue-700'
-                    }`}>
-                      {mediaData.mediaType.toUpperCase()}
-                    </span>
-                  )}
-                </div>
-              )}
-              
-              {/* Weather Information */}
-              {weatherData && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600 font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
-                  <i className={`${weatherData.weatherIcon} mr-1 text-gray-500`}></i>
-                  <span>{weatherData.conditionSummary}</span>
-                  {weatherData.displayTemp && (
-                    <span className="text-xs bg-gray-500/20 text-gray-700 px-2 py-0.5 rounded">
-                      {weatherData.displayTemp}
-                    </span>
-                  )}
-                  {weatherData.gameImpact && weatherData.gameImpact !== 'low' && (
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      weatherData.gameImpact === 'high' ? 'bg-red-500/20 text-red-700' :
-                      weatherData.gameImpact === 'moderate' ? 'bg-yellow-500/20 text-yellow-700' :
-                      'bg-green-500/20 text-green-700'
-                    }`}>
-                      {weatherData.gameImpact} Impact
-                    </span>
-                  )}
-                </div>
-              )}
-              
-              {game.venue && (
-                <div className="text-sm text-gray-600 font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
-                  <i className="fas fa-map-marker-alt mr-1 text-gray-500"></i>
-                  {game.venue}
-                </div>
-              )}
-              
-              {(game.conference_game || game.conferenceGame) && (
-                <div className="inline-block text-xs bg-blue-500/20 backdrop-blur-sm text-blue-700 font-bold px-3 py-1 rounded-lg border border-blue-400/30">
-                  Conference Game
-                </div>
-              )}
-              
-              {(game.neutral_site || game.neutralSite) && (
-                <div className="inline-block text-xs bg-purple-500/20 backdrop-blur-sm text-purple-700 font-bold px-3 py-1 rounded-lg border border-purple-400/30 ml-2">
-                  Neutral Site
-                </div>
-              )}
-            </div>
+            {(game.neutral_site || game.neutralSite) && (
+              <div className="inline-block text-xs bg-purple-500/20 backdrop-blur-sm text-purple-700 font-bold px-3 py-1 rounded-full border border-purple-400/30">
+                <i className="fas fa-balance-scale mr-1"></i>
+                Neutral Site
+              </div>
+            )}
+
+            {game.rivalry && (
+              <div className="inline-block text-xs bg-red-500/20 backdrop-blur-sm text-red-700 font-bold px-3 py-1 rounded-full border border-red-400/30">
+                <i className="fas fa-fire mr-1"></i>
+                Rivalry Game
+              </div>
+            )}
+
+            {isCompleted && excitementIndex >= 8 && (
+              <div className="inline-block text-xs bg-yellow-500/20 backdrop-blur-sm text-yellow-700 font-bold px-3 py-1 rounded-full border border-yellow-400/30">
+                <i className="fas fa-star mr-1"></i>
+                Game of the Week
+              </div>
+            )}
           </div>
         </div>
         
