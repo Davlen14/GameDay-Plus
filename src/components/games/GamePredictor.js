@@ -190,8 +190,8 @@ const GamePredictor = () => {
   const yearOptions = [2024, 2025];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-none mx-auto">
         {/* Header Section */}
         <div className="text-center mb-16" data-aos="fade-up">
           <div className="flex items-center justify-center mb-6">
@@ -202,20 +202,20 @@ const GamePredictor = () => {
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             <span className="gradient-text">Game Predictor</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
             Advanced AI-powered predictions using machine learning algorithms and comprehensive statistical analysis.
           </p>
         </div>
 
         {/* Navigation Tabs */}
         <div className="flex justify-center mb-12">
-          <div className="bg-white rounded-2xl shadow-lg p-2 flex space-x-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-2 flex space-x-2">
             <button
               onClick={() => setActiveView('weekly')}
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 activeView === 'weekly'
                   ? 'gradient-bg text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  : 'text-gray-300 hover:text-white hover:bg-white/10'
               }`}
             >
               <i className="fas fa-calendar-week mr-2"></i>
@@ -226,7 +226,7 @@ const GamePredictor = () => {
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 activeView === 'matchup'
                   ? 'gradient-bg text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  : 'text-gray-300 hover:text-white hover:bg-white/10'
               }`}
             >
               <i className="fas fa-vs mr-2"></i>
@@ -237,7 +237,7 @@ const GamePredictor = () => {
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 activeView === 'models'
                   ? 'gradient-bg text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  : 'text-gray-300 hover:text-white hover:bg-white/10'
               }`}
             >
               <i className="fas fa-cogs mr-2"></i>
@@ -260,7 +260,7 @@ const GamePredictor = () => {
         {isLoading && (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 text-gray-300">
               {!predictorInitialized ? 'Initializing AI models...' : 'Generating predictions...'}
             </p>
           </div>
@@ -270,7 +270,7 @@ const GamePredictor = () => {
         {activeView === 'weekly' && predictorInitialized && (
           <div className="space-y-8">
             {/* Week/Year Selector */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg p-8">
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <h2 className="text-2xl font-bold gradient-text">Week {selectedWeek} Predictions</h2>
                 <div className="flex gap-4">
@@ -304,10 +304,10 @@ const GamePredictor = () => {
                 ))}
               </div>
             ) : !isLoading ? (
-              <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-                <i className="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i>
-                <h3 className="text-2xl font-bold text-gray-600 mb-2">No Games Available</h3>
-                <p className="text-gray-500">No games found for Week {selectedWeek} of {selectedYear}</p>
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg p-12 text-center">
+                <i className="fas fa-calendar-times text-6xl text-white/30 mb-4"></i>
+                <h3 className="text-2xl font-bold text-white mb-2">No Games Available</h3>
+                <p className="text-white/70">No games found for Week {selectedWeek} of {selectedYear}</p>
               </div>
             ) : null}
           </div>
@@ -345,35 +345,57 @@ const WeeklyPredictionCard = ({ prediction }) => {
   const underdog = spread > 0 ? awayTeam : homeTeam;
   const spreadValue = Math.abs(spread);
 
+  // Get team colors (fallback to default colors if not available)
+  const awayTeamColor = awayTeam?.color || '#dc2626'; // red
+  const homeTeamColor = homeTeam?.color || '#2563eb'; // blue
+
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-8 hover:shadow-2xl hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2">
       {/* Teams Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center space-x-6">
           <div className="text-center">
-            <img 
-              src={awayTeam?.logos?.[0] || '/api/placeholder/40/40'} 
-              alt={awayTeam?.school} 
-              className="w-10 h-10 mx-auto mb-1"
-            />
-            <div className="text-sm font-semibold text-gray-700">{awayTeam?.abbreviation || 'AWAY'}</div>
+            <div className="relative group">
+              <img 
+                src={awayTeam?.logos?.[0] || '/photos/ncaaf.png'} 
+                alt={awayTeam?.school} 
+                className="w-16 h-16 mx-auto mb-2 rounded-full shadow-lg filter drop-shadow-lg transform group-hover:scale-110 transition-all duration-300"
+                style={{
+                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3)) drop-shadow(0 0 8px rgba(255,255,255,0.2))',
+                  background: 'linear-gradient(145deg, #f0f0f0, #d0d0d0)',
+                  padding: '4px'
+                }}
+              />
+              <div className="text-sm font-bold text-white bg-black/20 backdrop-blur-sm rounded-lg px-2 py-1">
+                {awayTeam?.abbreviation || 'AWAY'}
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold text-gray-400">@</div>
+          <div className="text-3xl font-bold text-white/70">@</div>
           <div className="text-center">
-            <img 
-              src={homeTeam?.logos?.[0] || '/api/placeholder/40/40'} 
-              alt={homeTeam?.school} 
-              className="w-10 h-10 mx-auto mb-1"
-            />
-            <div className="text-sm font-semibold text-gray-700">{homeTeam?.abbreviation || 'HOME'}</div>
+            <div className="relative group">
+              <img 
+                src={homeTeam?.logos?.[0] || '/photos/ncaaf.png'} 
+                alt={homeTeam?.school} 
+                className="w-16 h-16 mx-auto mb-2 rounded-full shadow-lg filter drop-shadow-lg transform group-hover:scale-110 transition-all duration-300"
+                style={{
+                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3)) drop-shadow(0 0 8px rgba(255,255,255,0.2))',
+                  background: 'linear-gradient(145deg, #f0f0f0, #d0d0d0)',
+                  padding: '4px'
+                }}
+              />
+              <div className="text-sm font-bold text-white bg-black/20 backdrop-blur-sm rounded-lg px-2 py-1">
+                {homeTeam?.abbreviation || 'HOME'}
+              </div>
+            </div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-xs text-gray-500 mb-1">Confidence</div>
-          <div className={`px-2 py-1 rounded-full text-xs font-bold ${
-            confidence >= 0.8 ? 'bg-green-100 text-green-800' :
-            confidence >= 0.6 ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
+          <div className="text-xs text-white/70 mb-2 font-medium">Confidence</div>
+          <div className={`px-3 py-2 rounded-full text-sm font-bold backdrop-blur-sm border ${
+            confidence >= 0.8 ? 'bg-green-500/20 text-green-300 border-green-400/30' :
+            confidence >= 0.6 ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30' :
+            'bg-red-500/20 text-red-300 border-red-400/30'
           }`}>
             {(confidence * 100).toFixed(0)}%
           </div>
@@ -381,49 +403,78 @@ const WeeklyPredictionCard = ({ prediction }) => {
       </div>
 
       {/* Prediction Details */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="text-center">
-          <div className="text-xs text-gray-500 mb-1">Predicted Score</div>
-          <div className="font-bold text-gray-800">
+      <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+          <div className="text-xs text-white/70 mb-2 font-medium">Predicted Score</div>
+          <div className="font-bold text-white text-lg">
             {score.away.toFixed(0)} - {score.home.toFixed(0)}
           </div>
         </div>
-        <div className="text-center">
-          <div className="text-xs text-gray-500 mb-1">Spread</div>
-          <div className="font-bold gradient-text">
+        <div className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+          <div className="text-xs text-white/70 mb-2 font-medium">Spread</div>
+          <div className="font-bold gradient-text text-lg">
             {favorite?.abbreviation || 'FAV'} -{spreadValue.toFixed(1)}
           </div>
         </div>
-        <div className="text-center">
-          <div className="text-xs text-gray-500 mb-1">Total</div>
-          <div className="font-bold text-gray-800">{total.toFixed(1)}</div>
+        <div className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+          <div className="text-xs text-white/70 mb-2 font-medium">Total</div>
+          <div className="font-bold text-white text-lg">{total.toFixed(1)}</div>
         </div>
       </div>
 
-      {/* Win Probability */}
-      <div className="mb-4">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>{awayTeam?.school || 'Away Team'}</span>
-          <span>{homeTeam?.school || 'Home Team'}</span>
+      {/* Modern Win Probability Chart */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center text-sm text-white mb-4">
+          <div className="flex items-center space-x-2">
+            <img 
+              src={awayTeam?.logos?.[0] || '/photos/ncaaf.png'} 
+              alt={awayTeam?.school} 
+              className="w-6 h-6 rounded-full"
+            />
+            <span className="font-medium">{awayTeam?.school || 'Away Team'}</span>
+          </div>
+          <div className="text-xs text-white/70 font-medium">Win Probability</div>
+          <div className="flex items-center space-x-2">
+            <span className="font-medium">{homeTeam?.school || 'Home Team'}</span>
+            <img 
+              src={homeTeam?.logos?.[0] || '/photos/ncaaf.png'} 
+              alt={homeTeam?.school} 
+              className="w-6 h-6 rounded-full"
+            />
+          </div>
         </div>
-        <div className="relative bg-gray-200 rounded-full h-3">
+        
+        {/* Enhanced Win Probability Bar */}
+        <div className="relative bg-black/20 backdrop-blur-sm rounded-full h-6 border border-white/20 overflow-hidden">
           <div 
-            className="absolute left-0 top-0 h-3 bg-red-500 rounded-l-full"
-            style={{ width: `${winProbability.away}%` }}
+            className="absolute left-0 top-0 h-6 rounded-l-full transition-all duration-700 ease-out"
+            style={{ 
+              width: `${winProbability.away}%`,
+              background: `linear-gradient(90deg, ${awayTeamColor}, ${awayTeamColor}dd)`,
+              boxShadow: `inset 0 1px 3px rgba(255,255,255,0.2), 0 0 10px ${awayTeamColor}40`
+            }}
           ></div>
           <div 
-            className="absolute right-0 top-0 h-3 bg-blue-500 rounded-r-full"
-            style={{ width: `${winProbability.home}%` }}
+            className="absolute right-0 top-0 h-6 rounded-r-full transition-all duration-700 ease-out"
+            style={{ 
+              width: `${winProbability.home}%`,
+              background: `linear-gradient(90deg, ${homeTeamColor}dd, ${homeTeamColor})`,
+              boxShadow: `inset 0 1px 3px rgba(255,255,255,0.2), 0 0 10px ${homeTeamColor}40`
+            }}
           ></div>
+          
+          {/* Center divider */}
+          <div className="absolute left-1/2 top-0 w-0.5 h-6 bg-white/30 transform -translate-x-0.5"></div>
         </div>
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
+        
+        <div className="flex justify-between text-sm text-white/90 mt-3 font-medium">
           <span>{winProbability.away.toFixed(1)}%</span>
           <span>{winProbability.home.toFixed(1)}%</span>
         </div>
       </div>
 
       {/* Summary */}
-      <div className="text-sm text-gray-600 leading-relaxed">
+      <div className="text-sm text-white/80 leading-relaxed bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
         {summary}
       </div>
     </div>
