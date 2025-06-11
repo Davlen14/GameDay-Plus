@@ -44,16 +44,31 @@ const ArbitrageEV = () => {
     }
 
     // Get moneyline odds for all providers
-    const homeOdds = lines.map(l => l.moneylineHome).filter(o => o && o !== 0);
-    const awayOdds = lines.map(l => l.moneylineAway).filter(o => o && o !== 0);
+    const homeOdds = lines.map(l => l.moneylineHome).filter(o => o && o !== 0 && !isNaN(o));
+    const awayOdds = lines.map(l => l.moneylineAway).filter(o => o && o !== 0 && !isNaN(o));
     
     if (homeOdds.length === 0 || awayOdds.length === 0) {
       return { hasArbitrage: false, bestProfit: 0, bestCombination: null };
     }
 
-    // Find best odds for each side
-    const bestHomeOdds = Math.max(...homeOdds);
-    const bestAwayOdds = Math.max(...awayOdds);
+    // For arbitrage, we want the BEST odds for each side (most profitable)
+    // For positive odds, higher is better
+    // For negative odds, closer to 0 is better (less negative is better)
+    const bestHomeOdds = homeOdds.reduce((best, current) => {
+      if (current > 0 && best > 0) return Math.max(best, current);
+      if (current < 0 && best < 0) return Math.max(best, current); // closer to 0
+      if (current > 0 && best < 0) return current; // positive is better than negative
+      if (current < 0 && best > 0) return best; // positive is better than negative
+      return best;
+    });
+
+    const bestAwayOdds = awayOdds.reduce((best, current) => {
+      if (current > 0 && best > 0) return Math.max(best, current);
+      if (current < 0 && best < 0) return Math.max(best, current); // closer to 0
+      if (current > 0 && best < 0) return current; // positive is better than negative
+      if (current < 0 && best > 0) return best; // positive is better than negative
+      return best;
+    });
 
     // Convert to implied probabilities
     const homeImplied = BettingCalculations.americanToImpliedProbability(bestHomeOdds) / 100;
@@ -88,145 +103,69 @@ const ArbitrageEV = () => {
   const processRestAPILines = (restLines) => {
     if (!restLines || restLines.length === 0) return [];
     
-    console.log('Processing REST API lines:', restLines);
+    console.log('Processing REST API lines:', restLines.length, 'games');
     
-    // Group lines by game
-    const gameMap = {};
+    // Filter for FBS games only and games with lines
+    const fbsGames = restLines.filter(game => 
+      game.homeClassification === 'fbs' && 
+      game.awayClassification === 'fbs' &&
+      game.lines && 
+      game.lines.length > 0
+    );
     
-    restLines.forEach(line => {
-      // Handle the nested structure from the REST API
-      const gameKey = `${line.homeTeam}_${line.awayTeam}_${line.week}`;
-      
-      if (!gameMap[gameKey]) {
-        gameMap[gameKey] = {
-          id: line.id || `${line.homeTeam}_${line.awayTeam}_week${line.week}`,
-          homeTeam: line.homeTeam,
-          awayTeam: line.awayTeam,
-          week: line.week,
-          lines: [],
-          hasArbitrage: false,
-          bestProfit: 0,
-          bestCombination: null
-        };
-      }
-      
-      // Process the lines array if it exists
-      if (line.lines && Array.isArray(line.lines)) {
-        line.lines.forEach(providerLine => {
-          gameMap[gameKey].lines.push({
-            provider: providerLine.provider || 'Unknown',
-            moneylineHome: providerLine.homeMoneyline,
-            moneylineAway: providerLine.awayMoneyline, 
-            spread: providerLine.spread,
-            overUnder: providerLine.overUnder || providerLine.total
-          });
-        });
-      } else {
-        // Handle direct line data format
-        gameMap[gameKey].lines.push({
-          provider: line.provider || 'Unknown',
-          moneylineHome: line.homeMoneyline,
-          moneylineAway: line.awayMoneyline,
-          spread: line.spread,
-          overUnder: line.overUnder || line.total
-        });
-      }
-    });
-
-    // Calculate arbitrage for each game
-    const processedGames = Object.values(gameMap).map(game => {
-      // Filter out lines with missing data
-      game.lines = game.lines.filter(line => 
-        line.moneylineHome && line.moneylineAway && 
+    console.log('FBS games with lines:', fbsGames.length);
+    
+    // Process each game
+    const processedGames = fbsGames.map(gameData => {
+      // Map the lines data correctly
+      const processedLines = gameData.lines.map(line => ({
+        provider: line.provider || 'Unknown',
+        moneylineHome: line.homeMoneyline,
+        moneylineAway: line.awayMoneyline,
+        spread: line.spread,
+        overUnder: line.overUnder
+      })).filter(line => 
+        // Filter out lines with missing moneyline data
+        line.moneylineHome !== null && line.moneylineAway !== null &&
+        line.moneylineHome !== undefined && line.moneylineAway !== undefined &&
+        !isNaN(line.moneylineHome) && !isNaN(line.moneylineAway) &&
         line.moneylineHome !== 0 && line.moneylineAway !== 0
       );
       
-      if (game.lines.length >= 2) {
-        const arbitrageData = calculateSimpleArbitrage(game.lines);
+      console.log(`Game ${gameData.homeTeam} vs ${gameData.awayTeam}: ${gameData.lines.length} total lines, ${processedLines.length} valid lines`);
+      
+      // Only process games with at least 2 valid moneylines for arbitrage
+      if (processedLines.length >= 2) {
+        const arbitrageData = calculateSimpleArbitrage(processedLines);
+        console.log(`Arbitrage result for ${gameData.homeTeam} vs ${gameData.awayTeam}:`, arbitrageData);
+        
         return {
-          ...game,
+          id: gameData.id,
+          homeTeam: gameData.homeTeam,
+          awayTeam: gameData.awayTeam,
+          week: gameData.week,
+          lines: processedLines,
           ...arbitrageData
         };
       }
       
-      return game;
-    }).filter(game => game.lines.length > 0);
+      return null;
+    }).filter(Boolean); // Remove null entries
 
-    console.log('Processed games with arbitrage data:', processedGames);
+    console.log('Processed games with arbitrage data:', processedGames.length);
+    console.log('Games with arbitrage:', processedGames.filter(g => g.hasArbitrage).length);
     return processedGames;
   };
 
   // Data processing functions - defined before useMemo hooks
   const getArbitrageGames = React.useCallback(() => {
-    // GraphQL service already returns processed games with arbitrage calculations
+    // Return the actual processed games from REST API
     if (!gameLines || gameLines.length === 0) {
-      // Return mock data for demo purposes
-      return [
-        {
-          id: 'mock-arb-1',
-          homeTeam: 'Texas',
-          awayTeam: 'Oklahoma',
-          week: selectedWeek,
-          lines: [
-            {
-              provider: 'DraftKings',
-              homeMoneyline: -110,
-              awayMoneyline: -105,
-              spread: -1.5,
-              overUnder: 55.5
-            },
-            {
-              provider: 'Bovada',
-              homeMoneyline: -115,
-              awayMoneyline: -110,
-              spread: -2,
-              overUnder: 56
-            },
-            {
-              provider: 'ESPN Bet',
-              homeMoneyline: -108,
-              awayMoneyline: -112,
-              spread: -1,
-              overUnder: 55
-            }
-          ],
-          hasArbitrage: true,
-          bestProfit: 2.3,
-          bestCombination: {
-            type: 'moneyline',
-            homeBet: { provider: 'ESPN Bet', odds: -108, stake: 51.2 },
-            awayBet: { provider: 'DraftKings', odds: -105, stake: 48.8 }
-          }
-        },
-        {
-          id: 'mock-arb-2',
-          homeTeam: 'USC',
-          awayTeam: 'UCLA',
-          week: selectedWeek,
-          lines: [
-            {
-              provider: 'DraftKings',
-              homeMoneyline: -130,
-              awayMoneyline: 110,
-              spread: -3,
-              overUnder: 51.5
-            },
-            {
-              provider: 'Bovada',
-              homeMoneyline: -125,
-              awayMoneyline: 105,
-              spread: -2.5,
-              overUnder: 52
-            }
-          ],
-          hasArbitrage: false,
-          bestProfit: 0,
-          bestCombination: null
-        }
-      ];
+      return [];
     }
     
-    return gameLines || [];
+    // Filter to only return games that have arbitrage opportunities or at least multiple lines
+    return gameLines.filter(game => game.lines && game.lines.length >= 2);
   }, [gameLines, selectedWeek]);
 
   const getEVGames = React.useCallback(() => {

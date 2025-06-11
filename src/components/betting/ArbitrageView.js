@@ -3,6 +3,13 @@ import { teamService } from '../../services';
 import { BettingCalculations } from '../../utils';
 
 const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
+  // Debug logging
+  console.log('ArbitrageView received:', {
+    gamesCount: arbitrageGames?.length || 0,
+    sampleGame: arbitrageGames?.[0],
+    gamesWithArbitrage: arbitrageGames?.filter(g => g.hasArbitrage).length || 0
+  });
+
   // State management - mirrors Swift @State
   const [sortBy, setSortBy] = useState(0); // 0: profit, 1: homeTeam, 2: awayTeam
   const [filterBy, setFilterBy] = useState(0); // 0: all, 1: guaranteed
