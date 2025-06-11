@@ -109,8 +109,8 @@ const GamePredictor = () => {
               );
 
               const actualScore = {
-                home: game.home_points || 0,
-                away: game.away_points || 0
+                home: game.home_points || game.homePoints || 0,
+                away: game.away_points || game.awayPoints || 0
               };
 
               // Calculate prediction accuracy
