@@ -718,12 +718,12 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
   return (
     <div className="space-y-0" style={{ backgroundColor }}>
       {/* Controls section */}
-      <div className="px-4 pb-6">
+      <div className="px-1 pb-6">
         <ControlsSection />
       </div>
 
       {/* Summary section */}
-      <div className="px-4 pb-5">
+      <div className="px-1 pb-5">
         <SummarySection />
       </div>
 
@@ -731,7 +731,7 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
       {filteredGames.length === 0 ? (
         <EmptyStateView />
       ) : (
-        <div className="space-y-4 px-4 pb-5">
+        <div className="space-y-4 px-1 pb-5">
           {filteredGames.map(game => (
             <ArbitrageGameCard key={game.id} game={game} />
           ))}
