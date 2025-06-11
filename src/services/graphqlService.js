@@ -1,10 +1,10 @@
-// Simplified GraphQL service for College Football Data API
-// Direct endpoint interaction with focused functionality
+// Enhanced GraphQL service for College Football Data API
+// Optimized for prediction model with advanced metrics
 
 const GRAPHQL_ENDPOINT = 'https://graphql.collegefootballdata.com/v1/graphql';
 const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY;
 
-// Direct GraphQL API interaction
+// Direct GraphQL API interaction with enhanced error handling
 const fetchData = async (query, variables = {}) => {
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
@@ -26,137 +26,545 @@ const fetchData = async (query, variables = {}) => {
     }
     return result.data;
   } catch (error) {
-    console.error("Fetch Error:", error.message);
+    console.error("GraphQL Fetch Error:", error.message);
     throw error;
   }
 };
 
-// SP+ team ratings (used for gauges)
-export const getTeamRatings = async (team, year = 2024) => {
+// Rate limiting helper
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// ====== ENHANCED PREDICTION-FOCUSED QUERIES ======
+
+// Comprehensive prediction data in single query (GAME CHANGER!)
+export const getComprehensivePredictionData = async (homeTeam, awayTeam, year = 2024) => {
   const query = `
-    query GetTeamRatings($year: Int!, $team: String!) {
-      teamRatings(where: { year: { _eq: $year }, team: { _eq: $team } }) {
-        rating
-        offense { rating, ranking }
-        defense { rating, ranking }
-        specialTeams { rating }
+    query ComprehensivePredictionData($homeTeam: String!, $awayTeam: String!, $year: smallint!) {
+      # Home team recent games with advanced metrics
+      homeGames: game(
+        where: {
+          _and: [
+            {_or: [{homeTeam: {_eq: $homeTeam}}, {awayTeam: {_eq: $homeTeam}}]},
+            {season: {_eq: $year}},
+            {status: {_eq: "completed"}}
+          ]
+        }
+        orderBy: {week: DESC}
+        limit: 10
+      ) {
+        id week homeTeam awayTeam homePoints awayPoints
+        homeStartElo awayStartElo homeEndElo awayEndElo
+        homePostgameWinProb awayPostgameWinProb
+        excitementIndex
+        neutralSite conferenceGame
+        
+        gameLines {
+          provider spread overUnder homeMoneyline awayMoneyline
+        }
+        
+        gameWeather {
+          temperature windSpeed precipitation humidity weatherCondition
+        }
+      }
+      
+      # Away team recent games
+      awayGames: game(
+        where: {
+          _and: [
+            {_or: [{homeTeam: {_eq: $awayTeam}}, {awayTeam: {_eq: $awayTeam}}]},
+            {season: {_eq: $year}},
+            {status: {_eq: "completed"}}
+          ]
+        }
+        orderBy: {week: DESC}
+        limit: 10
+      ) {
+        id week homeTeam awayTeam homePoints awayPoints
+        homeStartElo awayStartElo homeEndElo awayEndElo
+        homePostgameWinProb awayPostgameWinProb
+        excitementIndex
+        neutralSite conferenceGame
+        
+        gameLines {
+          provider spread overUnder homeMoneyline awayMoneyline
+        }
+        
+        gameWeather {
+          temperature windSpeed precipitation humidity weatherCondition
+        }
+      }
+      
+      # Head-to-head history with betting context
+      headToHead: game(
+        where: {
+          _and: [
+            {season: {_gte: 2019}},
+            {_or: [
+              {_and: [{homeTeam: {_eq: $homeTeam}}, {awayTeam: {_eq: $awayTeam}}]},
+              {_and: [{homeTeam: {_eq: $awayTeam}}, {awayTeam: {_eq: $homeTeam}}]}
+            ]},
+            {status: {_eq: "completed"}}
+          ]
+        }
+        orderBy: {season: DESC}
+      ) {
+        season week homeTeam awayTeam homePoints awayPoints
+        neutralSite excitementIndex
+        gameLines { spread overUnder }
+      }
+      
+      # Aggregated performance metrics
+      homeAggregates: gameAggregate(
+        where: {
+          _and: [
+            {_or: [{homeTeam: {_eq: $homeTeam}}, {awayTeam: {_eq: $homeTeam}}]},
+            {season: {_eq: $year}},
+            {status: {_eq: "completed"}}
+          ]
+        }
+      ) {
+        aggregate {
+          count
+          avg {
+            homePoints awayPoints
+            homePostgameWinProb awayPostgameWinProb
+            excitementIndex
+            homeStartElo awayStartElo
+          }
+          max { homePoints awayPoints }
+          min { homePoints awayPoints }
+        }
+      }
+      
+      awayAggregates: gameAggregate(
+        where: {
+          _and: [
+            {_or: [{homeTeam: {_eq: $awayTeam}}, {awayTeam: {_eq: $awayTeam}}]},
+            {season: {_eq: $year}},
+            {status: {_eq: "completed"}}
+          ]
+        }
+      ) {
+        aggregate {
+          count
+          avg {
+            homePoints awayPoints
+            homePostgameWinProb awayPostgameWinProb
+            excitementIndex
+            homeStartElo awayStartElo
+          }
+          max { homePoints awayPoints }
+          min { homePoints awayPoints }
+        }
+      }
+      
+      # Team talent ratings
+      homeTalent: teamTalent(where: {team: {_eq: $homeTeam}, year: {_eq: $year}}) {
+        talent
+      }
+      
+      awayTalent: teamTalent(where: {team: {_eq: $awayTeam}, year: {_eq: $year}}) {
+        talent
+      }
+      
+      # Recruiting data
+      homeRecruiting: recruitingTeam(where: {team: {_eq: $homeTeam}, year: {_eq: $year}}) {
+        rank points
+      }
+      
+      awayRecruiting: recruitingTeam(where: {team: {_eq: $awayTeam}, year: {_eq: $year}}) {
+        rank points
       }
     }
   `;
-  const variables = { year, team };
+  
+  const variables = { homeTeam, awayTeam, year };
   const data = await fetchData(query, variables);
-  const teamData = data?.teamRatings?.[0];
-  if (!teamData) throw new Error(`Ratings data not found for team: ${team}`);
+  
+  // Process and return structured data
   return {
-    overall: teamData.rating,
-    offense: teamData.offense?.rating || "N/A",
-    defense: teamData.defense?.rating || "N/A",
-    specialTeams: teamData.specialTeams?.rating || "N/A",
-    offenseRank: teamData.offense?.ranking || "N/A",
-    defenseRank: teamData.defense?.ranking || "N/A",
+    homeGames: data?.homeGames || [],
+    awayGames: data?.awayGames || [],
+    headToHead: data?.headToHead || [],
+    homeAggregates: data?.homeAggregates?.aggregate || null,
+    awayAggregates: data?.awayAggregates?.aggregate || null,
+    homeTalent: data?.homeTalent?.[0]?.talent || null,
+    awayTalent: data?.awayTalent?.[0]?.talent || null,
+    homeRecruiting: data?.homeRecruiting?.[0] || null,
+    awayRecruiting: data?.awayRecruiting?.[0] || null
   };
 };
 
-// Detailed team ratings (for rating table)
+// Weekly games with prediction context
+export const getWeeklyGamesForPrediction = async (week, year = 2024, seasonType = 'regular') => {
+  const query = `
+    query WeeklyGamesForPrediction($week: smallint!, $year: smallint!, $seasonType: season_type!) {
+      game(
+        where: {
+          _and: [
+            {week: {_eq: $week}},
+            {season: {_eq: $year}},
+            {seasonType: {_eq: $seasonType}}
+          ]
+        }
+        orderBy: {startDate: ASC}
+      ) {
+        id
+        homeTeam awayTeam
+        startDate
+        neutralSite conferenceGame
+        status
+        
+        gameLines {
+          provider spread overUnder homeMoneyline awayMoneyline
+        }
+        
+        gameWeather {
+          temperature windSpeed precipitation gameIndoors
+        }
+        
+        # Include recent ELO if available
+        homeStartElo awayStartElo
+      }
+    }
+  `;
+  
+  const variables = { week, year, seasonType };
+  const data = await fetchData(query, variables);
+  return data?.game || [];
+};
+
+// Conference strength analysis
+export const getConferenceStrengthAnalysis = async (conference, year = 2024) => {
+  const query = `
+    query ConferenceStrengthAnalysis($conference: String!, $year: smallint!) {
+      teams: currentTeams(where: {conference: {_eq: $conference}}) {
+        school teamId
+        
+        # Season performance aggregates
+        gamesAggregate(
+          where: {
+            _and: [
+              {_or: [{homeTeam: {_eq: school}}, {awayTeam: {_eq: school}}]},
+              {season: {_eq: $year}},
+              {status: {_eq: "completed"}}
+            ]
+          }
+        ) {
+          aggregate {
+            count
+            avg {
+              homePoints awayPoints
+              homePostgameWinProb awayPostgameWinProb
+              excitementIndex
+            }
+          }
+        }
+        
+        # Talent rating
+        teamTalents(where: {year: {_eq: $year}}) {
+          talent
+        }
+        
+        # Recruiting
+        recruitingTeams(where: {year: {_eq: $year}}) {
+          rank points
+        }
+      }
+    }
+  `;
+  
+  const variables = { conference, year };
+  const data = await fetchData(query, variables);
+  return data?.teams || [];
+};
+
+// Enhanced team ratings with advanced metrics
+export const getEnhancedTeamRatings = async (team, year = 2024) => {
+  const query = `
+    query EnhancedTeamRatings($team: String!, $year: smallint!) {
+      # Standard ratings
+      ratings(where: {team: {_eq: $team}, year: {_eq: $year}}) {
+        conference elo fpi
+        fpiOffensiveEfficiency fpiDefensiveEfficiency fpiSpecialTeamsEfficiency
+        spOverall spOffense spDefense spSpecialTeams
+        srs
+      }
+      
+      # Talent composite
+      teamTalent(where: {team: {_eq: $team}, year: {_eq: $year}}) {
+        talent
+      }
+      
+      # Recruiting strength
+      recruitingTeam(where: {team: {_eq: $team}, year: {_eq: $year}}) {
+        rank points
+      }
+      
+      # Season performance aggregates
+      seasonStats: gameAggregate(
+        where: {
+          _and: [
+            {_or: [{homeTeam: {_eq: $team}}, {awayTeam: {_eq: $team}}]},
+            {season: {_eq: $year}},
+            {status: {_eq: "completed"}}
+          ]
+        }
+      ) {
+        aggregate {
+          count
+          avg {
+            homePoints awayPoints
+            homePostgameWinProb
+            excitementIndex
+            homeStartElo
+          }
+        }
+      }
+    }
+  `;
+  
+  const variables = { team, year };
+  const data = await fetchData(query, variables);
+  
+  const ratings = data?.ratings?.[0];
+  const talent = data?.teamTalent?.[0];
+  const recruiting = data?.recruitingTeam?.[0];
+  const stats = data?.seasonStats?.aggregate;
+  
+  return {
+    // Standard ratings
+    overall: ratings?.spOverall || null,
+    offense: ratings?.spOffense || null,
+    defense: ratings?.spDefense || null,
+    specialTeams: ratings?.spSpecialTeams || null,
+    
+    // Advanced metrics
+    fpi: ratings?.fpi || null,
+    fpiOffense: ratings?.fpiOffensiveEfficiency || null,
+    fpiDefense: ratings?.fpiDefensiveEfficiency || null,
+    elo: ratings?.elo || null,
+    srs: ratings?.srs || null,
+    
+    // Talent and recruiting
+    talent: talent?.talent || null,
+    recruitingRank: recruiting?.rank || null,
+    recruitingPoints: recruiting?.points || null,
+    
+    // Season performance
+    avgPointsScored: stats?.avg?.homePoints || null,
+    avgPointsAllowed: stats?.avg?.awayPoints || null,
+    avgWinProbability: stats?.avg?.homePostgameWinProb || null,
+    avgExcitement: stats?.avg?.excitementIndex || null,
+    avgElo: stats?.avg?.homeStartElo || null,
+    gamesPlayed: stats?.count || 0
+  };
+};
+
+// Betting lines analysis
+export const getBettingLinesAnalysis = async (homeTeam, awayTeam, year = 2024) => {
+  const query = `
+    query BettingLinesAnalysis($homeTeam: String!, $awayTeam: String!, $year: smallint!) {
+      # Current matchup if exists
+      currentMatchup: game(
+        where: {
+          _and: [
+            {homeTeam: {_eq: $homeTeam}},
+            {awayTeam: {_eq: $awayTeam}},
+            {season: {_eq: $year}}
+          ]
+        }
+      ) {
+        id
+        gameLines {
+          provider spread spreadOpen overUnder overUnderOpen
+          homeMoneyline awayMoneyline
+        }
+      }
+      
+      # Historical betting performance for both teams
+      homeTeamLines: game(
+        where: {
+          _and: [
+            {_or: [{homeTeam: {_eq: $homeTeam}}, {awayTeam: {_eq: $homeTeam}}]},
+            {season: {_eq: $year}},
+            {status: {_eq: "completed"}}
+          ]
+        }
+      ) {
+        homeTeam awayTeam homePoints awayPoints
+        gameLines {
+          provider spread overUnder
+        }
+      }
+      
+      awayTeamLines: game(
+        where: {
+          _and: [
+            {_or: [{homeTeam: {_eq: $awayTeam}}, {awayTeam: {_eq: $awayTeam}}]},
+            {season: {_eq: $year}},
+            {status: {_eq: "completed"}}
+          ]
+        }
+      ) {
+        homeTeam awayTeam homePoints awayPoints
+        gameLines {
+          provider spread overUnder
+        }
+      }
+    }
+  `;
+  
+  const variables = { homeTeam, awayTeam, year };
+  const data = await fetchData(query, variables);
+  
+  return {
+    currentLines: data?.currentMatchup?.[0]?.gameLines || [],
+    homeTeamHistory: data?.homeTeamLines || [],
+    awayTeamHistory: data?.awayTeamLines || []
+  };
+};
+
+// Live game tracking for in-game predictions
+export const getLiveGameData = async (gameId) => {
+  const query = `
+    query LiveGameData($gameId: Int!) {
+      scoreboard(where: {id: {_eq: $gameId}}) {
+        id status
+        currentPeriod currentClock
+        currentPossession currentSituation lastPlay
+        homeTeam awayTeam
+        homePoints awayPoints
+        homeLineScores awayLineScores
+        spread overUnder
+        moneylineHome moneylineAway
+        temperature weatherDescription
+        windSpeed windDirection
+      }
+    }
+  `;
+  
+  const variables = { gameId: parseInt(gameId) };
+  const data = await fetchData(query, variables);
+  return data?.scoreboard?.[0] || null;
+};
+
+// ====== EXISTING FUNCTIONS (ENHANCED) ======
+
+// Enhanced team ratings
+export const getTeamRatings = async (team, year = 2024) => {
+  return await getEnhancedTeamRatings(team, year);
+};
+
+// Detailed team ratings (enhanced with more metrics)
 export const getTeamDetailedRatings = async (team, year = 2024) => {
   const query = `
-    query Ratings($where: ratingsBoolExp) {
-      ratings(where: $where) {
-        conference
-        conferenceId
-        elo
-        fpi
-        fpiAvgWinProbabilityRank
-        fpiDefensiveEfficiency
-        fpiGameControlRank
-        fpiOffensiveEfficiency
-        fpiOverallEfficiency
-        fpiRemainingSosRank
-        fpiResumeRank
-        fpiSosRank
-        fpiSpecialTeamsEfficiency
+    query DetailedRatings($team: String!, $year: smallint!) {
+      ratings(where: {team: {_eq: $team}, year: {_eq: $year}}) {
+        conference conferenceId
+        elo fpi
+        fpiAvgWinProbabilityRank fpiDefensiveEfficiency fpiGameControlRank
+        fpiOffensiveEfficiency fpiOverallEfficiency fpiRemainingSosRank
+        fpiResumeRank fpiSosRank fpiSpecialTeamsEfficiency
         fpiStrengthOfRecordRank
-        spDefense
-        spOffense
-        spOverall
-        spSpecialTeams
-        srs
-        team
-        teamId
-        year
+        spDefense spOffense spOverall spSpecialTeams
+        srs team teamId year
+      }
+      
+      # Add talent and recruiting context
+      teamTalent(where: {team: {_eq: $team}, year: {_eq: $year}}) {
+        talent
+      }
+      
+      recruitingTeam(where: {team: {_eq: $team}, year: {_eq: $year}}) {
+        rank points
       }
     }
   `;
   
-  const variables = {
-    where: {
-      team: { _eq: team.trim() },
-      year: { _eq: year }
-    }
-  };
-  
+  const variables = { team: team.trim(), year };
   const data = await fetchData(query, variables);
-  return data?.ratings?.[0] || null;
+  
+  const ratings = data?.ratings?.[0];
+  const talent = data?.teamTalent?.[0];
+  const recruiting = data?.recruitingTeam?.[0];
+  
+  if (!ratings) return null;
+  
+  return {
+    ...ratings,
+    talent: talent?.talent || null,
+    recruitingRank: recruiting?.rank || null,
+    recruitingPoints: recruiting?.points || null
+  };
 };
 
-// Basic team information
+// Enhanced teams list
 export const getTeams = async () => {
   const query = `
-    query CurrentTeams(
-      $limit: Int,
-      $offset: Int,
-      $orderBy: [currentTeamsOrderBy!],
-      $where: currentTeamsBoolExp
-    ) {
-      currentTeams(
-        limit: $limit,
-        offset: $offset,
-        orderBy: $orderBy,
-        where: $where
-      ) {
-        abbreviation
-        classification
-        conference
-        conferenceId
-        division
-        school
-        teamId
+    query EnhancedCurrentTeams($limit: Int, $offset: Int, $where: currentTeamsBoolExp) {
+      currentTeams(limit: $limit, offset: $offset, where: $where, orderBy: {school: ASC}) {
+        abbreviation classification conference conferenceId
+        division school teamId
+        
+        # Add talent ranking for context
+        teamTalents(where: {year: {_eq: 2024}}, limit: 1) {
+          talent
+        }
       }
     }
   `;
+  
   const variables = {
-    limit: 100,
+    limit: 150,
     offset: 0,
     where: { classification: { _eq: "fbs" } }
   };
+  
   const data = await fetchData(query, variables);
-  return data?.currentTeams || [];
+  return (data?.currentTeams || []).map(team => ({
+    ...team,
+    talent: team.teamTalents?.[0]?.talent || null
+  }));
 };
 
-// Get team by school name
+// Enhanced team lookup
 export const getTeamBySchool = async (school) => {
   const query = `
-    query GetTeamBySchool($school: String!) {
+    query GetEnhancedTeamBySchool($school: String!) {
       currentTeams(where: {school: {_eq: $school}}) {
-        teamId
-        school
-        abbreviation
-        classification
-        conference
-        conferenceId
-        division
+        teamId school abbreviation classification
+        conference conferenceId division
+        
+        teamTalents(where: {year: {_eq: 2024}}, limit: 1) {
+          talent
+        }
+        
+        recruitingTeams(where: {year: {_eq: 2024}}, limit: 1) {
+          rank points
+        }
       }
     }
   `;
+  
   const variables = { school };
   const data = await fetchData(query, variables);
-  return data?.currentTeams?.[0] || null;
+  const team = data?.currentTeams?.[0];
+  
+  if (!team) return null;
+  
+  return {
+    ...team,
+    talent: team.teamTalents?.[0]?.talent || null,
+    recruitingRank: team.recruitingTeams?.[0]?.rank || null,
+    recruitingPoints: team.recruitingTeams?.[0]?.points || null
+  };
 };
 
-// Get games by team
+// Enhanced games by team (with more context)
 export const getGamesByTeam = async (team, season = 2024, seasonType = 'regular') => {
   const query = `
-    query GetGamesByTeam($team: String!, $season: smallint!, $seasonType: season_type!) {
+    query EnhancedGamesByTeam($team: String!, $season: smallint!, $seasonType: season_type!) {
       game(
         where: {
           _and: [
@@ -167,124 +575,82 @@ export const getGamesByTeam = async (team, season = 2024, seasonType = 'regular'
         }
         orderBy: {week: ASC}
       ) {
-        id
-        season
-        week
-        seasonType
-        startDate
-        homeTeam
-        homePoints
-        awayTeam
-        awayPoints
-        neutralSite
-        conferenceGame
-        attendance
+        id season week seasonType startDate
+        homeTeam homePoints awayTeam awayPoints
+        neutralSite conferenceGame attendance
+        status
+        
+        # Enhanced metrics
+        homeStartElo awayStartElo homeEndElo awayEndElo
+        homePostgameWinProb awayPostgameWinProb
+        excitementIndex
+        
+        # Betting context
+        gameLines {
+          provider spread overUnder
+        }
+        
+        # Weather conditions
+        gameWeather {
+          temperature windSpeed precipitation
+        }
       }
     }
   `;
+  
   const variables = { team, season, seasonType };
   const data = await fetchData(query, variables);
   return data?.game || [];
 };
 
-// Get detailed game scoreboard data
+// Keep existing functions for compatibility
 export const getGameScoreboard = async (gameId) => {
-  const query = `
-    query GetGameScoreboard($gameId: Int!) {
-      scoreboard(where: { id: { _eq: $gameId } }) {
-        id
-        awayClassification
-        awayConference
-        awayConferenceAbbreviation
-        awayId
-        awayLineScores
-        awayPoints
-        awayTeam
-        city
-        conferenceGame
-        currentClock
-        currentPeriod
-        currentPossession
-        currentSituation
-        homeClassification
-        homeConference
-        homeConferenceAbbreviation
-        homeId
-        homeLineScores
-        homePoints
-        homeTeam
-        lastPlay
-        moneylineAway
-        moneylineHome
-        neutralSite
-        overUnder
-        spread
-        startDate
-        startTimeTbd
-        state
-        status
-        temperature
-        tv
-        venue
-        weatherDescription
-        windDirection
-        windSpeed
-      }
-    }
-  `;
-  const variables = { gameId: parseInt(gameId) };
-  const data = await fetchData(query, variables);
-  return data?.scoreboard?.[0] || null;
+  return await getLiveGameData(gameId);
 };
 
-// Get comprehensive game information
 export const getGameInfo = async (gameId) => {
   const query = `
-    query GetGameInfo($gameId: Int!) {
+    query EnhancedGameInfo($gameId: Int!) {
       game(where: { id: { _eq: $gameId } }) {
-        id
-        attendance
-        away_classification
-        away_conference
-        away_conference_id
-        away_end_elo
-        away_line_scores
-        away_points
-        away_postgame_win_prob
-        away_start_elo
-        away_team
-        away_team_id
-        conference_game
-        excitement_index
-        home_classification
-        home_conference
-        home_conference_id
-        home_end_elo
-        home_line_scores
-        home_points
-        home_postgame_win_prob
-        home_start_elo
-        home_team
-        home_team_id
-        neutral_site
-        notes
-        season
-        season_type
-        start_date
-        start_time_tbd
-        status
-        venue_id
-        week
+        id attendance
+        awayClassification awayConference awayConferenceId
+        awayEndElo awayLineScores awayPoints awayPostgameWinProb
+        awayStartElo awayTeam awayTeamId
+        conferenceGame excitementIndex
+        homeClassification homeConference homeConferenceId
+        homeEndElo homeLineScores homePoints homePostgameWinProb
+        homeStartElo homeTeam homeTeamId
+        neutralSite notes season seasonType
+        startDate startTimeTbd status venueId week
+        
+        gameLines {
+          provider spread overUnder homeMoneyline awayMoneyline
+        }
+        
+        gameWeather {
+          temperature windSpeed precipitation humidity
+          weatherCondition gameIndoors
+        }
       }
     }
   `;
+  
   const variables = { gameId: parseInt(gameId) };
   const data = await fetchData(query, variables);
   return data?.game?.[0] || null;
 };
 
-// Export individual functions and create service object
+// Export enhanced service object
 const graphqlService = {
+  // Prediction-focused functions (NEW!)
+  getComprehensivePredictionData,
+  getWeeklyGamesForPrediction,
+  getConferenceStrengthAnalysis,
+  getEnhancedTeamRatings,
+  getBettingLinesAnalysis,
+  getLiveGameData,
+  
+  // Enhanced existing functions
   getTeams,
   getTeamBySchool,
   getTeamRatings,
@@ -295,9 +661,10 @@ const graphqlService = {
   
   // Utility functions
   utils: {
-    // Check if GraphQL is available (test query)
+    // Enhanced availability check
     isAvailable: async () => {
       try {
+        await delay(100); // Rate limiting
         const testQuery = `
           query TestQuery {
             currentTeams(limit: 1) {
@@ -311,6 +678,28 @@ const graphqlService = {
         console.warn('GraphQL not available:', error.message);
         return false;
       }
+    },
+    
+    // Rate limited query execution
+    queryWithDelay: async (query, variables = {}, delayMs = 100) => {
+      await delay(delayMs);
+      return await fetchData(query, variables);
+    },
+    
+    // Batch queries with rate limiting
+    batchQueries: async (queries, delayMs = 150) => {
+      const results = [];
+      for (const { query, variables } of queries) {
+        try {
+          const result = await fetchData(query, variables);
+          results.push({ success: true, data: result });
+          await delay(delayMs);
+        } catch (error) {
+          results.push({ success: false, error: error.message });
+          await delay(delayMs);
+        }
+      }
+      return results;
     }
   },
   
