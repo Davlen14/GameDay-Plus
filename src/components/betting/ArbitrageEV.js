@@ -442,7 +442,7 @@ const ArbitrageEV = () => {
 
   const TabSelection = () => (
     <div className="flex justify-center mb-6">
-      <div style={{ width: '97%', maxWidth: '1200px' }}>
+      <div style={{ width: '96%', maxWidth: 'none' }}>
         <div className="flex bg-gray-100 rounded-lg p-1">
           {tabs.map((tab, index) => (
             <button
@@ -550,7 +550,7 @@ const ArbitrageEV = () => {
         }
       `}</style>
       
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4" style={{ width: '96%', maxWidth: 'none' }}>
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold gradient-text mb-4">Arbitrage EV</h1>
@@ -559,7 +559,7 @@ const ArbitrageEV = () => {
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto">
+        <div className="w-full">
           {/* Navigation */}
           <TabSelection />
           <WeekSelector />
