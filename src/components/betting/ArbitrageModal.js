@@ -269,14 +269,24 @@ const ArbitrageModal = ({ game, onClose }) => {
 
   // Game Header Component
   const GameHeader = () => (
-    <div className="p-6 border-b border-gray-200">
+    <div 
+      className="p-6 border-b backdrop-blur-sm"
+      style={{
+        background: 'rgba(255, 255, 255, 0.15)',
+        borderColor: 'rgba(255, 255, 255, 0.2)'
+      }}
+    >
       {/* Close button */}
       <div className="flex justify-end mb-4">
         <button
           onClick={onClose}
-          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          className="p-2 rounded-full transition-colors"
+          style={{
+            background: 'rgba(107, 114, 128, 0.2)',
+            backdropFilter: 'blur(10px)'
+          }}
         >
-          <i className="fas fa-times text-gray-600"></i>
+          <i className="fas fa-times text-gray-800"></i>
         </button>
       </div>
 
@@ -284,14 +294,14 @@ const ArbitrageModal = ({ game, onClose }) => {
       <div className="flex items-center justify-center space-x-10 mb-6">
         <div className="text-center">
           <TeamLogo teamName={game.awayTeam} showCoverage={true} />
-          <div className="mt-2 text-sm font-medium">{game.awayTeam}</div>
+          <div className="mt-2 text-sm font-medium text-gray-800">{game.awayTeam}</div>
         </div>
 
-        <div className="text-lg font-bold text-gray-500">VS</div>
+        <div className="text-lg font-bold text-gray-700">VS</div>
 
         <div className="text-center">
           <TeamLogo teamName={game.homeTeam} showCoverage={true} />
-          <div className="mt-2 text-sm font-medium">{game.homeTeam}</div>
+          <div className="mt-2 text-sm font-medium text-gray-800">{game.homeTeam}</div>
         </div>
       </div>
 
@@ -325,13 +335,19 @@ const ArbitrageModal = ({ game, onClose }) => {
     const tabIcons = ['fas fa-chart-bar', 'fas fa-dollar-sign', 'fas fa-arrows-alt-h', 'fas fa-calculator'];
 
     return (
-      <div className="flex bg-gray-100">
+      <div 
+        className="flex backdrop-blur-sm"
+        style={{
+          background: 'rgba(243, 244, 246, 0.3)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
+        }}
+      >
         {tabs.map((tab, index) => (
           <button
             key={index}
             onClick={() => setActiveTab(index)}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-all ${
-              activeTab === index ? 'text-white' : 'text-gray-700 hover:text-gray-900'
+              activeTab === index ? 'text-white' : 'text-gray-800 hover:text-gray-900'
             }`}
             style={activeTab === index ? { background: metallicGradient } : {}}
           >
@@ -345,10 +361,16 @@ const ArbitrageModal = ({ game, onClose }) => {
 
   // Summary Card Component
   const SummaryCard = ({ title, value, icon }) => (
-    <div className="bg-gray-50 rounded-lg p-4">
+    <div 
+      className="rounded-lg p-4 backdrop-blur-sm"
+      style={{
+        background: 'rgba(249, 250, 251, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.2)'
+      }}
+    >
       <div className="flex items-center space-x-2 mb-2">
-        <i className={`${icon} text-sm text-gray-500`}></i>
-        <span className="text-xs text-gray-600">{title}</span>
+        <i className={`${icon} text-sm text-gray-600`}></i>
+        <span className="text-xs text-gray-700">{title}</span>
       </div>
       <div 
         className="text-lg font-bold"
@@ -366,22 +388,28 @@ const ArbitrageModal = ({ game, onClose }) => {
 
   // Modern Bookmaker Card Component
   const ModernBookmakerCard = ({ provider, team, odds, decimal, implied, showSpread = false }) => (
-    <div className="bg-gray-50 rounded-lg p-4 flex-1">
+    <div 
+      className="rounded-lg p-4 flex-1 backdrop-blur-sm"
+      style={{
+        background: 'rgba(249, 250, 251, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.2)'
+      }}
+    >
       {/* Header */}
       <div className="flex items-center space-x-2 mb-3">
         <SportsbookLogo provider={provider} />
-        <span className="text-sm font-medium truncate">{provider}</span>
+        <span className="text-sm font-medium truncate text-gray-800">{provider}</span>
       </div>
 
       {/* Team info */}
       <div className="flex items-center space-x-2 mb-3">
         {!showSpread && <TeamLogo teamName={team.split(' ')[0]} size={20} showCoverage={true} />}
-        <span className="text-sm font-medium">{team}</span>
+        <span className="text-sm font-medium text-gray-800">{team}</span>
       </div>
 
-      <div className="border-t pt-3 space-y-2">
+      <div className="border-t pt-3 space-y-2" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }}>
         <div className="flex justify-between">
-          <span className="text-xs text-gray-600">American:</span>
+          <span className="text-xs text-gray-700">American:</span>
           <span 
             className="text-xs font-bold"
             style={{
@@ -395,12 +423,12 @@ const ArbitrageModal = ({ game, onClose }) => {
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-xs text-gray-600">Decimal:</span>
-          <span className="text-xs font-bold">{decimal.toFixed(2)}</span>
+          <span className="text-xs text-gray-700">Decimal:</span>
+          <span className="text-xs font-bold text-gray-800">{decimal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-xs text-gray-600">Implied %:</span>
-          <span className="text-xs font-bold">{implied.toFixed(1)}%</span>
+          <span className="text-xs text-gray-700">Implied %:</span>
+          <span className="text-xs font-bold text-gray-800">{implied.toFixed(1)}%</span>
         </div>
       </div>
     </div>
@@ -409,7 +437,7 @@ const ArbitrageModal = ({ game, onClose }) => {
   // Result Row Component
   const ModernResultRow = ({ label, value, isHighlighted = false, valueColor = null, isMetallic = false }) => (
     <div className="flex justify-between items-center">
-      <span className={`text-sm ${isHighlighted ? 'text-gray-900' : 'text-gray-600'}`}>
+      <span className={`text-sm ${isHighlighted ? 'text-gray-900' : 'text-gray-700'}`}>
         {label}
       </span>
       <span 
@@ -431,7 +459,7 @@ const ArbitrageModal = ({ game, onClose }) => {
     <div className="p-6 space-y-6">
       {/* Market Summary */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Market Overview</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-800">Market Overview</h3>
         <div className="grid grid-cols-2 gap-4">
           <SummaryCard
             title="Best Moneyline"
@@ -448,25 +476,41 @@ const ArbitrageModal = ({ game, onClose }) => {
 
       {/* All Sportsbook Lines */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">All Sportsbook Lines</h3>
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <h3 className="text-lg font-semibold mb-4 text-gray-800">All Sportsbook Lines</h3>
+        <div 
+          className="rounded-lg shadow-sm overflow-hidden backdrop-blur-sm"
+          style={{
+            background: 'rgba(255, 255, 255, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
           {/* Header */}
-          <div className="bg-gray-50 px-4 py-2 flex">
-            <div className="w-24 text-xs font-medium text-gray-600">Sportsbook</div>
-            <div className="flex-1 text-xs font-medium text-gray-600">Moneyline</div>
+          <div 
+            className="px-4 py-2 flex"
+            style={{
+              background: 'rgba(249, 250, 251, 0.3)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            <div className="w-24 text-xs font-medium text-gray-700">Sportsbook</div>
+            <div className="flex-1 text-xs font-medium text-gray-700">Moneyline</div>
           </div>
 
           {/* Rows */}
           {game.lines.map((line, index) => (
-            <div key={index} className="px-4 py-3 border-b border-gray-50 last:border-b-0">
+            <div 
+              key={index} 
+              className="px-4 py-3 border-b last:border-b-0"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+            >
               <div className="flex items-center">
                 <div className="w-24 flex items-center space-x-2">
                   <SportsbookLogo provider={line.provider} size={20} />
-                  <span className="text-sm truncate">{line.provider}</span>
+                  <span className="text-sm truncate text-gray-800">{line.provider}</span>
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="text-sm">
-                    <span className="font-medium">{game.homeTeam}: </span>
+                    <span className="font-medium text-gray-800">{game.homeTeam}: </span>
                     <span 
                       className="font-semibold"
                       style={{
@@ -482,7 +526,7 @@ const ArbitrageModal = ({ game, onClose }) => {
                     </span>
                   </div>
                   <div className="text-sm">
-                    <span className="font-medium">{game.awayTeam}: </span>
+                    <span className="font-medium text-gray-800">{game.awayTeam}: </span>
                     <span 
                       className="font-semibold"
                       style={{
@@ -507,27 +551,42 @@ const ArbitrageModal = ({ game, onClose }) => {
       {/* Arbitrage Opportunities */}
       {game.hasArbitrage && (
         <div>
-          <h3 className="text-lg font-semibold mb-4">Arbitrage Opportunities</h3>
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">Arbitrage Opportunities</h3>
+          <div 
+            className="rounded-lg shadow-sm overflow-hidden backdrop-blur-sm"
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
             {/* Header */}
-            <div className="bg-gray-50 px-4 py-2 grid grid-cols-4 gap-4">
-              <div className="text-xs font-medium text-gray-600">Type</div>
-              <div className="text-xs font-medium text-gray-600">Home Book</div>
-              <div className="text-xs font-medium text-gray-600">Away Book</div>
-              <div className="text-xs font-medium text-gray-600 text-right">Profit</div>
+            <div 
+              className="px-4 py-2 grid grid-cols-4 gap-4"
+              style={{
+                background: 'rgba(249, 250, 251, 0.3)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              <div className="text-xs font-medium text-gray-700">Type</div>
+              <div className="text-xs font-medium text-gray-700">Home Book</div>
+              <div className="text-xs font-medium text-gray-700">Away Book</div>
+              <div className="text-xs font-medium text-gray-700 text-right">Profit</div>
             </div>
 
             {/* Moneyline row */}
             {bestMoneylinePair && (
-              <div className="px-4 py-3 grid grid-cols-4 gap-4 items-center border-b border-gray-50">
+              <div 
+                className="px-4 py-3 grid grid-cols-4 gap-4 items-center border-b"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+              >
                 <div 
                   className="text-xs font-bold text-white px-2 py-1 rounded"
                   style={{ background: metallicGradient }}
                 >
                   ML
                 </div>
-                <div className="text-sm">{bestMoneylinePair.homeBookmaker}</div>
-                <div className="text-sm">{bestMoneylinePair.awayBookmaker}</div>
+                <div className="text-sm text-gray-800">{bestMoneylinePair.homeBookmaker}</div>
+                <div className="text-sm text-gray-800">{bestMoneylinePair.awayBookmaker}</div>
                 <div 
                   className="text-sm font-bold text-right"
                   style={{
@@ -548,8 +607,8 @@ const ArbitrageModal = ({ game, onClose }) => {
                 <div className="text-xs font-bold text-white px-2 py-1 rounded bg-blue-500">
                   SPR
                 </div>
-                <div className="text-sm">{bestSpreadPair.homeBookmaker}</div>
-                <div className="text-sm">{bestSpreadPair.awayBookmaker}</div>
+                <div className="text-sm text-gray-800">{bestSpreadPair.homeBookmaker}</div>
+                <div className="text-sm text-gray-800">{bestSpreadPair.awayBookmaker}</div>
                 <div 
                   className="text-sm font-bold text-right"
                   style={{
@@ -574,8 +633,8 @@ const ArbitrageModal = ({ game, onClose }) => {
       return (
         <div className="p-6 text-center">
           <i className="fas fa-exclamation-triangle text-4xl text-orange-500 mb-4"></i>
-          <h3 className="text-lg font-bold mb-2">No Guaranteed Arbitrage Found</h3>
-          <p className="text-gray-600">
+          <h3 className="text-lg font-bold mb-2 text-gray-800">No Guaranteed Arbitrage Found</h3>
+          <p className="text-gray-700">
             This means the combined implied probabilities from different sportsbooks exceed 100%.
           </p>
         </div>
@@ -585,11 +644,17 @@ const ArbitrageModal = ({ game, onClose }) => {
     return (
       <div className="p-6 space-y-6">
         {/* Profit Banner */}
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div 
+          className="rounded-lg p-4 backdrop-blur-sm"
+          style={{
+            background: 'rgba(249, 250, 251, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <i className="fas fa-dollar-sign text-green-600"></i>
-              <span className="text-sm font-medium">Guaranteed Profit:</span>
+              <span className="text-sm font-medium text-gray-800">Guaranteed Profit:</span>
               <span 
                 className="text-lg font-bold"
                 style={{
@@ -611,8 +676,14 @@ const ArbitrageModal = ({ game, onClose }) => {
           </div>
 
           {showProfitChart && (
-            <div className="mt-4 h-32 bg-white rounded flex items-center justify-center">
-              <span className="text-gray-500">Chart visualization would go here</span>
+            <div 
+              className="mt-4 h-32 rounded flex items-center justify-center backdrop-blur-sm"
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              <span className="text-gray-600">Chart visualization would go here</span>
             </div>
           )}
         </div>
@@ -637,7 +708,7 @@ const ArbitrageModal = ({ game, onClose }) => {
 
         {/* Allocation bar */}
         <div className="space-y-2">
-          <div className="relative h-8 bg-gray-200 rounded-lg overflow-hidden">
+          <div className="relative h-8 rounded-lg overflow-hidden" style={{ background: 'rgba(209, 213, 219, 0.5)' }}>
             <div 
               className="absolute top-0 left-0 h-full flex items-center justify-center text-white text-xs font-bold"
               style={{
@@ -658,17 +729,23 @@ const ArbitrageModal = ({ game, onClose }) => {
               {Math.round((moneylineStakes.away / totalStake) * 100)}%
             </div>
           </div>
-          <div className="text-center text-xs text-gray-600">Stake Allocation</div>
+          <div className="text-center text-xs text-gray-700">Stake Allocation</div>
         </div>
 
         {/* Stake Calculator */}
-        <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-          <h4 className="text-sm font-semibold">Calculate Your Returns</h4>
+        <div 
+          className="rounded-lg p-4 space-y-4 backdrop-blur-sm"
+          style={{
+            background: 'rgba(249, 250, 251, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
+          <h4 className="text-sm font-semibold text-gray-800">Calculate Your Returns</h4>
           
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-gray-600">Total Stake ($):</label>
-              <span className="text-sm font-bold">${totalStake}</span>
+              <label className="text-sm text-gray-700">Total Stake ($):</label>
+              <span className="text-sm font-bold text-gray-800">${totalStake}</span>
             </div>
             <input
               type="range"
@@ -682,7 +759,7 @@ const ArbitrageModal = ({ game, onClose }) => {
             />
           </div>
 
-          <div className="border-t pt-4 space-y-3">
+          <div className="border-t pt-4 space-y-3" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }}>
             <ModernResultRow
               label={`Stake on ${game.homeTeam}:`}
               value={`$${moneylineStakes.home.toFixed(2)}`}
@@ -691,7 +768,7 @@ const ArbitrageModal = ({ game, onClose }) => {
               label={`Stake on ${game.awayTeam}:`}
               value={`$${moneylineStakes.away.toFixed(2)}`}
             />
-            <div className="border-t pt-2 space-y-2">
+            <div className="border-t pt-2 space-y-2" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }}>
               <ModernResultRow
                 label="Guaranteed Return:"
                 value={`$${(moneylineStakes.home * bestMoneylinePair.homeDecimal).toFixed(2)}`}
@@ -721,8 +798,8 @@ const ArbitrageModal = ({ game, onClose }) => {
       return (
         <div className="p-6 text-center">
           <i className="fas fa-exclamation-triangle text-4xl text-orange-500 mb-4"></i>
-          <h3 className="text-lg font-bold mb-2">No Spread Arbitrage Available</h3>
-          <p className="text-gray-600">
+          <h3 className="text-lg font-bold mb-2 text-gray-800">No Spread Arbitrage Available</h3>
+          <p className="text-gray-700">
             Spread arbitrage opportunities are less common than moneyline arbitrage.
           </p>
         </div>
@@ -732,10 +809,16 @@ const ArbitrageModal = ({ game, onClose }) => {
     return (
       <div className="p-6 space-y-6">
         {/* Profit Banner */}
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div 
+          className="rounded-lg p-4 backdrop-blur-sm"
+          style={{
+            background: 'rgba(249, 250, 251, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
           <div className="flex items-center space-x-2">
             <i className="fas fa-dollar-sign text-green-600"></i>
-            <span className="text-sm font-medium">Guaranteed Profit:</span>
+            <span className="text-sm font-medium text-gray-800">Guaranteed Profit:</span>
             <span 
               className="text-lg font-bold"
               style={{
@@ -771,7 +854,13 @@ const ArbitrageModal = ({ game, onClose }) => {
         </div>
 
         {/* Rest of spread tab content similar to moneyline */}
-        <div className="bg-blue-50 rounded-lg p-4">
+        <div 
+          className="rounded-lg p-4 backdrop-blur-sm"
+          style={{
+            background: 'rgba(219, 234, 254, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
           <div className="flex items-start space-x-3">
             <i className="fas fa-info-circle text-blue-600 mt-1"></i>
             <div>
@@ -788,18 +877,24 @@ const ArbitrageModal = ({ game, onClose }) => {
 
   const CalculatorTab = () => (
     <div className="p-6 space-y-6">
-      <h3 className="text-lg font-semibold">Arbitrage Calculator</h3>
+      <h3 className="text-lg font-semibold text-gray-800">Arbitrage Calculator</h3>
       
       {bestMoneylinePair && moneylineStakes ? (
         <div className="space-y-6">
           {/* Standard Calculator */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-            <h4 className="text-sm font-semibold">Standard Calculator</h4>
+          <div 
+            className="rounded-lg p-4 space-y-4 backdrop-blur-sm"
+            style={{
+              background: 'rgba(249, 250, 251, 0.3)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            <h4 className="text-sm font-semibold text-gray-800">Standard Calculator</h4>
             
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-gray-600">Total Budget ($):</label>
-                <span className="text-sm font-bold">${totalStake}</span>
+                <label className="text-sm text-gray-700">Total Budget ($):</label>
+                <span className="text-sm font-bold text-gray-800">${totalStake}</span>
               </div>
               <input
                 type="range"
@@ -813,11 +908,17 @@ const ArbitrageModal = ({ game, onClose }) => {
               />
             </div>
 
-            <div className="bg-white rounded-lg p-4">
-              <h5 className="text-xs font-semibold mb-3">Optimal Moneyline Allocation</h5>
+            <div 
+              className="rounded-lg p-4 backdrop-blur-sm"
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              <h5 className="text-xs font-semibold mb-3 text-gray-800">Optimal Moneyline Allocation</h5>
               
               {/* Header */}
-              <div className="grid grid-cols-3 gap-4 text-xs text-gray-600 mb-2 pb-2 border-b">
+              <div className="grid grid-cols-3 gap-4 text-xs text-gray-700 mb-2 pb-2 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }}>
                 <div>Team</div>
                 <div>Sportsbook</div>
                 <div className="text-right">Stake</div>
@@ -827,35 +928,42 @@ const ArbitrageModal = ({ game, onClose }) => {
               <div className="grid grid-cols-3 gap-4 text-sm mb-2">
                 <div className="flex items-center space-x-2">
                   <TeamLogo teamName={game.homeTeam} size={16} showCoverage={true} />
-                  <span className="truncate">{game.homeTeam}</span>
+                  <span className="truncate text-gray-800">{game.homeTeam}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <SportsbookLogo provider={bestMoneylinePair.homeBookmaker} size={14} />
-                  <span className="truncate">{bestMoneylinePair.homeBookmaker}</span>
+                  <span className="truncate text-gray-800">{bestMoneylinePair.homeBookmaker}</span>
                 </div>
-                <div className="text-right font-bold">
+                <div className="text-right font-bold text-gray-800">
                   ${moneylineStakes.home.toFixed(2)}
                 </div>
               </div>
 
               {/* Away row */}
-              <div className="grid grid-cols-3 gap-4 text-sm mb-2 pb-2 border-b">
+              <div className="grid grid-cols-3 gap-4 text-sm mb-2 pb-2 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }}>
                 <div className="flex items-center space-x-2">
                   <TeamLogo teamName={game.awayTeam} size={16} showCoverage={true} />
-                  <span className="truncate">{game.awayTeam}</span>
+                  <span className="truncate text-gray-800">{game.awayTeam}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <SportsbookLogo provider={bestMoneylinePair.awayBookmaker} size={14} />
-                  <span className="truncate">{bestMoneylinePair.awayBookmaker}</span>
+                  <span className="truncate text-gray-800">{bestMoneylinePair.awayBookmaker}</span>
                 </div>
-                <div className="text-right font-bold">
+                <div className="text-right font-bold text-gray-800">
                   ${moneylineStakes.away.toFixed(2)}
                 </div>
               </div>
 
               {/* Total row */}
-              <div className="grid grid-cols-3 gap-4 text-sm bg-gray-50 -mx-4 px-4 py-2">
-                <div className="font-bold">Total Profit</div>
+              <div 
+                className="grid grid-cols-3 gap-4 text-sm -mx-4 px-4 py-2"
+                style={{
+                  background: 'rgba(249, 250, 251, 0.3)',
+                  borderRadius: '0.5rem',
+                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                }}
+              >
+                <div className="font-bold text-gray-800">Total Profit</div>
                 <div 
                   className="font-bold"
                   style={{
@@ -883,11 +991,23 @@ const ArbitrageModal = ({ game, onClose }) => {
           </div>
 
           {/* Scenario Analysis */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="text-sm font-semibold mb-4">Scenario Analysis</h4>
+          <div 
+            className="rounded-lg p-4 backdrop-blur-sm"
+            style={{
+              background: 'rgba(249, 250, 251, 0.3)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            <h4 className="text-sm font-semibold mb-4 text-gray-800">Scenario Analysis</h4>
             
-            <div className="bg-white rounded-lg p-4">
-              <div className="grid grid-cols-3 gap-4 text-xs text-gray-600 mb-2 pb-2 border-b">
+            <div 
+              className="rounded-lg p-4 backdrop-blur-sm"
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              <div className="grid grid-cols-3 gap-4 text-xs text-gray-700 mb-2 pb-2 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }}>
                 <div>Scenario</div>
                 <div>Return</div>
                 <div className="text-right">Net Profit</div>
@@ -897,9 +1017,9 @@ const ArbitrageModal = ({ game, onClose }) => {
               <div className="grid grid-cols-3 gap-4 text-sm mb-2">
                 <div className="flex items-center space-x-2">
                   <TeamLogo teamName={game.homeTeam} size={16} showCoverage={true} />
-                  <span>If {game.homeTeam} wins</span>
+                  <span className="text-gray-800">If {game.homeTeam} wins</span>
                 </div>
-                <div>${(moneylineStakes.home * bestMoneylinePair.homeDecimal).toFixed(2)}</div>
+                <div className="text-gray-800">${(moneylineStakes.home * bestMoneylinePair.homeDecimal).toFixed(2)}</div>
                 <div 
                   className="text-right font-bold"
                   style={{
@@ -917,9 +1037,9 @@ const ArbitrageModal = ({ game, onClose }) => {
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center space-x-2">
                   <TeamLogo teamName={game.awayTeam} size={16} showCoverage={true} />
-                  <span>If {game.awayTeam} wins</span>
+                  <span className="text-gray-800">If {game.awayTeam} wins</span>
                 </div>
-                <div>${(moneylineStakes.away * bestMoneylinePair.awayDecimal).toFixed(2)}</div>
+                <div className="text-gray-800">${(moneylineStakes.away * bestMoneylinePair.awayDecimal).toFixed(2)}</div>
                 <div 
                   className="text-right font-bold"
                   style={{
@@ -937,7 +1057,7 @@ const ArbitrageModal = ({ game, onClose }) => {
         </div>
       ) : (
         <div className="text-center py-8">
-          <p className="text-gray-600">No arbitrage opportunities available for calculation.</p>
+          <p className="text-gray-700">No arbitrage opportunities available for calculation.</p>
         </div>
       )}
     </div>
@@ -945,7 +1065,13 @@ const ArbitrageModal = ({ game, onClose }) => {
 
   // Modal Footer
   const ModalFooter = () => (
-    <div className="flex space-x-4 p-6 bg-gray-50 border-t">
+    <div 
+      className="flex space-x-4 p-6 border-t backdrop-blur-sm"
+      style={{
+        background: 'rgba(249, 250, 251, 0.3)',
+        borderColor: 'rgba(255, 255, 255, 0.2)'
+      }}
+    >
       <button
         className="flex-1 py-3 px-4 text-white font-medium rounded-lg transition-all hover:shadow-lg"
         style={{ background: metallicGradient }}
@@ -955,7 +1081,12 @@ const ArbitrageModal = ({ game, onClose }) => {
       </button>
       <button
         onClick={onClose}
-        className="flex-1 py-3 px-4 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+        className="flex-1 py-3 px-4 font-medium rounded-lg transition-colors backdrop-blur-sm"
+        style={{
+          background: 'rgba(209, 213, 219, 0.3)',
+          color: '#374151',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}
       >
         <i className="fas fa-times mr-2"></i>
         Close
@@ -988,7 +1119,15 @@ const ArbitrageModal = ({ game, onClose }) => {
   // Main render
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div 
+        className="rounded-xl shadow-2xl w-full max-w-4xl backdrop-blur-sm border"
+        style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          maxHeight: '90vh',
+          minHeight: '70vh'
+        }}
+      >
         <div className="flex flex-col h-full">
           <GameHeader />
           <TabNavigation />
