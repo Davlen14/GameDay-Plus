@@ -16,6 +16,8 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
     }
   });
 
+  console.log(`📡 [API DEBUG] Making REST API request to: ${endpoint}`, params);
+
   try {
     const response = await fetch(url.toString(), {
       method: "GET",
@@ -28,7 +30,7 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`College Football API Error: ${response.status} ${response.statusText}`, errorText);
+      console.error(`❌ [API DEBUG] REST API Error: ${response.status} ${response.statusText}`, errorText);
       const error = new Error(`College Football API Error: ${response.status} ${response.statusText} - ${errorText || 'No additional details'}`);
       error.status = response.status;
       error.statusText = response.statusText;
@@ -38,6 +40,7 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
     }
     
     const data = await response.json();
+    console.log(`✅ [API DEBUG] REST API request successful for: ${endpoint}`);
     return data;
   } catch (error) {
     console.error("College Football API Error:", error.message);

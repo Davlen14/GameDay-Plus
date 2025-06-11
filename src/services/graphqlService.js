@@ -6,6 +6,7 @@ const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY 
 
 // Direct GraphQL API interaction with enhanced error handling
 const fetchData = async (query, variables = {}) => {
+  console.log('🚀 [API DEBUG] Attempting GraphQL request to:', GRAPHQL_ENDPOINT);
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
@@ -21,6 +22,7 @@ const fetchData = async (query, variables = {}) => {
     });
 
     if (!response.ok) {
+      console.log('❌ [API DEBUG] GraphQL request failed with status:', response.status);
       // Check for CORS or auth errors specifically
       if (response.status === 0 || response.status === 403 || response.status === 401) {
         throw new Error('CORS_ERROR');
@@ -30,12 +32,16 @@ const fetchData = async (query, variables = {}) => {
 
     const result = await response.json();
     if (result.errors) {
+      console.log('❌ [API DEBUG] GraphQL returned errors:', result.errors);
       throw new Error(result.errors.map((e) => e.message).join(", "));
     }
+    
+    console.log('✅ [API DEBUG] GraphQL request successful - data received');
     return result.data;
   } catch (error) {
-    console.error("GraphQL Fetch Error:", error.message);
+    console.error("❌ [API DEBUG] GraphQL Fetch Error:", error.message);
     if (error.message.includes('CORS') || error.name === 'TypeError') {
+      console.log('🔄 [API DEBUG] CORS error detected - will fallback to REST API');
       throw new Error('CORS_ERROR');
     }
     throw error;

@@ -36,17 +36,20 @@ export const teamService = {
   getFBSTeams: async (useGraphQL = true) => {
     if (useGraphQL) {
       try {
+        console.log('🔍 [API DEBUG] Checking GraphQL availability for FBS teams...');
         // Test GraphQL availability first
         const isGraphQLAvailable = await graphqlService.utils.isAvailable();
         if (!isGraphQLAvailable) {
-          console.log('GraphQL not available, using REST API');
+          console.log('🔄 [API DEBUG] GraphQL not available, using REST API for FBS teams');
           return await fetchCollegeFootballData('/teams', { division: 'fbs' });
         }
 
+        console.log('✅ [API DEBUG] GraphQL available, fetching FBS teams via GraphQL...');
         const graphqlTeams = await graphqlService.teams.getCurrent({ 
           classification: 'fbs' 
         });
         
+        console.log('🔄 [API DEBUG] Supplementing with REST API for team logos...');
         // Still need REST for logos
         const restTeams = await fetchCollegeFootballData('/teams', { division: 'fbs' });
         
