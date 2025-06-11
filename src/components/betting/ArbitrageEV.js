@@ -357,9 +357,9 @@ const ArbitrageEV = () => {
     return () => clearTimeout(loadingTimeout);
   }, [isLoading, errorMessage, gameLines.length]);
 
-  // Sportsbook Slider Component
+  // Sportsbook Slider Component - Full Width
   const SportsbookSlider = () => (
-    <div className="relative overflow-hidden py-8 mb-12">
+    <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden py-8 mb-12">
       <div className="flex animate-scroll">
         {/* First set of sportsbooks */}
         {sportsbooks.map((book, index) => (
@@ -681,18 +681,19 @@ const ArbitrageEV = () => {
         }
       `}</style>
       
+      {/* Header - Full Width */}
+      <div className="text-center mb-8 w-full">
+        <h1 className="text-5xl font-bold gradient-text mb-4">ARBITRAGE EV</h1>
+        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          Expected value calculations and arbitrage opportunities through various sportsbooks.
+        </p>
+      </div>
+
+      {/* Sportsbook Slider - Full Width */}
+      <SportsbookSlider />
+
+      {/* Main Content Container - Constrained Width for Tabs/Content */}
       <div className="container mx-auto px-4" style={{ width: '96%', maxWidth: 'none' }}>
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold gradient-text mb-4">Arbitrage EV</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Expected value calculations and arbitrage opportunities
-          </p>
-        </div>
-
-        {/* Sportsbook Slider */}
-        <SportsbookSlider />
-
         <div className="w-full">
           {/* Navigation */}
           <TabSelection />

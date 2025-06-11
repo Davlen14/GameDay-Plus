@@ -289,15 +289,15 @@ const EVBettingView = ({ evGames = [] }) => {
     return teamCoverage2024[teamName] || false;
   };
 
-  // Best bet indicator component
-  const BestBetArrow = ({ isVisible }) => (
+  // Best bet indicator component with tooltip
+  const BestBetArrow = ({ isVisible, tooltipText = "" }) => (
     isVisible ? (
       <div 
-        className="flex items-center ml-2"
+        className="flex items-center ml-2 group relative"
         style={{ filter: 'drop-shadow(0 1px 2px rgba(34, 197, 94, 0.4))' }}
       >
         <div
-          className="w-0 h-0"
+          className="w-0 h-0 transition-all duration-200 group-hover:scale-110"
           style={{
             borderLeft: '6px solid transparent',
             borderRight: '6px solid transparent', 
@@ -305,6 +305,17 @@ const EVBettingView = ({ evGames = [] }) => {
             transform: 'rotate(-90deg)'
           }}
         />
+        
+        {/* Best bet tooltip */}
+        {tooltipText && (
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-green-600/90 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div className="font-semibold">✅ Best Expected Value</div>
+            <div className="text-green-200">{tooltipText}</div>
+            <div className="text-yellow-300 font-medium">Highest profit potential</div>
+            {/* Arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-green-600/90"></div>
+          </div>
+        )}
       </div>
     ) : null
   );
@@ -316,12 +327,12 @@ const EVBettingView = ({ evGames = [] }) => {
     const isCovered = isTeamCovered(teamName);
 
     return (
-      <div className="relative">
+      <div className="relative group">
         {logoUrl ? (
           <img
             src={logoUrl}
             alt={teamName}
-            className="rounded shadow-lg"
+            className="rounded shadow-lg cursor-pointer transition-transform duration-200 group-hover:scale-110"
             style={{
               width: size,
               height: size,
@@ -336,7 +347,7 @@ const EVBettingView = ({ evGames = [] }) => {
         ) : null}
         
         <div
-          className="rounded-full flex items-center justify-center font-bold text-white shadow-lg"
+          className="rounded-full flex items-center justify-center font-bold text-white shadow-lg cursor-pointer transition-transform duration-200 group-hover:scale-110"
           style={{
             width: size,
             height: size,
@@ -357,23 +368,45 @@ const EVBettingView = ({ evGames = [] }) => {
           </span>
         </div>
 
-        {/* Coverage indicator */}
+        {/* Coverage indicator with enhanced tooltip */}
         {showCoverage && (
-          <div
-            className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold"
-            style={{
-              background: isCovered 
-                ? 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))'
-                : 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))',
-              color: 'white',
-              fontSize: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-            }}
-            title={isCovered ? 'Team covered in 2024' : 'Team not covered in 2024'}
-          >
-            {isCovered ? '✓' : '✗'}
+          <div className="group relative">
+            <div
+              className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold cursor-help transition-transform duration-200 hover:scale-125"
+              style={{
+                background: isCovered 
+                  ? 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))'
+                  : 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))',
+                color: 'white',
+                fontSize: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+              }}
+            >
+              {isCovered ? '✓' : '✗'}
+              
+              {/* Enhanced Coverage Tooltip */}
+              <div className={`absolute bottom-full right-0 mb-2 px-3 py-2 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 ${isCovered ? 'bg-green-600/90' : 'bg-red-600/90'}`}>
+                <div className="font-semibold">{isCovered ? '✓ 2024 Coverage Available' : '✗ Limited 2024 Coverage'}</div>
+                <div className={isCovered ? 'text-green-200' : 'text-red-200'}>
+                  {isCovered 
+                    ? 'Full betting data available for this team' 
+                    : 'Limited betting data - use with caution'
+                  }
+                </div>
+                {/* Arrow */}
+                <div className={`absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${isCovered ? 'border-t-green-600/90' : 'border-t-red-600/90'}`}></div>
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Team name tooltip */}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800/90 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-40">
+          <div className="font-semibold">{teamName}</div>
+          <div className="text-gray-300">Click for team details</div>
+          {/* Arrow */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800/90"></div>
+        </div>
       </div>
     );
   };
@@ -383,12 +416,23 @@ const EVBettingView = ({ evGames = [] }) => {
     
     if (logoUrl) {
       return (
-        <img
-          src={logoUrl}
-          alt={provider}
-          className="rounded shadow-sm"
-          style={{ width: size, height: size, objectFit: 'contain' }}
-        />
+        <div className="group relative">
+          <img
+            src={logoUrl}
+            alt={provider}
+            className="rounded shadow-sm cursor-pointer transition-transform duration-200 group-hover:scale-110"
+            style={{ width: size, height: size, objectFit: 'contain' }}
+          />
+          
+          {/* Sportsbook tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-blue-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div className="font-semibold">📊 {provider}</div>
+            <div className="text-blue-200">Compare odds across sportsbooks</div>
+            <div className="text-yellow-300 font-medium">Find the best value</div>
+            {/* Arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600/95"></div>
+          </div>
+        </div>
       );
     }
 
@@ -409,15 +453,26 @@ const EVBettingView = ({ evGames = [] }) => {
     };
 
     return (
-      <div
-        className="rounded flex items-center justify-center"
-        style={{
-          width: size,
-          height: size,
-          background: 'linear-gradient(135deg, #3b82f6, #2563eb)'
-        }}
-      >
-        <i className={`${getProviderIcon(provider)} text-white text-xs`}></i>
+      <div className="group relative">
+        <div
+          className="rounded flex items-center justify-center cursor-pointer transition-transform duration-200 group-hover:scale-110"
+          style={{
+            width: size,
+            height: size,
+            background: 'linear-gradient(135deg, #3b82f6, #2563eb)'
+          }}
+        >
+          <i className={`${getProviderIcon(provider)} text-white text-xs`}></i>
+        </div>
+        
+        {/* Sportsbook tooltip */}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-blue-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+          <div className="font-semibold">📊 {provider}</div>
+          <div className="text-blue-200">Compare odds across sportsbooks</div>
+          <div className="text-yellow-300 font-medium">Find the best value</div>
+          {/* Arrow */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600/95"></div>
+        </div>
       </div>
     );
   };
@@ -601,14 +656,74 @@ const EVBettingView = ({ evGames = [] }) => {
               </div>
               
               <div className="flex-1 text-center">
-                <div className="flex items-center justify-center">
-                  <div className="text-sm font-semibold" style={{ color: line.homeMoneyline > 0 ? positiveColor : accentColor }}>
-                    {formatOdds(line.homeMoneyline)}
-                  </div>
-                  <BestBetArrow isVisible={homeEV >= 3} />
+                <div className="flex items-center justify-center group relative">
+                  {line.homeMoneyline ? (
+                    <>
+                      <div 
+                        className="text-sm font-semibold cursor-help transition-all duration-200 hover:scale-105" 
+                        style={{ 
+                          background: homeEV >= 3 
+                            ? 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))'
+                            : line.homeMoneyline > 0 
+                              ? `linear-gradient(135deg, ${positiveColor}, ${positiveColor}CC)` 
+                              : metallicGradient,
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text'
+                        }}
+                      >
+                        {formatOdds(line.homeMoneyline)}
+                      </div>
+                      <BestBetArrow 
+                        isVisible={homeEV >= 3} 
+                        tooltipText={`${homeEV.toFixed(1)}% expected value on home team`}
+                      />
+                      
+                      {/* Odds explanation tooltip */}
+                      <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 ${homeEV >= 3 ? 'bg-green-600/95' : 'bg-blue-600/95'}`}>
+                        <div className="font-semibold">
+                          {homeEV >= 3 ? '🎯 High Value Home Bet' : '🏠 Home Moneyline'}
+                        </div>
+                        <div className={homeEV >= 3 ? 'text-green-200' : 'text-blue-200'}>
+                          {line.homeMoneyline > 0 
+                            ? `Bet $100 to win $${line.homeMoneyline}` 
+                            : `Bet $${Math.abs(line.homeMoneyline)} to win $100`
+                          }
+                        </div>
+                        <div className="text-yellow-300 font-medium">
+                          Expected Value: +{homeEV.toFixed(1)}%
+                        </div>
+                        {/* Arrow */}
+                        <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${homeEV >= 3 ? 'border-t-green-600/95' : 'border-t-blue-600/95'}`}></div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center group relative">
+                      <span 
+                        className="text-sm font-semibold cursor-help"
+                        style={{
+                          background: 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text'
+                        }}
+                      >
+                        ✗
+                      </span>
+                      
+                      {/* No odds tooltip */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-red-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                        <div className="font-semibold">❌ No Odds Available</div>
+                        <div className="text-red-200">This sportsbook is not offering odds</div>
+                        <div className="text-yellow-300 font-medium">Try other sportsbooks</div>
+                        {/* Arrow */}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-600/95"></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div 
-                  className="text-xs font-bold"
+                  className="text-xs font-bold cursor-help"
                   style={{
                     background: metallicEVGradient(homeEV),
                     WebkitBackgroundClip: 'text',
@@ -621,14 +736,74 @@ const EVBettingView = ({ evGames = [] }) => {
               </div>
               
               <div className="flex-1 text-center">
-                <div className="flex items-center justify-center">
-                  <div className="text-sm font-semibold" style={{ color: line.awayMoneyline > 0 ? positiveColor : accentColor }}>
-                    {formatOdds(line.awayMoneyline)}
-                  </div>
-                  <BestBetArrow isVisible={awayEV >= 3} />
+                <div className="flex items-center justify-center group relative">
+                  {line.awayMoneyline ? (
+                    <>
+                      <div 
+                        className="text-sm font-semibold cursor-help transition-all duration-200 hover:scale-105" 
+                        style={{ 
+                          background: awayEV >= 3 
+                            ? 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))'
+                            : line.awayMoneyline > 0 
+                              ? `linear-gradient(135deg, ${positiveColor}, ${positiveColor}CC)` 
+                              : metallicGradient,
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text'
+                        }}
+                      >
+                        {formatOdds(line.awayMoneyline)}
+                      </div>
+                      <BestBetArrow 
+                        isVisible={awayEV >= 3} 
+                        tooltipText={`${awayEV.toFixed(1)}% expected value on away team`}
+                      />
+                      
+                      {/* Odds explanation tooltip */}
+                      <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 ${awayEV >= 3 ? 'bg-green-600/95' : 'bg-blue-600/95'}`}>
+                        <div className="font-semibold">
+                          {awayEV >= 3 ? '🎯 High Value Away Bet' : '✈️ Away Moneyline'}
+                        </div>
+                        <div className={awayEV >= 3 ? 'text-green-200' : 'text-blue-200'}>
+                          {line.awayMoneyline > 0 
+                            ? `Bet $100 to win $${line.awayMoneyline}` 
+                            : `Bet $${Math.abs(line.awayMoneyline)} to win $100`
+                          }
+                        </div>
+                        <div className="text-yellow-300 font-medium">
+                          Expected Value: +{awayEV.toFixed(1)}%
+                        </div>
+                        {/* Arrow */}
+                        <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${awayEV >= 3 ? 'border-t-green-600/95' : 'border-t-blue-600/95'}`}></div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center group relative">
+                      <span 
+                        className="text-sm font-semibold cursor-help"
+                        style={{
+                          background: 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text'
+                        }}
+                      >
+                        ✗
+                      </span>
+                      
+                      {/* No odds tooltip */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-red-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                        <div className="font-semibold">❌ No Odds Available</div>
+                        <div className="text-red-200">This sportsbook is not offering odds</div>
+                        <div className="text-yellow-300 font-medium">Try other sportsbooks</div>
+                        {/* Arrow */}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-600/95"></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div 
-                  className="text-xs font-bold"
+                  className="text-xs font-bold cursor-help"
                   style={{
                     background: metallicEVGradient(awayEV),
                     WebkitBackgroundClip: 'text',
@@ -640,16 +815,29 @@ const EVBettingView = ({ evGames = [] }) => {
                 </div>
               </div>
               
-              <div 
-                className="w-16 text-sm font-bold text-right"
-                style={{
-                  background: metallicEVGradient(bestEV),
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
-              >
-                +{bestEV.toFixed(1)}%
+              <div className="group relative">
+                <div 
+                  className="w-16 text-sm font-bold text-right cursor-help"
+                  style={{
+                    background: metallicEVGradient(bestEV),
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
+                >
+                  +{bestEV.toFixed(1)}%
+                </div>
+                
+                {/* Best EV tooltip */}
+                <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-purple-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  <div className="font-semibold">🏆 Best EV for this Book</div>
+                  <div className="text-purple-200">Highest expected value available</div>
+                  <div className="text-yellow-300 font-medium">
+                    {bestEV === homeEV ? 'Home team bet' : 'Away team bet'}
+                  </div>
+                  {/* Arrow */}
+                  <div className="absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-purple-600/95"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -660,9 +848,18 @@ const EVBettingView = ({ evGames = [] }) => {
 
   const EVCalculator = ({ game }) => (
     <div className="space-y-4 p-4">
-      <div className="flex items-center space-x-2">
-        <h4 className="text-lg font-medium">EV Calculator</h4>
-        <i className="fas fa-calculator text-gray-500"></i>
+      <div className="flex items-center space-x-2 group relative">
+        <h4 className="text-lg font-medium cursor-help">EV Calculator</h4>
+        <i className="fas fa-calculator text-gray-500 cursor-help"></i>
+        
+        {/* EV Calculator explanation tooltip */}
+        <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-indigo-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+          <div className="font-semibold">🧮 Expected Value Calculator</div>
+          <div className="text-indigo-200 max-w-xs">Shows potential profit based on statistical edge</div>
+          <div className="text-yellow-300 font-medium">Higher EV = Better long-term profit</div>
+          {/* Arrow */}
+          <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-indigo-600/95"></div>
+        </div>
       </div>
       
       <p className="text-sm text-gray-600">
@@ -684,8 +881,8 @@ const EVBettingView = ({ evGames = [] }) => {
           const expectedProfit = stake * (game.maxEV / 100);
 
           return (
-            <div key={stake} className="px-4 py-2 border-b border-gray-100 last:border-b-0">
-              <div className="flex">
+            <div key={stake} className="px-4 py-2 border-b border-gray-100 last:border-b-0 group relative">
+              <div className="flex cursor-help">
                 <div className="flex-1 text-sm">${stake}</div>
                 <div className="flex-1 text-sm">${expectedReturn.toFixed(2)}</div>
                 <div 
@@ -699,6 +896,15 @@ const EVBettingView = ({ evGames = [] }) => {
                 >
                   ${expectedProfit.toFixed(2)}
                 </div>
+              </div>
+              
+              {/* Profit explanation tooltip */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-green-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                <div className="font-semibold">💰 Betting ${stake} at {game.maxEV.toFixed(1)}% EV</div>
+                <div className="text-green-200">Expected profit over many bets: ${expectedProfit.toFixed(2)}</div>
+                <div className="text-yellow-300 font-medium">Total expected return: ${expectedReturn.toFixed(2)}</div>
+                {/* Arrow */}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-green-600/95"></div>
               </div>
             </div>
           );
@@ -731,7 +937,7 @@ const EVBettingView = ({ evGames = [] }) => {
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-3">
-                  <TeamLogo teamName={game.awayTeam} showCoverage={true} />
+                  <TeamLogo teamName={game.awayTeam} size={50} showCoverage={true} />
                   <div>
                     <div className="font-medium text-sm">{game.awayTeam}</div>
                     <div className="text-xs text-gray-500">Away</div>
@@ -741,7 +947,7 @@ const EVBettingView = ({ evGames = [] }) => {
                 <span className="text-gray-400 text-sm">@</span>
 
                 <div className="flex items-center space-x-3">
-                  <TeamLogo teamName={game.homeTeam} showCoverage={true} />
+                  <TeamLogo teamName={game.homeTeam} size={50} showCoverage={true} />
                   <div>
                     <div className="font-medium text-sm">{game.homeTeam}</div>
                     <div className="text-xs text-gray-500">Home</div>
@@ -752,12 +958,23 @@ const EVBettingView = ({ evGames = [] }) => {
               {/* EV Badge */}
               <div className="text-right">
                 <div className="text-xs text-gray-500 mb-2">Week {game.week}</div>
-                <div 
-                  className="px-3 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1"
-                  style={{ background: metallicEVGradient(game.maxEV) }}
-                >
-                  <i className="fas fa-trophy text-yellow-300"></i>
-                  +{game.maxEV.toFixed(1)}% EV
+                <div className="group relative">
+                  <div 
+                    className="px-3 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1 cursor-help"
+                    style={{ background: metallicEVGradient(game.maxEV) }}
+                  >
+                    <i className="fas fa-trophy text-yellow-300"></i>
+                    +{game.maxEV.toFixed(1)}% EV
+                  </div>
+                  
+                  {/* EV Badge tooltip */}
+                  <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-orange-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    <div className="font-semibold">🏆 Best Expected Value</div>
+                    <div className="text-orange-200">This game offers {game.maxEV.toFixed(1)}% profit edge</div>
+                    <div className="text-yellow-300 font-medium">Positive EV = Long-term profit potential</div>
+                    {/* Arrow */}
+                    <div className="absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-orange-600/95"></div>
+                  </div>
                 </div>
               </div>
             </div>

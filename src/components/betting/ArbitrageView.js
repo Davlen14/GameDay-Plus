@@ -168,45 +168,103 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
     }
   };
 
-  // Implied Probability Display Component (Now Horizontal)
+  // Implied Probability Display Component with enhanced tooltips
   const ImpliedProbabilityDisplay = ({ game }) => {
     const { homeImplied, awayImplied, totalImplied } = calculateImpliedProbabilities(game);
 
     if (homeImplied === 0 && awayImplied === 0) return null;
 
+    const getTooltipContent = (type, value) => {
+      switch (type) {
+        case 'home':
+          return {
+            title: '🏠 Home Implied Probability',
+            description: `Market believes home team has ${value.toFixed(1)}% chance to win`,
+            interpretation: value > 60 ? 'Strong favorite' : value > 40 ? 'Slight favorite' : 'Underdog'
+          };
+        case 'away':
+          return {
+            title: '✈️ Away Implied Probability', 
+            description: `Market believes away team has ${value.toFixed(1)}% chance to win`,
+            interpretation: value > 60 ? 'Strong favorite' : value > 40 ? 'Slight favorite' : 'Underdog'
+          };
+        case 'total':
+          return {
+            title: '📊 Total Market Efficiency',
+            description: `Combined probabilities: ${value.toFixed(1)}%`,
+            interpretation: value < 100 ? 'Arbitrage opportunity!' : value > 105 ? 'High market margin' : 'Fair market'
+          };
+        default:
+          return { title: '', description: '', interpretation: '' };
+      }
+    };
+
     return (
       <div className="flex items-center gap-2">
         {/* Home Implied Probability */}
-        <div 
-          className="px-2 py-1 rounded-md text-xs font-medium backdrop-blur-sm border border-white/20"
-          style={{
-            background: getProbabilityGradient(homeImplied),
-            color: homeImplied > 60 ? '#dc2626' : homeImplied > 40 ? '#d97706' : '#16a34a'
-          }}
-        >
-          <span className="font-semibold">H:</span> {homeImplied.toFixed(1)}%
+        <div className="group relative">
+          <div 
+            className="px-2 py-1 rounded-md text-xs font-medium backdrop-blur-sm border border-white/20 cursor-help transition-all duration-200 hover:scale-105 hover:shadow-lg"
+            style={{
+              background: getProbabilityGradient(homeImplied),
+              color: homeImplied > 60 ? '#dc2626' : homeImplied > 40 ? '#d97706' : '#16a34a'
+            }}
+          >
+            <span className="font-semibold">H:</span> {homeImplied.toFixed(1)}%
+          </div>
+          
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div className="font-semibold text-blue-300">{getTooltipContent('home', homeImplied).title}</div>
+            <div className="text-gray-200">{getTooltipContent('home', homeImplied).description}</div>
+            <div className="text-yellow-300 font-medium">{getTooltipContent('home', homeImplied).interpretation}</div>
+            {/* Arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800/95"></div>
+          </div>
         </div>
 
         {/* Away Implied Probability */}
-        <div 
-          className="px-2 py-1 rounded-md text-xs font-medium backdrop-blur-sm border border-white/20"
-          style={{
-            background: getProbabilityGradient(awayImplied),
-            color: awayImplied > 60 ? '#dc2626' : awayImplied > 40 ? '#d97706' : '#16a34a'
-          }}
-        >
-          <span className="font-semibold">A:</span> {awayImplied.toFixed(1)}%
+        <div className="group relative">
+          <div 
+            className="px-2 py-1 rounded-md text-xs font-medium backdrop-blur-sm border border-white/20 cursor-help transition-all duration-200 hover:scale-105 hover:shadow-lg"
+            style={{
+              background: getProbabilityGradient(awayImplied),
+              color: awayImplied > 60 ? '#dc2626' : awayImplied > 40 ? '#d97706' : '#16a34a'
+            }}
+          >
+            <span className="font-semibold">A:</span> {awayImplied.toFixed(1)}%
+          </div>
+          
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div className="font-semibold text-blue-300">{getTooltipContent('away', awayImplied).title}</div>
+            <div className="text-gray-200">{getTooltipContent('away', awayImplied).description}</div>
+            <div className="text-yellow-300 font-medium">{getTooltipContent('away', awayImplied).interpretation}</div>
+            {/* Arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800/95"></div>
+          </div>
         </div>
 
         {/* Total Implied Probability */}
-        <div 
-          className="px-2 py-1 rounded-md text-xs font-bold backdrop-blur-sm border border-white/20"
-          style={{
-            background: getProbabilityGradient(totalImplied, true),
-            color: totalImplied > 105 ? '#dc2626' : totalImplied > 100 ? '#d97706' : '#16a34a'
-          }}
-        >
-          <span className="font-semibold">T:</span> {totalImplied.toFixed(1)}%
+        <div className="group relative">
+          <div 
+            className="px-2 py-1 rounded-md text-xs font-bold backdrop-blur-sm border border-white/20 cursor-help transition-all duration-200 hover:scale-105 hover:shadow-lg"
+            style={{
+              background: getProbabilityGradient(totalImplied, true),
+              color: totalImplied > 105 ? '#dc2626' : totalImplied > 100 ? '#d97706' : '#16a34a'
+            }}
+          >
+            <span className="font-semibold">T:</span> {totalImplied.toFixed(1)}%
+          </div>
+          
+          {/* Tooltip */}
+          <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 ${totalImplied < 100 ? 'bg-green-600/95' : totalImplied > 105 ? 'bg-red-600/95' : 'bg-yellow-600/95'}`}>
+            <div className="font-semibold">{getTooltipContent('total', totalImplied).title}</div>
+            <div className={totalImplied < 100 ? 'text-green-200' : totalImplied > 105 ? 'text-red-200' : 'text-yellow-200'}>{getTooltipContent('total', totalImplied).description}</div>
+            <div className="text-white font-medium">{getTooltipContent('total', totalImplied).interpretation}</div>
+            {/* Arrow */}
+            <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${totalImplied < 100 ? 'border-t-green-600/95' : totalImplied > 105 ? 'border-t-red-600/95' : 'border-t-yellow-600/95'}`}></div>
+          </div>
         </div>
       </div>
     );
@@ -234,15 +292,15 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
     return teamCoverage2024[teamName] || false;
   };
 
-  // Best bet indicator component
-  const BestBetArrow = ({ isVisible }) => (
+  // Best bet indicator component with tooltip
+  const BestBetArrow = ({ isVisible, tooltipText }) => (
     isVisible ? (
       <div 
-        className="flex items-center ml-2"
+        className="flex items-center ml-2 group relative"
         style={{ filter: 'drop-shadow(0 1px 2px rgba(34, 197, 94, 0.4))' }}
       >
         <div
-          className="w-0 h-0"
+          className="w-0 h-0 transition-all duration-200 group-hover:scale-110"
           style={{
             borderLeft: '6px solid transparent',
             borderRight: '6px solid transparent', 
@@ -250,6 +308,13 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
             transform: 'rotate(-90deg)'
           }}
         />
+        {/* Tooltip */}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-green-600/90 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+          <div className="font-semibold">✓ Best Odds Available</div>
+          <div className="text-green-200">{tooltipText}</div>
+          {/* Arrow */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-green-600/90"></div>
+        </div>
       </div>
     ) : null
   );
@@ -312,19 +377,19 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
     </div>
   );
 
-  // Team logo component with fallback
+  // Team logo component with fallback and enhanced tooltip
   const TeamLogo = ({ teamName, size = 40, showCoverage = false }) => {
     const logoUrl = getTeamLogo(teamName);
     const firstLetter = teamName.charAt(0).toUpperCase();
     const isCovered = isTeamCovered(teamName);
 
     return (
-      <div className="relative">
+      <div className="relative group">
         {logoUrl ? (
           <img
             src={logoUrl}
             alt={teamName}
-            className="rounded shadow-md"
+            className="rounded shadow-md transition-transform duration-200 group-hover:scale-110"
             style={{
               width: size,
               height: size,
@@ -339,7 +404,7 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
         ) : null}
 
         <div
-          className="rounded-full flex items-center justify-center font-bold text-white shadow-md"
+          className="rounded-full flex items-center justify-center font-bold text-white shadow-md transition-transform duration-200 group-hover:scale-110"
           style={{
             width: size,
             height: size,
@@ -362,10 +427,10 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
           </span>
         </div>
 
-        {/* Coverage indicator */}
+        {/* Coverage indicator with enhanced tooltip */}
         {showCoverage && (
           <div
-            className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold"
+            className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold cursor-help transition-transform duration-200 hover:scale-125"
             style={{
               background: isCovered 
                 ? 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))'
@@ -374,31 +439,62 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
               fontSize: '8px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
             }}
-            title={isCovered ? 'Team covered in 2024' : 'Team not covered in 2024'}
           >
             {isCovered ? '✓' : '✗'}
+            
+            {/* Enhanced Tooltip */}
+            <div className={`absolute bottom-full right-0 mb-2 px-3 py-2 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 ${isCovered ? 'bg-green-600/90' : 'bg-red-600/90'}`}>
+              <div className="font-semibold">{isCovered ? '✓ 2024 Coverage Available' : '✗ Limited 2024 Coverage'}</div>
+              <div className={isCovered ? 'text-green-200' : 'text-red-200'}>
+                {isCovered 
+                  ? 'Full betting data available for this team' 
+                  : 'Limited betting data - use with caution'
+                }
+              </div>
+              {/* Arrow */}
+              <div className={`absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${isCovered ? 'border-t-green-600/90' : 'border-t-red-600/90'}`}></div>
+            </div>
           </div>
         )}
+
+        {/* Team name tooltip */}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800/90 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-40">
+          <div className="font-semibold">{teamName}</div>
+          <div className="text-gray-300">Click for team details</div>
+          {/* Arrow */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800/90"></div>
+        </div>
       </div>
     );
   };
 
-  // Sportsbook logo component
+  // Sportsbook logo component with enhanced tooltip
   const SportsbookLogo = ({ provider, size = 28 }) => {
     const logoUrl = getSportsbookLogo(provider);
     
     if (logoUrl) {
       return (
-        <img
-          src={logoUrl}
-          alt={provider}
-          className="rounded shadow-sm"
-          style={{
-            width: size,
-            height: size,
-            objectFit: 'contain'
-          }}
-        />
+        <div className="group relative">
+          <img
+            src={logoUrl}
+            alt={provider}
+            className="rounded shadow-sm transition-transform duration-200 group-hover:scale-110 cursor-help"
+            style={{
+              width: size,
+              height: size,
+              objectFit: 'contain'
+            }}
+          />
+          
+          {/* Sportsbook tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-blue-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div className="font-semibold">📊 {provider}</div>
+            <div className="text-blue-200">Compare odds across sportsbooks</div>
+            <div className="text-yellow-300 font-medium">Find the best value</div>
+            {/* Arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600/95"></div>
+          </div>
+        </div>
       );
     }
 
@@ -420,16 +516,27 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
     };
 
     return (
-      <div
-        className="rounded flex items-center justify-center"
-        style={{
-          width: size,
-          height: size,
-          background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-        }}
-      >
-        <i className={`${getProviderIcon(provider)} text-white text-xs`}></i>
+      <div className="group relative">
+        <div
+          className="rounded flex items-center justify-center transition-transform duration-200 group-hover:scale-110 cursor-help"
+          style={{
+            width: size,
+            height: size,
+            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+          }}
+        >
+          <i className={`${getProviderIcon(provider)} text-white text-xs`}></i>
+        </div>
+        
+        {/* Sportsbook tooltip */}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-blue-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+          <div className="font-semibold">📊 {provider}</div>
+          <div className="text-blue-200">Compare odds across sportsbooks</div>
+          <div className="text-yellow-300 font-medium">Find the best value</div>
+          {/* Arrow */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600/95"></div>
+        </div>
       </div>
     );
   };
@@ -583,56 +690,181 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
         </div>
 
         {/* Sportsbook rows */}
-        {game.lines.slice(0, 3).map((line, index) => (
-          <div key={index} className="px-4 py-3 border-b border-gray-50 last:border-b-0">
-            <div className="flex items-center">
-              <div className="w-28 flex items-center space-x-2">
-                <SportsbookLogo provider={line.provider} />
-                <span className="text-sm text-gray-700 truncate">{line.provider}</span>
-              </div>
-              
-              <div className="flex-1 text-center">
-                <div className="flex items-center justify-center">
-                  <span 
-                    className="text-sm font-semibold"
-                    style={{
-                      background: line.homeMoneyline > 0 
-                        ? `linear-gradient(135deg, ${positiveColor}, ${positiveColor}CC)` 
-                        : metallicGradient,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                    }}
-                  >
-                    {BettingCalculations.formatAmericanOdds(line.homeMoneyline)}
-                  </span>
-                  <BestBetArrow isVisible={game.hasArbitrage && line.homeMoneyline > -150} />
+        {game.lines.slice(0, 3).map((line, index) => {
+          // Find the best odds for comparison
+          const allHomeOdds = game.lines.map(l => l.homeMoneyline).filter(o => o != null);
+          const allAwayOdds = game.lines.map(l => l.awayMoneyline).filter(o => o != null);
+          
+          const bestHomeOdds = allHomeOdds.reduce((best, current) => {
+            if (current > 0 && best > 0) return Math.max(best, current);
+            if (current < 0 && best < 0) return Math.max(best, current);
+            if (current > 0 && best < 0) return current;
+            if (current < 0 && best > 0) return best;
+            return best;
+          }, allHomeOdds[0]);
+          
+          const bestAwayOdds = allAwayOdds.reduce((best, current) => {
+            if (current > 0 && best > 0) return Math.max(best, current);
+            if (current < 0 && best < 0) return Math.max(best, current);
+            if (current > 0 && best < 0) return current;
+            if (current < 0 && best > 0) return best;
+            return best;
+          }, allAwayOdds[0]);
+
+          const isHomeBest = line.homeMoneyline === bestHomeOdds;
+          const isAwayBest = line.awayMoneyline === bestAwayOdds;
+          
+          return (
+            <div key={index} className="px-4 py-3 border-b border-gray-50 last:border-b-0">
+              <div className="flex items-center">
+                <div className="w-28 flex items-center space-x-2">
+                  <SportsbookLogo provider={line.provider} />
+                  <span className="text-sm text-gray-700 truncate">{line.provider}</span>
                 </div>
-              </div>
-              
-              <div className="flex-1 text-center">
-                <div className="flex items-center justify-center">
-                  <span 
-                    className="text-sm font-semibold"
-                    style={{
-                      background: line.awayMoneyline > 0 
-                        ? `linear-gradient(135deg, ${positiveColor}, ${positiveColor}CC)` 
-                        : metallicGradient,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                    }}
-                  >
-                    {BettingCalculations.formatAmericanOdds(line.awayMoneyline)}
-                  </span>
-                  <BestBetArrow isVisible={game.hasArbitrage && line.awayMoneyline > -150} />
+                
+                <div className="flex-1 text-center">
+                  <div className="flex items-center justify-center group relative">
+                    {line.homeMoneyline ? (
+                      <>
+                        <span 
+                          className="text-sm font-semibold cursor-help transition-all duration-200 hover:scale-105"
+                          style={{
+                            background: isHomeBest 
+                              ? 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))' 
+                              : line.homeMoneyline > 0 
+                                ? `linear-gradient(135deg, ${positiveColor}, ${positiveColor}CC)` 
+                                : metallicGradient,
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          {BettingCalculations.formatAmericanOdds(line.homeMoneyline)}
+                        </span>
+                        <BestBetArrow 
+                          isVisible={isHomeBest} 
+                          tooltipText={`Best home odds: +${Math.abs(line.homeMoneyline)} more profitable than competitors`}
+                        />
+                        
+                        {/* Odds explanation tooltip */}
+                        <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 ${isHomeBest ? 'bg-green-600/95' : 'bg-blue-600/95'}`}>
+                          <div className="font-semibold">
+                            {isHomeBest ? '🎯 Best Home Odds' : '🏠 Home Moneyline'}
+                          </div>
+                          <div className={isHomeBest ? 'text-green-200' : 'text-blue-200'}>
+                            {line.homeMoneyline > 0 
+                              ? `Bet $100 to win $${line.homeMoneyline}` 
+                              : `Bet $${Math.abs(line.homeMoneyline)} to win $100`
+                            }
+                          </div>
+                          <div className="text-yellow-300 font-medium">
+                            {isHomeBest ? 'Highest payout available!' : 'Compare with other books'}
+                          </div>
+                          {/* Arrow */}
+                          <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${isHomeBest ? 'border-t-green-600/95' : 'border-t-blue-600/95'}`}></div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center group relative">
+                        <span 
+                          className="text-sm font-semibold cursor-help"
+                          style={{
+                            background: 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text'
+                          }}
+                        >
+                          ✗
+                        </span>
+                        
+                        {/* No odds tooltip */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-red-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                          <div className="font-semibold">❌ No Odds Available</div>
+                          <div className="text-red-200">This sportsbook is not offering odds</div>
+                          <div className="text-yellow-300 font-medium">Try other sportsbooks</div>
+                          {/* Arrow */}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-600/95"></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex-1 text-center">
+                  <div className="flex items-center justify-center group relative">
+                    {line.awayMoneyline ? (
+                      <>
+                        <span 
+                          className="text-sm font-semibold cursor-help transition-all duration-200 hover:scale-105"
+                          style={{
+                            background: isAwayBest 
+                              ? 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))' 
+                              : line.awayMoneyline > 0 
+                                ? `linear-gradient(135deg, ${positiveColor}, ${positiveColor}CC)` 
+                                : metallicGradient,
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          {BettingCalculations.formatAmericanOdds(line.awayMoneyline)}
+                        </span>
+                        <BestBetArrow 
+                          isVisible={isAwayBest} 
+                          tooltipText={`Best away odds: +${Math.abs(line.awayMoneyline)} more profitable than competitors`}
+                        />
+                        
+                        {/* Odds explanation tooltip */}
+                        <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 ${isAwayBest ? 'bg-green-600/95' : 'bg-blue-600/95'}`}>
+                          <div className="font-semibold">
+                            {isAwayBest ? '🎯 Best Away Odds' : '✈️ Away Moneyline'}
+                          </div>
+                          <div className={isAwayBest ? 'text-green-200' : 'text-blue-200'}>
+                            {line.awayMoneyline > 0 
+                              ? `Bet $100 to win $${line.awayMoneyline}` 
+                              : `Bet $${Math.abs(line.awayMoneyline)} to win $100`
+                            }
+                          </div>
+                          <div className="text-yellow-300 font-medium">
+                            {isAwayBest ? 'Highest payout available!' : 'Compare with other books'}
+                          </div>
+                          {/* Arrow */}
+                          <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${isAwayBest ? 'border-t-green-600/95' : 'border-t-blue-600/95'}`}></div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center group relative">
+                        <span 
+                          className="text-sm font-semibold cursor-help"
+                          style={{
+                            background: 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text'
+                          }}
+                        >
+                          ✗
+                        </span>
+                        
+                        {/* No odds tooltip */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-red-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                          <div className="font-semibold">❌ No Odds Available</div>
+                          <div className="text-red-200">This sportsbook is not offering odds</div>
+                          <div className="text-yellow-300 font-medium">Try other sportsbooks</div>
+                          {/* Arrow */}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-600/95"></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* More sportsbooks indicator */}
         {game.lines.length > 3 && (
@@ -649,7 +881,7 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
       <div className="p-4">
         <button
           onClick={() => onGameSelected?.(game)}
-          className="w-full py-3 text-white font-medium rounded-lg transition-all hover:shadow-lg"
+          className="w-full py-3 text-white font-medium rounded-lg transition-all hover:shadow-lg group relative"
           style={{
             background: metallicGradient,
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
@@ -657,6 +889,15 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
         >
           <i className="fas fa-chart-bar mr-2"></i>
           View Arbitrage Details
+          
+          {/* Button tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-purple-600/95 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div className="font-semibold">🔍 Detailed Analysis</div>
+            <div className="text-purple-200">View complete arbitrage breakdown</div>
+            <div className="text-yellow-300 font-medium">Calculate optimal bet amounts</div>
+            {/* Arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-purple-600/95"></div>
+          </div>
         </button>
       </div>
     </div>
