@@ -228,5 +228,145 @@ export const analyticsService = {
       console.error('Team WEPA Error:', error);
       return { error: error.message };
     }
+  },
+
+  // GET /team/talent - Get team talent composite ratings
+  getTeamTalentRatings: async (year = new Date().getFullYear()) => {
+    try {
+      return await fetchCollegeFootballData('/talent', { year });
+    } catch (error) {
+      console.error('Team Talent Error:', error);
+      return [];
+    }
+  },
+
+  // GET /recruiting/teams - Get team recruiting rankings
+  getTeamRecruitingRankings: async (year = new Date().getFullYear()) => {
+    try {
+      return await fetchCollegeFootballData('/recruiting/teams', { year });
+    } catch (error) {
+      console.error('Recruiting Rankings Error:', error);
+      return [];
+    }
+  },
+
+  // GET /ppa/teams - Get team success rate and efficiency metrics
+  getTeamEfficiencyMetrics: async (team, year = new Date().getFullYear(), excludeGarbageTime = true) => {
+    try {
+      const params = { year, excludeGarbageTime };
+      if (team) params.team = team;
+      
+      const [ppaData, advancedStats] = await Promise.all([
+        fetchCollegeFootballData('/ppa/teams', params),
+        fetchCollegeFootballData('/stats/season/advanced', params)
+      ]);
+      
+      return {
+        ppa: ppaData,
+        advanced: advancedStats
+      };
+    } catch (error) {
+      console.error('Team Efficiency Error:', error);
+      return { ppa: [], advanced: [] };
+    }
+  },
+
+  // Calculate drive efficiency from drives data
+  calculateDriveEfficiency: async (team, year = new Date().getFullYear()) => {
+    try {
+      const { driveService } = await import('./driveService');
+      const drives = await driveService.getOffensiveDrives(team, year);
+      
+      if (!drives || drives.length === 0) return 0.35; // Default fallback
+      
+      const scoringDrives = drives.filter(drive => 
+        drive.drive_result === 'TD' || drive.drive_result === 'FG'
+      );
+      
+      return scoringDrives.length / drives.length;
+    } catch (error) {
+      console.error('Drive Efficiency Error:', error);
+      return 0.35; // Default fallback
+    }
+  },
+
+  // Get team success rate from advanced stats
+  getTeamSuccessRate: async (team, year = new Date().getFullYear()) => {
+    try {
+      const advancedStats = await fetchCollegeFootballData('/stats/season/advanced', {
+        year,
+        team,
+        excludeGarbageTime: true
+      });
+      
+      if (!advancedStats || advancedStats.length === 0) return 0.45; // Default fallback
+      
+      const teamStats = advancedStats.find(stat => stat.team === team);
+      return teamStats?.offense?.successRate || 0.45;
+    } catch (error) {
+      console.error('Success Rate Error:', error);
+      return 0.45; // Default fallback
+    }
+  },
+
+  // Get team explosiveness rating
+  getTeamExplosiveness: async (team, year = new Date().getFullYear()) => {
+    try {
+      const ppaData = await fetchCollegeFootballData('/ppa/teams', {
+        year,
+        team,
+        excludeGarbageTime: true
+      });
+      
+      if (!ppaData || ppaData.length === 0) return 0.1; // Default fallback
+      
+      const teamData = ppaData.find(data => data.team === team);
+      return teamData?.offense?.explosiveness || 0.1;
+    } catch (error) {
+      console.error('Explosiveness Error:', error);
+      return 0.1; // Default fallback
+    }
+  },
+
+  // Get comprehensive team metrics for enhanced predictions
+  getEnhancedTeamMetrics: async (team, year = new Date().getFullYear()) => {
+    try {
+      const [talent, recruiting, efficiency, driveEff, successRate, explosiveness] = await Promise.all([
+        analyticsService.getTeamTalentRatings(year),
+        analyticsService.getTeamRecruitingRankings(year),
+        analyticsService.getTeamEfficiencyMetrics(team, year),
+        analyticsService.calculateDriveEfficiency(team, year),
+        analyticsService.getTeamSuccessRate(team, year),
+        analyticsService.getTeamExplosiveness(team, year)
+      ]);
+
+      const teamTalent = talent.find(t => t.school === team);
+      const teamRecruiting = recruiting.find(r => r.team === team);
+
+      return {
+        talent: {
+          rating: teamTalent?.talent || 700,
+          rank: teamTalent?.rank || 64
+        },
+        recruiting: {
+          rank: teamRecruiting?.rank || 64,
+          points: teamRecruiting?.points || 0
+        },
+        efficiency: efficiency,
+        driveEfficiency: driveEff,
+        successRate: successRate,
+        explosiveness: explosiveness
+      };
+    } catch (error) {
+      console.error('Enhanced Team Metrics Error:', error);
+      return {
+        talent: { rating: 700, rank: 64 },
+        recruiting: { rank: 64, points: 0 },
+        efficiency: { ppa: [], advanced: [] },
+        driveEfficiency: 0.35,
+        successRate: 0.45,
+        explosiveness: 0.1
+      };
+    }
   }
 };

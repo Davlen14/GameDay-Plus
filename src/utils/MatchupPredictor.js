@@ -1,1070 +1,825 @@
-// utilities/MatchupPredictor.js
-
-import { gameService, teamService, rankingsService } from '../services';
-
 /**
- * Universal College Football Matchup Predictor
- * Provides comprehensive game predictions for any team matchup
+ * Enhanced MatchupPredictor - Professional-grade college football predictions
+ * 
+ * Uses comprehensive service layer architecture for:
+ * - Advanced analytics and talent ratings
+ * - Real-time betting lines and market data
+ * - Weather conditions and venue factors
+ * - Drive efficiency and success rates
+ * - SP+ ratings and efficiency metrics
+ * - Recruiting rankings and depth charts
+ * 
+ * All API keys are stored securely in Vercel environment variables
  */
 
-class MatchupPredictor {
+import { 
+  analyticsService, 
+  bettingService, 
+  weatherService, 
+  teamService,
+  gameService,
+  driveService,
+  rankingsService
+} from '../services';
+
+export class MatchupPredictor {
   constructor() {
-    this.teams = new Map();
-    this.historicalData = new Map();
-    this.spRatings = new Map();
-    this.recruitingData = new Map();
-    this.transferData = new Map();
-    this.isInitialized = false;
+    this.version = '2.1.0';
+    this.supportedSeason = 2024;
+    this.cache = new Map();
+    this.cacheExpiry = 30 * 60 * 1000; // 30 minutes
   }
 
   /**
-   * Initialize the predictor with necessary data
+   * Main prediction engine - analyzes matchup and returns comprehensive prediction
    */
-  async initialize(forceRefresh = false) {
-    if (this.isInitialized && !forceRefresh) return;
-
+  async predictMatchup(homeTeam, awayTeam, options = {}) {
     try {
-      console.log('Initializing Matchup Predictor...');
+      console.log(`🏈 Enhanced MatchupPredictor v${this.version}: Analyzing ${awayTeam} @ ${homeTeam}`);
       
-      // Load teams data - only FBS teams
-      const teams = await teamService.getFBSTeams();
-      teams.forEach(team => {
-        this.teams.set(team.id, team);
-      });
+      const {
+        week = null,
+        season = this.supportedSeason,
+        venue = null,
+        includeWeather = true,
+        includeBetting = true,
+        includeAdvanced = true
+      } = options;
 
-      // Load SP+ ratings (most recent)
-      const spData = await this.loadSPRatings();
-      spData.forEach(rating => {
-        this.spRatings.set(rating.team, rating);
-      });
-
-      // Load recruiting data
-      const recruitingData = await this.loadRecruitingData();
-      recruitingData.forEach(data => {
-        this.recruitingData.set(data.team, data);
-      });
-
-      this.isInitialized = true;
-      console.log('Matchup Predictor initialized successfully');
+      // Validate FBS teams only
+      const fbsTeams = await this.getFBSTeams();
+      const homeTeamData = fbsTeams.find(t => t.school === homeTeam);
+      const awayTeamData = fbsTeams.find(t => t.school === awayTeam);
       
-    } catch (error) {
-      console.error('Error initializing Matchup Predictor:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Generate comprehensive matchup prediction
-   */
-  async predictMatchup(homeTeamId, awayTeamId, options = {}) {
-    await this.initialize();
-
-    const {
-      neutralSite = false,
-      week = 1,
-      season = 2025,
-      weatherConditions = null,
-      conferenceGame = false
-    } = options;
-
-    try {
-      const homeTeam = this.teams.get(homeTeamId);
-      const awayTeam = this.teams.get(awayTeamId);
-
-      if (!homeTeam || !awayTeam) {
-        throw new Error('Team not found');
+      if (!homeTeamData || !awayTeamData) {
+        throw new Error('Both teams must be FBS teams for enhanced predictions');
       }
 
-      // Get historical data for both teams
-      const [homeHistory, awayHistory] = await Promise.all([
-        this.getTeamHistory(homeTeamId),
-        this.getTeamHistory(awayTeamId)
+      // Load comprehensive data in parallel
+      const [
+        homeMetrics,
+        awayMetrics,
+        bettingData,
+        weatherData,
+        homeAdvanced,
+        awayAdvanced,
+        headToHead,
+        venueFactor
+      ] = await Promise.all([
+        this.getEnhancedTeamMetrics(homeTeam, season),
+        this.getEnhancedTeamMetrics(awayTeam, season),
+        includeBetting ? this.getBettingIntelligence(homeTeam, awayTeam, week, season) : null,
+        includeWeather ? this.getWeatherImpact(venue, homeTeam) : null,
+        includeAdvanced ? this.getAdvancedAnalytics(homeTeam, season) : null,
+        includeAdvanced ? this.getAdvancedAnalytics(awayTeam, season) : null,
+        this.getHeadToHeadHistory(homeTeam, awayTeam),
+        this.getVenueAdvantage(homeTeam, venue)
       ]);
 
-      // Calculate core metrics
-      const homeMetrics = this.calculateTeamMetrics(homeTeam, homeHistory);
-      const awayMetrics = this.calculateTeamMetrics(awayTeam, awayHistory);
-
-      // Get head-to-head history
-      const headToHead = await this.getHeadToHeadHistory(homeTeamId, awayTeamId);
-
-      // Calculate predictions
-      const prediction = this.calculatePrediction({
-        homeTeam,
-        awayTeam,
+      // Calculate prediction using enhanced algorithm
+      const prediction = await this.calculateEnhancedPrediction({
+        homeTeam: homeTeamData,
+        awayTeam: awayTeamData,
         homeMetrics,
         awayMetrics,
+        bettingData,
+        weatherData,
+        homeAdvanced,
+        awayAdvanced,
         headToHead,
-        neutralSite,
-        week,
+        venueFactor,
         season,
-        weatherConditions,
-        conferenceGame
+        week
       });
 
-      // Generate comprehensive analysis
-      const analysis = this.generateAnalysis({
-        homeTeam,
-        awayTeam,
-        homeMetrics,
-        awayMetrics,
-        prediction,
-        headToHead,
-        options
-      });
-
+      console.log(`✅ Prediction complete: ${prediction.prediction} (Confidence: ${prediction.confidence}%)`);
+      
       return {
-        prediction,
-        analysis,
-        teams: {
-          home: { ...homeTeam, metrics: homeMetrics },
-          away: { ...awayTeam, metrics: awayMetrics }
-        },
-        headToHead,
-        confidence: this.calculateConfidence(prediction, homeMetrics, awayMetrics),
-        lastUpdated: new Date().toISOString()
+        ...prediction,
+        version: this.version,
+        timestamp: new Date().toISOString(),
+        dataSource: 'Enhanced Service Layer',
+        factors: this.getAnalysisFactors(prediction)
       };
 
     } catch (error) {
-      console.error('Error generating matchup prediction:', error);
-      throw error;
+      console.error('Enhanced MatchupPredictor Error:', error);
+      return this.generateFallbackPrediction(homeTeam, awayTeam, error);
     }
   }
 
   /**
-   * Calculate team performance metrics
+   * Get FBS teams with caching
    */
-  calculateTeamMetrics(team, history) {
-    const recentGames = history.slice(-10); // Last 10 games
-    const allGames = history;
+  async getFBSTeams() {
+    const cacheKey = 'fbs_teams';
+    if (this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey);
+      if (Date.now() - cached.timestamp < this.cacheExpiry) {
+        return cached.data;
+      }
+    }
 
-    // Basic stats
-    const winPercentage = allGames.length > 0 ? 
-      allGames.filter(g => g.isWin).length / allGames.length : 0.5;
+    const teams = await teamService.getFBSTeams(true);
+    this.cache.set(cacheKey, { data: teams, timestamp: Date.now() });
+    return teams;
+  }
 
-    const avgPointsScored = this.calculateAverage(allGames.map(g => g.pointsScored));
-    const avgPointsAllowed = this.calculateAverage(allGames.map(g => g.pointsAllowed));
-    const pointDifferential = avgPointsScored - avgPointsAllowed;
+  /**
+   * Get comprehensive team metrics using enhanced analytics service
+   */
+  async getEnhancedTeamMetrics(team, season) {
+    try {
+      // Use the enhanced analytics service methods
+      const metrics = await analyticsService.getEnhancedTeamMetrics(team, season);
+      
+      // Add SP+ ratings and additional metrics
+      const [spRatings, ppaData, teamStats] = await Promise.all([
+        teamService.getSPRatings(season, team),
+        teamService.getTeamPPA(season, team),
+        teamService.getAdvancedTeamStats(season, team)
+      ]);
 
-    // Recent form
-    const recentWinPct = recentGames.length > 0 ? 
-      recentGames.filter(g => g.isWin).length / recentGames.length : 0.5;
+      const teamSP = spRatings?.find(r => r.team === team);
+      const teamPPA = ppaData?.find(p => p.team === team);
+      const teamAdv = teamStats?.find(s => s.team === team);
 
-    const recentPtsScored = this.calculateAverage(recentGames.map(g => g.pointsScored));
-    const recentPtsAllowed = this.calculateAverage(recentGames.map(g => g.pointsAllowed));
+      return {
+        ...metrics,
+        spPlus: {
+          overall: teamSP?.rating || 0,
+          offense: teamSP?.offense || 0,
+          defense: teamSP?.defense || 0,
+          specialTeams: teamSP?.specialTeams || 0
+        },
+        ppa: {
+          overall: teamPPA?.ppa || 0,
+          offense: teamPPA?.offense?.overall || 0,
+          defense: teamPPA?.defense?.overall || 0,
+          passing: teamPPA?.offense?.passing || 0,
+          rushing: teamPPA?.offense?.rushing || 0
+        },
+        advanced: {
+          turnovers: teamAdv?.turnovers || 0,
+          penalties: teamAdv?.penalties || 0,
+          thirdDowns: teamAdv?.thirdDownConversions || 0,
+          redZone: teamAdv?.redZoneConversions || 0
+        }
+      };
+    } catch (error) {
+      console.error(`Error loading metrics for ${team}:`, error);
+      return this.getDefaultMetrics();
+    }
+  }
 
-    // Get SP+ rating
-    const spRating = this.spRatings.get(team.school) || { rating: 0, ranking: 64 };
+  /**
+   * Get betting intelligence and market data
+   */
+  async getBettingIntelligence(homeTeam, awayTeam, week, season) {
+    try {
+      const bettingLines = await bettingService.getBettingLines(null, season, week, 'regular', null, homeTeam, awayTeam);
+      
+      if (!bettingLines || bettingLines.length === 0) {
+        return null;
+      }
 
-    // Get recruiting strength
-    const recruiting = this.recruitingData.get(team.school) || { rank: 64, points: 0 };
+      // Find the most recent line for this matchup
+      const matchupLine = bettingLines.find(line => 
+        (line.homeTeam === homeTeam && line.awayTeam === awayTeam) ||
+        (line.home === homeTeam && line.away === awayTeam)
+      );
 
-    // Advanced metrics
-    const strengthOfSchedule = this.calculateSOS(allGames);
-    const homeFieldAdvantage = this.calculateHomeFieldAdvantage(allGames);
+      if (!matchupLine || !matchupLine.lines || matchupLine.lines.length === 0) {
+        return null;
+      }
+
+      // Get the most recent line from the best provider
+      const latestLine = matchupLine.lines
+        .filter(line => line.spread !== undefined && line.overUnder !== undefined)
+        .sort((a, b) => new Date(b.formattedSpread) - new Date(a.formattedSpread))[0];
+
+      if (!latestLine) {
+        return null;
+      }
+
+      return {
+        spread: parseFloat(latestLine.spread) || 0,
+        overUnder: parseFloat(latestLine.overUnder) || 0,
+        provider: latestLine.provider || 'Unknown',
+        moneylineHome: latestLine.homeMoneyline || null,
+        moneylineAway: latestLine.awayMoneyline || null,
+        impliedProbability: {
+          home: this.calculateImpliedProbability(latestLine.homeMoneyline, latestLine.spread),
+          away: this.calculateImpliedProbability(latestLine.awayMoneyline, -latestLine.spread)
+        },
+        marketConfidence: this.calculateMarketConfidence(latestLine),
+        timestamp: latestLine.formattedSpread || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error loading betting data:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get weather impact analysis
+   */
+  async getWeatherImpact(venue, homeTeam) {
+    try {
+      // Get weather data for the venue
+      const weatherData = await weatherService.getGameWeather(null, venue, new Date());
+      
+      if (!weatherData) {
+        return null;
+      }
+
+      // Calculate weather impact on game style
+      const impact = {
+        ...weatherData,
+        gameStyle: this.calculateWeatherGameStyle(weatherData),
+        advantageTeam: this.calculateWeatherAdvantage(weatherData, homeTeam),
+        severity: this.calculateWeatherSeverity(weatherData)
+      };
+
+      return impact;
+    } catch (error) {
+      console.error('Error loading weather data:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get advanced analytics including drive efficiency and success rates
+   */
+  async getAdvancedAnalytics(team, season) {
+    try {
+      const [
+        driveData,
+        wepaData,
+        eloRatings
+      ] = await Promise.all([
+        driveService.getTeamDrives(team, season),
+        analyticsService.getTeamWEPA(season, team),
+        teamService.getEloRatings(season, null, team)
+      ]);
+
+      // Calculate advanced metrics
+      const drives = driveData || [];
+      const efficiency = this.calculateDriveEfficiency(drives);
+      
+      return {
+        driveEfficiency: efficiency,
+        wepa: wepaData || { offense: 0, defense: 0 },
+        elo: eloRatings?.[0] || { elo: 1500 },
+        momentum: this.calculateMomentum(drives),
+        clutchFactor: this.calculateClutchPerformance(drives)
+      };
+    } catch (error) {
+      console.error(`Error loading advanced analytics for ${team}:`, error);
+      return this.getDefaultAdvanced();
+    }
+  }
+
+  /**
+   * Get head-to-head history and trends
+   */
+  async getHeadToHeadHistory(homeTeam, awayTeam) {
+    try {
+      const matchupData = await teamService.getTeamMatchup(homeTeam, awayTeam, 2019, 2024);
+      
+      if (!matchupData || !matchupData.games) {
+        return { games: [], trends: null };
+      }
+
+      const games = matchupData.games;
+      const trends = this.analyzeHeadToHeadTrends(games, homeTeam, awayTeam);
+      
+      return {
+        games: games.slice(0, 5), // Last 5 meetings
+        trends,
+        totalMeetings: games.length,
+        lastMeeting: games[0] || null
+      };
+    } catch (error) {
+      console.error('Error loading head-to-head data:', error);
+      return { games: [], trends: null };
+    }
+  }
+
+  /**
+   * Calculate venue advantage and home field impact
+   */
+  async getVenueAdvantage(homeTeam, venue) {
+    try {
+      // Get home team's record at venue
+      const homeGames = await gameService.getGamesByTeam(homeTeam, this.supportedSeason);
+      const atHome = homeGames.filter(game => 
+        (game.home_team === homeTeam || game.homeTeam === homeTeam) && 
+        !game.neutral_site
+      );
+
+      const homeRecord = this.calculateRecord(atHome, homeTeam);
+      const venueAdvantage = this.calculateVenueAdvantage(homeRecord, homeTeam);
+
+      return {
+        homeRecord,
+        venueAdvantage,
+        altitude: venue ? this.getAltitudeAdvantage(venue) : 0,
+        crowd: venue ? this.getCrowdAdvantage(venue, homeTeam) : 0.5,
+        surface: venue ? this.getSurfaceAdvantage(venue) : 0
+      };
+    } catch (error) {
+      console.error('Error calculating venue advantage:', error);
+      return { homeRecord: { wins: 0, losses: 0 }, venueAdvantage: 0.03 };
+    }
+  }
+
+  /**
+   * Enhanced prediction algorithm combining all factors
+   */
+  async calculateEnhancedPrediction(data) {
+    const {
+      homeTeam,
+      awayTeam,
+      homeMetrics,
+      awayMetrics,
+      bettingData,
+      weatherData,
+      homeAdvanced,
+      awayAdvanced,
+      headToHead,
+      venueFactor
+    } = data;
+
+    // Core team strength differential
+    const talentDiff = (homeMetrics.talent.rating - awayMetrics.talent.rating) / 100;
+    const spPlusDiff = (homeMetrics.spPlus.overall - awayMetrics.spPlus.overall) / 10;
+    const efficiencyDiff = (homeMetrics.driveEfficiency - awayMetrics.driveEfficiency) * 10;
     
-    // Efficiency metrics
-    const offensiveEfficiency = this.calculateOffensiveEfficiency(allGames);
-    const defensiveEfficiency = this.calculateDefensiveEfficiency(allGames);
+    // Advanced factors
+    const ppaDiff = (homeMetrics.ppa.overall - awayMetrics.ppa.overall) * 5;
+    const clutchDiff = (homeAdvanced?.clutchFactor || 0.5) - (awayAdvanced?.clutchFactor || 0.5);
+    
+    // Situational factors
+    const homeFieldAdvantage = venueFactor.venueAdvantage + venueFactor.crowd + venueFactor.altitude;
+    const weatherImpact = weatherData ? this.calculateWeatherImpactOnPrediction(weatherData, homeMetrics, awayMetrics) : 0;
+    const bettingAdjustment = bettingData ? this.calculateBettingAdjustment(bettingData) : 0;
+    
+    // Historical factors
+    const h2hTrend = headToHead.trends ? this.calculateH2HTrend(headToHead.trends, homeTeam.school) : 0;
+    
+    // Combine all factors with weights
+    const rawScore = (
+      talentDiff * 0.25 +
+      spPlusDiff * 0.20 +
+      efficiencyDiff * 0.15 +
+      ppaDiff * 0.10 +
+      clutchDiff * 0.08 +
+      homeFieldAdvantage * 0.10 +
+      weatherImpact * 0.05 +
+      bettingAdjustment * 0.04 +
+      h2hTrend * 0.03
+    );
 
-    // Red zone performance
-    const redZoneScoring = this.calculateRedZoneEfficiency(allGames, 'offense');
-    const redZoneDefense = this.calculateRedZoneEfficiency(allGames, 'defense');
-
-    // Turnover metrics
-    const turnoverMargin = this.calculateTurnoverMargin(allGames);
+    // Convert to probability using logistic function
+    const homeProbability = 1 / (1 + Math.exp(-rawScore * 3));
+    const awayProbability = 1 - homeProbability;
+    
+    // Determine prediction and confidence
+    const isHomeWin = homeProbability > 0.5;
+    const confidence = Math.round(Math.max(homeProbability, awayProbability) * 100);
+    const margin = Math.abs(rawScore * 14); // Convert to point spread estimate
+    
+    // Generate score prediction
+    const scorePrediction = this.generateScorePrediction(
+      homeMetrics, 
+      awayMetrics, 
+      rawScore, 
+      weatherData
+    );
 
     return {
-      // Core metrics
-      winPercentage,
-      avgPointsScored,
-      avgPointsAllowed,
-      pointDifferential,
-      
-      // Recent form
-      recentWinPct,
-      recentPtsScored,
-      recentPtsAllowed,
-      recentForm: recentPtsScored - recentPtsAllowed,
-      
-      // Advanced ratings
-      spRating: spRating.rating || 0,
-      spRanking: spRating.ranking || 64,
-      recruitingRank: recruiting.rank || 64,
-      recruitingPoints: recruiting.points || 0,
-      
-      // Situational
-      strengthOfSchedule,
-      homeFieldAdvantage,
-      
-      // Efficiency
-      offensiveEfficiency,
-      defensiveEfficiency,
-      redZoneScoring,
-      redZoneDefense,
-      turnoverMargin,
-      
-      // Game counts
-      totalGames: allGames.length,
-      recentGames: recentGames.length
+      prediction: isHomeWin ? homeTeam.school : awayTeam.school,
+      confidence,
+      homeProbability: Math.round(homeProbability * 100),
+      awayProbability: Math.round(awayProbability * 100),
+      predictedMargin: Math.round(margin * 10) / 10,
+      predictedScore: scorePrediction,
+      keyFactors: this.identifyKeyFactors(data, rawScore),
+      riskFactors: this.identifyRiskFactors(data),
+      bettingRecommendation: this.generateBettingRecommendation(bettingData, homeProbability),
+      model: {
+        algorithm: 'Enhanced Multi-Factor Analysis',
+        factors: {
+          talent: talentDiff,
+          spPlus: spPlusDiff,
+          efficiency: efficiencyDiff,
+          ppa: ppaDiff,
+          clutch: clutchDiff,
+          homeField: homeFieldAdvantage,
+          weather: weatherImpact,
+          betting: bettingAdjustment,
+          history: h2hTrend
+        },
+        rawScore,
+        version: this.version
+      }
     };
   }
 
   /**
-   * Calculate final prediction
+   * Generate detailed score prediction
    */
-  calculatePrediction({ homeTeam, awayTeam, homeMetrics, awayMetrics, headToHead, neutralSite, week, season, weatherConditions, conferenceGame }) {
+  generateScorePrediction(homeMetrics, awayMetrics, rawScore, weatherData) {
+    // Base scoring from team efficiency
+    const homeBaseScore = 24 + (homeMetrics.ppa.offense * 8) + (homeMetrics.driveEfficiency * 15);
+    const awayBaseScore = 24 + (awayMetrics.ppa.offense * 8) + (awayMetrics.driveEfficiency * 15);
     
-    // Base prediction using multiple factors
-    let homeScore = 28; // Base score
-    let awayScore = 24; // Base score
-
-    // Factor in team strength
-    const spDifferential = homeMetrics.spRating - awayMetrics.spRating;
-    const pointDifferential = homeMetrics.pointDifferential - awayMetrics.pointDifferential;
+    // Apply defensive adjustments
+    const homeAdjusted = homeBaseScore - (awayMetrics.ppa.defense * 5);
+    const awayAdjusted = awayBaseScore - (homeMetrics.ppa.defense * 5);
     
-    // Adjust scores based on team strength
-    homeScore += (spDifferential * 0.4) + (pointDifferential * 0.15);
-    awayScore += (-spDifferential * 0.4) + (-pointDifferential * 0.15);
-
-    // Recent form adjustment
-    const recentFormDiff = homeMetrics.recentForm - awayMetrics.recentForm;
-    homeScore += recentFormDiff * 0.1;
-    awayScore -= recentFormDiff * 0.1;
-
-    // Home field advantage (if not neutral site)
-    if (!neutralSite) {
-      homeScore += homeMetrics.homeFieldAdvantage || 3.2;
-    }
-
-    // Week adjustments
-    if (week <= 4) {
-      // Early season - more conservative scoring
-      homeScore *= 0.92;
-      awayScore *= 0.92;
-    }
-
+    // Apply game script and situational factors
+    const marginEffect = rawScore * 7;
+    const homeScore = Math.max(10, Math.round(homeAdjusted + marginEffect));
+    const awayScore = Math.max(10, Math.round(awayAdjusted - marginEffect));
+    
     // Weather adjustments
-    if (weatherConditions) {
-      const weatherAdjustment = this.calculateWeatherImpact(weatherConditions);
-      homeScore += weatherAdjustment.home;
-      awayScore += weatherAdjustment.away;
+    if (weatherData && weatherData.severity > 0.5) {
+      const reduction = Math.round(weatherData.severity * 8);
+      return {
+        home: Math.max(7, homeScore - reduction),
+        away: Math.max(7, awayScore - reduction),
+        total: Math.max(14, homeScore + awayScore - (reduction * 2)),
+        weatherAdjusted: true
+      };
     }
-
-    // Conference game adjustment
-    if (conferenceGame) {
-      // Conference games tend to be closer
-      const adjustment = Math.abs(homeScore - awayScore) * 0.15;
-      if (homeScore > awayScore) {
-        homeScore -= adjustment;
-        awayScore += adjustment * 0.5;
-      } else {
-        awayScore -= adjustment;
-        homeScore += adjustment * 0.5;
-      }
-    }
-
-    // Ensure reasonable bounds
-    homeScore = Math.max(10, Math.min(70, homeScore));
-    awayScore = Math.max(7, Math.min(65, awayScore));
-
-    // Round to reasonable numbers
-    homeScore = Math.round(homeScore * 10) / 10;
-    awayScore = Math.round(awayScore * 10) / 10;
-
-    // Calculate derived metrics
-    const total = homeScore + awayScore;
-    const spread = homeScore - awayScore;
-    const homeWinProb = this.calculateWinProbability(homeScore, awayScore, homeMetrics, awayMetrics);
-    const awayWinProb = 1 - homeWinProb;
-
-    // Convert to moneyline odds
-    const homeMoneyline = this.probabilityToMoneyline(homeWinProb);
-    const awayMoneyline = this.probabilityToMoneyline(awayWinProb);
-
-    return {
-      score: {
-        home: homeScore,
-        away: awayScore,
-        total: Math.round(total * 10) / 10
-      },
-      spread: Math.round(spread * 10) / 10,
-      total: Math.round(total * 10) / 10,
-      winProbability: {
-        home: Math.round(homeWinProb * 1000) / 10, // Percentage
-        away: Math.round(awayWinProb * 1000) / 10
-      },
-      moneyline: {
-        home: homeMoneyline,
-        away: awayMoneyline
-      },
-      factors: {
-        spDifferential: Math.round(spDifferential * 10) / 10,
-        pointDifferential: Math.round(pointDifferential * 10) / 10,
-        recentFormDiff: Math.round(recentFormDiff * 10) / 10,
-        homeFieldValue: neutralSite ? 0 : (homeMetrics.homeFieldAdvantage || 3.2)
-      }
-    };
-  }
-
-  /**
-   * Generate comprehensive analysis
-   */
-  generateAnalysis({ homeTeam, awayTeam, homeMetrics, awayMetrics, prediction, headToHead, options }) {
-    const analysis = {
-      summary: this.generateSummary(homeTeam, awayTeam, prediction),
-      keyFactors: this.identifyKeyFactors(homeMetrics, awayMetrics, prediction),
-      teamAnalysis: {
-        home: this.generateTeamAnalysis(homeTeam, homeMetrics, 'home'),
-        away: this.generateTeamAnalysis(awayTeam, awayMetrics, 'away')
-      },
-      matchupEdges: this.identifyMatchupEdges(homeMetrics, awayMetrics),
-      historicalContext: this.analyzeHistoricalContext(headToHead),
-      situationalFactors: this.analyzeSituationalFactors(options),
-      confidenceFactors: this.getConfidenceFactors(homeMetrics, awayMetrics, prediction),
-      bettingInsights: this.generateBettingInsights(prediction, homeMetrics, awayMetrics)
-    };
-
-    return analysis;
-  }
-
-  /**
-   * Generate game summary
-   */
-  generateSummary(homeTeam, awayTeam, prediction) {
-    const favorite = prediction.spread > 0 ? homeTeam.school : awayTeam.school;
-    const favoriteBy = Math.abs(prediction.spread);
-    const total = prediction.total;
-    const homeProb = prediction.winProbability.home;
-
-    let gameType = 'competitive';
-    if (favoriteBy >= 14) gameType = 'blowout potential';
-    else if (favoriteBy >= 7) gameType = 'comfortable favorite';
-    else if (favoriteBy >= 3) gameType = 'slight favorite';
-    else gameType = 'toss-up';
-
-    let scoringExpectation = 'moderate';
-    if (total >= 65) scoringExpectation = 'high-scoring';
-    else if (total >= 55) scoringExpectation = 'above-average scoring';
-    else if (total <= 45) scoringExpectation = 'low-scoring';
-
-    return {
-      gameType,
-      scoringExpectation,
-      favorite,
-      favoriteBy: Math.round(favoriteBy * 10) / 10,
-      description: `${favorite} is favored by ${favoriteBy.toFixed(1)} points in what projects to be a ${gameType} ${scoringExpectation} game with a total of ${total.toFixed(1)} points. ${homeTeam.school} has a ${homeProb.toFixed(1)}% chance to win at home.`
-    };
-  }
-
-  /**
-   * Identify key factors driving the prediction
-   */
-  identifyKeyFactors(homeMetrics, awayMetrics, prediction) {
-    const factors = [];
-
-    // SP+ differential
-    const spDiff = homeMetrics.spRating - awayMetrics.spRating;
-    if (Math.abs(spDiff) >= 5) {
-      factors.push({
-        factor: 'Team Quality Gap',
-        impact: spDiff > 0 ? 'Favors Home' : 'Favors Away',
-        strength: Math.abs(spDiff) >= 10 ? 'Strong' : 'Moderate',
-        description: `SP+ rating differential of ${spDiff.toFixed(1)} points indicates ${Math.abs(spDiff) >= 10 ? 'significant' : 'notable'} talent gap`
-      });
-    }
-
-    // Recent form
-    const formDiff = homeMetrics.recentForm - awayMetrics.recentForm;
-    if (Math.abs(formDiff) >= 7) {
-      factors.push({
-        factor: 'Recent Form',
-        impact: formDiff > 0 ? 'Favors Home' : 'Favors Away',
-        strength: Math.abs(formDiff) >= 14 ? 'Strong' : 'Moderate',
-        description: `Recent point differential gap of ${Math.abs(formDiff).toFixed(1)} points per game`
-      });
-    }
-
-    // Offensive vs Defensive matchup
-    const offVsDef = homeMetrics.offensiveEfficiency - awayMetrics.defensiveEfficiency;
-    const defVsOff = homeMetrics.defensiveEfficiency - awayMetrics.offensiveEfficiency;
     
-    if (offVsDef >= 0.3) {
+    return {
+      home: homeScore,
+      away: awayScore,
+      total: homeScore + awayScore,
+      weatherAdjusted: false
+    };
+  }
+
+  /**
+   * Identify key factors influencing the prediction
+   */
+  identifyKeyFactors(data, rawScore) {
+    const factors = [];
+    const { homeMetrics, awayMetrics, bettingData, weatherData, venueFactor } = data;
+    
+    // Talent advantage
+    const talentDiff = homeMetrics.talent.rating - awayMetrics.talent.rating;
+    if (Math.abs(talentDiff) > 50) {
       factors.push({
-        factor: 'Home Offensive Advantage',
-        impact: 'Favors Home',
-        strength: offVsDef >= 0.5 ? 'Strong' : 'Moderate',
-        description: 'Home team\'s offense significantly better than away team\'s defense'
+        factor: 'Talent Advantage',
+        advantage: talentDiff > 0 ? 'Home' : 'Away',
+        magnitude: Math.abs(talentDiff),
+        impact: 'High'
       });
     }
-
-    if (defVsOff >= 0.3) {
+    
+    // SP+ differential
+    const spDiff = homeMetrics.spPlus.overall - awayMetrics.spPlus.overall;
+    if (Math.abs(spDiff) > 5) {
       factors.push({
-        factor: 'Home Defensive Advantage',
-        impact: 'Favors Home',
-        strength: defVsOff >= 0.5 ? 'Strong' : 'Moderate',
-        description: 'Home team\'s defense significantly better than away team\'s offense'
+        factor: 'SP+ Rating',
+        advantage: spDiff > 0 ? 'Home' : 'Away',
+        magnitude: Math.abs(spDiff),
+        impact: 'High'
       });
     }
-
+    
     // Home field advantage
-    if (homeMetrics.homeFieldAdvantage >= 4.5) {
+    if (venueFactor.venueAdvantage > 0.05) {
       factors.push({
-        factor: 'Strong Home Field',
-        impact: 'Favors Home',
-        strength: 'Moderate',
-        description: `Home team has strong home field advantage worth ${homeMetrics.homeFieldAdvantage.toFixed(1)} points`
+        factor: 'Home Field Advantage',
+        advantage: 'Home',
+        magnitude: venueFactor.venueAdvantage,
+        impact: 'Medium'
       });
     }
-
+    
+    // Weather impact
+    if (weatherData && weatherData.severity > 0.4) {
+      factors.push({
+        factor: 'Weather Conditions',
+        advantage: weatherData.advantageTeam || 'Neutral',
+        magnitude: weatherData.severity,
+        impact: 'Medium'
+      });
+    }
+    
+    // Betting market confidence
+    if (bettingData && bettingData.marketConfidence > 0.7) {
+      factors.push({
+        factor: 'Market Consensus',
+        advantage: bettingData.spread > 0 ? 'Away' : 'Home',
+        magnitude: Math.abs(bettingData.spread),
+        impact: 'Medium'
+      });
+    }
+    
     return factors.slice(0, 5); // Top 5 factors
   }
 
   /**
-   * Generate team-specific analysis
+   * Identify potential risk factors
    */
-  generateTeamAnalysis(team, metrics, side) {
-    const strengths = [];
-    const weaknesses = [];
-    const keyStats = [];
-
-    // Identify strengths
-    if (metrics.offensiveEfficiency >= 0.6) strengths.push('Elite Offense');
-    else if (metrics.offensiveEfficiency >= 0.4) strengths.push('Strong Offense');
+  identifyRiskFactors(data) {
+    const risks = [];
+    const { homeMetrics, awayMetrics, weatherData, headToHead } = data;
     
-    if (metrics.defensiveEfficiency >= 0.6) strengths.push('Elite Defense');
-    else if (metrics.defensiveEfficiency >= 0.4) strengths.push('Strong Defense');
+    // Close talent levels
+    const talentDiff = Math.abs(homeMetrics.talent.rating - awayMetrics.talent.rating);
+    if (talentDiff < 25) {
+      risks.push('Teams have similar talent levels - could be decided by execution');
+    }
     
-    if (metrics.redZoneScoring >= 0.7) strengths.push('Red Zone Efficiency');
-    if (metrics.turnoverMargin >= 0.5) strengths.push('Turnover Creation');
-    if (metrics.recentWinPct >= 0.8) strengths.push('Hot Streak');
-
-    // Identify weaknesses
-    if (metrics.offensiveEfficiency <= 0.3) weaknesses.push('Struggling Offense');
-    if (metrics.defensiveEfficiency <= 0.3) weaknesses.push('Poor Defense');
-    if (metrics.redZoneDefense <= 0.4) weaknesses.push('Red Zone Defense');
-    if (metrics.turnoverMargin <= -0.5) weaknesses.push('Turnover Issues');
-    if (metrics.recentWinPct <= 0.3) weaknesses.push('Poor Recent Form');
-
-    // Key stats
-    keyStats.push({
-      label: 'Points Per Game',
-      value: metrics.avgPointsScored.toFixed(1),
-      rank: this.getRankFromValue(metrics.avgPointsScored, 45, 20)
-    });
+    // Weather concerns
+    if (weatherData && weatherData.severity > 0.6) {
+      risks.push('Severe weather conditions may lead to unpredictable outcomes');
+    }
     
-    keyStats.push({
-      label: 'Points Allowed',
-      value: metrics.avgPointsAllowed.toFixed(1),
-      rank: this.getRankFromValue(metrics.avgPointsAllowed, 15, 35, true)
-    });
+    // Historical variance
+    if (headToHead.games && headToHead.games.length > 2) {
+      const margins = headToHead.games.map(g => Math.abs(g.homePoints - g.awayPoints));
+      const avgMargin = margins.reduce((a, b) => a + b, 0) / margins.length;
+      if (avgMargin < 10) {
+        risks.push('Historical meetings have been close - upset potential');
+      }
+    }
     
-    keyStats.push({
-      label: 'Win Percentage',
-      value: `${(metrics.winPercentage * 100).toFixed(1)}%`,
-      rank: this.getRankFromValue(metrics.winPercentage, 0.8, 0.4)
-    });
+    return risks;
+  }
 
+  /**
+   * Generate betting recommendation based on model vs market
+   */
+  generateBettingRecommendation(bettingData, modelProbability) {
+    if (!bettingData) {
+      return { recommendation: 'No betting data available', confidence: 0 };
+    }
+    
+    const marketProbability = bettingData.impliedProbability.home;
+    const edge = Math.abs(modelProbability - marketProbability);
+    
+    if (edge > 0.15) { // 15% edge threshold
+      return {
+        recommendation: modelProbability > marketProbability ? 'Home Team' : 'Away Team',
+        edge: Math.round(edge * 100),
+        confidence: edge > 0.25 ? 'High' : 'Medium',
+        explanation: `Model suggests ${Math.round(edge * 100)}% edge over market`
+      };
+    }
+    
     return {
-      strengths: strengths.slice(0, 3),
-      weaknesses: weaknesses.slice(0, 3),
-      keyStats,
-      overall: this.getOverallGrade(metrics),
-      trend: this.getTrend(metrics)
+      recommendation: 'No strong betting edge detected',
+      edge: Math.round(edge * 100),
+      confidence: 'Low'
     };
   }
 
   /**
-   * Identify specific matchup edges
+   * Helper methods for calculations
    */
-  identifyMatchupEdges(homeMetrics, awayMetrics) {
-    const edges = [];
-
-    // Offensive vs Defensive matchups
-    const homeOffVsAwayDef = homeMetrics.offensiveEfficiency - awayMetrics.defensiveEfficiency;
-    const awayOffVsHomeDef = awayMetrics.offensiveEfficiency - homeMetrics.defensiveEfficiency;
-
-    if (homeOffVsAwayDef >= 0.2) {
-      edges.push({
-        type: 'Offensive Mismatch',
-        favors: 'Home',
-        strength: homeOffVsAwayDef >= 0.4 ? 'Major' : 'Moderate',
-        description: 'Home team offense vs Away team defense'
-      });
-    }
-
-    if (awayOffVsHomeDef >= 0.2) {
-      edges.push({
-        type: 'Offensive Mismatch',
-        favors: 'Away',
-        strength: awayOffVsHomeDef >= 0.4 ? 'Major' : 'Moderate',
-        description: 'Away team offense vs Home team defense'
-      });
-    }
-
-    // Special situations
-    const redZoneDiff = homeMetrics.redZoneScoring - awayMetrics.redZoneDefense;
-    if (Math.abs(redZoneDiff) >= 0.2) {
-      edges.push({
-        type: 'Red Zone Edge',
-        favors: redZoneDiff > 0 ? 'Home' : 'Away',
-        strength: Math.abs(redZoneDiff) >= 0.3 ? 'Major' : 'Moderate',
-        description: `${redZoneDiff > 0 ? 'Home' : 'Away'} team has red zone advantage`
-      });
-    }
-
-    // Turnover battle
-    const turnoverDiff = homeMetrics.turnoverMargin - awayMetrics.turnoverMargin;
-    if (Math.abs(turnoverDiff) >= 1.0) {
-      edges.push({
-        type: 'Turnover Battle',
-        favors: turnoverDiff > 0 ? 'Home' : 'Away',
-        strength: Math.abs(turnoverDiff) >= 1.5 ? 'Major' : 'Moderate',
-        description: `${turnoverDiff > 0 ? 'Home' : 'Away'} team much better with ball security`
-      });
-    }
-
-    return edges;
-  }
-
-  /**
-   * Generate betting insights
-   */
-  generateBettingInsights(prediction, homeMetrics, awayMetrics) {
-    const insights = [];
-
-    // Spread analysis
-    const spreadConfidence = this.analyzeSpreadConfidence(prediction, homeMetrics, awayMetrics);
-    insights.push({
-      type: 'Spread',
-      recommendation: spreadConfidence.recommendation,
-      confidence: spreadConfidence.confidence,
-      reasoning: spreadConfidence.reasoning
-    });
-
-    // Total analysis
-    const totalConfidence = this.analyzeTotalConfidence(prediction, homeMetrics, awayMetrics);
-    insights.push({
-      type: 'Total',
-      recommendation: totalConfidence.recommendation,
-      confidence: totalConfidence.confidence,
-      reasoning: totalConfidence.reasoning
-    });
-
-    // Moneyline value
-    const mlValue = this.analyzeMoneylineValue(prediction);
-    if (mlValue.hasValue) {
-      insights.push({
-        type: 'Moneyline',
-        recommendation: mlValue.recommendation,
-        confidence: mlValue.confidence,
-        reasoning: mlValue.reasoning
-      });
-    }
-
-    return insights;
-  }
-
-  // Helper methods for calculations
-  calculateAverage(values) {
-    if (!values || values.length === 0) return 0;
-    return values.reduce((sum, val) => sum + val, 0) / values.length;
-  }
-
-  calculateWinProbability(homeScore, awayScore, homeMetrics, awayMetrics) {
-    const scoreDiff = homeScore - awayScore;
-    const strengthDiff = (homeMetrics.spRating - awayMetrics.spRating) / 10;
+  calculateImpliedProbability(moneyline, spread) {
+    if (!moneyline) return 0.5;
     
-    // Base probability from score differential
-    let prob = 0.5 + (scoreDiff / 35);
-    
-    // Adjust for team strength
-    prob += strengthDiff * 0.05;
-    
-    // Adjust for recent form
-    const formDiff = (homeMetrics.recentWinPct - awayMetrics.recentWinPct);
-    prob += formDiff * 0.1;
-    
-    // Bound between 0.05 and 0.95
-    return Math.max(0.05, Math.min(0.95, prob));
-  }
-
-  probabilityToMoneyline(probability) {
-    if (probability >= 0.5) {
-      return Math.round(-probability / (1 - probability) * 100);
+    if (moneyline > 0) {
+      return 100 / (moneyline + 100);
     } else {
-      return Math.round((1 - probability) / probability * 100);
+      return Math.abs(moneyline) / (Math.abs(moneyline) + 100);
     }
   }
 
-  calculateConfidence(prediction, homeMetrics, awayMetrics) {
-    let confidence = 0.7; // Base confidence
-
-    // Data quality
-    const dataQuality = Math.min(homeMetrics.totalGames, awayMetrics.totalGames);
-    if (dataQuality >= 10) confidence += 0.1;
-    else if (dataQuality <= 5) confidence -= 0.1;
-
-    // Prediction certainty
-    const spreadAbs = Math.abs(prediction.spread);
-    if (spreadAbs >= 10) confidence += 0.1;
-    else if (spreadAbs <= 3) confidence -= 0.05;
-
-    // Team strength differential
-    const strengthDiff = Math.abs(homeMetrics.spRating - awayMetrics.spRating);
-    if (strengthDiff >= 10) confidence += 0.1;
-    else if (strengthDiff <= 3) confidence -= 0.05;
-
-    return Math.max(0.4, Math.min(0.95, confidence));
+  calculateMarketConfidence(line) {
+    const spreadConfidence = Math.min(Math.abs(line.spread) / 20, 1);
+    const moneylineConfidence = line.homeMoneyline && line.awayMoneyline ? 
+      Math.min(Math.abs(line.homeMoneyline - line.awayMoneyline) / 400, 1) : 0.5;
+    
+    return (spreadConfidence + moneylineConfidence) / 2;
   }
 
-  // Placeholder implementations for data loading methods
-  async loadSPRatings() {
-    // This would load SP+ ratings from your API
-    // For now, return mock data for testing
-    return [
-      { team: 'Georgia', rating: 28.5, ranking: 1 },
-      { team: 'Alabama', rating: 25.2, ranking: 2 },
-      { team: 'Ohio State', rating: 23.8, ranking: 3 },
-      { team: 'Texas', rating: 22.1, ranking: 4 },
-      { team: 'Oregon', rating: 20.5, ranking: 5 }
-    ];
+  calculateWeatherGameStyle(weather) {
+    if (weather.precipitation > 0.3 || weather.windSpeed > 20) {
+      return 'Run-heavy, low-scoring';
+    } else if (weather.temperature < 35 || weather.temperature > 85) {
+      return 'Weather-impacted';
+    }
+    return 'Normal conditions';
   }
 
-  async loadRecruitingData() {
-    // This would load recruiting data from your API
-    // For now, return mock data for testing
-    return [
-      { team: 'Georgia', rank: 1, points: 325.4 },
-      { team: 'Alabama', rank: 2, points: 315.8 },
-      { team: 'Ohio State', rank: 3, points: 310.2 },
-      { team: 'Texas', rank: 4, points: 295.6 },
-      { team: 'Oregon', rank: 5, points: 285.1 }
-    ];
+  calculateWeatherAdvantage(weather, homeTeam) {
+    // Teams from colder climates might have advantage in cold weather
+    if (weather.temperature < 35) {
+      const coldWeatherTeams = ['Minnesota', 'Wisconsin', 'Michigan', 'Michigan State', 'Northwestern'];
+      return coldWeatherTeams.includes(homeTeam) ? 'Home' : 'Neutral';
+    }
+    return 'Neutral';
   }
 
-  async getTeamHistory(teamId) {
-    try {
-      // Get team's recent games from game service
-      const games = await gameService.getGamesByTeam(teamId, 2024); // Use 2024 data for now
+  calculateWeatherSeverity(weather) {
+    let severity = 0;
+    
+    if (weather.precipitation > 0.2) severity += 0.3;
+    if (weather.windSpeed > 15) severity += 0.2;
+    if (weather.temperature < 32 || weather.temperature > 90) severity += 0.2;
+    if (weather.humidity > 80) severity += 0.1;
+    
+    return Math.min(severity, 1);
+  }
+
+  calculateDriveEfficiency(drives) {
+    if (!drives || drives.length === 0) return 0.35;
+    
+    const scoringDrives = drives.filter(d => d.scoring === true).length;
+    return Math.min(scoringDrives / drives.length, 1);
+  }
+
+  calculateMomentum(drives) {
+    if (!drives || drives.length < 5) return 0.5;
+    
+    const recentDrives = drives.slice(-5);
+    const scoringPct = recentDrives.filter(d => d.scoring).length / recentDrives.length;
+    return scoringPct;
+  }
+
+  calculateClutchPerformance(drives) {
+    if (!drives || drives.length === 0) return 0.5;
+    
+    // This would need more detailed drive data to properly calculate
+    // For now, return baseline
+    return 0.5;
+  }
+
+  analyzeHeadToHeadTrends(games, homeTeam, awayTeam) {
+    if (!games || games.length === 0) return null;
+    
+    let homeWins = 0;
+    let totalMargin = 0;
+    
+    games.forEach(game => {
+      const homePoints = game.home_team === homeTeam ? game.home_points : game.away_points;
+      const awayPoints = game.home_team === homeTeam ? game.away_points : game.home_points;
       
-      // Transform games into the expected format
-      return games.map(game => ({
-        isWin: game.completed && 
-               ((game.homeId === teamId && game.homePoints > game.awayPoints) ||
-                (game.awayId === teamId && game.awayPoints > game.homePoints)),
-        pointsScored: game.homeId === teamId ? game.homePoints : game.awayPoints,
-        pointsAllowed: game.homeId === teamId ? game.awayPoints : game.homePoints,
-        isHome: game.homeId === teamId,
-        opponent: game.homeId === teamId ? game.awayTeam : game.homeTeam,
-        week: game.week
-      })).filter(game => game.pointsScored !== undefined && game.pointsAllowed !== undefined);
-    } catch (error) {
-      console.error('Error loading team history:', error);
-      // Return mock data for development
-      return this.generateMockTeamHistory();
-    }
-  }
-
-  generateMockTeamHistory() {
-    // Generate mock team history for development
-    const games = [];
-    for (let i = 0; i < 12; i++) {
-      const homePoints = Math.floor(Math.random() * 35) + 14;
-      const awayPoints = Math.floor(Math.random() * 35) + 14;
-      games.push({
-        isWin: homePoints > awayPoints,
-        pointsScored: homePoints,
-        pointsAllowed: awayPoints,
-        isHome: Math.random() > 0.5,
-        week: i + 1
-      });
-    }
-    return games;
-  }
-
-  async getHeadToHeadHistory(team1Id, team2Id) {
-    try {
-      // This would query for head-to-head games between the teams
-      // For now, return mock data
-      return {
-        games: [],
-        team1Wins: Math.floor(Math.random() * 5),
-        team2Wins: Math.floor(Math.random() * 5)
-      };
-    } catch (error) {
-      console.error('Error loading head-to-head history:', error);
-      return { games: [], team1Wins: 0, team2Wins: 0 };
-    }
-  }
-
-  // Utility calculation methods
-  calculateOffensiveEfficiency(games) {
-    if (!games || games.length === 0) return 0.5;
-    const avgScored = this.calculateAverage(games.map(g => g.pointsScored));
-    return Math.min(1.0, Math.max(0.0, (avgScored - 20) / 40));
-  }
-
-  calculateDefensiveEfficiency(games) {
-    if (!games || games.length === 0) return 0.5;
-    const avgAllowed = this.calculateAverage(games.map(g => g.pointsAllowed));
-    return Math.min(1.0, Math.max(0.0, (45 - avgAllowed) / 30));
-  }
-
-  calculateRedZoneEfficiency(games, type) {
-    // Simplified calculation - would need more detailed game data
-    if (type === 'offense') {
-      return Math.random() * 0.4 + 0.5; // 50-90%
-    } else {
-      return Math.random() * 0.4 + 0.3; // 30-70%
-    }
-  }
-
-  calculateTurnoverMargin(games) {
-    // Simplified calculation - would need turnover data
-    return (Math.random() - 0.5) * 2; // -1 to +1
-  }
-
-  calculateSOS(games) {
-    // Simplified strength of schedule calculation
-    return Math.random() * 0.4 + 0.4; // 0.4 to 0.8
-  }
-
-  calculateHomeFieldAdvantage(games) {
-    // Calculate home field advantage based on home vs away performance
-    const homeGames = games.filter(g => g.isHome);
-    const awayGames = games.filter(g => !g.isHome);
+      if (homePoints > awayPoints) homeWins++;
+      totalMargin += Math.abs(homePoints - awayPoints);
+    });
     
-    if (homeGames.length === 0 || awayGames.length === 0) return 3.2;
-    
-    const homeDiff = this.calculateAverage(homeGames.map(g => g.pointsScored - g.pointsAllowed));
-    const awayDiff = this.calculateAverage(awayGames.map(g => g.pointsScored - g.pointsAllowed));
-    
-    return Math.max(1.0, Math.min(6.0, homeDiff - awayDiff + 3.2));
-  }
-
-  calculateWeatherImpact(conditions) {
-    let homeImpact = 0;
-    let awayImpact = 0;
-    
-    if (conditions.temperature < 35) {
-      homeImpact -= 2;
-      awayImpact -= 3; // Away team more affected by cold
-    }
-    
-    if (conditions.windSpeed > 15) {
-      homeImpact -= 1;
-      awayImpact -= 1;
-    }
-    
-    if (conditions.precipitation) {
-      homeImpact -= 1.5;
-      awayImpact -= 2;
-    }
-    
-    return { home: homeImpact, away: awayImpact };
-  }
-
-  getRankFromValue(value, excellent, poor, reverse = false) {
-    if (reverse) {
-      if (value <= excellent) return 'Top 10';
-      if (value <= (excellent + poor) / 2) return 'Top 25';
-      if (value <= poor) return 'Average';
-      return 'Below Average';
-    } else {
-      if (value >= excellent) return 'Top 10';
-      if (value >= (excellent + poor) / 2) return 'Top 25';
-      if (value >= poor) return 'Average';
-      return 'Below Average';
-    }
-  }
-
-  getOverallGrade(metrics) {
-    const composite = (metrics.spRating / 30) + (metrics.winPercentage * 2) + 
-                    (metrics.offensiveEfficiency) + (metrics.defensiveEfficiency);
-    
-    if (composite >= 3.5) return 'A';
-    if (composite >= 3.0) return 'B+';
-    if (composite >= 2.5) return 'B';
-    if (composite >= 2.0) return 'C+';
-    if (composite >= 1.5) return 'C';
-    return 'D';
-  }
-
-  getTrend(metrics) {
-    const recent = metrics.recentForm;
-    const overall = metrics.pointDifferential;
-    
-    if (recent > overall + 5) return 'Trending Up';
-    if (recent < overall - 5) return 'Trending Down';
-    return 'Stable';
-  }
-
-  analyzeSpreadConfidence(prediction, homeMetrics, awayMetrics) {
-    const spreadAbs = Math.abs(prediction.spread);
-    const strengthDiff = Math.abs(homeMetrics.spRating - awayMetrics.spRating);
-    
-    let confidence = 'Medium';
-    let recommendation = prediction.spread > 0 ? 'Home' : 'Away';
-    let reasoning = `Model projects ${recommendation.toLowerCase()} team by ${spreadAbs.toFixed(1)} points`;
-
-    if (strengthDiff >= 10 && spreadAbs >= 7) {
-      confidence = 'High';
-      reasoning += '. Significant talent gap supports the spread.';
-    } else if (strengthDiff <= 3 && spreadAbs <= 3) {
-      confidence = 'Low';
-      reasoning += '. Very close matchup with uncertain outcome.';
-    }
-
-    return { recommendation, confidence, reasoning };
-  }
-
-  analyzeTotalConfidence(prediction, homeMetrics, awayMetrics) {
-    const avgScoring = (homeMetrics.avgPointsScored + homeMetrics.avgPointsAllowed + 
-                       awayMetrics.avgPointsScored + awayMetrics.avgPointsAllowed) / 4;
-    
-    const modelTotal = prediction.total;
-    const difference = Math.abs(modelTotal - avgScoring);
-    
-    let recommendation = modelTotal > avgScoring ? 'Over' : 'Under';
-    let confidence = 'Medium';
-    let reasoning = `Model projects ${modelTotal.toFixed(1)} points vs historical average of ${avgScoring.toFixed(1)}`;
-
-    if (difference >= 8) {
-      confidence = 'High';
-      reasoning += `. Significant deviation suggests strong ${recommendation.toLowerCase()} value.`;
-    } else if (difference <= 3) {
-      confidence = 'Low';
-      reasoning += '. Model total close to historical average.';
-    }
-
-    return { recommendation, confidence, reasoning };
-  }
-
-  analyzeMoneylineValue(prediction) {
-    const homeProb = prediction.winProbability.home / 100;
-    const homeML = prediction.moneyline.home;
-    
-    // Calculate implied probability from moneyline
-    const impliedProb = homeML < 0 ? 
-      Math.abs(homeML) / (Math.abs(homeML) + 100) :
-      100 / (homeML + 100);
-    
-    const edge = homeProb - impliedProb;
-    
-    if (Math.abs(edge) >= 0.05) {
-      return {
-        hasValue: true,
-        recommendation: edge > 0 ? 'Home ML' : 'Away ML',
-        confidence: Math.abs(edge) >= 0.1 ? 'High' : 'Medium',
-        reasoning: `Model gives ${edge > 0 ? 'home' : 'away'} team ${Math.abs(edge * 100).toFixed(1)}% better chance than odds suggest`
-      };
-    }
-
-    return { hasValue: false };
-  }
-
-  analyzeHistoricalContext(headToHead) {
-    if (!headToHead || headToHead.games.length === 0) {
-      return {
-        summary: 'No recent head-to-head history available',
-        trend: 'Unknown',
-        relevance: 'Low'
-      };
-    }
-
-    const recentGames = headToHead.games.slice(-5);
-    const totalGames = headToHead.games.length;
-    
-    let summary = `Teams have met ${totalGames} times in recent history. `;
-    
-    if (headToHead.team1Wins > headToHead.team2Wins) {
-      summary += `Home team leads the series ${headToHead.team1Wins}-${headToHead.team2Wins}`;
-    } else if (headToHead.team2Wins > headToHead.team1Wins) {
-      summary += `Away team leads the series ${headToHead.team2Wins}-${headToHead.team1Wins}`;
-    } else {
-      summary += `Series is tied ${headToHead.team1Wins}-${headToHead.team2Wins}`;
-    }
-
     return {
-      summary,
-      trend: 'Even',
-      recentGames: recentGames.length,
-      relevance: totalGames >= 3 ? 'High' : 'Medium'
+      homeAdvantage: homeWins / games.length,
+      avgMargin: totalMargin / games.length,
+      recentForm: games.slice(0, 3),
+      totalGames: games.length
     };
   }
 
-  analyzeSituationalFactors(options) {
-    const factors = [];
-
-    if (options.week <= 2) {
-      factors.push({
-        factor: 'Early Season',
-        impact: 'Unpredictable',
-        description: 'Teams still finding their identity, potential for upsets'
-      });
-    } else if (options.week >= 10) {
-      factors.push({
-        factor: 'Late Season',
-        impact: 'High Stakes',
-        description: 'Conference championships and playoffs on the line'
-      });
-    }
-
-    if (options.neutralSite) {
-      factors.push({
-        factor: 'Neutral Site',
-        impact: 'Equalizer',
-        description: 'No home field advantage, may favor better team'
-      });
-    }
-
-    if (options.conferenceGame) {
-      factors.push({
-        factor: 'Conference Game',
-        impact: 'Closer Contest',
-        description: 'Conference familiarity often leads to tighter games'
-      });
-    }
-
-    return factors;
-  }
-
-  getConfidenceFactors(homeMetrics, awayMetrics, prediction) {
-    return {
-      dataQuality: this.assessDataQuality(homeMetrics, awayMetrics),
-      modelAgreement: this.assessModelAgreement(homeMetrics, awayMetrics, prediction),
-      historicalAccuracy: this.getHistoricalAccuracy(),
-      uncertaintyFactors: this.getUncertaintyFactors(homeMetrics, awayMetrics)
-    };
-  }
-
-  assessDataQuality(homeMetrics, awayMetrics) {
-    const homeGames = homeMetrics.totalGames;
-    const awayGames = awayMetrics.totalGames;
-    const minGames = Math.min(homeGames, awayGames);
-
-    if (minGames >= 12) return { score: 95, description: 'Excellent - Full season of data' };
-    if (minGames >= 8) return { score: 85, description: 'Good - Most of season available' };
-    if (minGames >= 5) return { score: 70, description: 'Fair - Limited sample size' };
-    return { score: 50, description: 'Poor - Very limited data' };
-  }
-
-  assessModelAgreement(homeMetrics, awayMetrics, prediction) {
-    const spFavorsHome = homeMetrics.spRating > awayMetrics.spRating;
-    const recentFormFavorsHome = homeMetrics.recentForm > awayMetrics.recentForm;
-    const spreadFavorsHome = prediction.spread > 0;
-
-    const agreements = [spFavorsHome, recentFormFavorsHome, spreadFavorsHome].filter(x => x === spreadFavorsHome).length;
-
-    if (agreements === 3) return { score: 90, description: 'High - All metrics agree' };
-    if (agreements === 2) return { score: 75, description: 'Moderate - Most metrics agree' };
-    return { score: 60, description: 'Low - Mixed signals from metrics' };
-  }
-
-  getHistoricalAccuracy() {
-    return {
-      spreads: { accuracy: 72, description: '72% against the spread accuracy' },
-      totals: { accuracy: 65, description: '65% over/under accuracy' },
-      moneylines: { accuracy: 78, description: '78% moneyline accuracy' }
-    };
-  }
-
-  getUncertaintyFactors(homeMetrics, awayMetrics) {
-    const factors = [];
-
-    if (homeMetrics.totalGames < 8 || awayMetrics.totalGames < 8) {
-      factors.push('Limited game sample affects prediction accuracy');
-    }
-
-    const homeConsistency = this.calculateConsistency(homeMetrics);
-    const awayConsistency = this.calculateConsistency(awayMetrics);
-    if (homeConsistency < 0.6 || awayConsistency < 0.6) {
-      factors.push('Team performance inconsistency');
-    }
-
-    return factors;
-  }
-
-  calculateConsistency(metrics) {
-    return 0.7; // Placeholder - would analyze game-by-game variance
-  }
-
-  /**
-   * Quick prediction method for simple use cases
-   */
-  async quickPredict(homeTeamName, awayTeamName, options = {}) {
-    await this.initialize();
-
-    const homeTeam = Array.from(this.teams.values()).find(team => 
-      team.school.toLowerCase().includes(homeTeamName.toLowerCase()) ||
-      team.abbreviation?.toLowerCase() === homeTeamName.toLowerCase()
-    );
-
-    const awayTeam = Array.from(this.teams.values()).find(team => 
-      team.school.toLowerCase().includes(awayTeamName.toLowerCase()) ||
-      team.abbreviation?.toLowerCase() === awayTeamName.toLowerCase()
-    );
-
-    if (!homeTeam || !awayTeam) {
-      throw new Error('Teams not found. Please check team names.');
-    }
-
-    return this.predictMatchup(homeTeam.id, awayTeam.id, options);
-  }
-
-  /**
-   * Get summary prediction without full analysis
-   */
-  async getSummaryPrediction(homeTeamId, awayTeamId, options = {}) {
-    const fullPrediction = await this.predictMatchup(homeTeamId, awayTeamId, options);
+  calculateRecord(games, team) {
+    let wins = 0;
+    let losses = 0;
     
+    games.forEach(game => {
+      const isHome = (game.home_team === team || game.homeTeam === team);
+      const homeScore = game.home_points || game.homePoints || 0;
+      const awayScore = game.away_points || game.awayPoints || 0;
+      
+      const teamWon = isHome ? homeScore > awayScore : awayScore > homeScore;
+      
+      if (teamWon) wins++;
+      else losses++;
+    });
+    
+    return { wins, losses };
+  }
+
+  calculateVenueAdvantage(record, team) {
+    const totalGames = record.wins + record.losses;
+    if (totalGames === 0) return 0.03; // Default home field advantage
+    
+    const winPct = record.wins / totalGames;
+    return Math.min(winPct - 0.5, 0.15); // Cap at 15% advantage
+  }
+
+  getAltitudeAdvantage(venue) {
+    const highAltitudeVenues = {
+      'Folsom Field': 0.05, // Colorado
+      'LaVell Edwards Stadium': 0.03, // BYU
+      'Sun Bowl': 0.02 // UTEP
+    };
+    
+    return highAltitudeVenues[venue] || 0;
+  }
+
+  getCrowdAdvantage(venue, team) {
+    // Simplified crowd advantage - would need venue capacity and attendance data
+    const bigCrowdTeams = ['Alabama', 'LSU', 'Texas', 'Ohio State', 'Michigan', 'Penn State'];
+    return bigCrowdTeams.includes(team) ? 0.04 : 0.02;
+  }
+
+  getSurfaceAdvantage(venue) {
+    // Turf vs grass advantages - simplified
+    return 0;
+  }
+
+  calculateWeatherImpactOnPrediction(weather, homeMetrics, awayMetrics) {
+    if (!weather || weather.severity < 0.3) return 0;
+    
+    // Cold weather might favor rushing teams
+    if (weather.temperature < 35) {
+      const homeRushAdv = (homeMetrics.ppa.rushing || 0) - (awayMetrics.ppa.rushing || 0);
+      return homeRushAdv * weather.severity * 0.1;
+    }
+    
+    // High winds affect passing
+    if (weather.windSpeed > 20) {
+      const homePassAdv = (homeMetrics.ppa.passing || 0) - (awayMetrics.ppa.passing || 0);
+      return -homePassAdv * weather.severity * 0.1; // Negative because wind hurts passing
+    }
+    
+    return 0;
+  }
+
+  calculateBettingAdjustment(bettingData) {
+    if (!bettingData || !bettingData.marketConfidence) return 0;
+    
+    // If market is very confident, slightly adjust toward market
+    if (bettingData.marketConfidence > 0.8) {
+      return (bettingData.spread > 0 ? -0.02 : 0.02);
+    }
+    
+    return 0;
+  }
+
+  calculateH2HTrend(trends, homeTeam) {
+    if (!trends) return 0;
+    
+    const homeAdvantage = trends.homeAdvantage - 0.5; // Center around 0
+    return homeAdvantage * 0.1; // Small weight to historical trends
+  }
+
+  getAnalysisFactors(prediction) {
     return {
-      score: fullPrediction.prediction.score,
-      spread: fullPrediction.prediction.spread,
-      total: fullPrediction.prediction.total,
-      winProbability: fullPrediction.prediction.winProbability,
-      moneyline: fullPrediction.prediction.moneyline,
-      summary: fullPrediction.analysis.summary.description,
-      confidence: fullPrediction.confidence
+      primaryFactors: prediction.keyFactors?.slice(0, 3) || [],
+      riskFactors: prediction.riskFactors || [],
+      confidence: prediction.confidence,
+      methodology: 'Multi-factor statistical analysis with advanced metrics'
     };
   }
 
   /**
-   * Get team search suggestions
+   * Default/fallback data methods
    */
-  getTeamSuggestions(searchTerm) {
-    if (!searchTerm || searchTerm.length < 2) return [];
+  getDefaultMetrics() {
+    return {
+      talent: { rating: 700, rank: 64 },
+      recruiting: { rank: 64, points: 0 },
+      efficiency: { ppa: [], advanced: [] },
+      driveEfficiency: 0.35,
+      successRate: 0.45,
+      explosiveness: 0.1,
+      spPlus: { overall: 0, offense: 0, defense: 0, specialTeams: 0 },
+      ppa: { overall: 0, offense: 0, defense: 0, passing: 0, rushing: 0 },
+      advanced: { turnovers: 0, penalties: 0, thirdDowns: 0, redZone: 0 }
+    };
+  }
 
-    const term = searchTerm.toLowerCase();
-    return Array.from(this.teams.values())
-      .filter(team => 
-        team.school.toLowerCase().includes(term) ||
-        team.abbreviation?.toLowerCase().includes(term) ||
-        team.mascot?.toLowerCase().includes(term)
-      )
-      .slice(0, 10)
-      .map(team => ({
-        id: team.id,
-        name: team.school,
-        abbreviation: team.abbreviation,
-        mascot: team.mascot,
-        conference: team.conference,
-        logo: team.logos?.[0]
-      }));
+  getDefaultAdvanced() {
+    return {
+      driveEfficiency: 0.35,
+      wepa: { offense: 0, defense: 0 },
+      elo: { elo: 1500 },
+      momentum: 0.5,
+      clutchFactor: 0.5
+    };
+  }
+
+  generateFallbackPrediction(homeTeam, awayTeam, error) {
+    console.warn('Using fallback prediction due to error:', error.message);
+    
+    return {
+      prediction: homeTeam, // Default to home team
+      confidence: 52,
+      homeProbability: 52,
+      awayProbability: 48,
+      predictedMargin: 3.0,
+      predictedScore: { home: 24, away: 21, total: 45 },
+      keyFactors: [{ factor: 'Home Field Advantage', advantage: 'Home', impact: 'Medium' }],
+      riskFactors: ['Limited data available for comprehensive analysis'],
+      bettingRecommendation: { recommendation: 'Insufficient data', confidence: 'Low' },
+      model: {
+        algorithm: 'Fallback Basic Prediction',
+        version: this.version,
+        error: error.message
+      },
+      isFallback: true,
+      version: this.version,
+      timestamp: new Date().toISOString()
+    };
   }
 }
 
-// Create singleton instance
-const matchupPredictor = new MatchupPredictor();
-
-export default matchupPredictor;
-
-// Named exports for specific functions
-export const {
-  predictMatchup,
-  quickPredict,
-  getSummaryPrediction,
-  getTeamSuggestions,
-  initialize
-} = matchupPredictor;
+// Export singleton instance
+export default new MatchupPredictor();

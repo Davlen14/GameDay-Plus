@@ -197,5 +197,32 @@ export const teamService = {
     const params = { year };
     if (team) params.team = team;
     return await fetchCollegeFootballData('/recruiting/teams', params);
+  },
+
+  // GET /talent - Get team talent ratings
+  getTalentRatings: async (year = new Date().getFullYear()) => {
+    return await fetchCollegeFootballData('/talent', { year });
+  },
+
+  // GET /games/teams - Get advanced team game stats
+  getAdvancedGameStats: async (year = new Date().getFullYear(), team = null, week = null) => {
+    const params = { year };
+    if (team) params.team = team;
+    if (week) params.week = week;
+    return await fetchCollegeFootballData('/games/teams', params);
+  },
+
+  // GET /stats/season/advanced - Get advanced season stats
+  getAdvancedSeasonStats: async (year = new Date().getFullYear(), team = null) => {
+    const params = { year };
+    if (team) params.team = team;
+    return await fetchCollegeFootballData('/stats/season/advanced', params);
+  },
+
+  // GET /ppa/teams - Get PPA data for drive efficiency
+  getDriveEfficiency: async (year = new Date().getFullYear(), team = null) => {
+    const params = { year };
+    if (team) params.team = team;
+    return await fetchCollegeFootballData('/ppa/teams', params);
   }
 };

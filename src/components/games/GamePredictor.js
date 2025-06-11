@@ -30,9 +30,9 @@ const GamePredictor = () => {
   const initializePredictor = useCallback(async () => {
     try {
       setIsLoading(true);
-      await matchupPredictor.initialize();
+      // Enhanced MatchupPredictor doesn't need explicit initialization
       setPredictorInitialized(true);
-      console.log('MatchupPredictor initialized successfully');
+      console.log('Enhanced MatchupPredictor ready');
     } catch (error) {
       console.error('Error initializing predictor:', error);
       setErrorMessage('Failed to initialize prediction engine');
@@ -97,14 +97,16 @@ const GamePredictor = () => {
 
             // For completed 2024 games, show actual vs predicted
             if (selectedYear === 2024 && game.completed) {
-              const prediction = await matchupPredictor.getSummaryPrediction(
-                homeTeamId, 
-                awayTeamId, 
+              const prediction = await matchupPredictor.predictMatchup(
+                homeTeamName, 
+                awayTeamName, 
                 {
                   week: selectedWeek,
                   season: selectedYear,
-                  neutralSite: game.neutral_site || game.neutralSite || false,
-                  conferenceGame: game.conference_game || game.conferenceGame || false
+                  venue: game.venue,
+                  includeWeather: true,
+                  includeBetting: true,
+                  includeAdvanced: true
                 }
               );
 
@@ -114,13 +116,13 @@ const GamePredictor = () => {
               };
 
               // Calculate prediction accuracy
-              const predictedWinner = prediction.score.home > prediction.score.away ? 'home' : 'away';
+              const predictedWinner = prediction.predictedScore.home > prediction.predictedScore.away ? 'home' : 'away';
               const actualWinner = actualScore.home > actualScore.away ? 'home' : 'away';
               const correctWinner = predictedWinner === actualWinner;
 
               const scoreDifference = {
-                home: Math.abs(prediction.score.home - actualScore.home),
-                away: Math.abs(prediction.score.away - actualScore.away)
+                home: Math.abs(prediction.predictedScore.home - actualScore.home),
+                away: Math.abs(prediction.predictedScore.away - actualScore.away)
               };
 
               gamePredictions.push({
@@ -129,22 +131,27 @@ const GamePredictor = () => {
                 awayTeam: awayTeam,
                 isCompleted: true,
                 actualScore: actualScore,
-                predictedScore: prediction.score,
+                predictedScore: prediction.predictedScore,
                 correctWinner: correctWinner,
                 scoreDifference: scoreDifference,
-                ...prediction
+                prediction: prediction.prediction,
+                confidence: prediction.confidence,
+                keyFactors: prediction.keyFactors || [],
+                version: prediction.version
               });
             } 
             // For 2025 games or incomplete games, show normal predictions
             else {
-              const prediction = await matchupPredictor.getSummaryPrediction(
-                homeTeamId, 
-                awayTeamId, 
+              const prediction = await matchupPredictor.predictMatchup(
+                homeTeamName, 
+                awayTeamName, 
                 {
                   week: selectedWeek,
                   season: selectedYear,
-                  neutralSite: game.neutral_site || game.neutralSite || false,
-                  conferenceGame: game.conference_game || game.conferenceGame || false
+                  venue: game.venue,
+                  includeWeather: true,
+                  includeBetting: true,
+                  includeAdvanced: true
                 }
               );
 
@@ -153,7 +160,16 @@ const GamePredictor = () => {
                 homeTeam: homeTeam,
                 awayTeam: awayTeam,
                 isCompleted: false,
-                ...prediction
+                prediction: prediction.prediction,
+                confidence: prediction.confidence,
+                predictedScore: prediction.predictedScore,
+                homeProbability: prediction.homeProbability,
+                awayProbability: prediction.awayProbability,
+                predictedMargin: prediction.predictedMargin,
+                keyFactors: prediction.keyFactors || [],
+                riskFactors: prediction.riskFactors || [],
+                bettingRecommendation: prediction.bettingRecommendation,
+                version: prediction.version
               });
             }
           } catch (error) {
@@ -204,13 +220,16 @@ const GamePredictor = () => {
   // Team search functionality
   const handleTeamSearch = useCallback(async (query) => {
     setSearchQuery(query);
-    if (query.length >= 2 && predictorInitialized) {
-      const suggestions = matchupPredictor.getTeamSuggestions(query);
+    if (query.length >= 2 && predictorInitialized && teams.length > 0) {
+      const suggestions = teams.filter(team => 
+        team.school?.toLowerCase().includes(query.toLowerCase()) ||
+        team.abbreviation?.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 10);
       setTeamSearchResults(suggestions);
     } else {
       setTeamSearchResults([]);
     }
-  }, [predictorInitialized]);
+  }, [predictorInitialized, teams]);
 
   // Matchup prediction handler
   const handleMatchupPrediction = useCallback(async () => {
@@ -219,13 +238,15 @@ const GamePredictor = () => {
     try {
       setIsLoading(true);
       const prediction = await matchupPredictor.predictMatchup(
-        homeTeam.id,
-        awayTeam.id,
+        homeTeam.school,  // Use team name instead of ID
+        awayTeam.school,  // Use team name instead of ID
         {
           week: selectedWeek,
           season: selectedYear,
-          neutralSite: false,
-          conferenceGame: homeTeam.conference === awayTeam.conference
+          venue: null, // Could be enhanced to get venue from team data
+          includeWeather: true,
+          includeBetting: true,
+          includeAdvanced: true
         }
       );
       
