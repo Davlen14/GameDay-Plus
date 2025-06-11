@@ -269,8 +269,12 @@ const GamePredictor = () => {
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             <span className="gradient-text">Game Predictor</span>
           </h1>
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-gray-700 max-w-4xl mx-auto leading-relaxed">
             Advanced AI-powered predictions using machine learning algorithms and comprehensive statistical analysis.
+            <span className="block mt-2 text-lg text-gray-600">
+              <i className="fas fa-microscope mr-2 text-blue-600"></i>
+              Validate our AI model accuracy by comparing 2024 predictions vs actual game results, or explore 2025 predictions.
+            </span>
           </p>
         </div>
 
@@ -341,21 +345,44 @@ const GamePredictor = () => {
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="flex flex-col">
                   <h2 className="text-2xl font-bold gradient-text">
-                    Week {selectedWeek} {selectedYear === 2024 ? 'Results vs Predictions' : 'Predictions'}
+                    Week {selectedWeek} {selectedYear === 2024 ? 'AI Model Validation' : 'Game Predictions'}
                   </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedYear === 2024 
+                      ? 'Actual game results vs our AI predictions - validating model accuracy'
+                      : 'Advanced machine learning predictions for upcoming games'
+                    }
+                  </p>
                   {selectedYear === 2024 && weekAccuracy && (
-                    <div className="mt-2 flex flex-wrap gap-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-3 h-3 rounded-full ${weekAccuracy.winnerAccuracy >= 70 ? 'bg-green-500' : weekAccuracy.winnerAccuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
-                        <span className="text-gray-700 font-medium">
-                          Winner Accuracy: <span className="font-bold">{weekAccuracy.winnerAccuracy.toFixed(1)}%</span> ({weekAccuracy.correctPredictions}/{weekAccuracy.totalGames})
-                        </span>
+                    <div className="mt-4 bg-white/40 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <i className="fas fa-chart-line text-blue-500"></i>
+                        <span className="font-semibold text-gray-800">AI Model Performance</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <i className="fas fa-target text-blue-500"></i>
-                        <span className="text-gray-700 font-medium">
-                          Avg Score Error: <span className="font-bold">{weekAccuracy.averageScoreError.toFixed(1)} pts</span>
-                        </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                            weekAccuracy.winnerAccuracy >= 70 ? 'bg-green-500' : 
+                            weekAccuracy.winnerAccuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}>
+                            <i className={`fas ${weekAccuracy.winnerAccuracy >= 70 ? 'fa-check' : weekAccuracy.winnerAccuracy >= 60 ? 'fa-minus' : 'fa-times'} text-white text-xs`}></i>
+                          </div>
+                          <span className="text-gray-700 font-medium">
+                            Winner Accuracy: <span className="font-bold gradient-text">{weekAccuracy.winnerAccuracy.toFixed(1)}%</span>
+                            <span className="text-xs text-gray-500 ml-1">({weekAccuracy.correctPredictions}/{weekAccuracy.totalGames})</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                            weekAccuracy.averageScoreError <= 10 ? 'bg-green-500' : 
+                            weekAccuracy.averageScoreError <= 15 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}>
+                            <i className="fas fa-target text-white text-xs"></i>
+                          </div>
+                          <span className="text-gray-700 font-medium">
+                            Avg Score Error: <span className="font-bold gradient-text">{weekAccuracy.averageScoreError.toFixed(1)} pts</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -394,7 +421,15 @@ const GamePredictor = () => {
               <div className="bg-white/30 backdrop-blur-lg border border-white/40 rounded-2xl shadow-xl p-12 text-center">
                 <i className="fas fa-calendar-times text-6xl text-gray-400 mb-4"></i>
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">No Games Available</h3>
-                <p className="text-gray-600">No games found for Week {selectedWeek} of {selectedYear}</p>
+                <p className="text-gray-600">
+                  No games found for Week {selectedWeek} of {selectedYear}
+                  {selectedYear === 2025 && (
+                    <span className="block mt-2 text-sm">
+                      <i className="fas fa-info-circle mr-1"></i>
+                      2025 schedule may not be fully released yet
+                    </span>
+                  )}
+                </p>
               </div>
             ) : null}
           </div>
@@ -480,64 +515,87 @@ const WeeklyPredictionCard = ({ prediction }) => {
         <div className="text-right">
           {isCompleted ? (
             <div>
-              <div className="text-xs text-gray-600 mb-2 font-medium">Prediction</div>
-              <div className={`px-3 py-2 rounded-full text-sm font-bold backdrop-blur-sm border ${
-                correctWinner ? 'bg-green-500/20 text-green-700 border-green-400/50' : 'bg-red-500/20 text-red-700 border-red-400/50'
+              <div className="text-xs text-gray-600 mb-2 font-medium">AI Model Result</div>
+              <div className={`px-4 py-2 rounded-full text-sm font-bold backdrop-blur-lg border-2 shadow-lg ${
+                correctWinner 
+                  ? 'bg-green-500/30 text-green-700 border-green-400/60' 
+                  : 'bg-red-500/30 text-red-700 border-red-400/60'
               }`}>
-                {correctWinner ? '✓ Correct' : '✗ Wrong'}
+                <div className="flex items-center space-x-2">
+                  <i className={`fas ${correctWinner ? 'fa-trophy' : 'fa-target'}`}></i>
+                  <span>{correctWinner ? 'Accurate' : 'Missed'}</span>
+                </div>
               </div>
             </div>
           ) : (
             <div>
-              <div className="text-xs text-gray-600 mb-2 font-medium">Confidence</div>
-              <div className={`px-3 py-2 rounded-full text-sm font-bold backdrop-blur-sm border ${
-                confidence >= 0.8 ? 'bg-green-500/20 text-green-700 border-green-400/50' :
-                confidence >= 0.6 ? 'bg-yellow-500/20 text-yellow-700 border-yellow-400/50' :
-                'bg-red-500/20 text-red-700 border-red-400/50'
+              <div className="text-xs text-gray-600 mb-2 font-medium">Prediction Confidence</div>
+              <div className={`px-4 py-2 rounded-full text-sm font-bold backdrop-blur-lg border-2 shadow-lg ${
+                confidence >= 0.8 ? 'bg-green-500/30 text-green-700 border-green-400/60' :
+                confidence >= 0.6 ? 'bg-yellow-500/30 text-yellow-700 border-yellow-400/60' :
+                'bg-red-500/30 text-red-700 border-red-400/60'
               }`}>
-                {(confidence * 100).toFixed(0)}%
+                <div className="flex items-center space-x-2">
+                  <i className={`fas ${confidence >= 0.8 ? 'fa-star' : confidence >= 0.6 ? 'fa-star-half-alt' : 'fa-question'}`}></i>
+                  <span>{(confidence * 100).toFixed(0)}%</span>
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Score Display - Different for completed vs upcoming */}
+      {/* Score Display - Enhanced for completed vs upcoming */}
       {isCompleted ? (
         <div className="grid grid-cols-2 gap-6 mb-8">
-          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-            <div className="text-xs text-gray-600 mb-2 font-medium">Actual Score</div>
-            <div className="font-bold text-gray-800 text-lg">
+          <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
+            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
+              <i className="fas fa-trophy text-green-600"></i>
+              <span>Actual Final Score</span>
+            </div>
+            <div className="font-bold text-gray-800 text-xl">
               {actualScore.away} - {actualScore.home}
             </div>
-            <div className="text-xs text-gray-600 mt-1">Final</div>
+            <div className="text-xs text-green-600 mt-1 font-medium">Official Result</div>
           </div>
-          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-            <div className="text-xs text-gray-600 mb-2 font-medium">Our Prediction</div>
-            <div className="font-bold text-gray-800 text-lg">
+          <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
+            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
+              <i className="fas fa-brain text-blue-600"></i>
+              <span>AI Prediction</span>
+            </div>
+            <div className="font-bold text-gray-800 text-xl">
               {predictedScore.away.toFixed(0)} - {predictedScore.home.toFixed(0)}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
-              Off by {scoreDifference.away.toFixed(0)}-{scoreDifference.home.toFixed(0)} pts
+            <div className="text-xs text-blue-600 mt-1 font-medium">
+              ±{scoreDifference.away.toFixed(0)}-{scoreDifference.home.toFixed(0)} pts error
             </div>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-6 mb-8">
-          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-            <div className="text-xs text-gray-600 mb-2 font-medium">Predicted Score</div>
+          <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
+            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
+              <i className="fas fa-calculator text-purple-600"></i>
+              <span>Predicted Score</span>
+            </div>
             <div className="font-bold text-gray-800 text-lg">
               {score.away.toFixed(0)} - {score.home.toFixed(0)}
             </div>
           </div>
-          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-            <div className="text-xs text-gray-600 mb-2 font-medium">Spread</div>
+          <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
+            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
+              <i className="fas fa-chart-line text-orange-600"></i>
+              <span>Spread</span>
+            </div>
             <div className="font-bold gradient-text text-lg">
               {favorite?.abbreviation || 'FAV'} -{spreadValue.toFixed(1)}
             </div>
           </div>
-          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-            <div className="text-xs text-gray-600 mb-2 font-medium">Total</div>
+          <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
+            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
+              <i className="fas fa-plus text-green-600"></i>
+              <span>Total</span>
+            </div>
             <div className="font-bold text-gray-800 text-lg">{total.toFixed(1)}</div>
           </div>
         </div>
@@ -555,7 +613,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
             <span className="font-medium">{awayTeam?.school || 'Away Team'}</span>
           </div>
           <div className="text-xs text-gray-600 font-medium">
-            {isCompleted ? 'Predicted Win Probability' : 'Win Probability'}
+            {isCompleted ? 'Pre-Game Win Probability (AI Model)' : 'Win Probability'}
           </div>
           <div className="flex items-center space-x-2">
             <span className="font-medium">{homeTeam?.school || 'Home Team'}</span>
@@ -596,25 +654,61 @@ const WeeklyPredictionCard = ({ prediction }) => {
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="text-sm text-gray-700 leading-relaxed bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+      {/* Enhanced Summary with Validation Feedback */}
+      <div className="text-sm text-gray-700 leading-relaxed bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
         {isCompleted ? (
           <div>
-            <div className="font-semibold mb-2">Prediction Analysis:</div>
-            {summary}
-            {correctWinner && (
-              <div className="mt-3 p-2 bg-green-100/70 rounded-lg border border-green-200/50">
-                <div className="text-green-800 text-xs font-semibold">✓ Winner predicted correctly!</div>
+            <div className="font-semibold mb-3 flex items-center space-x-2">
+              <i className="fas fa-microscope text-blue-600"></i>
+              <span>AI Model Validation Analysis:</span>
+            </div>
+            <div className="mb-3">{summary}</div>
+            
+            {/* Enhanced Accuracy Feedback */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div className={`p-3 rounded-lg border-2 ${
+                correctWinner 
+                  ? 'bg-green-50/80 border-green-200 text-green-800' 
+                  : 'bg-red-50/80 border-red-200 text-red-800'
+              }`}>
+                <div className="flex items-center space-x-2">
+                  <i className={`fas ${correctWinner ? 'fa-check-circle' : 'fa-times-circle'} text-lg`}></i>
+                  <div>
+                    <div className="font-semibold text-xs">Winner Prediction</div>
+                    <div className="text-sm">
+                      {correctWinner ? 'Correct! ✓' : 'Incorrect ✗'}
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-            {!correctWinner && (
-              <div className="mt-3 p-2 bg-red-100/70 rounded-lg border border-red-200/50">
-                <div className="text-red-800 text-xs font-semibold">✗ Winner prediction was incorrect</div>
+              
+              <div className={`p-3 rounded-lg border-2 ${
+                (scoreDifference.home + scoreDifference.away) / 2 <= 10
+                  ? 'bg-green-50/80 border-green-200 text-green-800'
+                  : (scoreDifference.home + scoreDifference.away) / 2 <= 15
+                  ? 'bg-yellow-50/80 border-yellow-200 text-yellow-800'
+                  : 'bg-red-50/80 border-red-200 text-red-800'
+              }`}>
+                <div className="flex items-center space-x-2">
+                  <i className="fas fa-bullseye text-lg"></i>
+                  <div>
+                    <div className="font-semibold text-xs">Score Accuracy</div>
+                    <div className="text-sm">
+                      {((scoreDifference.home + scoreDifference.away) / 2).toFixed(1)} pts avg error
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         ) : (
-          summary
+          <div>
+            <div className="font-semibold mb-2 flex items-center space-x-2">
+              <i className="fas fa-robot text-purple-600"></i>
+              <span>AI Prediction Analysis:</span>
+            </div>
+            {summary}
+          </div>
         )}
       </div>
     </div>
