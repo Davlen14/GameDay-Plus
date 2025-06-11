@@ -53,7 +53,7 @@ const GamePredictor = () => {
       setGames(weekGames);
 
       // Load team data to get full team objects with logos, abbreviations, etc.
-      const allTeams = await teamService.getAllTeams();
+      const allTeams = await teamService.getFBSTeams(); // Only load FBS teams
       
       // Create a lookup map for teams by ID and name
       const teamLookup = new Map();
@@ -243,7 +243,8 @@ const GamePredictor = () => {
     const loadTeams = async () => {
       if (predictorInitialized) {
         try {
-          const teamData = await teamService.getAllTeams();
+          // Load only FBS teams
+          const teamData = await teamService.getFBSTeams();
           setTeams(teamData);
         } catch (error) {
           console.error('Error loading teams:', error);

@@ -26,8 +26,8 @@ class MatchupPredictor {
     try {
       console.log('Initializing Matchup Predictor...');
       
-      // Load teams data
-      const teams = await teamService.getAllTeams();
+      // Load teams data - only FBS teams
+      const teams = await teamService.getFBSTeams();
       teams.forEach(team => {
         this.teams.set(team.id, team);
       });
