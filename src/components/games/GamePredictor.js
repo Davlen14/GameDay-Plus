@@ -190,32 +190,32 @@ const GamePredictor = () => {
   const yearOptions = [2024, 2025];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-none mx-auto">
         {/* Header Section */}
         <div className="text-center mb-16" data-aos="fade-up">
           <div className="flex items-center justify-center mb-6">
-            <div className={`w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center ${animateShine ? 'metallic-3d-logo-enhanced' : ''}`}>
-              <i className="fas fa-brain text-3xl icon-gradient"></i>
+            <div className={`w-16 h-16 bg-white/30 backdrop-blur-lg rounded-full shadow-lg flex items-center justify-center border border-white/40 ${animateShine ? 'metallic-3d-logo-enhanced' : ''}`}>
+              <i className="fas fa-brain text-3xl text-gray-700"></i>
             </div>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="gradient-text">Game Predictor</span>
+            <span className="bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 bg-clip-text text-transparent">Game Predictor</span>
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
             Advanced AI-powered predictions using machine learning algorithms and comprehensive statistical analysis.
           </p>
         </div>
 
         {/* Navigation Tabs */}
         <div className="flex justify-center mb-12">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-2 flex space-x-2">
+          <div className="bg-white/30 backdrop-blur-lg rounded-2xl shadow-xl border border-white/40 p-2 flex space-x-2">
             <button
               onClick={() => setActiveView('weekly')}
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 activeView === 'weekly'
-                  ? 'gradient-bg text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white shadow-lg'
+                  : 'text-gray-700 hover:text-gray-800 hover:bg-white/20'
               }`}
             >
               <i className="fas fa-calendar-week mr-2"></i>
@@ -225,8 +225,8 @@ const GamePredictor = () => {
               onClick={() => setActiveView('matchup')}
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 activeView === 'matchup'
-                  ? 'gradient-bg text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white shadow-lg'
+                  : 'text-gray-700 hover:text-gray-800 hover:bg-white/20'
               }`}
             >
               <i className="fas fa-vs mr-2"></i>
@@ -236,8 +236,8 @@ const GamePredictor = () => {
               onClick={() => setActiveView('models')}
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 activeView === 'models'
-                  ? 'gradient-bg text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white shadow-lg'
+                  : 'text-gray-700 hover:text-gray-800 hover:bg-white/20'
               }`}
             >
               <i className="fas fa-cogs mr-2"></i>
@@ -259,8 +259,8 @@ const GamePredictor = () => {
         {/* Loading State */}
         {isLoading && (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-            <p className="mt-4 text-gray-300">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
+            <p className="mt-4 text-gray-700">
               {!predictorInitialized ? 'Initializing AI models...' : 'Generating predictions...'}
             </p>
           </div>
@@ -270,9 +270,9 @@ const GamePredictor = () => {
         {activeView === 'weekly' && predictorInitialized && (
           <div className="space-y-8">
             {/* Week/Year Selector */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg p-8">
+            <div className="bg-white/30 backdrop-blur-lg border border-white/40 rounded-2xl shadow-xl p-8">
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <h2 className="text-2xl font-bold gradient-text">Week {selectedWeek} Predictions</h2>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">Week {selectedWeek} Predictions</h2>
                 <div className="flex gap-4">
                   <select
                     value={selectedYear}
@@ -304,10 +304,10 @@ const GamePredictor = () => {
                 ))}
               </div>
             ) : !isLoading ? (
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg p-12 text-center">
-                <i className="fas fa-calendar-times text-6xl text-white/30 mb-4"></i>
-                <h3 className="text-2xl font-bold text-white mb-2">No Games Available</h3>
-                <p className="text-white/70">No games found for Week {selectedWeek} of {selectedYear}</p>
+              <div className="bg-white/30 backdrop-blur-lg border border-white/40 rounded-2xl shadow-xl p-12 text-center">
+                <i className="fas fa-calendar-times text-6xl text-gray-400 mb-4"></i>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">No Games Available</h3>
+                <p className="text-gray-600">No games found for Week {selectedWeek} of {selectedYear}</p>
               </div>
             ) : null}
           </div>
@@ -350,7 +350,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
   const homeTeamColor = homeTeam?.color || '#2563eb'; // blue
 
   return (
-    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-8 hover:shadow-2xl hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2">
+    <div className="bg-white/30 backdrop-blur-lg border border-white/40 rounded-2xl shadow-2xl p-8 hover:shadow-3xl hover:bg-white/40 transition-all duration-300 transform hover:-translate-y-2">
       {/* Teams Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-6">
@@ -366,12 +366,12 @@ const WeeklyPredictionCard = ({ prediction }) => {
                   padding: '4px'
                 }}
               />
-              <div className="text-sm font-bold text-white bg-black/20 backdrop-blur-sm rounded-lg px-2 py-1">
+              <div className="text-sm font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/40">
                 {awayTeam?.abbreviation || 'AWAY'}
               </div>
             </div>
           </div>
-          <div className="text-3xl font-bold text-white/70">@</div>
+          <div className="text-3xl font-bold text-gray-600">@</div>
           <div className="text-center">
             <div className="relative group">
               <img 
@@ -384,18 +384,18 @@ const WeeklyPredictionCard = ({ prediction }) => {
                   padding: '4px'
                 }}
               />
-              <div className="text-sm font-bold text-white bg-black/20 backdrop-blur-sm rounded-lg px-2 py-1">
+              <div className="text-sm font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/40">
                 {homeTeam?.abbreviation || 'HOME'}
               </div>
             </div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-xs text-white/70 mb-2 font-medium">Confidence</div>
+          <div className="text-xs text-gray-600 mb-2 font-medium">Confidence</div>
           <div className={`px-3 py-2 rounded-full text-sm font-bold backdrop-blur-sm border ${
-            confidence >= 0.8 ? 'bg-green-500/20 text-green-300 border-green-400/30' :
-            confidence >= 0.6 ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30' :
-            'bg-red-500/20 text-red-300 border-red-400/30'
+            confidence >= 0.8 ? 'bg-green-500/20 text-green-700 border-green-400/50' :
+            confidence >= 0.6 ? 'bg-yellow-500/20 text-yellow-700 border-yellow-400/50' :
+            'bg-red-500/20 text-red-700 border-red-400/50'
           }`}>
             {(confidence * 100).toFixed(0)}%
           </div>
@@ -404,27 +404,27 @@ const WeeklyPredictionCard = ({ prediction }) => {
 
       {/* Prediction Details */}
       <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-          <div className="text-xs text-white/70 mb-2 font-medium">Predicted Score</div>
-          <div className="font-bold text-white text-lg">
+        <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+          <div className="text-xs text-gray-600 mb-2 font-medium">Predicted Score</div>
+          <div className="font-bold text-gray-800 text-lg">
             {score.away.toFixed(0)} - {score.home.toFixed(0)}
           </div>
         </div>
-        <div className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-          <div className="text-xs text-white/70 mb-2 font-medium">Spread</div>
-          <div className="font-bold gradient-text text-lg">
+        <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+          <div className="text-xs text-gray-600 mb-2 font-medium">Spread</div>
+          <div className="font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent text-lg">
             {favorite?.abbreviation || 'FAV'} -{spreadValue.toFixed(1)}
           </div>
         </div>
-        <div className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-          <div className="text-xs text-white/70 mb-2 font-medium">Total</div>
-          <div className="font-bold text-white text-lg">{total.toFixed(1)}</div>
+        <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+          <div className="text-xs text-gray-600 mb-2 font-medium">Total</div>
+          <div className="font-bold text-gray-800 text-lg">{total.toFixed(1)}</div>
         </div>
       </div>
 
       {/* Modern Win Probability Chart */}
       <div className="mb-6">
-        <div className="flex justify-between items-center text-sm text-white mb-4">
+        <div className="flex justify-between items-center text-sm text-gray-800 mb-4">
           <div className="flex items-center space-x-2">
             <img 
               src={awayTeam?.logos?.[0] || '/photos/ncaaf.png'} 
@@ -433,7 +433,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
             />
             <span className="font-medium">{awayTeam?.school || 'Away Team'}</span>
           </div>
-          <div className="text-xs text-white/70 font-medium">Win Probability</div>
+          <div className="text-xs text-gray-600 font-medium">Win Probability</div>
           <div className="flex items-center space-x-2">
             <span className="font-medium">{homeTeam?.school || 'Home Team'}</span>
             <img 
@@ -445,7 +445,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
         </div>
         
         {/* Enhanced Win Probability Bar */}
-        <div className="relative bg-black/20 backdrop-blur-sm rounded-full h-6 border border-white/20 overflow-hidden">
+        <div className="relative bg-gray-300/60 backdrop-blur-sm rounded-full h-6 border border-white/40 overflow-hidden">
           <div 
             className="absolute left-0 top-0 h-6 rounded-l-full transition-all duration-700 ease-out"
             style={{ 
@@ -467,14 +467,14 @@ const WeeklyPredictionCard = ({ prediction }) => {
           <div className="absolute left-1/2 top-0 w-0.5 h-6 bg-white/30 transform -translate-x-0.5"></div>
         </div>
         
-        <div className="flex justify-between text-sm text-white/90 mt-3 font-medium">
+        <div className="flex justify-between text-sm text-gray-800 mt-3 font-medium">
           <span>{winProbability.away.toFixed(1)}%</span>
           <span>{winProbability.home.toFixed(1)}%</span>
         </div>
       </div>
 
       {/* Summary */}
-      <div className="text-sm text-white/80 leading-relaxed bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+      <div className="text-sm text-gray-700 leading-relaxed bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
         {summary}
       </div>
     </div>
@@ -495,8 +495,8 @@ const MatchupPredictorInterface = ({
   return (
     <div className="space-y-8">
       {/* Team Selection */}
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold gradient-text mb-6 text-center">Select Teams to Compare</h2>
+      <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6 text-center">Select Teams to Compare</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Away Team Selection */}
@@ -570,7 +570,7 @@ const MatchupPredictorInterface = ({
           <button
             onClick={onPredict}
             disabled={!homeTeam || !awayTeam || isLoading}
-            className="gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="bg-gradient-to-r from-gray-700 to-gray-800 text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {isLoading ? (
               <>
@@ -602,10 +602,10 @@ const MatchupPredictionResults = ({ prediction }) => {
   return (
     <div className="space-y-6">
       {/* Main Prediction Card */}
-      <div className="bg-white rounded-2xl shadow-lg p-8">
+      <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold gradient-text mb-4">Prediction Results</h3>
-          <div className="text-lg text-gray-600">{analysis.summary.description}</div>
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Prediction Results</h3>
+          <div className="text-lg text-gray-700">{analysis.summary.description}</div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -623,7 +623,7 @@ const MatchupPredictionResults = ({ prediction }) => {
           {/* Spread */}
           <div className="text-center">
             <div className="text-sm text-gray-500 mb-2">Point Spread</div>
-            <div className="text-3xl font-bold gradient-text mb-2">
+            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">
               {pred.spread > 0 ? teams.home.abbreviation : teams.away.abbreviation} 
               {Math.abs(pred.spread).toFixed(1)}
             </div>
@@ -795,10 +795,10 @@ const ModelDetailsView = () => {
   return (
     <div className="space-y-8">
       {/* Model Overview */}
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold gradient-text mb-6">Prediction Model Details</h2>
+      <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6">Prediction Model Details</h2>
         <div className="prose max-w-none">
-          <p className="text-gray-600 leading-relaxed mb-6">
+          <p className="text-gray-700 leading-relaxed mb-6">
             Our AI-powered prediction system combines multiple sophisticated models to generate 
             accurate game predictions. Each model contributes unique insights based on different 
             aspects of team performance and game dynamics.
@@ -839,38 +839,38 @@ const ModelDetailsView = () => {
       </div>
 
       {/* Model Performance */}
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        <h3 className="text-xl font-bold gradient-text mb-6">Historical Performance</h3>
+      <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
+        <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6">Historical Performance</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="text-center">
-            <div className="text-3xl font-bold gradient-text mb-2">72%</div>
-            <div className="text-sm text-gray-600">Against the Spread</div>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">72%</div>
+            <div className="text-sm text-gray-700">Against the Spread</div>
+            <div className="w-full bg-gray-300/60 rounded-full h-2 mt-2">
               <div className="bg-blue-500 h-2 rounded-full" style={{width: '72%'}}></div>
             </div>
           </div>
           
           <div className="text-center">
-            <div className="text-3xl font-bold gradient-text mb-2">78%</div>
-            <div className="text-sm text-gray-600">Moneyline Accuracy</div>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">78%</div>
+            <div className="text-sm text-gray-700">Moneyline Accuracy</div>
+            <div className="w-full bg-gray-300/60 rounded-full h-2 mt-2">
               <div className="bg-green-500 h-2 rounded-full" style={{width: '78%'}}></div>
             </div>
           </div>
           
           <div className="text-center">
-            <div className="text-3xl font-bold gradient-text mb-2">65%</div>
-            <div className="text-sm text-gray-600">Over/Under</div>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">65%</div>
+            <div className="text-sm text-gray-700">Over/Under</div>
+            <div className="w-full bg-gray-300/60 rounded-full h-2 mt-2">
               <div className="bg-yellow-500 h-2 rounded-full" style={{width: '65%'}}></div>
             </div>
           </div>
           
           <div className="text-center">
-            <div className="text-3xl font-bold gradient-text mb-2">83%</div>
-            <div className="text-sm text-gray-600">Top 25 Games</div>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">83%</div>
+            <div className="text-sm text-gray-700">Top 25 Games</div>
+            <div className="w-full bg-gray-300/60 rounded-full h-2 mt-2">
               <div className="bg-purple-500 h-2 rounded-full" style={{width: '83%'}}></div>
             </div>
           </div>
@@ -878,8 +878,8 @@ const ModelDetailsView = () => {
       </div>
 
       {/* Input Factors */}
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        <h3 className="text-xl font-bold gradient-text mb-6">Key Input Factors</h3>
+      <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
+        <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6">Key Input Factors</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
@@ -893,7 +893,7 @@ const ModelDetailsView = () => {
                 'Turnover Margin',
                 'Third Down Conversion %'
               ].map((metric, index) => (
-                <div key={index} className="flex items-center text-sm text-gray-600">
+                <div key={index} className="flex items-center text-sm text-gray-700">
                   <i className="fas fa-check-circle text-green-500 mr-2"></i>
                   {metric}
                 </div>
@@ -912,7 +912,7 @@ const ModelDetailsView = () => {
                 'Weather Conditions',
                 'Conference Game Dynamics'
               ].map((factor, index) => (
-                <div key={index} className="flex items-center text-sm text-gray-600">
+                <div key={index} className="flex items-center text-sm text-gray-700">
                   <i className="fas fa-check-circle text-blue-500 mr-2"></i>
                   {factor}
                 </div>
@@ -923,35 +923,35 @@ const ModelDetailsView = () => {
       </div>
 
       {/* Confidence Scoring */}
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        <h3 className="text-xl font-bold gradient-text mb-6">Confidence Scoring System</h3>
+      <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
+        <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6">Confidence Scoring System</h3>
         
         <div className="space-y-4">
-          <div className="flex items-center space-x-4 p-4 bg-green-50 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-green-100/70 backdrop-blur-sm rounded-lg border border-green-200/50">
             <div className="w-4 h-4 bg-green-500 rounded-full"></div>
             <div>
               <div className="font-semibold text-green-800">High Confidence (80%+)</div>
-              <div className="text-sm text-green-600">
+              <div className="text-sm text-green-700">
                 Strong model agreement, large talent gaps, extensive data
               </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4 p-4 bg-yellow-50 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-yellow-100/70 backdrop-blur-sm rounded-lg border border-yellow-200/50">
             <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
             <div>
               <div className="font-semibold text-yellow-800">Medium Confidence (60-79%)</div>
-              <div className="text-sm text-yellow-600">
+              <div className="text-sm text-yellow-700">
                 Moderate model agreement, reasonable data quality
               </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4 p-4 bg-red-50 rounded-lg">
+          <div className="flex items-center space-x-4 p-4 bg-red-100/70 backdrop-blur-sm rounded-lg border border-red-200/50">
             <div className="w-4 h-4 bg-red-500 rounded-full"></div>
             <div>
               <div className="font-semibold text-red-800">Lower Confidence (40-59%)</div>
-              <div className="text-sm text-red-600">
+              <div className="text-sm text-red-700">
                 Mixed signals, limited data, high uncertainty
               </div>
             </div>
