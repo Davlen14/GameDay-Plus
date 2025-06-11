@@ -55,19 +55,33 @@ const GamePredictor = () => {
       
       try {
         console.log('🚀 Loading prediction data via GraphQL...');
+        
+        // Check GraphQL availability first
+        const isGraphQLAvailable = await graphqlService.utils.isAvailable();
+        if (!isGraphQLAvailable) {
+          throw new Error('GraphQL service not available');
+        }
+        
         const graphqlData = await graphqlService.getWeeklyGamesForPrediction(selectedWeek, selectedYear);
         
         if (graphqlData && graphqlData.games) {
           weekGames = graphqlData.games;
-          allTeams = graphqlData.teams || await teamService.getFBSTeams();
+          allTeams = graphqlData.teams || await teamService.getFBSTeams(false); // Use REST fallback
           console.log('✓ Successfully loaded data via GraphQL');
         } else {
           throw new Error('GraphQL returned empty data');
         }
       } catch (graphqlError) {
-        console.warn('⚠️ GraphQL loading failed, falling back to REST API:', graphqlError);
-        weekGames = await gameService.getGamesByWeek(selectedYear, selectedWeek);
-        allTeams = await teamService.getFBSTeams();
+        console.warn('⚠️ GraphQL loading failed, falling back to REST API:', graphqlError.message);
+        try {
+          weekGames = await gameService.getGamesByWeek(selectedYear, selectedWeek, 'regular', false);
+          allTeams = await teamService.getFBSTeams(false); // Force REST API
+        } catch (restError) {
+          console.error('❌ REST API fallback also failed:', restError.message);
+          setErrorMessage('Failed to load game data from both GraphQL and REST APIs');
+          setIsLoading(false);
+          return;
+        }
       }
 
       setGames(weekGames);

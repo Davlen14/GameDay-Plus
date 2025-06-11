@@ -2,7 +2,7 @@
 // Optimized for prediction model with advanced metrics
 
 const GRAPHQL_ENDPOINT = 'https://graphql.collegefootballdata.com/v1/graphql';
-const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY;
+const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY || 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
 
 // Direct GraphQL API interaction with enhanced error handling
 const fetchData = async (query, variables = {}) => {
@@ -12,11 +12,19 @@ const fetchData = async (query, variables = {}) => {
       headers: {
         'Authorization': `Bearer ${COLLEGE_FOOTBALL_API_KEY}`,
         "Content-Type": "application/json",
+        'Accept': 'application/json',
+        'Origin': window.location.origin,
       },
+      mode: 'cors',
+      credentials: 'omit',
       body: JSON.stringify({ query, variables }),
     });
 
     if (!response.ok) {
+      // Check for CORS or auth errors specifically
+      if (response.status === 0 || response.status === 403 || response.status === 401) {
+        throw new Error('CORS_ERROR');
+      }
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
 
@@ -27,6 +35,9 @@ const fetchData = async (query, variables = {}) => {
     return result.data;
   } catch (error) {
     console.error("GraphQL Fetch Error:", error.message);
+    if (error.message.includes('CORS') || error.name === 'TypeError') {
+      throw new Error('CORS_ERROR');
+    }
     throw error;
   }
 };
@@ -449,6 +460,102 @@ export const getLiveGameData = async (gameId) => {
   return data?.scoreboard?.[0] || null;
 };
 
+// Head-to-head history analysis
+export const getHeadToHeadHistory = async (team1, team2, year = 2024) => {
+  const query = `
+    query HeadToHeadHistory($team1: String!, $team2: String!, $year: smallint!) {
+      team1Games: game(
+        where: {
+          _and: [
+            {_or: [{homeTeam: {_eq: $team1}}, {awayTeam: {_eq: $team1}}]},
+            {_or: [{homeTeam: {_eq: $team2}}, {awayTeam: {_eq: $team2}}]},
+            {season: {_lte: $year}},
+            {status: {_eq: "completed"}}
+          ]
+        }
+        orderBy: {season: DESC}
+        limit: 10
+      ) {
+        id season week homeTeam awayTeam
+        homePoints awayPoints
+        excitementIndex
+        homeStartElo awayStartElo
+      }
+    }
+  `;
+  
+  const variables = { team1, team2, year };
+  const data = await fetchData(query, variables);
+  
+  const games = data?.team1Games || [];
+  const team1Wins = games.filter(game => 
+    (game.homeTeam === team1 && game.homePoints > game.awayPoints) ||
+    (game.awayTeam === team1 && game.awayPoints > game.homePoints)
+  ).length;
+  
+  return {
+    games: games.map(game => ({
+      ...game,
+      excitementIndex: game.excitementIndex || 0,
+      eloRatingDiff: (game.homeStartElo || 0) - (game.awayStartElo || 0)
+    })),
+    team1Wins,
+    team2Wins: games.length - team1Wins,
+    avgPointDiff: games.length > 0 ? 
+      games.reduce((acc, game) => {
+        const diff = game.homeTeam === team1 ? 
+          game.homePoints - game.awayPoints : 
+          game.awayPoints - game.homePoints;
+        return acc + diff;
+      }, 0) / games.length : 0,
+    lastMeeting: games[0] || null
+  };
+};
+
+// Weather conditions for game prediction
+export const getWeatherConditions = async (teamId, week, season = 2024) => {
+  const query = `
+    query WeatherConditions($teamId: Int!, $week: Int!, $season: smallint!) {
+      game(
+        where: {
+          _and: [
+            {_or: [{homeTeamId: {_eq: $teamId}}, {awayTeamId: {_eq: $teamId}}]},
+            {week: {_eq: $week}},
+            {season: {_eq: $season}}
+          ]
+        }
+        limit: 1
+      ) {
+        gameWeather {
+          temperature windSpeed precipitation humidity
+          weatherCondition gameIndoors
+        }
+      }
+    }
+  `;
+  
+  const variables = { teamId: parseInt(teamId), week, season };
+  const data = await fetchData(query, variables);
+  
+  const weather = data?.game?.[0]?.gameWeather;
+  if (!weather) return null;
+  
+  return {
+    detailedConditions: {
+      temperature: weather.temperature,
+      windSpeed: weather.windSpeed,
+      precipitation: weather.precipitation ? {
+        type: weather.precipitation > 0.5 ? 'heavy' : 'light',
+        intensity: weather.precipitation
+      } : null,
+      humidity: weather.humidity,
+      visibility: weather.gameIndoors ? 1.0 : 0.75 // Indoor games have perfect visibility
+    },
+    severity: weather.temperature < 32 || weather.windSpeed > 25 ? 'high' : 
+              weather.temperature < 45 || weather.windSpeed > 15 ? 'moderate' : 'low'
+  };
+};
+
 // ====== EXISTING FUNCTIONS (ENHANCED) ======
 
 // Enhanced team ratings
@@ -500,7 +607,7 @@ export const getTeamDetailedRatings = async (team, year = 2024) => {
 };
 
 // Enhanced teams list
-export const getTeams = async () => {
+export const getTeams = async (filters = {}) => {
   const query = `
     query EnhancedCurrentTeams($limit: Int, $offset: Int, $where: currentTeamsBoolExp) {
       currentTeams(limit: $limit, offset: $offset, where: $where, orderBy: {school: ASC}) {
@@ -515,10 +622,19 @@ export const getTeams = async () => {
     }
   `;
   
+  // Build where clause based on filters
+  let whereClause = {};
+  if (filters.classification) {
+    whereClause.classification = { _eq: filters.classification };
+  } else {
+    // Default to FBS teams
+    whereClause.classification = { _eq: "fbs" };
+  }
+  
   const variables = {
-    limit: 150,
-    offset: 0,
-    where: { classification: { _eq: "fbs" } }
+    limit: filters.limit || 150,
+    offset: filters.offset || 0,
+    where: whereClause
   };
   
   const data = await fetchData(query, variables);
@@ -649,6 +765,8 @@ const graphqlService = {
   getEnhancedTeamRatings,
   getBettingLinesAnalysis,
   getLiveGameData,
+  getHeadToHeadHistory,
+  getWeatherConditions,
   
   // Enhanced existing functions
   getTeams,
@@ -658,6 +776,22 @@ const graphqlService = {
   getGamesByTeam,
   getGameScoreboard,
   getGameInfo,
+  
+  // Structured service namespaces for easier use
+  teams: {
+    getCurrent: getTeams,
+    getBySchool: getTeamBySchool,
+    getRatings: getTeamRatings,
+    getDetailed: getTeamDetailedRatings,
+    getByConference: getConferenceStrengthAnalysis
+  },
+  
+  games: {
+    getByTeam: getGamesByTeam,
+    getByWeek: getWeeklyGamesForPrediction,
+    getScoreboard: getGameScoreboard,
+    getInfo: getGameInfo
+  },
   
   // Utility functions
   utils: {
@@ -673,9 +807,13 @@ const graphqlService = {
           }
         `;
         await fetchData(testQuery);
+        console.log('✓ GraphQL service available');
         return true;
       } catch (error) {
-        console.warn('GraphQL not available:', error.message);
+        console.warn('⚠️ GraphQL not available:', error.message);
+        if (error.message.includes('CORS')) {
+          console.warn('⚠️ GraphQL CORS blocked - falling back to REST API');
+        }
         return false;
       }
     },

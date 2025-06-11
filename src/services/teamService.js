@@ -36,6 +36,13 @@ export const teamService = {
   getFBSTeams: async (useGraphQL = true) => {
     if (useGraphQL) {
       try {
+        // Test GraphQL availability first
+        const isGraphQLAvailable = await graphqlService.utils.isAvailable();
+        if (!isGraphQLAvailable) {
+          console.log('GraphQL not available, using REST API');
+          return await fetchCollegeFootballData('/teams', { division: 'fbs' });
+        }
+
         const graphqlTeams = await graphqlService.teams.getCurrent({ 
           classification: 'fbs' 
         });
@@ -52,7 +59,7 @@ export const teamService = {
           };
         });
       } catch (error) {
-        console.warn('GraphQL FBS teams failed, falling back to REST:', error);
+        console.warn('GraphQL FBS teams failed, falling back to REST:', error.message);
         return await fetchCollegeFootballData('/teams', { division: 'fbs' });
       }
     } else {
