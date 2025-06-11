@@ -33,6 +33,17 @@ const ArbitrageEV = () => {
     rgb(255, 46, 74)
   )`;
 
+  // Sportsbook data for the slider
+  const sportsbooks = [
+    { name: 'Underdog', logo: '/SportsbookLogos/underdog.svg' },
+    { name: 'ESPN Bet', logo: '/SportsbookLogos/espnbet.svg' },
+    { name: 'DraftKings', logo: '/SportsbookLogos/Draftking.svg' },
+    { name: 'Caesars', logo: '/SportsbookLogos/caesar.svg' },
+    { name: 'Bovada', logo: '/SportsbookLogos/Bovada-Casino-Logo.svg' },
+    { name: 'BetMGM', logo: '/SportsbookLogos/betgmg.svg' },
+    { name: 'Bet365', logo: '/SportsbookLogos/bet365.svg' }
+  ];
+
   // Tab options
   const tabs = ['EV+', 'Arbitrage', 'Boosts', 'Middles'];
   const tabIcons = ['fas fa-chart-line', 'fas fa-exchange-alt', 'fas fa-arrow-up', 'fas fa-arrows-alt-v'];
@@ -346,6 +357,91 @@ const ArbitrageEV = () => {
     return () => clearTimeout(loadingTimeout);
   }, [isLoading, errorMessage, gameLines.length]);
 
+  // Sportsbook Slider Component
+  const SportsbookSlider = () => (
+    <div className="relative overflow-hidden py-8 mb-12">
+      <div className="flex animate-scroll">
+        {/* First set of sportsbooks */}
+        {sportsbooks.map((book, index) => (
+          <div 
+            key={`first-${index}`}
+            className="flex-shrink-0 mx-6 group cursor-pointer"
+          >
+            <div className="relative bg-white/80 backdrop-blur-md border border-white/30 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 min-w-[200px]">
+              {/* Glassy overlay effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-50/50 to-transparent rounded-2xl"></div>
+              
+              {/* Content */}
+              <div className="relative z-10 flex flex-col items-center text-center">
+                <div className="w-16 h-16 mb-4 flex items-center justify-center bg-white/90 rounded-xl shadow-sm">
+                  <img 
+                    src={book.logo} 
+                    alt={book.name}
+                    className="w-12 h-12 object-contain filter drop-shadow-sm"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                  <div className="hidden w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    {book.name.substring(0, 2)}
+                  </div>
+                </div>
+                <h3 className="font-semibold text-gray-800 text-sm mb-1">{book.name}</h3>
+                <p className="text-xs text-gray-600">Compare Odds</p>
+              </div>
+              
+              {/* Shimmer effect on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer rounded-2xl"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+        
+        {/* Duplicate set for seamless loop */}
+        {sportsbooks.map((book, index) => (
+          <div 
+            key={`second-${index}`}
+            className="flex-shrink-0 mx-6 group cursor-pointer"
+          >
+            <div className="relative bg-white/80 backdrop-blur-md border border-white/30 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 min-w-[200px]">
+              {/* Glassy overlay effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-50/50 to-transparent rounded-2xl"></div>
+              
+              {/* Content */}
+              <div className="relative z-10 flex flex-col items-center text-center">
+                <div className="w-16 h-16 mb-4 flex items-center justify-center bg-white/90 rounded-xl shadow-sm">
+                  <img 
+                    src={book.logo} 
+                    alt={book.name}
+                    className="w-12 h-12 object-contain filter drop-shadow-sm"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                  <div className="hidden w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    {book.name.substring(0, 2)}
+                  </div>
+                </div>
+                <h3 className="font-semibold text-gray-800 text-sm mb-1">{book.name}</h3>
+                <p className="text-xs text-gray-600">Compare Odds</p>
+              </div>
+              
+              {/* Shimmer effect on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer rounded-2xl"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   // Component sections
   const LoadingView = () => (
     <div className="flex flex-col items-center justify-center py-20">
@@ -387,21 +483,21 @@ const ArbitrageEV = () => {
       {selectedTab === 0 ? (
         // EV Stats
         <>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
             <div className="flex items-center mb-2">
               <i className="fas fa-list text-red-600 mr-2"></i>
               <span className="text-sm text-gray-600">Available Bets</span>
             </div>
             <div className="text-2xl font-bold gradient-text">{evStats.betCount}</div>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
             <div className="flex items-center mb-2">
               <i className="fas fa-chart-bar text-green-600 mr-2"></i>
               <span className="text-sm text-gray-600">Average EV</span>
             </div>
             <div className="text-2xl font-bold text-green-600">{evStats.avgEV.toFixed(1)}%</div>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
             <div className="flex items-center mb-2">
               <i className="fas fa-star text-yellow-600 mr-2"></i>
               <span className="text-sm text-gray-600">Best EV</span>
@@ -412,14 +508,14 @@ const ArbitrageEV = () => {
       ) : (
         // Arbitrage Stats
         <>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
             <div className="flex items-center mb-2">
               <i className="fas fa-chart-line text-red-600 mr-2"></i>
               <span className="text-sm text-gray-600">Arbitrage Games</span>
             </div>
             <div className="text-2xl font-bold gradient-text">{arbitrageStats.withArbitrageCount}</div>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
             <div className="flex items-center mb-2">
               <i className="fas fa-exchange-alt text-green-600 mr-2"></i>
               <span className="text-sm text-gray-600">Profit %</span>
@@ -428,7 +524,7 @@ const ArbitrageEV = () => {
               {arbitrageStats.withArbitrageCount > 0 ? arbitrageStats.bestProfit.toFixed(1) : '0.0'}%
             </div>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
             <div className="flex items-center mb-2">
               <i className="fas fa-trophy text-yellow-600 mr-2"></i>
               <span className="text-sm text-gray-600">Best Profit</span>
@@ -443,7 +539,7 @@ const ArbitrageEV = () => {
   const TabSelection = () => (
     <div className="flex justify-center mb-6">
       <div style={{ width: '96%', maxWidth: 'none' }}>
-        <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="flex bg-white/50 backdrop-blur-md border border-white/30 rounded-lg p-1 shadow-lg">
           {tabs.map((tab, index) => (
             <button
               key={index}
@@ -472,7 +568,7 @@ const ArbitrageEV = () => {
       <div className="relative">
         <button
           onClick={() => setShowWeekPicker(!showWeekPicker)}
-          className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+          className="flex items-center px-4 py-2 bg-white/80 backdrop-blur-md border border-white/30 rounded-lg hover:bg-white/90 transition-all shadow-lg"
         >
           <i className="fas fa-calendar mr-2 text-gray-500"></i>
           College Week {selectedWeek}
@@ -480,7 +576,7 @@ const ArbitrageEV = () => {
         </button>
         
         {showWeekPicker && (
-          <div className="absolute top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+          <div className="absolute top-full mt-1 w-48 bg-white/90 backdrop-blur-md border border-white/30 rounded-lg shadow-xl z-10">
             <div className="p-2">
               <div className="text-sm font-semibold text-gray-700 px-2 py-1">Select Week</div>
               <div className="max-h-60 overflow-y-auto">
@@ -491,8 +587,8 @@ const ArbitrageEV = () => {
                       setSelectedWeek(week);
                       setShowWeekPicker(false);
                     }}
-                    className={`w-full text-left px-2 py-1 rounded text-sm hover:bg-gray-100 ${
-                      selectedWeek === week ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-700'
+                    className={`w-full text-left px-2 py-1 rounded text-sm hover:bg-white/70 transition-colors ${
+                      selectedWeek === week ? 'bg-red-50/80 text-red-600 font-semibold' : 'text-gray-700'
                     }`}
                   >
                     Week {week}
@@ -540,7 +636,7 @@ const ArbitrageEV = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12">
       <style jsx>{`
         .gradient-text {
           background: linear-gradient(135deg, ${gradientStart}, ${gradientEnd});
@@ -548,16 +644,54 @@ const ArbitrageEV = () => {
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
+        
+        @keyframes scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        
+        .animate-scroll {
+          animation: scroll 30s linear infinite;
+        }
+        
+        .animate-scroll:hover {
+          animation-play-state: paused;
+        }
+        
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+        
+        .animate-shimmer {
+          animation: shimmer 2s ease-in-out;
+        }
+        
+        .backdrop-blur-md {
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+        }
       `}</style>
       
       <div className="container mx-auto px-4" style={{ width: '96%', maxWidth: 'none' }}>
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-5xl font-bold gradient-text mb-4">Arbitrage EV</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Expected value calculations and arbitrage opportunities
           </p>
         </div>
+
+        {/* Sportsbook Slider */}
+        <SportsbookSlider />
 
         <div className="w-full">
           {/* Navigation */}
@@ -568,7 +702,7 @@ const ArbitrageEV = () => {
           {selectedTab < 2 && <StatsSummary />}
 
           {/* Main Content */}
-          <div className="bg-white rounded-lg shadow-lg">
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg shadow-xl">
             <div className="p-6">
               {isLoading ? (
                 <LoadingView />
