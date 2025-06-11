@@ -168,14 +168,14 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
     }
   };
 
-  // Implied Probability Overlay Component
-  const ImpliedProbabilityOverlay = ({ game }) => {
+  // Implied Probability Display Component (Now Horizontal)
+  const ImpliedProbabilityDisplay = ({ game }) => {
     const { homeImplied, awayImplied, totalImplied } = calculateImpliedProbabilities(game);
 
     if (homeImplied === 0 && awayImplied === 0) return null;
 
     return (
-      <div className="absolute top-0 right-0 p-3 space-y-1">
+      <div className="flex items-center gap-2">
         {/* Home Implied Probability */}
         <div 
           className="px-2 py-1 rounded-md text-xs font-medium backdrop-blur-sm border border-white/20"
@@ -521,7 +521,7 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
     >
       {/* Game header */}
       <div className="p-4">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-center">
           {/* Teams presentation */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
@@ -545,6 +545,11 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
                 <div className="text-xs text-gray-500">Home</div>
               </div>
             </div>
+          </div>
+
+          {/* Implied Probabilities in the middle */}
+          <div className="flex-1 flex justify-center">
+            <ImpliedProbabilityDisplay game={game} />
           </div>
 
           {/* Week info and profit badge */}
@@ -654,9 +659,6 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
           View Arbitrage Details
         </button>
       </div>
-
-      {/* Implied Probability Overlay */}
-      <ImpliedProbabilityOverlay game={game} />
     </div>
   );
 
@@ -741,4 +743,4 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
   );
 };
 
-export default ArbitrageView
+export default ArbitrageView;
