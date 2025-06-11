@@ -17,6 +17,7 @@ const GamePredictor = () => {
   const [teams, setTeams] = useState([]);
   const [predictions, setPredictions] = useState(new Map());
   const [weeklyPredictions, setWeeklyPredictions] = useState([]);
+  const [weekAccuracy, setWeekAccuracy] = useState(null);
   const [predictorInitialized, setPredictorInitialized] = useState(false);
   
   // Matchup Predictor state
@@ -61,8 +62,10 @@ const GamePredictor = () => {
         if (team.school) teamLookup.set(team.school.toLowerCase(), team);
       });
 
-      // Generate predictions for each game
+      // Process games differently based on year
       const gamePredictions = [];
+      let weekAccuracy = null;
+
       for (const game of weekGames) {
         const homeTeamId = game.home_id || game.homeId;
         const awayTeamId = game.away_id || game.awayId;
@@ -71,17 +74,6 @@ const GamePredictor = () => {
         
         if (homeTeamId && awayTeamId) {
           try {
-            const prediction = await matchupPredictor.getSummaryPrediction(
-              homeTeamId, 
-              awayTeamId, 
-              {
-                week: selectedWeek,
-                season: selectedYear,
-                neutralSite: game.neutral_site || game.neutralSite || false,
-                conferenceGame: game.conference_game || game.conferenceGame || false
-              }
-            );
-            
             // Find full team objects for home and away teams
             const homeTeam = teamLookup.get(homeTeamId) || 
                            teamLookup.get(homeTeamName?.toLowerCase()) || 
@@ -102,20 +94,95 @@ const GamePredictor = () => {
                              logos: ['/photos/ncaaf.png'],
                              conference: 'Unknown'
                            };
-            
-            gamePredictions.push({
-              gameId: game.id,
-              homeTeam: homeTeam,  // Now passing full team object
-              awayTeam: awayTeam,  // Now passing full team object
-              ...prediction
-            });
+
+            // For completed 2024 games, show actual vs predicted
+            if (selectedYear === 2024 && game.completed) {
+              const prediction = await matchupPredictor.getSummaryPrediction(
+                homeTeamId, 
+                awayTeamId, 
+                {
+                  week: selectedWeek,
+                  season: selectedYear,
+                  neutralSite: game.neutral_site || game.neutralSite || false,
+                  conferenceGame: game.conference_game || game.conferenceGame || false
+                }
+              );
+
+              const actualScore = {
+                home: game.home_points || 0,
+                away: game.away_points || 0
+              };
+
+              // Calculate prediction accuracy
+              const predictedWinner = prediction.score.home > prediction.score.away ? 'home' : 'away';
+              const actualWinner = actualScore.home > actualScore.away ? 'home' : 'away';
+              const correctWinner = predictedWinner === actualWinner;
+
+              const scoreDifference = {
+                home: Math.abs(prediction.score.home - actualScore.home),
+                away: Math.abs(prediction.score.away - actualScore.away)
+              };
+
+              gamePredictions.push({
+                gameId: game.id,
+                homeTeam: homeTeam,
+                awayTeam: awayTeam,
+                isCompleted: true,
+                actualScore: actualScore,
+                predictedScore: prediction.score,
+                correctWinner: correctWinner,
+                scoreDifference: scoreDifference,
+                ...prediction
+              });
+            } 
+            // For 2025 games or incomplete games, show normal predictions
+            else {
+              const prediction = await matchupPredictor.getSummaryPrediction(
+                homeTeamId, 
+                awayTeamId, 
+                {
+                  week: selectedWeek,
+                  season: selectedYear,
+                  neutralSite: game.neutral_site || game.neutralSite || false,
+                  conferenceGame: game.conference_game || game.conferenceGame || false
+                }
+              );
+
+              gamePredictions.push({
+                gameId: game.id,
+                homeTeam: homeTeam,
+                awayTeam: awayTeam,
+                isCompleted: false,
+                ...prediction
+              });
+            }
           } catch (error) {
             console.error(`Error predicting game ${game.id}:`, error);
           }
         }
       }
 
+      // Calculate week accuracy for 2024 completed games
+      if (selectedYear === 2024) {
+        const completedGames = gamePredictions.filter(g => g.isCompleted);
+        if (completedGames.length > 0) {
+          const correctPredictions = completedGames.filter(g => g.correctWinner).length;
+          const totalGames = completedGames.length;
+          const avgScoreError = completedGames.reduce((acc, game) => {
+            return acc + (game.scoreDifference.home + game.scoreDifference.away) / 2;
+          }, 0) / completedGames.length;
+
+          weekAccuracy = {
+            winnerAccuracy: (correctPredictions / totalGames) * 100,
+            averageScoreError: avgScoreError,
+            totalGames: totalGames,
+            correctPredictions: correctPredictions
+          };
+        }
+      }
+
       setWeeklyPredictions(gamePredictions);
+      setWeekAccuracy(weekAccuracy);
       
     } catch (error) {
       console.error('Error loading prediction data:', error);
@@ -272,7 +339,27 @@ const GamePredictor = () => {
             {/* Week/Year Selector */}
             <div className="bg-white/30 backdrop-blur-lg border border-white/40 rounded-2xl shadow-xl p-8">
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <h2 className="text-2xl font-bold gradient-text">Week {selectedWeek} Predictions</h2>
+                <div className="flex flex-col">
+                  <h2 className="text-2xl font-bold gradient-text">
+                    Week {selectedWeek} {selectedYear === 2024 ? 'Results vs Predictions' : 'Predictions'}
+                  </h2>
+                  {selectedYear === 2024 && weekAccuracy && (
+                    <div className="mt-2 flex flex-wrap gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${weekAccuracy.winnerAccuracy >= 70 ? 'bg-green-500' : weekAccuracy.winnerAccuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+                        <span className="text-gray-700 font-medium">
+                          Winner Accuracy: <span className="font-bold">{weekAccuracy.winnerAccuracy.toFixed(1)}%</span> ({weekAccuracy.correctPredictions}/{weekAccuracy.totalGames})
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <i className="fas fa-target text-blue-500"></i>
+                        <span className="text-gray-700 font-medium">
+                          Avg Score Error: <span className="font-bold">{weekAccuracy.averageScoreError.toFixed(1)} pts</span>
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-4">
                   <select
                     value={selectedYear}
@@ -340,7 +427,7 @@ const GamePredictor = () => {
 
 // Weekly Prediction Card Component
 const WeeklyPredictionCard = ({ prediction }) => {
-  const { homeTeam, awayTeam, score, spread, total, winProbability, confidence, summary } = prediction;
+  const { homeTeam, awayTeam, score, spread, total, winProbability, confidence, summary, isCompleted, actualScore, predictedScore, correctWinner, scoreDifference } = prediction;
   const favorite = spread > 0 ? homeTeam : awayTeam;
   const underdog = spread > 0 ? awayTeam : homeTeam;
   const spreadValue = Math.abs(spread);
@@ -391,36 +478,70 @@ const WeeklyPredictionCard = ({ prediction }) => {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-xs text-gray-600 mb-2 font-medium">Confidence</div>
-          <div className={`px-3 py-2 rounded-full text-sm font-bold backdrop-blur-sm border ${
-            confidence >= 0.8 ? 'bg-green-500/20 text-green-700 border-green-400/50' :
-            confidence >= 0.6 ? 'bg-yellow-500/20 text-yellow-700 border-yellow-400/50' :
-            'bg-red-500/20 text-red-700 border-red-400/50'
-          }`}>
-            {(confidence * 100).toFixed(0)}%
-          </div>
+          {isCompleted ? (
+            <div>
+              <div className="text-xs text-gray-600 mb-2 font-medium">Prediction</div>
+              <div className={`px-3 py-2 rounded-full text-sm font-bold backdrop-blur-sm border ${
+                correctWinner ? 'bg-green-500/20 text-green-700 border-green-400/50' : 'bg-red-500/20 text-red-700 border-red-400/50'
+              }`}>
+                {correctWinner ? '✓ Correct' : '✗ Wrong'}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="text-xs text-gray-600 mb-2 font-medium">Confidence</div>
+              <div className={`px-3 py-2 rounded-full text-sm font-bold backdrop-blur-sm border ${
+                confidence >= 0.8 ? 'bg-green-500/20 text-green-700 border-green-400/50' :
+                confidence >= 0.6 ? 'bg-yellow-500/20 text-yellow-700 border-yellow-400/50' :
+                'bg-red-500/20 text-red-700 border-red-400/50'
+              }`}>
+                {(confidence * 100).toFixed(0)}%
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Prediction Details */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-          <div className="text-xs text-gray-600 mb-2 font-medium">Predicted Score</div>
-          <div className="font-bold text-gray-800 text-lg">
-            {score.away.toFixed(0)} - {score.home.toFixed(0)}
+      {/* Score Display - Different for completed vs upcoming */}
+      {isCompleted ? (
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+            <div className="text-xs text-gray-600 mb-2 font-medium">Actual Score</div>
+            <div className="font-bold text-gray-800 text-lg">
+              {actualScore.away} - {actualScore.home}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">Final</div>
+          </div>
+          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+            <div className="text-xs text-gray-600 mb-2 font-medium">Our Prediction</div>
+            <div className="font-bold text-gray-800 text-lg">
+              {predictedScore.away.toFixed(0)} - {predictedScore.home.toFixed(0)}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">
+              Off by {scoreDifference.away.toFixed(0)}-{scoreDifference.home.toFixed(0)} pts
+            </div>
           </div>
         </div>
-        <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-          <div className="text-xs text-gray-600 mb-2 font-medium">Spread</div>
-          <div className="font-bold gradient-text text-lg">
-            {favorite?.abbreviation || 'FAV'} -{spreadValue.toFixed(1)}
+      ) : (
+        <div className="grid grid-cols-3 gap-6 mb-8">
+          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+            <div className="text-xs text-gray-600 mb-2 font-medium">Predicted Score</div>
+            <div className="font-bold text-gray-800 text-lg">
+              {score.away.toFixed(0)} - {score.home.toFixed(0)}
+            </div>
+          </div>
+          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+            <div className="text-xs text-gray-600 mb-2 font-medium">Spread</div>
+            <div className="font-bold gradient-text text-lg">
+              {favorite?.abbreviation || 'FAV'} -{spreadValue.toFixed(1)}
+            </div>
+          </div>
+          <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+            <div className="text-xs text-gray-600 mb-2 font-medium">Total</div>
+            <div className="font-bold text-gray-800 text-lg">{total.toFixed(1)}</div>
           </div>
         </div>
-        <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-          <div className="text-xs text-gray-600 mb-2 font-medium">Total</div>
-          <div className="font-bold text-gray-800 text-lg">{total.toFixed(1)}</div>
-        </div>
-      </div>
+      )}
 
       {/* Modern Win Probability Chart */}
       <div className="mb-6">
@@ -433,7 +554,9 @@ const WeeklyPredictionCard = ({ prediction }) => {
             />
             <span className="font-medium">{awayTeam?.school || 'Away Team'}</span>
           </div>
-          <div className="text-xs text-gray-600 font-medium">Win Probability</div>
+          <div className="text-xs text-gray-600 font-medium">
+            {isCompleted ? 'Predicted Win Probability' : 'Win Probability'}
+          </div>
           <div className="flex items-center space-x-2">
             <span className="font-medium">{homeTeam?.school || 'Home Team'}</span>
             <img 
@@ -475,7 +598,24 @@ const WeeklyPredictionCard = ({ prediction }) => {
 
       {/* Summary */}
       <div className="text-sm text-gray-700 leading-relaxed bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-        {summary}
+        {isCompleted ? (
+          <div>
+            <div className="font-semibold mb-2">Prediction Analysis:</div>
+            {summary}
+            {correctWinner && (
+              <div className="mt-3 p-2 bg-green-100/70 rounded-lg border border-green-200/50">
+                <div className="text-green-800 text-xs font-semibold">✓ Winner predicted correctly!</div>
+              </div>
+            )}
+            {!correctWinner && (
+              <div className="mt-3 p-2 bg-red-100/70 rounded-lg border border-red-200/50">
+                <div className="text-red-800 text-xs font-semibold">✗ Winner prediction was incorrect</div>
+              </div>
+            )}
+          </div>
+        ) : (
+          summary
+        )}
       </div>
     </div>
   );
