@@ -519,8 +519,6 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
       }}
     >
-      {/* Implied Probability Overlay */}
-      <ImpliedProbabilityOverlay game={game} />
       {/* Game header */}
       <div className="p-4">
         <div className="flex justify-between items-start">
@@ -733,7 +731,7 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
       {filteredGames.length === 0 ? (
         <EmptyStateView />
       ) : (
-        <div className="space-y-4 px-4 pb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 pb-5">
           {filteredGames.map(game => (
             <ArbitrageGameCard key={game.id} game={game} />
           ))}
