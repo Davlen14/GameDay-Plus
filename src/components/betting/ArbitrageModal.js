@@ -147,6 +147,138 @@ const ArbitrageModal = ({ game, onClose }) => {
     return logoMap[providerLower] || null;
   };
 
+  // Modern Profit Chart Component
+  const ProfitChart = ({ moneylineStakes, bestMoneylinePair, totalStake }) => {
+    const homeWinProfit = (moneylineStakes.home * bestMoneylinePair.homeDecimal - totalStake);
+    const awayWinProfit = (moneylineStakes.away * bestMoneylinePair.awayDecimal - totalStake);
+    const maxProfit = Math.max(homeWinProfit, awayWinProfit);
+    
+    return (
+      <div 
+        className="mt-4 rounded-lg backdrop-blur-sm overflow-hidden"
+        style={{
+          background: 'rgba(255, 255, 255, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          minHeight: '200px'
+        }}
+      >
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h5 className="text-sm font-semibold text-gray-800">Profit Visualization</h5>
+            <div className="flex items-center space-x-4 text-xs text-gray-600">
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 rounded" style={{ background: metallicGradient }}></div>
+                <span>Home Win</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-3 rounded" style={{ background: metallicGreenGradient }}></div>
+                <span>Away Win</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart Container */}
+          <div className="relative h-32">
+            {/* Y-axis labels */}
+            <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-600 pr-2">
+              <span>${maxProfit.toFixed(0)}</span>
+              <span>${(maxProfit / 2).toFixed(0)}</span>
+              <span>$0</span>
+            </div>
+            
+            {/* Chart area */}
+            <div className="ml-8 h-full flex items-end space-x-8 justify-center">
+              {/* Home team bar */}
+              <div className="flex flex-col items-center">
+                <div 
+                  className="w-16 rounded-t-lg transition-all duration-500 ease-out flex items-end justify-center text-white text-xs font-bold"
+                  style={{
+                    height: `${(homeWinProfit / maxProfit) * 100}%`,
+                    minHeight: '20px',
+                    background: metallicGradient,
+                    animation: 'slideUp 0.8s ease-out'
+                  }}
+                >
+                  ${homeWinProfit.toFixed(0)}
+                </div>
+                <div className="mt-2 text-xs font-medium text-gray-800 text-center">
+                  <TeamLogo teamName={game.homeTeam} size={20} />
+                  <div className="mt-1">{game.homeTeam}</div>
+                </div>
+              </div>
+              
+              {/* Away team bar */}
+              <div className="flex flex-col items-center">
+                <div 
+                  className="w-16 rounded-t-lg transition-all duration-500 ease-out flex items-end justify-center text-white text-xs font-bold"
+                  style={{
+                    height: `${(awayWinProfit / maxProfit) * 100}%`,
+                    minHeight: '20px',
+                    background: metallicGreenGradient,
+                    animation: 'slideUp 0.8s ease-out 0.2s both'
+                  }}
+                >
+                  ${awayWinProfit.toFixed(0)}
+                </div>
+                <div className="mt-2 text-xs font-medium text-gray-800 text-center">
+                  <TeamLogo teamName={game.awayTeam} size={20} />
+                  <div className="mt-1">{game.awayTeam}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart footer info */}
+          <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }}>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div className="text-center">
+                <div className="text-gray-600">Guaranteed Profit</div>
+                <div 
+                  className="text-sm font-bold"
+                  style={{
+                    background: metallicGreenGradient,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
+                >
+                  ${Math.min(homeWinProfit, awayWinProfit).toFixed(2)}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-gray-600">Profit Margin</div>
+                <div 
+                  className="text-sm font-bold"
+                  style={{
+                    background: metallicGreenGradient,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
+                >
+                  {bestMoneylinePair.profitMargin.toFixed(2)}%
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <style jsx>{`
+          @keyframes slideUp {
+            from {
+              height: 0;
+              opacity: 0;
+            }
+            to {
+              height: var(--final-height);
+              opacity: 1;
+            }
+          }
+        `}</style>
+      </div>
+    );
+  };
+
   // Components
   const TeamLogo = ({ teamName, size = 70, showCoverage = false }) => {
     const logoUrl = getTeamLogo(teamName);
@@ -676,15 +808,11 @@ const ArbitrageModal = ({ game, onClose }) => {
           </div>
 
           {showProfitChart && (
-            <div 
-              className="mt-4 h-32 rounded flex items-center justify-center backdrop-blur-sm"
-              style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}
-            >
-              <span className="text-gray-600">Chart visualization would go here</span>
-            </div>
+            <ProfitChart 
+              moneylineStakes={moneylineStakes}
+              bestMoneylinePair={bestMoneylinePair}
+              totalStake={totalStake}
+            />
           )}
         </div>
 
@@ -1118,21 +1246,28 @@ const ArbitrageModal = ({ game, onClose }) => {
 
   // Main render
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{
+        background: 'rgba(0, 0, 0, 0.75)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
+      }}
+    >
       <div 
-        className="rounded-xl shadow-2xl w-full max-w-4xl backdrop-blur-sm border"
+        className="rounded-xl shadow-2xl w-full max-w-4xl backdrop-blur-md border overflow-hidden"
         style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          maxHeight: '90vh',
+          background: 'rgba(255, 255, 255, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          maxHeight: '95vh',
           minHeight: '70vh'
         }}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full max-h-[95vh]">
           <GameHeader />
           <TabNavigation />
           
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
             {activeTab === 0 && <OverviewTab />}
             {activeTab === 1 && <MoneylineTab />}
             {activeTab === 2 && <SpreadTab />}
