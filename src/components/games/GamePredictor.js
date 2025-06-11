@@ -30,9 +30,9 @@ const GamePredictor = () => {
   const initializePredictor = useCallback(async () => {
     try {
       setIsLoading(true);
-      // Enhanced MatchupPredictor doesn't need explicit initialization
+      await matchupPredictor.initialize();
       setPredictorInitialized(true);
-      console.log('Enhanced MatchupPredictor ready');
+      console.log('MatchupPredictor initialized successfully');
     } catch (error) {
       console.error('Error initializing predictor:', error);
       setErrorMessage('Failed to initialize prediction engine');
@@ -97,16 +97,12 @@ const GamePredictor = () => {
 
             // For completed 2024 games, show actual vs predicted
             if (selectedYear === 2024 && game.completed) {
-              const prediction = await matchupPredictor.predictMatchup(
-                homeTeamName, 
-                awayTeamName, 
+              const prediction = await matchupPredictor.getSummaryPrediction(
+                homeTeamId, 
+                awayTeamId, 
                 {
                   week: selectedWeek,
-                  season: selectedYear,
-                  venue: game.venue,
-                  includeWeather: true,
-                  includeBetting: true,
-                  includeAdvanced: true
+                  season: selectedYear
                 }
               );
 
@@ -116,13 +112,13 @@ const GamePredictor = () => {
               };
 
               // Calculate prediction accuracy
-              const predictedWinner = prediction.predictedScore.home > prediction.predictedScore.away ? 'home' : 'away';
+              const predictedWinner = prediction.score.home > prediction.score.away ? 'home' : 'away';
               const actualWinner = actualScore.home > actualScore.away ? 'home' : 'away';
               const correctWinner = predictedWinner === actualWinner;
 
               const scoreDifference = {
-                home: Math.abs(prediction.predictedScore.home - actualScore.home),
-                away: Math.abs(prediction.predictedScore.away - actualScore.away)
+                home: Math.abs(prediction.score.home - actualScore.home),
+                away: Math.abs(prediction.score.away - actualScore.away)
               };
 
               gamePredictions.push({
@@ -131,27 +127,23 @@ const GamePredictor = () => {
                 awayTeam: awayTeam,
                 isCompleted: true,
                 actualScore: actualScore,
-                predictedScore: prediction.predictedScore,
+                predictedScore: prediction.score,
                 correctWinner: correctWinner,
                 scoreDifference: scoreDifference,
-                prediction: prediction.prediction,
+                prediction: prediction.spread,
                 confidence: prediction.confidence,
-                keyFactors: prediction.keyFactors || [],
-                version: prediction.version
+                summary: prediction.summary,
+                winProbability: prediction.winProbability
               });
             } 
             // For 2025 games or incomplete games, show normal predictions
             else {
-              const prediction = await matchupPredictor.predictMatchup(
-                homeTeamName, 
-                awayTeamName, 
+              const prediction = await matchupPredictor.getSummaryPrediction(
+                homeTeamId, 
+                awayTeamId, 
                 {
                   week: selectedWeek,
-                  season: selectedYear,
-                  venue: game.venue,
-                  includeWeather: true,
-                  includeBetting: true,
-                  includeAdvanced: true
+                  season: selectedYear
                 }
               );
 
@@ -160,16 +152,13 @@ const GamePredictor = () => {
                 homeTeam: homeTeam,
                 awayTeam: awayTeam,
                 isCompleted: false,
-                prediction: prediction.prediction,
+                prediction: prediction.spread,
                 confidence: prediction.confidence,
-                predictedScore: prediction.predictedScore,
-                homeProbability: prediction.homeProbability,
-                awayProbability: prediction.awayProbability,
-                predictedMargin: prediction.predictedMargin,
-                keyFactors: prediction.keyFactors || [],
-                riskFactors: prediction.riskFactors || [],
-                bettingRecommendation: prediction.bettingRecommendation,
-                version: prediction.version
+                predictedScore: prediction.score,
+                winProbability: prediction.winProbability,
+                total: prediction.total,
+                summary: prediction.summary,
+                moneyline: prediction.moneyline
               });
             }
           } catch (error) {
@@ -220,16 +209,13 @@ const GamePredictor = () => {
   // Team search functionality
   const handleTeamSearch = useCallback(async (query) => {
     setSearchQuery(query);
-    if (query.length >= 2 && predictorInitialized && teams.length > 0) {
-      const suggestions = teams.filter(team => 
-        team.school?.toLowerCase().includes(query.toLowerCase()) ||
-        team.abbreviation?.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 10);
+    if (query.length >= 2 && predictorInitialized) {
+      const suggestions = matchupPredictor.getTeamSuggestions(query);
       setTeamSearchResults(suggestions);
     } else {
       setTeamSearchResults([]);
     }
-  }, [predictorInitialized, teams]);
+  }, [predictorInitialized]);
 
   // Matchup prediction handler
   const handleMatchupPrediction = useCallback(async () => {
@@ -238,15 +224,11 @@ const GamePredictor = () => {
     try {
       setIsLoading(true);
       const prediction = await matchupPredictor.predictMatchup(
-        homeTeam.school,  // Use team name instead of ID
-        awayTeam.school,  // Use team name instead of ID
+        homeTeam.id,  // Use team ID
+        awayTeam.id,  // Use team ID
         {
           week: selectedWeek,
-          season: selectedYear,
-          venue: null, // Could be enhanced to get venue from team data
-          includeWeather: true,
-          includeBetting: true,
-          includeAdvanced: true
+          season: selectedYear
         }
       );
       
@@ -484,7 +466,7 @@ const GamePredictor = () => {
 
 // Weekly Prediction Card Component
 const WeeklyPredictionCard = ({ prediction }) => {
-  const { homeTeam, awayTeam, score, spread, total, winProbability, confidence, summary, isCompleted, actualScore, predictedScore, correctWinner, scoreDifference } = prediction;
+  const { homeTeam, awayTeam, predictedScore, prediction: spread, total, winProbability, confidence, summary, isCompleted, actualScore, correctWinner, scoreDifference } = prediction;
   const favorite = spread > 0 ? homeTeam : awayTeam;
   const underdog = spread > 0 ? awayTeam : homeTeam;
   const spreadValue = Math.abs(spread);
@@ -601,7 +583,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
               <span>Predicted Score</span>
             </div>
             <div className="font-bold text-gray-800 text-lg">
-              {score.away.toFixed(0)} - {score.home.toFixed(0)}
+              {predictedScore.away.toFixed(0)} - {predictedScore.home.toFixed(0)}
             </div>
           </div>
           <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
@@ -853,7 +835,13 @@ const MatchupPredictorInterface = ({
 
 // Matchup Prediction Results Component
 const MatchupPredictionResults = ({ prediction }) => {
-  const { teams, prediction: pred, analysis, confidence } = prediction;
+  if (!prediction) return null;
+
+  // Handle original MatchupPredictor format
+  const pred = prediction.prediction || prediction;
+  const teams = prediction.teams || { home: {}, away: {} };
+  const analysis = prediction.analysis || {};
+  const confidence = prediction.confidence || 0.7;
   
   return (
     <div className="space-y-6">
@@ -861,7 +849,7 @@ const MatchupPredictionResults = ({ prediction }) => {
       <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <h3 className="text-2xl font-bold gradient-text mb-4">Prediction Results</h3>
-          <div className="text-lg text-gray-700">{analysis.summary.description}</div>
+          <div className="text-lg text-gray-700">{analysis.summary?.description || 'Prediction complete'}</div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -869,10 +857,10 @@ const MatchupPredictionResults = ({ prediction }) => {
           <div className="text-center">
             <div className="text-sm text-gray-500 mb-2">Predicted Score</div>
             <div className="text-3xl font-bold text-gray-800 mb-2">
-              {pred.score.away.toFixed(0)} - {pred.score.home.toFixed(0)}
+              {pred.score?.away?.toFixed(0) || '0'} - {pred.score?.home?.toFixed(0) || '0'}
             </div>
             <div className="text-sm text-gray-600">
-              {teams.away.school} @ {teams.home.school}
+              {teams.away?.school || 'Away'} @ {teams.home?.school || 'Home'}
             </div>
           </div>
 
@@ -880,8 +868,8 @@ const MatchupPredictionResults = ({ prediction }) => {
           <div className="text-center">
             <div className="text-sm text-gray-500 mb-2">Point Spread</div>
             <div className="text-3xl font-bold gradient-text mb-2">
-              {pred.spread > 0 ? teams.home.abbreviation : teams.away.abbreviation} 
-              {Math.abs(pred.spread).toFixed(1)}
+              {pred.spread > 0 ? (teams.home?.abbreviation || 'HOME') : (teams.away?.abbreviation || 'AWAY')} 
+              {Math.abs(pred.spread || 0).toFixed(1)}
             </div>
             <div className="text-sm text-gray-600">
               {pred.spread > 0 ? 'Home' : 'Away'} Favored
@@ -892,10 +880,10 @@ const MatchupPredictionResults = ({ prediction }) => {
           <div className="text-center">
             <div className="text-sm text-gray-500 mb-2">Total Points</div>
             <div className="text-3xl font-bold text-gray-800 mb-2">
-              {pred.total.toFixed(1)}
+              {pred.total?.toFixed(1) || '0.0'}
             </div>
             <div className="text-sm text-gray-600">
-              O/U {pred.total.toFixed(1)}
+              O/U {pred.total?.toFixed(1) || '0.0'}
             </div>
           </div>
         </div>
@@ -906,22 +894,22 @@ const MatchupPredictionResults = ({ prediction }) => {
             <div className="text-sm text-gray-500">Win Probability</div>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <div className="text-sm font-semibold">{teams.away.school}</div>
-            <div className="text-sm font-semibold">{teams.home.school}</div>
+            <div className="text-sm font-semibold">{teams.away?.school || 'Away Team'}</div>
+            <div className="text-sm font-semibold">{teams.home?.school || 'Home Team'}</div>
           </div>
           <div className="relative bg-gray-200 rounded-full h-4">
             <div 
               className="absolute left-0 top-0 h-4 bg-red-500 rounded-l-full"
-              style={{ width: `${pred.winProbability.away}%` }}
+              style={{ width: `${pred.winProbability?.away || 50}%` }}
             ></div>
             <div 
               className="absolute right-0 top-0 h-4 bg-blue-500 rounded-r-full"
-              style={{ width: `${pred.winProbability.home}%` }}
+              style={{ width: `${pred.winProbability?.home || 50}%` }}
             ></div>
           </div>
           <div className="flex justify-between text-sm text-gray-600 mt-2">
-            <span>{pred.winProbability.away.toFixed(1)}%</span>
-            <span>{pred.winProbability.home.toFixed(1)}%</span>
+            <span>{(pred.winProbability?.away || 50).toFixed(1)}%</span>
+            <span>{(pred.winProbability?.home || 50).toFixed(1)}%</span>
           </div>
         </div>
 
@@ -938,8 +926,8 @@ const MatchupPredictionResults = ({ prediction }) => {
         </div>
       </div>
 
-      {/* Key Factors */}
-      {analysis.keyFactors.length > 0 && (
+      {/* Key Factors - only show if available */}
+      {analysis.keyFactors?.length > 0 && (
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <h4 className="text-xl font-bold gradient-text mb-6">Key Factors</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -960,11 +948,13 @@ const MatchupPredictionResults = ({ prediction }) => {
         </div>
       )}
 
-      {/* Team Analysis */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <TeamAnalysisCard team={teams.away} analysis={analysis.teamAnalysis.away} />
-        <TeamAnalysisCard team={teams.home} analysis={analysis.teamAnalysis.home} />
-      </div>
+      {/* Team Analysis - only show if available */}
+      {analysis.teamAnalysis && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TeamAnalysisCard team={teams.away} analysis={analysis.teamAnalysis.away} />
+          <TeamAnalysisCard team={teams.home} analysis={analysis.teamAnalysis.home} />
+        </div>
+      )}
     </div>
   );
 };
