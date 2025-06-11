@@ -1,6 +1,7 @@
 // utilities/MatchupPredictor.js
 
 import { gameService, teamService, rankingsService } from '../services';
+import graphqlService from '../services/graphqlService';
 
 /**
  * Universal College Football Matchup Predictor
@@ -14,6 +15,10 @@ class MatchupPredictor {
     this.spRatings = new Map();
     this.recruitingData = new Map();
     this.transferData = new Map();
+    this.eloRatings = new Map();
+    this.weatherData = new Map();
+    this.bettingData = new Map();
+    this.comprehensiveData = new Map();
     this.isInitialized = false;
   }
 
@@ -24,7 +29,7 @@ class MatchupPredictor {
     if (this.isInitialized && !forceRefresh) return;
 
     try {
-      console.log('Initializing Matchup Predictor...');
+      console.log('Initializing Enhanced Matchup Predictor with GraphQL...');
       
       // Load teams data - only FBS teams
       const teams = await teamService.getFBSTeams();
@@ -32,25 +37,82 @@ class MatchupPredictor {
         this.teams.set(team.id, team);
       });
 
-      // Load SP+ ratings (most recent)
-      const spData = await this.loadSPRatings();
-      spData.forEach(rating => {
-        this.spRatings.set(rating.team, rating);
-      });
-
-      // Load recruiting data
-      const recruitingData = await this.loadRecruitingData();
-      recruitingData.forEach(data => {
-        this.recruitingData.set(data.team, data);
-      });
+      // Load comprehensive data using GraphQL for better performance
+      try {
+        const comprehensiveData = await graphqlService.getComprehensivePredictionData();
+        this.processComprehensiveData(comprehensiveData);
+        console.log('✓ Loaded comprehensive data via GraphQL');
+      } catch (graphqlError) {
+        console.warn('GraphQL data loading failed, falling back to individual API calls:', graphqlError);
+        await this.loadFallbackData();
+      }
 
       this.isInitialized = true;
-      console.log('Matchup Predictor initialized successfully');
+      console.log('✓ Enhanced Matchup Predictor initialized successfully');
       
     } catch (error) {
       console.error('Error initializing Matchup Predictor:', error);
       throw error;
     }
+  }
+
+  /**
+   * Process comprehensive GraphQL data
+   */
+  processComprehensiveData(data) {
+    // Process SP+ ratings
+    if (data.spRatings) {
+      data.spRatings.forEach(rating => {
+        this.spRatings.set(rating.team, rating);
+      });
+    }
+
+    // Process recruiting data
+    if (data.recruiting) {
+      data.recruiting.forEach(recruit => {
+        this.recruitingData.set(recruit.team, recruit);
+      });
+    }
+
+    // Process ELO ratings
+    if (data.eloRatings) {
+      data.eloRatings.forEach(elo => {
+        this.eloRatings.set(elo.team, elo);
+      });
+    }
+
+    // Process betting data
+    if (data.bettingData) {
+      data.bettingData.forEach(betting => {
+        this.bettingData.set(betting.team, betting);
+      });
+    }
+
+    // Cache comprehensive data for team lookups
+    if (data.teams) {
+      data.teams.forEach(teamData => {
+        this.comprehensiveData.set(teamData.id, teamData);
+      });
+    }
+  }
+
+  /**
+   * Fallback data loading if GraphQL fails
+   */
+  async loadFallbackData() {
+    console.log('Loading fallback data...');
+    
+    // Load SP+ ratings (most recent)
+    const spData = await this.loadSPRatings();
+    spData.forEach(rating => {
+      this.spRatings.set(rating.team, rating);
+    });
+
+    // Load recruiting data
+    const recruitingData = await this.loadRecruitingData();
+    recruitingData.forEach(data => {
+      this.recruitingData.set(data.team, data);
+    });
   }
 
   /**
@@ -75,21 +137,20 @@ class MatchupPredictor {
         throw new Error('Team not found');
       }
 
-      // Get historical data for both teams
-      const [homeHistory, awayHistory] = await Promise.all([
-        this.getTeamHistory(homeTeamId),
-        this.getTeamHistory(awayTeamId)
+      // Get historical data for both teams using enhanced GraphQL queries
+      const [homeHistory, awayHistory, headToHead, weatherData] = await Promise.all([
+        this.getEnhancedTeamHistory(homeTeamId),
+        this.getEnhancedTeamHistory(awayTeamId),
+        this.getEnhancedHeadToHeadHistory(homeTeamId, awayTeamId),
+        this.getWeatherData(homeTeam, options)
       ]);
 
-      // Calculate core metrics
-      const homeMetrics = this.calculateTeamMetrics(homeTeam, homeHistory);
-      const awayMetrics = this.calculateTeamMetrics(awayTeam, awayHistory);
+      // Calculate enhanced metrics with GraphQL data
+      const homeMetrics = this.calculateEnhancedTeamMetrics(homeTeam, homeHistory, homeTeamId);
+      const awayMetrics = this.calculateEnhancedTeamMetrics(awayTeam, awayHistory, awayTeamId);
 
-      // Get head-to-head history
-      const headToHead = await this.getHeadToHeadHistory(homeTeamId, awayTeamId);
-
-      // Calculate predictions
-      const prediction = this.calculatePrediction({
+      // Calculate enhanced predictions with GraphQL data
+      const prediction = this.calculateEnhancedPrediction({
         homeTeam,
         awayTeam,
         homeMetrics,
@@ -98,7 +159,7 @@ class MatchupPredictor {
         neutralSite,
         week,
         season,
-        weatherConditions,
+        weatherConditions: weatherData,
         conferenceGame
       });
 
@@ -305,6 +366,212 @@ class MatchupPredictor {
         homeFieldValue: neutralSite ? 0 : (homeMetrics.homeFieldAdvantage || 3.2)
       }
     };
+  }
+
+  /**
+   * Enhanced prediction calculation using GraphQL data and advanced metrics
+   */
+  calculateEnhancedPrediction({ homeTeam, awayTeam, homeMetrics, awayMetrics, headToHead, neutralSite, week, season, weatherConditions, conferenceGame }) {
+    
+    // Start with base prediction
+    const basePrediction = this.calculatePrediction({ 
+      homeTeam, awayTeam, homeMetrics, awayMetrics, headToHead, 
+      neutralSite, week, season, weatherConditions, conferenceGame 
+    });
+    
+    let homeScore = basePrediction.score.home;
+    let awayScore = basePrediction.score.away;
+    
+    // Enhanced adjustments using GraphQL data
+    
+    // ELO Rating adjustments (more accurate than SP+ alone)
+    if (homeMetrics.eloRating && awayMetrics.eloRating) {
+      const eloDiff = homeMetrics.eloRating - awayMetrics.eloRating;
+      const eloAdjustment = eloDiff * 0.02; // ELO differential impact
+      homeScore += eloAdjustment;
+      awayScore -= eloAdjustment;
+    }
+    
+    // Talent composite adjustments
+    if (homeMetrics.talentComposite && awayMetrics.talentComposite) {
+      const talentDiff = homeMetrics.talentComposite - awayMetrics.talentComposite;
+      const talentAdjustment = talentDiff * 0.15;
+      homeScore += talentAdjustment;
+      awayScore -= talentAdjustment;
+    }
+    
+    // Transfer portal impact
+    if (homeMetrics.transferPortalImpact && awayMetrics.transferPortalImpact) {
+      const transferDiff = homeMetrics.transferPortalImpact - awayMetrics.transferPortalImpact;
+      homeScore += transferDiff * 0.8; // Transfer impact on scoring
+      awayScore -= transferDiff * 0.8;
+    }
+    
+    // Enhanced weather impact (more detailed from GraphQL)
+    if (weatherConditions && weatherConditions.detailedConditions) {
+      const enhancedWeatherImpact = this.calculateEnhancedWeatherImpact(
+        weatherConditions.detailedConditions, 
+        homeMetrics, 
+        awayMetrics
+      );
+      homeScore += enhancedWeatherImpact.home;
+      awayScore += enhancedWeatherImpact.away;
+    }
+    
+    // Betting market efficiency (if our model disagrees with market)
+    if (homeMetrics.impliedWinRate && awayMetrics.impliedWinRate) {
+      const marketHomeWinRate = homeMetrics.impliedWinRate;
+      const modelHomeWinRate = this.calculateWinProbability(homeScore, awayScore, homeMetrics, awayMetrics);
+      const marketDisagreement = Math.abs(modelHomeWinRate - marketHomeWinRate);
+      
+      // If we disagree significantly with market, increase confidence but moderate prediction
+      if (marketDisagreement > 0.15) {
+        // Market inefficiency detected - trust our model more
+        const adjustment = marketDisagreement * 0.5;
+        if (modelHomeWinRate > marketHomeWinRate) {
+          homeScore += adjustment;
+        } else {
+          awayScore += adjustment;
+        }
+      }
+    }
+    
+    // Ensure reasonable bounds
+    homeScore = Math.max(7, Math.min(75, homeScore));
+    awayScore = Math.max(3, Math.min(70, awayScore));
+    
+    // Round to realistic numbers
+    homeScore = Math.round(homeScore * 10) / 10;
+    awayScore = Math.round(awayScore * 10) / 10;
+    
+    // Calculate enhanced derived metrics
+    const total = homeScore + awayScore;
+    const spread = homeScore - awayScore;
+    const homeWinProb = this.calculateEnhancedWinProbability(homeScore, awayScore, homeMetrics, awayMetrics);
+    const awayWinProb = 1 - homeWinProb;
+    
+    // Enhanced moneyline calculation
+    const homeMoneyline = this.probabilityToMoneyline(homeWinProb);
+    const awayMoneyline = this.probabilityToMoneyline(awayWinProb);
+    
+    return {
+      score: {
+        home: homeScore,
+        away: awayScore,
+        total: Math.round(total * 10) / 10
+      },
+      spread: Math.round(spread * 10) / 10,
+      total: Math.round(total * 10) / 10,
+      winProbability: {
+        home: Math.round(homeWinProb * 1000) / 10,
+        away: Math.round(awayWinProb * 1000) / 10
+      },
+      moneyline: {
+        home: homeMoneyline,
+        away: awayMoneyline
+      },
+      // Enhanced factors
+      factors: {
+        ...basePrediction.factors,
+        eloRatingDiff: homeMetrics.eloRating && awayMetrics.eloRating ? 
+          Math.round((homeMetrics.eloRating - awayMetrics.eloRating) * 10) / 10 : null,
+        talentDiff: homeMetrics.talentComposite && awayMetrics.talentComposite ?
+          Math.round((homeMetrics.talentComposite - awayMetrics.talentComposite) * 10) / 10 : null,
+        transferImpact: homeMetrics.transferPortalImpact && awayMetrics.transferPortalImpact ?
+          Math.round((homeMetrics.transferPortalImpact - awayMetrics.transferPortalImpact) * 10) / 10 : null,
+        weatherImpact: weatherConditions?.severity || 'none',
+        excitementIndex: Math.max(homeMetrics.excitementIndex || 0, awayMetrics.excitementIndex || 0)
+      }
+    };
+  }
+
+  /**
+   * Enhanced weather impact calculation with detailed conditions
+   */
+  calculateEnhancedWeatherImpact(detailedConditions, homeMetrics, awayMetrics) {
+    let homeImpact = 0;
+    let awayImpact = 0;
+    
+    const { temperature, windSpeed, precipitation, humidity, visibility } = detailedConditions;
+    
+    // Temperature effects (more nuanced)
+    if (temperature < 20) {
+      homeImpact -= 3;
+      awayImpact -= 5; // Away team more affected by extreme cold
+    } else if (temperature < 35) {
+      homeImpact -= 1.5;
+      awayImpact -= 3;
+    } else if (temperature > 95) {
+      homeImpact -= 2;
+      awayImpact -= 3.5; // Heat affects away team more
+    }
+    
+    // Wind effects on passing games
+    if (windSpeed > 25) {
+      // Heavily impacts passing
+      const homePassingImpact = (homeMetrics.yardsPerPlay || 0) > 6 ? -3 : -1;
+      const awayPassingImpact = (awayMetrics.yardsPerPlay || 0) > 6 ? -3 : -1;
+      homeImpact += homePassingImpact;
+      awayImpact += awayPassingImpact;
+    } else if (windSpeed > 15) {
+      const homePassingImpact = (homeMetrics.yardsPerPlay || 0) > 6 ? -1.5 : -0.5;
+      const awayPassingImpact = (awayMetrics.yardsPerPlay || 0) > 6 ? -1.5 : -0.5;
+      homeImpact += homePassingImpact;
+      awayImpact += awayPassingImpact;
+    }
+    
+    // Precipitation effects
+    if (precipitation) {
+      if (precipitation.type === 'snow' && precipitation.intensity > 0.5) {
+        homeImpact -= 2;
+        awayImpact -= 4; // Snow heavily favors home team
+      } else if (precipitation.type === 'rain' && precipitation.intensity > 0.3) {
+        homeImpact -= 1;
+        awayImpact -= 2.5;
+      }
+    }
+    
+    // Visibility effects
+    if (visibility && visibility < 0.25) { // Quarter mile or less
+      homeImpact -= 1;
+      awayImpact -= 2.5;
+    }
+    
+    return { home: homeImpact, away: awayImpact };
+  }
+
+  /**
+   * Enhanced win probability calculation with more factors
+   */
+  calculateEnhancedWinProbability(homeScore, awayScore, homeMetrics, awayMetrics) {
+    // Start with base probability
+    let prob = this.calculateWinProbability(homeScore, awayScore, homeMetrics, awayMetrics);
+    
+    // ELO rating adjustment
+    if (homeMetrics.eloRating && awayMetrics.eloRating) {
+      const eloAdj = (homeMetrics.eloRating - awayMetrics.eloRating) / 400; // ELO scale
+      prob += eloAdj * 0.05;
+    }
+    
+    // Talent composite adjustment
+    if (homeMetrics.talentComposite && awayMetrics.talentComposite) {
+      const talentAdj = (homeMetrics.talentComposite - awayMetrics.talentComposite) / 100;
+      prob += talentAdj * 0.03;
+    }
+    
+    // Market efficiency check
+    if (homeMetrics.impliedWinRate) {
+      const marketProb = homeMetrics.impliedWinRate;
+      const diff = Math.abs(prob - marketProb);
+      
+      // If we're very different from market, moderate slightly
+      if (diff > 0.2) {
+        prob = prob * 0.8 + marketProb * 0.2; // Blend with market
+      }
+    }
+    
+    // Bound probability
+    return Math.max(0.02, Math.min(0.98, prob));
   }
 
   /**
@@ -698,360 +965,125 @@ class MatchupPredictor {
     }
   }
 
-  // Utility calculation methods
-  calculateOffensiveEfficiency(games) {
-    if (!games || games.length === 0) return 0.5;
-    const avgScored = this.calculateAverage(games.map(g => g.pointsScored));
-    return Math.min(1.0, Math.max(0.0, (avgScored - 20) / 40));
-  }
-
-  calculateDefensiveEfficiency(games) {
-    if (!games || games.length === 0) return 0.5;
-    const avgAllowed = this.calculateAverage(games.map(g => g.pointsAllowed));
-    return Math.min(1.0, Math.max(0.0, (45 - avgAllowed) / 30));
-  }
-
-  calculateRedZoneEfficiency(games, type) {
-    // Simplified calculation - would need more detailed game data
-    if (type === 'offense') {
-      return Math.random() * 0.4 + 0.5; // 50-90%
-    } else {
-      return Math.random() * 0.4 + 0.3; // 30-70%
+  /**
+   * Enhanced team history using GraphQL comprehensive data
+   */
+  async getEnhancedTeamHistory(teamId) {
+    try {
+      // Try to get comprehensive data from GraphQL first
+      const teamData = this.comprehensiveData.get(teamId);
+      if (teamData && teamData.games) {
+        return teamData.games.map(game => ({
+          isWin: game.completed && 
+                 ((game.homeId === teamId && game.homePoints > game.awayPoints) ||
+                  (game.awayId === teamId && game.awayPoints > game.homePoints)),
+          pointsScored: game.homeId === teamId ? game.homePoints : game.awayPoints,
+          pointsAllowed: game.homeId === teamId ? game.awayPoints : game.homePoints,
+          isHome: game.homeId === teamId,
+          opponent: game.homeId === teamId ? game.awayTeam : game.homeTeam,
+          week: game.week,
+          // Enhanced data from GraphQL
+          excitementIndex: game.excitementIndex || 0,
+          eloRating: game.eloRating || null,
+          weatherConditions: game.weather || null
+        }));
+      }
+      
+      // Fallback to original method
+      return await this.getTeamHistory(teamId);
+    } catch (error) {
+      console.error('Error loading enhanced team history:', error);
+      return await this.getTeamHistory(teamId);
     }
-  }
-
-  calculateTurnoverMargin(games) {
-    // Simplified calculation - would need turnover data
-    return (Math.random() - 0.5) * 2; // -1 to +1
-  }
-
-  calculateSOS(games) {
-    // Simplified strength of schedule calculation
-    return Math.random() * 0.4 + 0.4; // 0.4 to 0.8
-  }
-
-  calculateHomeFieldAdvantage(games) {
-    // Calculate home field advantage based on home vs away performance
-    const homeGames = games.filter(g => g.isHome);
-    const awayGames = games.filter(g => !g.isHome);
-    
-    if (homeGames.length === 0 || awayGames.length === 0) return 3.2;
-    
-    const homeDiff = this.calculateAverage(homeGames.map(g => g.pointsScored - g.pointsAllowed));
-    const awayDiff = this.calculateAverage(awayGames.map(g => g.pointsScored - g.pointsAllowed));
-    
-    return Math.max(1.0, Math.min(6.0, homeDiff - awayDiff + 3.2));
-  }
-
-  calculateWeatherImpact(conditions) {
-    let homeImpact = 0;
-    let awayImpact = 0;
-    
-    if (conditions.temperature < 35) {
-      homeImpact -= 2;
-      awayImpact -= 3; // Away team more affected by cold
-    }
-    
-    if (conditions.windSpeed > 15) {
-      homeImpact -= 1;
-      awayImpact -= 1;
-    }
-    
-    if (conditions.precipitation) {
-      homeImpact -= 1.5;
-      awayImpact -= 2;
-    }
-    
-    return { home: homeImpact, away: awayImpact };
-  }
-
-  getRankFromValue(value, excellent, poor, reverse = false) {
-    if (reverse) {
-      if (value <= excellent) return 'Top 10';
-      if (value <= (excellent + poor) / 2) return 'Top 25';
-      if (value <= poor) return 'Average';
-      return 'Below Average';
-    } else {
-      if (value >= excellent) return 'Top 10';
-      if (value >= (excellent + poor) / 2) return 'Top 25';
-      if (value >= poor) return 'Average';
-      return 'Below Average';
-    }
-  }
-
-  getOverallGrade(metrics) {
-    const composite = (metrics.spRating / 30) + (metrics.winPercentage * 2) + 
-                    (metrics.offensiveEfficiency) + (metrics.defensiveEfficiency);
-    
-    if (composite >= 3.5) return 'A';
-    if (composite >= 3.0) return 'B+';
-    if (composite >= 2.5) return 'B';
-    if (composite >= 2.0) return 'C+';
-    if (composite >= 1.5) return 'C';
-    return 'D';
-  }
-
-  getTrend(metrics) {
-    const recent = metrics.recentForm;
-    const overall = metrics.pointDifferential;
-    
-    if (recent > overall + 5) return 'Trending Up';
-    if (recent < overall - 5) return 'Trending Down';
-    return 'Stable';
-  }
-
-  analyzeSpreadConfidence(prediction, homeMetrics, awayMetrics) {
-    const spreadAbs = Math.abs(prediction.spread);
-    const strengthDiff = Math.abs(homeMetrics.spRating - awayMetrics.spRating);
-    
-    let confidence = 'Medium';
-    let recommendation = prediction.spread > 0 ? 'Home' : 'Away';
-    let reasoning = `Model projects ${recommendation.toLowerCase()} team by ${spreadAbs.toFixed(1)} points`;
-
-    if (strengthDiff >= 10 && spreadAbs >= 7) {
-      confidence = 'High';
-      reasoning += '. Significant talent gap supports the spread.';
-    } else if (strengthDiff <= 3 && spreadAbs <= 3) {
-      confidence = 'Low';
-      reasoning += '. Very close matchup with uncertain outcome.';
-    }
-
-    return { recommendation, confidence, reasoning };
-  }
-
-  analyzeTotalConfidence(prediction, homeMetrics, awayMetrics) {
-    const avgScoring = (homeMetrics.avgPointsScored + homeMetrics.avgPointsAllowed + 
-                       awayMetrics.avgPointsScored + awayMetrics.avgPointsAllowed) / 4;
-    
-    const modelTotal = prediction.total;
-    const difference = Math.abs(modelTotal - avgScoring);
-    
-    let recommendation = modelTotal > avgScoring ? 'Over' : 'Under';
-    let confidence = 'Medium';
-    let reasoning = `Model projects ${modelTotal.toFixed(1)} points vs historical average of ${avgScoring.toFixed(1)}`;
-
-    if (difference >= 8) {
-      confidence = 'High';
-      reasoning += `. Significant deviation suggests strong ${recommendation.toLowerCase()} value.`;
-    } else if (difference <= 3) {
-      confidence = 'Low';
-      reasoning += '. Model total close to historical average.';
-    }
-
-    return { recommendation, confidence, reasoning };
-  }
-
-  analyzeMoneylineValue(prediction) {
-    const homeProb = prediction.winProbability.home / 100;
-    const homeML = prediction.moneyline.home;
-    
-    // Calculate implied probability from moneyline
-    const impliedProb = homeML < 0 ? 
-      Math.abs(homeML) / (Math.abs(homeML) + 100) :
-      100 / (homeML + 100);
-    
-    const edge = homeProb - impliedProb;
-    
-    if (Math.abs(edge) >= 0.05) {
-      return {
-        hasValue: true,
-        recommendation: edge > 0 ? 'Home ML' : 'Away ML',
-        confidence: Math.abs(edge) >= 0.1 ? 'High' : 'Medium',
-        reasoning: `Model gives ${edge > 0 ? 'home' : 'away'} team ${Math.abs(edge * 100).toFixed(1)}% better chance than odds suggest`
-      };
-    }
-
-    return { hasValue: false };
-  }
-
-  analyzeHistoricalContext(headToHead) {
-    if (!headToHead || headToHead.games.length === 0) {
-      return {
-        summary: 'No recent head-to-head history available',
-        trend: 'Unknown',
-        relevance: 'Low'
-      };
-    }
-
-    const recentGames = headToHead.games.slice(-5);
-    const totalGames = headToHead.games.length;
-    
-    let summary = `Teams have met ${totalGames} times in recent history. `;
-    
-    if (headToHead.team1Wins > headToHead.team2Wins) {
-      summary += `Home team leads the series ${headToHead.team1Wins}-${headToHead.team2Wins}`;
-    } else if (headToHead.team2Wins > headToHead.team1Wins) {
-      summary += `Away team leads the series ${headToHead.team2Wins}-${headToHead.team1Wins}`;
-    } else {
-      summary += `Series is tied ${headToHead.team1Wins}-${headToHead.team2Wins}`;
-    }
-
-    return {
-      summary,
-      trend: 'Even',
-      recentGames: recentGames.length,
-      relevance: totalGames >= 3 ? 'High' : 'Medium'
-    };
-  }
-
-  analyzeSituationalFactors(options) {
-    const factors = [];
-
-    if (options.week <= 2) {
-      factors.push({
-        factor: 'Early Season',
-        impact: 'Unpredictable',
-        description: 'Teams still finding their identity, potential for upsets'
-      });
-    } else if (options.week >= 10) {
-      factors.push({
-        factor: 'Late Season',
-        impact: 'High Stakes',
-        description: 'Conference championships and playoffs on the line'
-      });
-    }
-
-    if (options.neutralSite) {
-      factors.push({
-        factor: 'Neutral Site',
-        impact: 'Equalizer',
-        description: 'No home field advantage, may favor better team'
-      });
-    }
-
-    if (options.conferenceGame) {
-      factors.push({
-        factor: 'Conference Game',
-        impact: 'Closer Contest',
-        description: 'Conference familiarity often leads to tighter games'
-      });
-    }
-
-    return factors;
-  }
-
-  getConfidenceFactors(homeMetrics, awayMetrics, prediction) {
-    return {
-      dataQuality: this.assessDataQuality(homeMetrics, awayMetrics),
-      modelAgreement: this.assessModelAgreement(homeMetrics, awayMetrics, prediction),
-      historicalAccuracy: this.getHistoricalAccuracy(),
-      uncertaintyFactors: this.getUncertaintyFactors(homeMetrics, awayMetrics)
-    };
-  }
-
-  assessDataQuality(homeMetrics, awayMetrics) {
-    const homeGames = homeMetrics.totalGames;
-    const awayGames = awayMetrics.totalGames;
-    const minGames = Math.min(homeGames, awayGames);
-
-    if (minGames >= 12) return { score: 95, description: 'Excellent - Full season of data' };
-    if (minGames >= 8) return { score: 85, description: 'Good - Most of season available' };
-    if (minGames >= 5) return { score: 70, description: 'Fair - Limited sample size' };
-    return { score: 50, description: 'Poor - Very limited data' };
-  }
-
-  assessModelAgreement(homeMetrics, awayMetrics, prediction) {
-    const spFavorsHome = homeMetrics.spRating > awayMetrics.spRating;
-    const recentFormFavorsHome = homeMetrics.recentForm > awayMetrics.recentForm;
-    const spreadFavorsHome = prediction.spread > 0;
-
-    const agreements = [spFavorsHome, recentFormFavorsHome, spreadFavorsHome].filter(x => x === spreadFavorsHome).length;
-
-    if (agreements === 3) return { score: 90, description: 'High - All metrics agree' };
-    if (agreements === 2) return { score: 75, description: 'Moderate - Most metrics agree' };
-    return { score: 60, description: 'Low - Mixed signals from metrics' };
-  }
-
-  getHistoricalAccuracy() {
-    return {
-      spreads: { accuracy: 72, description: '72% against the spread accuracy' },
-      totals: { accuracy: 65, description: '65% over/under accuracy' },
-      moneylines: { accuracy: 78, description: '78% moneyline accuracy' }
-    };
-  }
-
-  getUncertaintyFactors(homeMetrics, awayMetrics) {
-    const factors = [];
-
-    if (homeMetrics.totalGames < 8 || awayMetrics.totalGames < 8) {
-      factors.push('Limited game sample affects prediction accuracy');
-    }
-
-    const homeConsistency = this.calculateConsistency(homeMetrics);
-    const awayConsistency = this.calculateConsistency(awayMetrics);
-    if (homeConsistency < 0.6 || awayConsistency < 0.6) {
-      factors.push('Team performance inconsistency');
-    }
-
-    return factors;
-  }
-
-  calculateConsistency(metrics) {
-    return 0.7; // Placeholder - would analyze game-by-game variance
   }
 
   /**
-   * Quick prediction method for simple use cases
+   * Enhanced head-to-head history using GraphQL
    */
-  async quickPredict(homeTeamName, awayTeamName, options = {}) {
-    await this.initialize();
-
-    const homeTeam = Array.from(this.teams.values()).find(team => 
-      team.school.toLowerCase().includes(homeTeamName.toLowerCase()) ||
-      team.abbreviation?.toLowerCase() === homeTeamName.toLowerCase()
-    );
-
-    const awayTeam = Array.from(this.teams.values()).find(team => 
-      team.school.toLowerCase().includes(awayTeamName.toLowerCase()) ||
-      team.abbreviation?.toLowerCase() === awayTeamName.toLowerCase()
-    );
-
-    if (!homeTeam || !awayTeam) {
-      throw new Error('Teams not found. Please check team names.');
+  async getEnhancedHeadToHeadHistory(team1Id, team2Id) {
+    try {
+      // Try GraphQL enhanced head-to-head query
+      const h2hData = await graphqlService.getHeadToHeadHistory(team1Id, team2Id);
+      
+      if (h2hData && h2hData.games) {
+        return {
+          games: h2hData.games.map(game => ({
+            ...game,
+            excitementIndex: game.excitementIndex || 0,
+            eloRatingDiff: game.eloRatingDiff || 0
+          })),
+          team1Wins: h2hData.team1Wins || 0,
+          team2Wins: h2hData.team2Wins || 0,
+          avgPointDiff: h2hData.avgPointDiff || 0,
+          lastMeeting: h2hData.lastMeeting || null
+        };
+      }
+      
+      // Fallback to original method
+      return await this.getHeadToHeadHistory(team1Id, team2Id);
+    } catch (error) {
+      console.error('Error loading enhanced head-to-head history:', error);
+      return await this.getHeadToHeadHistory(team1Id, team2Id);
     }
-
-    return this.predictMatchup(homeTeam.id, awayTeam.id, options);
   }
 
   /**
-   * Get summary prediction without full analysis
+   * Get weather data for game location
    */
-  async getSummaryPrediction(homeTeamId, awayTeamId, options = {}) {
-    const fullPrediction = await this.predictMatchup(homeTeamId, awayTeamId, options);
+  async getWeatherData(homeTeam, options) {
+    try {
+      if (options.weatherConditions) {
+        return options.weatherConditions;
+      }
+
+      // Try to get weather from comprehensive data
+      const teamData = this.comprehensiveData.get(homeTeam.id);
+      if (teamData && teamData.weather) {
+        return teamData.weather;
+      }
+
+      // Try GraphQL weather query
+      const weatherData = await graphqlService.getWeatherConditions(homeTeam.id, options.week, options.season);
+      return weatherData || null;
+    } catch (error) {
+      console.warn('Weather data unavailable:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Enhanced team metrics calculation with GraphQL data
+   */
+  calculateEnhancedTeamMetrics(team, history, teamId) {
+    // Start with base metrics
+    const baseMetrics = this.calculateTeamMetrics(team, history);
+    
+    // Add enhanced metrics from GraphQL data
+    const teamData = this.comprehensiveData.get(teamId);
+    const eloData = this.eloRatings.get(team.school);
+    const bettingData = this.bettingData.get(team.school);
     
     return {
-      score: fullPrediction.prediction.score,
-      spread: fullPrediction.prediction.spread,
-      total: fullPrediction.prediction.total,
-      winProbability: fullPrediction.prediction.winProbability,
-      moneyline: fullPrediction.prediction.moneyline,
-      summary: fullPrediction.analysis.summary.description,
-      confidence: fullPrediction.confidence
+      ...baseMetrics,
+      // Enhanced ratings
+      eloRating: eloData?.rating || null,
+      eloRanking: eloData?.ranking || null,
+      
+      // Betting insights
+      impliedWinRate: bettingData?.impliedWinRate || null,
+      avgClosingLine: bettingData?.avgClosingLine || null,
+      
+      // Advanced analytics
+      excitementIndex: teamData?.excitementIndex || 0,
+      talentComposite: teamData?.talentComposite || null,
+      transferPortalImpact: teamData?.transferPortalImpact || null,
+      
+      // Enhanced efficiency metrics
+      thirdDownConversion: teamData?.thirdDownConversion || null,
+      redZoneSuccess: teamData?.redZoneSuccess || null,
+      yardsPerPlay: teamData?.yardsPerPlay || null,
+      timePossession: teamData?.timePossession || null
     };
-  }
-
-  /**
-   * Get team search suggestions
-   */
-  getTeamSuggestions(searchTerm) {
-    if (!searchTerm || searchTerm.length < 2) return [];
-
-    const term = searchTerm.toLowerCase();
-    return Array.from(this.teams.values())
-      .filter(team => 
-        team.school.toLowerCase().includes(term) ||
-        team.abbreviation?.toLowerCase().includes(term) ||
-        team.mascot?.toLowerCase().includes(term)
-      )
-      .slice(0, 10)
-      .map(team => ({
-        id: team.id,
-        name: team.school,
-        abbreviation: team.abbreviation,
-        mascot: team.mascot,
-        conference: team.conference,
-        logo: team.logos?.[0]
-      }));
   }
 }
 

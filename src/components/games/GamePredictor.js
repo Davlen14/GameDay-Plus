@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { gameService, teamService, rankingsService, bettingService } from '../../services';
+import graphqlService from '../../services/graphqlService';
 import matchupPredictor from '../../utils/MatchupPredictor';
 
 const GamePredictor = () => {
@@ -48,13 +49,29 @@ const GamePredictor = () => {
       setIsLoading(true);
       setErrorMessage(null);
 
-      // Load games for the selected week
-      const weekGames = await gameService.getGamesByWeek(selectedYear, selectedWeek);
+      // Try to load games using enhanced GraphQL query first
+      let weekGames = [];
+      let allTeams = [];
+      
+      try {
+        console.log('🚀 Loading prediction data via GraphQL...');
+        const graphqlData = await graphqlService.getWeeklyGamesForPrediction(selectedWeek, selectedYear);
+        
+        if (graphqlData && graphqlData.games) {
+          weekGames = graphqlData.games;
+          allTeams = graphqlData.teams || await teamService.getFBSTeams();
+          console.log('✓ Successfully loaded data via GraphQL');
+        } else {
+          throw new Error('GraphQL returned empty data');
+        }
+      } catch (graphqlError) {
+        console.warn('⚠️ GraphQL loading failed, falling back to REST API:', graphqlError);
+        weekGames = await gameService.getGamesByWeek(selectedYear, selectedWeek);
+        allTeams = await teamService.getFBSTeams();
+      }
+
       setGames(weekGames);
 
-      // Load team data to get full team objects with logos, abbreviations, etc.
-      const allTeams = await teamService.getFBSTeams(); // Only load FBS teams
-      
       // Create a lookup map for teams by ID and name
       const teamLookup = new Map();
       allTeams.forEach(team => {
@@ -62,7 +79,7 @@ const GamePredictor = () => {
         if (team.school) teamLookup.set(team.school.toLowerCase(), team);
       });
 
-      // Process games differently based on year
+      // Process games with enhanced predictions
       const gamePredictions = [];
       let weekAccuracy = null;
 
@@ -95,15 +112,23 @@ const GamePredictor = () => {
                              conference: 'Unknown'
                            };
 
-            // For completed 2024 games, show actual vs predicted
+            // Enhanced prediction options with GraphQL data
+            const predictionOptions = {
+              week: selectedWeek,
+              season: selectedYear,
+              conferenceGame: homeTeam.conference === awayTeam.conference,
+              weatherConditions: game.weather || null,
+              // Add enhanced context from GraphQL
+              excitementIndex: game.excitementIndex || null,
+              bettingData: game.bettingLines || null
+            };
+
+            // For completed 2024 games, show actual vs predicted with enhanced analysis
             if (selectedYear === 2024 && game.completed) {
               const prediction = await matchupPredictor.getSummaryPrediction(
                 homeTeamId, 
                 awayTeamId, 
-                {
-                  week: selectedWeek,
-                  season: selectedYear
-                }
+                predictionOptions
               );
 
               const actualScore = {
@@ -111,7 +136,7 @@ const GamePredictor = () => {
                 away: game.away_points || game.awayPoints || 0
               };
 
-              // Calculate prediction accuracy
+              // Enhanced accuracy calculation
               const predictedWinner = prediction.score.home > prediction.score.away ? 'home' : 'away';
               const actualWinner = actualScore.home > actualScore.away ? 'home' : 'away';
               const correctWinner = predictedWinner === actualWinner;
@@ -133,18 +158,22 @@ const GamePredictor = () => {
                 prediction: prediction.spread,
                 confidence: prediction.confidence,
                 summary: prediction.summary,
-                winProbability: prediction.winProbability
+                winProbability: prediction.winProbability,
+                // Enhanced fields from GraphQL
+                excitementIndex: game.excitementIndex || 0,
+                weatherImpact: game.weather?.impact || 'none',
+                eloRatings: {
+                  home: game.homeEloRating || null,
+                  away: game.awayEloRating || null
+                }
               });
             } 
-            // For 2025 games or incomplete games, show normal predictions
+            // For 2025 games or incomplete games, show enhanced predictions
             else {
               const prediction = await matchupPredictor.getSummaryPrediction(
                 homeTeamId, 
                 awayTeamId, 
-                {
-                  week: selectedWeek,
-                  season: selectedYear
-                }
+                predictionOptions
               );
 
               gamePredictions.push({
@@ -158,7 +187,16 @@ const GamePredictor = () => {
                 winProbability: prediction.winProbability,
                 total: prediction.total,
                 summary: prediction.summary,
-                moneyline: prediction.moneyline
+                moneyline: prediction.moneyline,
+                // Enhanced fields from GraphQL
+                excitementIndex: game.excitementIndex || 0,
+                weatherImpact: game.weather?.impact || 'none',
+                bettingInsights: game.bettingLines || null,
+                eloRatings: {
+                  home: game.homeEloRating || null,
+                  away: game.awayEloRating || null
+                },
+                talentGap: game.talentDifferential || null
               });
             }
           } catch (error) {
@@ -167,7 +205,7 @@ const GamePredictor = () => {
         }
       }
 
-      // Calculate week accuracy for 2024 completed games
+      // Enhanced week accuracy calculation for 2024 completed games
       if (selectedYear === 2024) {
         const completedGames = gamePredictions.filter(g => g.isCompleted);
         if (completedGames.length > 0) {
@@ -177,11 +215,18 @@ const GamePredictor = () => {
             return acc + (game.scoreDifference.home + game.scoreDifference.away) / 2;
           }, 0) / completedGames.length;
 
+          // Enhanced accuracy metrics
+          const highConfidenceGames = completedGames.filter(g => g.confidence >= 0.8);
+          const highConfidenceAccuracy = highConfidenceGames.length > 0 ?
+            (highConfidenceGames.filter(g => g.correctWinner).length / highConfidenceGames.length) * 100 : 0;
+
           weekAccuracy = {
             winnerAccuracy: (correctPredictions / totalGames) * 100,
             averageScoreError: avgScoreError,
             totalGames: totalGames,
-            correctPredictions: correctPredictions
+            correctPredictions: correctPredictions,
+            highConfidenceAccuracy: highConfidenceAccuracy,
+            highConfidenceGames: highConfidenceGames.length
           };
         }
       }
@@ -279,6 +324,10 @@ const GamePredictor = () => {
               <i className="fas fa-microscope mr-2 text-blue-600"></i>
               Validate our AI model accuracy by comparing 2024 predictions vs actual game results, or explore 2025 predictions.
             </span>
+            <span className="block mt-2 text-sm text-purple-600 font-medium">
+              <i className="fas fa-rocket mr-2"></i>
+              Enhanced with GraphQL integration for comprehensive data analysis including ELO ratings, weather impact, and betting insights.
+            </span>
           </p>
         </div>
 
@@ -361,9 +410,9 @@ const GamePredictor = () => {
                     <div className="mt-4 bg-white/40 backdrop-blur-sm rounded-xl p-4 border border-white/50">
                       <div className="flex items-center gap-2 mb-2">
                         <i className="fas fa-chart-line text-blue-500"></i>
-                        <span className="font-semibold text-gray-800">AI Model Performance</span>
+                        <span className="font-semibold text-gray-800">Enhanced AI Model Performance</span>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                         <div className="flex items-center space-x-2">
                           <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
                             weekAccuracy.winnerAccuracy >= 70 ? 'bg-green-500' : 
@@ -372,7 +421,7 @@ const GamePredictor = () => {
                             <i className={`fas ${weekAccuracy.winnerAccuracy >= 70 ? 'fa-check' : weekAccuracy.winnerAccuracy >= 60 ? 'fa-minus' : 'fa-times'} text-white text-xs`}></i>
                           </div>
                           <span className="text-gray-700 font-medium">
-                            Winner Accuracy: <span className="font-bold gradient-text">{weekAccuracy.winnerAccuracy.toFixed(1)}%</span>
+                            Overall Accuracy: <span className="font-bold gradient-text">{weekAccuracy.winnerAccuracy.toFixed(1)}%</span>
                             <span className="text-xs text-gray-500 ml-1">({weekAccuracy.correctPredictions}/{weekAccuracy.totalGames})</span>
                           </span>
                         </div>
@@ -387,6 +436,20 @@ const GamePredictor = () => {
                             Avg Score Error: <span className="font-bold gradient-text">{weekAccuracy.averageScoreError.toFixed(1)} pts</span>
                           </span>
                         </div>
+                        {weekAccuracy.highConfidenceGames > 0 && (
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                              weekAccuracy.highConfidenceAccuracy >= 80 ? 'bg-green-500' : 
+                              weekAccuracy.highConfidenceAccuracy >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}>
+                              <i className="fas fa-star text-white text-xs"></i>
+                            </div>
+                            <span className="text-gray-700 font-medium">
+                              High Confidence: <span className="font-bold gradient-text">{weekAccuracy.highConfidenceAccuracy.toFixed(1)}%</span>
+                              <span className="text-xs text-gray-500 ml-1">({weekAccuracy.highConfidenceGames} games)</span>
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -466,7 +529,12 @@ const GamePredictor = () => {
 
 // Weekly Prediction Card Component
 const WeeklyPredictionCard = ({ prediction }) => {
-  const { homeTeam, awayTeam, predictedScore, prediction: spread, total, winProbability, confidence, summary, isCompleted, actualScore, correctWinner, scoreDifference } = prediction;
+  const { 
+    homeTeam, awayTeam, predictedScore, prediction: spread, total, winProbability, 
+    confidence, summary, isCompleted, actualScore, correctWinner, scoreDifference,
+    excitementIndex, weatherImpact, eloRatings, talentGap, bettingInsights 
+  } = prediction;
+  
   const favorite = spread > 0 ? homeTeam : awayTeam;
   const underdog = spread > 0 ? awayTeam : homeTeam;
   const spreadValue = Math.abs(spread);
@@ -477,7 +545,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
 
   return (
     <div className="bg-white/30 backdrop-blur-lg border border-white/40 rounded-2xl shadow-2xl p-8 hover:shadow-3xl hover:bg-white/40 transition-all duration-300 transform hover:-translate-y-2">
-      {/* Teams Header */}
+      {/* Enhanced Teams Header with ELO Ratings */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-6">
           <div className="text-center">
@@ -495,6 +563,12 @@ const WeeklyPredictionCard = ({ prediction }) => {
               <div className="text-sm font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/40">
                 {awayTeam?.abbreviation || 'AWAY'}
               </div>
+              {/* ELO Rating Display */}
+              {eloRatings?.away && (
+                <div className="text-xs text-blue-600 font-medium mt-1">
+                  ELO: {eloRatings.away.toFixed(0)}
+                </div>
+              )}
             </div>
           </div>
           <div className="text-3xl font-bold text-gray-600">@</div>
@@ -513,9 +587,17 @@ const WeeklyPredictionCard = ({ prediction }) => {
               <div className="text-sm font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/40">
                 {homeTeam?.abbreviation || 'HOME'}
               </div>
+              {/* ELO Rating Display */}
+              {eloRatings?.home && (
+                <div className="text-xs text-blue-600 font-medium mt-1">
+                  ELO: {eloRatings.home.toFixed(0)}
+                </div>
+              )}
             </div>
           </div>
         </div>
+        
+        {/* Enhanced Status Section */}
         <div className="text-right">
           {isCompleted ? (
             <div>
@@ -532,24 +614,43 @@ const WeeklyPredictionCard = ({ prediction }) => {
               </div>
             </div>
           ) : (
-            <div>
-              <div className="text-xs text-gray-600 mb-2 font-medium">Prediction Confidence</div>
-              <div className={`px-4 py-2 rounded-full text-sm font-bold backdrop-blur-lg border-2 shadow-lg ${
-                confidence >= 0.8 ? 'bg-green-500/30 text-green-700 border-green-400/60' :
-                confidence >= 0.6 ? 'bg-yellow-500/30 text-yellow-700 border-yellow-400/60' :
-                'bg-red-500/30 text-red-700 border-red-400/60'
-              }`}>
-                <div className="flex items-center space-x-2">
-                  <i className={`fas ${confidence >= 0.8 ? 'fa-star' : confidence >= 0.6 ? 'fa-star-half-alt' : 'fa-question'}`}></i>
-                  <span>{(confidence * 100).toFixed(0)}%</span>
+            <div className="space-y-2">
+              <div>
+                <div className="text-xs text-gray-600 mb-1 font-medium">Prediction Confidence</div>
+                <div className={`px-3 py-1 rounded-full text-sm font-bold backdrop-blur-lg border-2 shadow-lg ${
+                  confidence >= 0.8 ? 'bg-green-500/30 text-green-700 border-green-400/60' :
+                  confidence >= 0.6 ? 'bg-yellow-500/30 text-yellow-700 border-yellow-400/60' :
+                  'bg-red-500/30 text-red-700 border-red-400/60'
+                }`}>
+                  <div className="flex items-center space-x-1">
+                    <i className={`fas ${confidence >= 0.8 ? 'fa-star' : confidence >= 0.6 ? 'fa-star-half-alt' : 'fa-question'}`}></i>
+                    <span>{(confidence * 100).toFixed(0)}%</span>
+                  </div>
                 </div>
               </div>
+              
+              {/* Excitement Index */}
+              {excitementIndex > 0 && (
+                <div>
+                  <div className="text-xs text-gray-600 mb-1 font-medium">Game Excitement</div>
+                  <div className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-lg border shadow-lg ${
+                    excitementIndex >= 8 ? 'bg-purple-500/30 text-purple-700 border-purple-400/60' :
+                    excitementIndex >= 6 ? 'bg-orange-500/30 text-orange-700 border-orange-400/60' :
+                    'bg-gray-500/30 text-gray-700 border-gray-400/60'
+                  }`}>
+                    <div className="flex items-center space-x-1">
+                      <i className="fas fa-fire"></i>
+                      <span>{excitementIndex.toFixed(1)}/10</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Score Display - Enhanced for completed vs upcoming */}
+      {/* Enhanced Score Display with Talent Gap */}
       {isCompleted ? (
         <div className="grid grid-cols-2 gap-6 mb-8">
           <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
@@ -585,6 +686,12 @@ const WeeklyPredictionCard = ({ prediction }) => {
             <div className="font-bold text-gray-800 text-lg">
               {predictedScore.away.toFixed(0)} - {predictedScore.home.toFixed(0)}
             </div>
+            {/* Talent Gap Indicator */}
+            {talentGap && (
+              <div className="text-xs text-purple-600 mt-1 font-medium">
+                Talent Gap: {talentGap > 0 ? '+' : ''}{talentGap.toFixed(1)}
+              </div>
+            )}
           </div>
           <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
             <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
@@ -658,7 +765,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
         </div>
       </div>
 
-      {/* Enhanced Summary with Validation Feedback */}
+      {/* Enhanced Summary with Weather and Additional Context */}
       <div className="text-sm text-gray-700 leading-relaxed bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
         {isCompleted ? (
           <div>
@@ -709,9 +816,40 @@ const WeeklyPredictionCard = ({ prediction }) => {
           <div>
             <div className="font-semibold mb-2 flex items-center space-x-2">
               <i className="fas fa-robot text-purple-600"></i>
-              <span>AI Prediction Analysis:</span>
+              <span>Enhanced AI Prediction Analysis:</span>
             </div>
-            {summary}
+            <div className="mb-3">{summary}</div>
+            
+            {/* Enhanced Context Indicators */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {/* Weather Impact */}
+              {weatherImpact && weatherImpact !== 'none' && (
+                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  weatherImpact === 'high' ? 'bg-red-100 text-red-700' :
+                  weatherImpact === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-blue-100 text-blue-700'
+                }`}>
+                  <i className="fas fa-cloud mr-1"></i>
+                  Weather: {weatherImpact}
+                </div>
+              )}
+              
+              {/* ELO Rating Difference */}
+              {eloRatings?.home && eloRatings?.away && (
+                <div className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                  <i className="fas fa-chart-bar mr-1"></i>
+                  ELO Δ: {Math.abs(eloRatings.home - eloRatings.away).toFixed(0)}
+                </div>
+              )}
+              
+              {/* High Excitement Game */}
+              {excitementIndex >= 7 && (
+                <div className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                  <i className="fas fa-fire mr-1"></i>
+                  High Stakes
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
