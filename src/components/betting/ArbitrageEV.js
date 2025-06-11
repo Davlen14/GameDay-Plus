@@ -122,14 +122,16 @@ const ArbitrageEV = () => {
         provider: line.provider || 'Unknown',
         moneylineHome: line.homeMoneyline,
         moneylineAway: line.awayMoneyline,
+        homeMoneyline: line.homeMoneyline,  // Add this mapping for ArbitrageView
+        awayMoneyline: line.awayMoneyline,  // Add this mapping for ArbitrageView
         spread: line.spread,
         overUnder: line.overUnder
       })).filter(line => 
         // Filter out lines with missing moneyline data
-        line.moneylineHome !== null && line.moneylineAway !== null &&
-        line.moneylineHome !== undefined && line.moneylineAway !== undefined &&
-        !isNaN(line.moneylineHome) && !isNaN(line.moneylineAway) &&
-        line.moneylineHome !== 0 && line.moneylineAway !== 0
+        line.homeMoneyline !== null && line.awayMoneyline !== null &&
+        line.homeMoneyline !== undefined && line.awayMoneyline !== undefined &&
+        !isNaN(line.homeMoneyline) && !isNaN(line.awayMoneyline) &&
+        line.homeMoneyline !== 0 && line.awayMoneyline !== 0
       );
       
       console.log(`Game ${gameData.homeTeam} vs ${gameData.awayTeam}: ${gameData.lines.length} total lines, ${processedLines.length} valid lines`);

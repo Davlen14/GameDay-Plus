@@ -510,7 +510,7 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
   // Arbitrage game card
   const ArbitrageGameCard = ({ game }) => (
     <div 
-      className="relative rounded-xl shadow-lg overflow-hidden border"
+      className="rounded-xl shadow-lg overflow-hidden border"
       style={{
         background: 'rgba(255, 255, 255, 0.85)',
         backdropFilter: 'blur(10px)',
@@ -731,7 +731,7 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
       {filteredGames.length === 0 ? (
         <EmptyStateView />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 pb-5">
+        <div className="space-y-4 px-4 pb-5">
           {filteredGames.map(game => (
             <ArbitrageGameCard key={game.id} game={game} />
           ))}
