@@ -102,6 +102,116 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
     return logoMap[providerLower] || null;
   };
 
+  // Helper function to calculate implied probabilities for a game
+  const calculateImpliedProbabilities = (game) => {
+    if (!game.lines || game.lines.length === 0) {
+      return { homeImplied: 0, awayImplied: 0, totalImplied: 0 };
+    }
+
+    // Find best odds for each side
+    const homeOdds = game.lines.map(l => l.homeMoneyline).filter(o => o != null);
+    const awayOdds = game.lines.map(l => l.awayMoneyline).filter(o => o != null);
+
+    if (homeOdds.length === 0 || awayOdds.length === 0) {
+      return { homeImplied: 0, awayImplied: 0, totalImplied: 0 };
+    }
+
+    // Find best odds (highest positive, or closest to 0 for negative)
+    const bestHomeOdds = homeOdds.reduce((best, current) => {
+      if (current > 0 && best > 0) return Math.max(best, current);
+      if (current < 0 && best < 0) return Math.max(best, current);
+      if (current > 0 && best < 0) return current;
+      if (current < 0 && best > 0) return best;
+      return best;
+    });
+
+    const bestAwayOdds = awayOdds.reduce((best, current) => {
+      if (current > 0 && best > 0) return Math.max(best, current);
+      if (current < 0 && best < 0) return Math.max(best, current);
+      if (current > 0 && best < 0) return current;
+      if (current < 0 && best > 0) return best;
+      return best;
+    });
+
+    // Calculate implied probabilities
+    const homeImplied = BettingCalculations.americanToImpliedProbability(bestHomeOdds) || 0;
+    const awayImplied = BettingCalculations.americanToImpliedProbability(bestAwayOdds) || 0;
+    const totalImplied = homeImplied + awayImplied;
+
+    return {
+      homeImplied: homeImplied,
+      awayImplied: awayImplied,
+      totalImplied: totalImplied
+    };
+  };
+
+  // Helper function to get gradient color based on probability
+  const getProbabilityGradient = (probability, isTotal = false) => {
+    if (isTotal) {
+      // For total probability: < 100% (green), 100-105% (yellow), > 105% (red)
+      if (probability < 100) {
+        return 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.25))'; // Green
+      } else if (probability <= 105) {
+        return 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.25))'; // Yellow
+      } else {
+        return 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.25))'; // Red
+      }
+    } else {
+      // For individual probabilities: higher is more red/orange, lower is more green
+      if (probability < 40) {
+        return 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.25))'; // Green
+      } else if (probability < 60) {
+        return 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.25))'; // Yellow
+      } else {
+        return 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.25))'; // Red
+      }
+    }
+  };
+
+  // Implied Probability Overlay Component
+  const ImpliedProbabilityOverlay = ({ game }) => {
+    const { homeImplied, awayImplied, totalImplied } = calculateImpliedProbabilities(game);
+
+    if (homeImplied === 0 && awayImplied === 0) return null;
+
+    return (
+      <div className="absolute top-0 right-0 p-3 space-y-1">
+        {/* Home Implied Probability */}
+        <div 
+          className="px-2 py-1 rounded-md text-xs font-medium backdrop-blur-sm border border-white/20"
+          style={{
+            background: getProbabilityGradient(homeImplied),
+            color: homeImplied > 60 ? '#dc2626' : homeImplied > 40 ? '#d97706' : '#16a34a'
+          }}
+        >
+          <span className="font-semibold">H:</span> {homeImplied.toFixed(1)}%
+        </div>
+
+        {/* Away Implied Probability */}
+        <div 
+          className="px-2 py-1 rounded-md text-xs font-medium backdrop-blur-sm border border-white/20"
+          style={{
+            background: getProbabilityGradient(awayImplied),
+            color: awayImplied > 60 ? '#dc2626' : awayImplied > 40 ? '#d97706' : '#16a34a'
+          }}
+        >
+          <span className="font-semibold">A:</span> {awayImplied.toFixed(1)}%
+        </div>
+
+        {/* Total Implied Probability */}
+        <div 
+          className="px-2 py-1 rounded-md text-xs font-bold backdrop-blur-sm border border-white/20"
+          style={{
+            background: getProbabilityGradient(totalImplied, true),
+            color: totalImplied > 105 ? '#dc2626' : totalImplied > 100 ? '#d97706' : '#16a34a'
+          }}
+        >
+          <span className="font-semibold">T:</span> {totalImplied.toFixed(1)}%
+        </div>
+      </div>
+    );
+  };
+
   // Team coverage information for 2024 season
   const teamCoverage2024 = {
     'Alabama': true, 'Auburn': true, 'Georgia': true, 'Tennessee': true, 'Florida': true,
@@ -400,7 +510,7 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
   // Arbitrage game card
   const ArbitrageGameCard = ({ game }) => (
     <div 
-      className="rounded-xl shadow-lg overflow-hidden border"
+      className="relative rounded-xl shadow-lg overflow-hidden border"
       style={{
         background: 'rgba(255, 255, 255, 0.85)',
         backdropFilter: 'blur(10px)',
@@ -409,6 +519,8 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
       }}
     >
+      {/* Implied Probability Overlay */}
+      <ImpliedProbabilityOverlay game={game} />
       {/* Game header */}
       <div className="p-4">
         <div className="flex justify-between items-start">
@@ -544,6 +656,9 @@ const ArbitrageView = ({ arbitrageGames, onGameSelected }) => {
           View Arbitrage Details
         </button>
       </div>
+
+      {/* Implied Probability Overlay */}
+      <ImpliedProbabilityOverlay game={game} />
     </div>
   );
 
