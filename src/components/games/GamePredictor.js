@@ -200,7 +200,7 @@ const GamePredictor = () => {
             </div>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 bg-clip-text text-transparent">Game Predictor</span>
+            <span className="gradient-text">Game Predictor</span>
           </h1>
           <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
             Advanced AI-powered predictions using machine learning algorithms and comprehensive statistical analysis.
@@ -214,7 +214,7 @@ const GamePredictor = () => {
               onClick={() => setActiveView('weekly')}
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 activeView === 'weekly'
-                  ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white shadow-lg'
+                  ? 'gradient-bg text-white shadow-lg'
                   : 'text-gray-700 hover:text-gray-800 hover:bg-white/20'
               }`}
             >
@@ -225,7 +225,7 @@ const GamePredictor = () => {
               onClick={() => setActiveView('matchup')}
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 activeView === 'matchup'
-                  ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white shadow-lg'
+                  ? 'gradient-bg text-white shadow-lg'
                   : 'text-gray-700 hover:text-gray-800 hover:bg-white/20'
               }`}
             >
@@ -236,7 +236,7 @@ const GamePredictor = () => {
               onClick={() => setActiveView('models')}
               className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 activeView === 'models'
-                  ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white shadow-lg'
+                  ? 'gradient-bg text-white shadow-lg'
                   : 'text-gray-700 hover:text-gray-800 hover:bg-white/20'
               }`}
             >
@@ -272,7 +272,7 @@ const GamePredictor = () => {
             {/* Week/Year Selector */}
             <div className="bg-white/30 backdrop-blur-lg border border-white/40 rounded-2xl shadow-xl p-8">
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">Week {selectedWeek} Predictions</h2>
+                <h2 className="text-2xl font-bold gradient-text">Week {selectedWeek} Predictions</h2>
                 <div className="flex gap-4">
                   <select
                     value={selectedYear}
@@ -412,7 +412,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
         </div>
         <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
           <div className="text-xs text-gray-600 mb-2 font-medium">Spread</div>
-          <div className="font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent text-lg">
+          <div className="font-bold gradient-text text-lg">
             {favorite?.abbreviation || 'FAV'} -{spreadValue.toFixed(1)}
           </div>
         </div>
@@ -496,7 +496,7 @@ const MatchupPredictorInterface = ({
     <div className="space-y-8">
       {/* Team Selection */}
       <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6 text-center">Select Teams to Compare</h2>
+        <h2 className="text-2xl font-bold gradient-text mb-6 text-center">Select Teams to Compare</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Away Team Selection */}
@@ -570,7 +570,7 @@ const MatchupPredictorInterface = ({
           <button
             onClick={onPredict}
             disabled={!homeTeam || !awayTeam || isLoading}
-            className="bg-gradient-to-r from-gray-700 to-gray-800 text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {isLoading ? (
               <>
@@ -604,7 +604,7 @@ const MatchupPredictionResults = ({ prediction }) => {
       {/* Main Prediction Card */}
       <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Prediction Results</h3>
+          <h3 className="text-2xl font-bold gradient-text mb-4">Prediction Results</h3>
           <div className="text-lg text-gray-700">{analysis.summary.description}</div>
         </div>
 
@@ -623,7 +623,7 @@ const MatchupPredictionResults = ({ prediction }) => {
           {/* Spread */}
           <div className="text-center">
             <div className="text-sm text-gray-500 mb-2">Point Spread</div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">
+            <div className="text-3xl font-bold gradient-text mb-2">
               {pred.spread > 0 ? teams.home.abbreviation : teams.away.abbreviation} 
               {Math.abs(pred.spread).toFixed(1)}
             </div>
@@ -796,7 +796,7 @@ const ModelDetailsView = () => {
     <div className="space-y-8">
       {/* Model Overview */}
       <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6">Prediction Model Details</h2>
+        <h2 className="text-2xl font-bold gradient-text mb-6">Prediction Model Details</h2>
         <div className="prose max-w-none">
           <p className="text-gray-700 leading-relaxed mb-6">
             Our AI-powered prediction system combines multiple sophisticated models to generate 
@@ -840,11 +840,11 @@ const ModelDetailsView = () => {
 
       {/* Model Performance */}
       <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
-        <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6">Historical Performance</h3>
+        <h3 className="text-xl font-bold gradient-text mb-6">Historical Performance</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="text-center">
-            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">72%</div>
+            <div className="text-3xl font-bold gradient-text mb-2">72%</div>
             <div className="text-sm text-gray-700">Against the Spread</div>
             <div className="w-full bg-gray-300/60 rounded-full h-2 mt-2">
               <div className="bg-blue-500 h-2 rounded-full" style={{width: '72%'}}></div>
@@ -852,7 +852,7 @@ const ModelDetailsView = () => {
           </div>
           
           <div className="text-center">
-            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">78%</div>
+            <div className="text-3xl font-bold gradient-text mb-2">78%</div>
             <div className="text-sm text-gray-700">Moneyline Accuracy</div>
             <div className="w-full bg-gray-300/60 rounded-full h-2 mt-2">
               <div className="bg-green-500 h-2 rounded-full" style={{width: '78%'}}></div>
@@ -860,7 +860,7 @@ const ModelDetailsView = () => {
           </div>
           
           <div className="text-center">
-            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">65%</div>
+            <div className="text-3xl font-bold gradient-text mb-2">65%</div>
             <div className="text-sm text-gray-700">Over/Under</div>
             <div className="w-full bg-gray-300/60 rounded-full h-2 mt-2">
               <div className="bg-yellow-500 h-2 rounded-full" style={{width: '65%'}}></div>
@@ -868,7 +868,7 @@ const ModelDetailsView = () => {
           </div>
           
           <div className="text-center">
-            <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">83%</div>
+            <div className="text-3xl font-bold gradient-text mb-2">83%</div>
             <div className="text-sm text-gray-700">Top 25 Games</div>
             <div className="w-full bg-gray-300/60 rounded-full h-2 mt-2">
               <div className="bg-purple-500 h-2 rounded-full" style={{width: '83%'}}></div>
@@ -879,7 +879,7 @@ const ModelDetailsView = () => {
 
       {/* Input Factors */}
       <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
-        <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6">Key Input Factors</h3>
+        <h3 className="text-xl font-bold gradient-text mb-6">Key Input Factors</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
@@ -924,7 +924,7 @@ const ModelDetailsView = () => {
 
       {/* Confidence Scoring */}
       <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
-        <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-6">Confidence Scoring System</h3>
+        <h3 className="text-xl font-bold gradient-text mb-6">Confidence Scoring System</h3>
         
         <div className="space-y-4">
           <div className="flex items-center space-x-4 p-4 bg-green-100/70 backdrop-blur-sm rounded-lg border border-green-200/50">
