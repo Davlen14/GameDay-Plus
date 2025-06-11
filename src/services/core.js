@@ -1,6 +1,6 @@
 // Core API utility functions
-const COLLEGE_FOOTBALL_API_BASE = 'https://apinext.collegefootballdata.com';
-const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY;
+const COLLEGE_FOOTBALL_API_BASE = 'https://api.collegefootballdata.com';
+const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY || 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
 const GNEWS_API_KEY = process.env.REACT_APP_GNEWS_API_KEY;
 const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
 const YOUTUBE_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY;
@@ -26,6 +26,8 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
+      mode: 'cors',
+      credentials: 'omit'
     });
 
     if (!response.ok) {
@@ -43,7 +45,17 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
     console.log(`✅ [API DEBUG] REST API request successful for: ${endpoint}`);
     return data;
   } catch (error) {
-    console.error("College Football API Error:", error.message);
+    console.error(`❌ [API DEBUG] College Football API Error for ${endpoint}:`, error.message);
+    
+    // Check if it's a CORS or network error
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.error('❌ [API DEBUG] Network/CORS error detected - REST API may be blocked');
+      const corsError = new Error(`CORS/Network error accessing ${endpoint}`);
+      corsError.isCorsError = true;
+      corsError.originalError = error;
+      throw corsError;
+    }
+    
     throw error;
   }
 };

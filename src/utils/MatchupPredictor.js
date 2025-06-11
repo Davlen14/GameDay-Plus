@@ -938,8 +938,12 @@ class MatchupPredictor {
 
   async getTeamHistory(teamId) {
     try {
+      console.log(`📊 [API DEBUG] Attempting to fetch team history for team ${teamId}...`);
+      
       // Get team's recent games from game service
       const games = await gameService.getGamesByTeam(teamId, 2024); // Use 2024 data for now
+      
+      console.log(`✅ [API DEBUG] Successfully fetched ${games.length} games for team ${teamId}`);
       
       // Transform games into the expected format
       return games.map(game => ({
@@ -953,26 +957,40 @@ class MatchupPredictor {
         week: game.week
       })).filter(game => game.pointsScored !== undefined && game.pointsAllowed !== undefined);
     } catch (error) {
-      console.error('Error loading team history:', error);
-      // Return mock data for development
+      console.error('❌ [API DEBUG] Error loading team history for team', teamId, '- using mock data:', error);
+      // Return mock data for development - this prevents the prediction from failing
+      console.log('🔄 [API DEBUG] Generating mock team history to prevent prediction failure');
       return this.generateMockTeamHistory();
     }
   }
 
   generateMockTeamHistory() {
-    // Generate mock team history for development
+    console.log('🔄 [API DEBUG] Generating realistic mock team history...');
+    // Generate mock team history for development with more realistic data
     const games = [];
+    const teamStrength = 0.3 + Math.random() * 0.4; // Random team strength 0.3-0.7
+    
     for (let i = 0; i < 12; i++) {
-      const homePoints = Math.floor(Math.random() * 35) + 14;
-      const awayPoints = Math.floor(Math.random() * 35) + 14;
+      // More realistic scoring with team strength influence
+      const baseOffense = 20 + (teamStrength * 25); // 20-45 base points
+      const baseDefense = 15 + ((1 - teamStrength) * 20); // 15-35 points allowed
+      
+      const homePoints = Math.floor(baseOffense + (Math.random() * 21) - 10); // ±10 variance
+      const awayPoints = Math.floor(baseDefense + (Math.random() * 21) - 10); // ±10 variance
+      
       games.push({
         isWin: homePoints > awayPoints,
-        pointsScored: homePoints,
-        pointsAllowed: awayPoints,
+        pointsScored: Math.max(0, homePoints),
+        pointsAllowed: Math.max(0, awayPoints),
         isHome: Math.random() > 0.5,
-        week: i + 1
+        week: i + 1,
+        // Add some realistic opponent context
+        opponent: `Mock Team ${i + 1}`,
+        excitementIndex: Math.random() * 10
       });
     }
+    
+    console.log(`✅ [API DEBUG] Generated ${games.length} mock games for fallback`);
     return games;
   }
 
@@ -996,9 +1014,12 @@ class MatchupPredictor {
    */
   async getEnhancedTeamHistory(teamId) {
     try {
+      console.log(`📊 [API DEBUG] Attempting to fetch enhanced team history for team ${teamId}...`);
+      
       // Try to get comprehensive data from GraphQL first
       const teamData = this.comprehensiveData.get(teamId);
       if (teamData && teamData.games) {
+        console.log(`✅ [API DEBUG] Using cached enhanced team history for team ${teamId}`);
         return teamData.games.map(game => ({
           isWin: game.completed && 
                  ((game.homeId === teamId && game.homePoints > game.awayPoints) ||
@@ -1015,10 +1036,11 @@ class MatchupPredictor {
         }));
       }
       
+      console.log(`🔄 [API DEBUG] No cached data, falling back to standard team history for team ${teamId}`);
       // Fallback to original method
       return await this.getTeamHistory(teamId);
     } catch (error) {
-      console.error('Error loading enhanced team history:', error);
+      console.error('❌ [API DEBUG] Error loading enhanced team history for team', teamId, '- falling back to standard method:', error);
       return await this.getTeamHistory(teamId);
     }
   }
@@ -1056,24 +1078,56 @@ class MatchupPredictor {
   /**
    * Get weather data for game location
    */
-  async getWeatherData(homeTeam, options) {
+  async getWeatherData(homeTeam, options = {}) {
     try {
+      // Return early if weather conditions are provided in options
       if (options.weatherConditions) {
+        console.log('🌤️ [API DEBUG] Using provided weather conditions from options');
         return options.weatherConditions;
       }
 
-      // Try to get weather from comprehensive data
+      // Check if weather data is available in comprehensive data
       const teamData = this.comprehensiveData.get(homeTeam.id);
       if (teamData && teamData.weather) {
+        console.log('📊 [API DEBUG] Using cached weather data from comprehensive data');
         return teamData.weather;
       }
 
-      // Try GraphQL weather query
-      const weatherData = await graphqlService.getWeatherConditions(homeTeam.id, options.week, options.season);
-      return weatherData || null;
+      // Only try GraphQL if available and CORS isn't an issue
+      if (this.graphqlAvailable) {
+        try {
+          console.log('🌤️ [API DEBUG] Attempting to fetch weather data via GraphQL...');
+          const weatherData = await graphqlService.getWeatherConditions(homeTeam.id, options.week, options.season);
+          if (weatherData) {
+            console.log('✅ [API DEBUG] Weather data fetched successfully via GraphQL');
+            return weatherData;
+          }
+        } catch (graphqlError) {
+          console.log('❌ [API DEBUG] GraphQL weather fetch failed, using default weather data');
+          // Don't throw, just continue with fallback
+        }
+      }
+
+      // Return default/mock weather data
+      console.log('🌤️ [API DEBUG] Using default weather conditions (no API data available)');
+      return {
+        temperature: 70,
+        humidity: 50,
+        windSpeed: 5,
+        conditions: 'Clear',
+        severity: 'none',
+        impact: 'minimal'
+      };
     } catch (error) {
-      console.warn('Weather data unavailable:', error);
-      return null;
+      console.warn('Weather data unavailable, using default conditions:', error);
+      return {
+        temperature: 70,
+        humidity: 50,
+        windSpeed: 5,
+        conditions: 'Clear',
+        severity: 'none',
+        impact: 'minimal'
+      };
     }
   }
 
