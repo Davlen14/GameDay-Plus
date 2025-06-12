@@ -989,14 +989,39 @@ const MatchupPredictorInterface = ({
 const MatchupPredictionResults = ({ prediction }) => {
   if (!prediction) return null;
 
+  // Debug logs for data flow
+  console.log('MatchupPredictionResults props:', prediction);
+
   // Handle original MatchupPredictor format
   const pred = prediction.prediction || prediction;
   const teams = prediction.teams || { home: {}, away: {} };
   const analysis = prediction.analysis || {};
+  const headToHead = prediction.headToHead || [];
   const confidence = prediction.confidence || 0.7;
-  
+
+  // Debug team analyses
+  console.log('Team Analyses:', analysis.teamAnalysis);
+
   return (
     <div className="space-y-6">
+      {/* Head-to-Head History */}
+      {headToHead.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <h4 className="text-xl font-bold gradient-text mb-4">Head-to-Head History</h4>
+          <ul className="space-y-2">
+            {headToHead.map((game, idx) => (
+              <li key={idx} className="flex justify-between text-sm text-gray-700">
+                <span>{new Date(game.date).toLocaleDateString()}</span>
+                <span>{game.homeTeam} {game.homeScore} - {game.awayScore} {game.awayTeam}</span>
+                <span className={`font-semibold ${game.winner === 'home' ? 'text-blue-600' : 'text-red-600'}`}>
+                  {game.winner === 'home' ? 'Home Win' : 'Away Win'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Main Prediction Card */}
       <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
@@ -1146,6 +1171,37 @@ const TeamAnalysisCard = ({ team, analysis }) => {
             <div className="text-xs text-gray-500">{stat.rank}</div>
           </div>
         ))}
+      </div>
+
+      {/* Additional Metrics */}
+      <div className="mb-6">
+        <h5 className="text-sm font-semibold text-gray-700 mb-2">Additional Metrics</h5>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="text-xs text-gray-500">Recruiting Rank</div>
+            <div className="font-bold">
+              {team.metrics?.recruitingRank ?? 'N/A'}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Recruiting Points</div>
+            <div className="font-bold">
+              {team.metrics?.recruitingPoints ?? 'N/A'}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">ELO Rating</div>
+            <div className="font-bold">
+              {team.metrics?.eloRating?.toFixed(1) ?? 'N/A'}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Strength of Schedule</div>
+            <div className="font-bold">
+              {team.metrics?.strengthOfSchedule?.toFixed(1) ?? 'N/A'}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Strengths & Weaknesses */}
