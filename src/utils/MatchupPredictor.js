@@ -163,10 +163,12 @@ class MatchupPredictor {
         throw new Error('Team not found');
       }
 
-      const [homeHistory, awayHistory, headToHead] = await Promise.all([
+      // Get historical data for both teams using enhanced GraphQL queries
+      const [homeHistory, awayHistory, headToHead, weatherData] = await Promise.all([
         this.getEnhancedTeamHistory(homeTeamId),
         this.getEnhancedTeamHistory(awayTeamId),
-        this.getEnhancedHeadToHeadHistory(homeTeamId, awayTeamId)
+        this.getEnhancedHeadToHeadHistory(homeTeamId, awayTeamId),
+        this.getWeatherData(homeTeam, options)
       ]);
 
       // Calculate enhanced metrics with GraphQL data
@@ -183,7 +185,7 @@ class MatchupPredictor {
         neutralSite,
         week,
         season,
-        weatherConditions,
+        weatherConditions: weatherData,
         conferenceGame
       });
 
@@ -223,26 +225,26 @@ class MatchupPredictor {
     const recentGames = history.slice(-10); // Last 10 games
     const allGames = history;
 
-    // Basic stats with fallbacks
+    // Basic stats
     const winPercentage = allGames.length > 0 ? 
       allGames.filter(g => g.isWin).length / allGames.length : 0.5;
 
-    const avgPointsScored = this.calculateAverage(allGames.map(g => g.pointsScored)) || 24;
-    const avgPointsAllowed = this.calculateAverage(allGames.map(g => g.pointsAllowed)) || 24;
+    const avgPointsScored = this.calculateAverage(allGames.map(g => g.pointsScored));
+    const avgPointsAllowed = this.calculateAverage(allGames.map(g => g.pointsAllowed));
     const pointDifferential = avgPointsScored - avgPointsAllowed;
 
-    // Recent form with fallbacks
+    // Recent form
     const recentWinPct = recentGames.length > 0 ? 
       recentGames.filter(g => g.isWin).length / recentGames.length : 0.5;
 
-    const recentPtsScored = this.calculateAverage(recentGames.map(g => g.pointsScored)) || avgPointsScored;
-    const recentPtsAllowed = this.calculateAverage(recentGames.map(g => g.pointsAllowed)) || avgPointsAllowed;
+    const recentPtsScored = this.calculateAverage(recentGames.map(g => g.pointsScored));
+    const recentPtsAllowed = this.calculateAverage(recentGames.map(g => g.pointsAllowed));
 
-    // Get SP+ rating with team-specific fallback
-    const spRating = this.spRatings.get(team.school) || this.getTeamSpecificSPRating(team);
+    // Get SP+ rating
+    const spRating = this.spRatings.get(team.school) || { rating: 0, ranking: 64 };
 
-    // Get recruiting strength with team-specific fallback
-    const recruiting = this.recruitingData.get(team.school) || this.getTeamSpecificRecruiting(team);
+    // Get recruiting strength
+    const recruiting = this.recruitingData.get(team.school) || { rank: 64, points: 0 };
 
     // Advanced metrics
     const strengthOfSchedule = this.calculateSOS(allGames);
@@ -300,29 +302,22 @@ class MatchupPredictor {
    */
   calculatePrediction({ homeTeam, awayTeam, homeMetrics, awayMetrics, headToHead, neutralSite, week, season, weatherConditions, conferenceGame }) {
     
-    // Base prediction using multiple factors - use team-specific starting scores
-    let homeScore = 24 + Math.random() * 8; // 24-32 base score with variance
-    let awayScore = 21 + Math.random() * 8; // 21-29 base score with variance
+    // Base prediction using multiple factors
+    let homeScore = 28; // Base score
+    let awayScore = 24; // Base score
 
-    // Factor in team strength with stronger impact
+    // Factor in team strength
     const spDifferential = homeMetrics.spRating - awayMetrics.spRating;
     const pointDifferential = homeMetrics.pointDifferential - awayMetrics.pointDifferential;
     
-    // Adjust scores based on team strength with more significant impact
-    homeScore += (spDifferential * 0.6) + (pointDifferential * 0.25);
-    awayScore += (-spDifferential * 0.6) + (-pointDifferential * 0.25);
-
-    // Team quality differential - use avg points scored/allowed as stronger factors
-    homeScore += (homeMetrics.avgPointsScored - 28) * 0.4; // Adjust based on team's typical scoring
-    homeScore -= (homeMetrics.avgPointsAllowed - 24) * 0.3; // Adjust based on team's defense
-    
-    awayScore += (awayMetrics.avgPointsScored - 28) * 0.4;
-    awayScore -= (awayMetrics.avgPointsAllowed - 24) * 0.3;
+    // Adjust scores based on team strength
+    homeScore += (spDifferential * 0.4) + (pointDifferential * 0.15);
+    awayScore += (-spDifferential * 0.4) + (-pointDifferential * 0.15);
 
     // Recent form adjustment
     const recentFormDiff = homeMetrics.recentForm - awayMetrics.recentForm;
-    homeScore += recentFormDiff * 0.15;
-    awayScore -= recentFormDiff * 0.15;
+    homeScore += recentFormDiff * 0.1;
+    awayScore -= recentFormDiff * 0.1;
 
     // Home field advantage (if not neutral site)
     if (!neutralSite) {
@@ -332,8 +327,8 @@ class MatchupPredictor {
     // Week adjustments
     if (week <= 4) {
       // Early season - more conservative scoring
-      homeScore *= 0.95;
-      awayScore *= 0.95;
+      homeScore *= 0.92;
+      awayScore *= 0.92;
     }
 
     // Weather adjustments
@@ -356,9 +351,9 @@ class MatchupPredictor {
       }
     }
 
-    // Ensure reasonable bounds with higher minimums
-    homeScore = Math.max(14, Math.min(70, homeScore));
-    awayScore = Math.max(10, Math.min(65, awayScore));
+    // Ensure reasonable bounds
+    homeScore = Math.max(10, Math.min(70, homeScore));
+    awayScore = Math.max(7, Math.min(65, awayScore));
 
     // Round to reasonable numbers
     homeScore = Math.round(homeScore * 10) / 10;
@@ -523,7 +518,7 @@ class MatchupPredictor {
     let homeImpact = 0;
     let awayImpact = 0;
     
-    const { temperature, windSpeed, precipitation, visibility } = detailedConditions;
+    const { temperature, windSpeed, precipitation, humidity, visibility } = detailedConditions;
     
     // Temperature effects (more nuanced)
     if (temperature < 20) {
@@ -866,9 +861,7 @@ class MatchupPredictor {
   // Helper methods for calculations
   calculateAverage(values) {
     if (!values || values.length === 0) return 0;
-    const validValues = values.filter(v => v !== null && v !== undefined && !isNaN(v));
-    if (validValues.length === 0) return 0;
-    return validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+    return values.reduce((sum, val) => sum + val, 0) / values.length;
   }
 
   calculateWinProbability(homeScore, awayScore, homeMetrics, awayMetrics) {
@@ -965,177 +958,40 @@ class MatchupPredictor {
       })).filter(game => game.pointsScored !== undefined && game.pointsAllowed !== undefined);
     } catch (error) {
       console.error('❌ [API DEBUG] Error loading team history for team', teamId, '- using mock data:', error);
-      // Return team-specific mock data for development
-      console.log('🔄 [API DEBUG] Generating team-specific mock team history to prevent prediction failure');
-      return this.generateMockTeamHistory(teamId);
+      // Return mock data for development - this prevents the prediction from failing
+      console.log('🔄 [API DEBUG] Generating mock team history to prevent prediction failure');
+      return this.generateMockTeamHistory();
     }
   }
 
-  generateMockTeamHistory(teamId) {
-    console.log(`🔄 [API DEBUG] Generating realistic mock team history for team ${teamId}...`);
-    
-    // Create team-specific strength based on team ID
-    const teamStrengthMap = this.getTeamStrengthFromId(teamId);
-    
+  generateMockTeamHistory() {
+    console.log('🔄 [API DEBUG] Generating realistic mock team history...');
+    // Generate mock team history for development with more realistic data
     const games = [];
+    const teamStrength = 0.3 + Math.random() * 0.4; // Random team strength 0.3-0.7
     
     for (let i = 0; i < 12; i++) {
-      // More realistic scoring with team-specific strength
-      const baseOffense = teamStrengthMap.offense; // 15-50 based on team
-      const baseDefense = teamStrengthMap.defense; // 10-40 based on team
+      // More realistic scoring with team strength influence
+      const baseOffense = 20 + (teamStrength * 25); // 20-45 base points
+      const baseDefense = 15 + ((1 - teamStrength) * 20); // 15-35 points allowed
       
-      const homePoints = Math.floor(baseOffense + (Math.random() * 15) - 7); // ±7 variance
-      const awayPoints = Math.floor(baseDefense + (Math.random() * 15) - 7); // ±7 variance
+      const homePoints = Math.floor(baseOffense + (Math.random() * 21) - 10); // ±10 variance
+      const awayPoints = Math.floor(baseDefense + (Math.random() * 21) - 10); // ±10 variance
       
       games.push({
         isWin: homePoints > awayPoints,
-        pointsScored: Math.max(7, homePoints), // Min 7 points
-        pointsAllowed: Math.max(3, awayPoints), // Min 3 points
+        pointsScored: Math.max(0, homePoints),
+        pointsAllowed: Math.max(0, awayPoints),
         isHome: Math.random() > 0.5,
         week: i + 1,
+        // Add some realistic opponent context
         opponent: `Mock Team ${i + 1}`,
         excitementIndex: Math.random() * 10
       });
     }
     
-    console.log(`✅ [API DEBUG] Generated ${games.length} team-specific mock games for team ${teamId}`);
+    console.log(`✅ [API DEBUG] Generated ${games.length} mock games for fallback`);
     return games;
-  }
-
-  getTeamStrengthFromId(teamId) {
-    // Get team object to check school name
-    const team = this.teams.get(teamId);
-    const teamName = team?.school?.toLowerCase() || '';
-    
-    // Known elite teams
-    const eliteTeams = ['georgia', 'alabama', 'ohio state', 'michigan', 'texas', 'oregon', 'florida state', 'washington'];
-    const goodTeams = ['penn state', 'utah', 'notre dame', 'clemson', 'lsu', 'tennessee', 'oklahoma', 'usc', 'miami'];
-    
-    if (eliteTeams.includes(teamName)) {
-      return {
-        offense: 38 + Math.random() * 8, // 38-46 points
-        defense: 16 + Math.random() * 6, // 16-22 points allowed
-        spRating: 18 + Math.random() * 12,
-        tier: 'elite'
-      };
-    } else if (goodTeams.includes(teamName)) {
-      return {
-        offense: 30 + Math.random() * 8, // 30-38 points
-        defense: 21 + Math.random() * 8, // 21-29 points allowed
-        spRating: 5 + Math.random() * 13,
-        tier: 'good'
-      };
-    } else {
-      // Create pseudo-realistic team strengths based on team ID fallback
-      const hash = this.hashCode((teamId || '').toString());
-      const normalized = Math.abs(hash) % 1000 / 1000; // 0-1
-      
-      // Elite teams (top 25)
-      if (normalized > 0.85) {
-        return {
-          offense: 35 + (normalized - 0.85) * 80, // 35-47 points
-          defense: 15 + (normalized - 0.85) * 60, // 15-24 points allowed
-          spRating: 15 + (normalized - 0.85) * 100,
-          tier: 'elite'
-        };
-      }
-      // Good teams (26-65)
-      else if (normalized > 0.5) {
-        return {
-          offense: 25 + (normalized - 0.5) * 28, // 25-35 points
-          defense: 20 + (normalized - 0.5) * 28, // 20-30 points allowed
-          spRating: 0 + (normalized - 0.5) * 43,
-          tier: 'good'
-        };
-      }
-      // Average to poor teams
-      else {
-        return {
-          offense: 17 + normalized * 16, // 17-25 points
-          defense: 28 + normalized * 20, // 28-40 points allowed
-          spRating: -15 + normalized * 30,
-          tier: 'struggling'
-        };
-      }
-    }
-  }
-
-  hashCode(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return hash;
-  }
-
-  getTeamSpecificSPRating(team) {
-    // Generate consistent SP+ rating based on team name/id
-    const teamName = team.school?.toLowerCase() || '';
-    
-    // Known elite teams with typical SP+ ratings
-    const eliteRatings = {
-      'georgia': { rating: 25.5, ranking: 2 },
-      'alabama': { rating: 23.8, ranking: 4 },
-      'ohio state': { rating: 26.2, ranking: 1 },
-      'michigan': { rating: 22.1, ranking: 6 },
-      'texas': { rating: 24.3, ranking: 3 },
-      'oregon': { rating: 21.8, ranking: 7 },
-      'florida state': { rating: 20.5, ranking: 9 },
-      'washington': { rating: 19.2, ranking: 12 }
-    };
-    
-    const goodRatings = {
-      'penn state': { rating: 18.5, ranking: 14 },
-      'utah': { rating: 17.2, ranking: 18 },
-      'notre dame': { rating: 16.8, ranking: 20 },
-      'clemson': { rating: 15.5, ranking: 25 },
-      'lsu': { rating: 14.8, ranking: 28 },
-      'tennessee': { rating: 16.2, ranking: 22 },
-      'oklahoma': { rating: 13.5, ranking: 35 },
-      'usc': { rating: 15.8, ranking: 24 },
-      'miami': { rating: 14.2, ranking: 30 }
-    };
-    
-    if (eliteRatings[teamName]) {
-      return eliteRatings[teamName];
-    } else if (goodRatings[teamName]) {
-      return goodRatings[teamName];
-    } else {
-      // Fallback to hash-based rating
-      const teamStr = team.school || team.id?.toString() || 'default';
-      const hash = Math.abs(this.hashCode(teamStr)) % 1000 / 1000;
-      
-      // Create realistic distribution of SP+ ratings
-      if (hash > 0.9) {
-        // Top 10 teams
-        return { rating: 20 + (hash - 0.9) * 150, ranking: Math.floor((1 - hash) * 10) + 1 };
-      } else if (hash > 0.75) {
-        // Top 25 teams
-        return { rating: 10 + (hash - 0.75) * 67, ranking: Math.floor((1 - hash) * 15) + 10 };
-      } else if (hash > 0.5) {
-        // Mid-tier teams
-        return { rating: -5 + (hash - 0.5) * 60, ranking: Math.floor((1 - hash) * 40) + 25 };
-      } else {
-        // Lower-tier teams
-        return { rating: -20 + hash * 30, ranking: Math.floor((1 - hash) * 65) + 65 };
-      }
-    }
-  }
-
-  getTeamSpecificRecruiting(team) {
-    // Generate consistent recruiting ranking based on team
-    const teamStr = team.school || team.id?.toString() || 'default';
-    const hash = Math.abs(this.hashCode(teamStr + 'recruiting')) % 1000 / 1000;
-    
-    if (hash > 0.85) {
-      return { rank: Math.floor((1 - hash) * 15) + 1, points: 280 + hash * 50 };
-    } else if (hash > 0.6) {
-      return { rank: Math.floor((1 - hash) * 35) + 15, points: 220 + hash * 80 };
-    } else {
-      return { rank: Math.floor((1 - hash) * 70) + 50, points: 150 + hash * 120 };
-    }
   }
 
   async getHeadToHeadHistory(team1Id, team2Id) {
@@ -1329,29 +1185,15 @@ class MatchupPredictor {
       };
     } catch (error) {
       console.error('Error generating summary prediction:', error);
-      
-      // Return team-specific fallback prediction based on team IDs
-      const homeStrength = this.getTeamStrengthFromId(homeTeamId);
-      const awayStrength = this.getTeamStrengthFromId(awayTeamId);
-      
-      const homeScore = Math.round(homeStrength.offense + 3.2); // Add home field advantage
-      const awayScore = Math.round(awayStrength.offense);
-      const spread = homeScore - awayScore;
-      const total = homeScore + awayScore;
-      
-      const homeWinProb = spread > 0 ? (50 + Math.min(spread * 2, 30)) : (50 + Math.max(spread * 2, -30));
-      
+      // Return fallback prediction
       return {
-        score: { home: homeScore, away: awayScore },
-        spread: spread,
-        total: total,
-        winProbability: { home: homeWinProb, away: 100 - homeWinProb },
-        moneyline: { 
-          home: homeWinProb > 50 ? -Math.round(homeWinProb * 2) : Math.round((100 - homeWinProb) * 2),
-          away: homeWinProb < 50 ? -Math.round((100 - homeWinProb) * 2) : Math.round(homeWinProb * 2)
-        },
+        score: { home: 24, away: 21 },
+        spread: 3,
+        total: 45,
+        winProbability: { home: 60, away: 40 },
+        moneyline: { home: -150, away: 125 },
         confidence: 0.6,
-        summary: `${homeStrength.tier.charAt(0).toUpperCase() + homeStrength.tier.slice(1)} vs ${awayStrength.tier} matchup prediction`
+        summary: 'Prediction unavailable - using fallback'
       };
     }
   }
@@ -1430,7 +1272,7 @@ class MatchupPredictor {
   /**
    * Load recruiting data (used during initialization)
    */
-  async loadRecruitingDataFromAPI() {
+  async loadRecruitingData() {
     try {
       const recruitingData = await this.loadRecruitingData();
       recruitingData.forEach(data => {
@@ -1470,10 +1312,8 @@ class MatchupPredictor {
     if (!games || games.length === 0) return 0.5;
     
     const avgPoints = this.calculateAverage(games.map(g => g.pointsScored));
-    if (avgPoints === 0) return 0.3; // Default for no data
-    
-    // Normalize to 0-1 scale (assumes 7-60 point range)
-    return Math.max(0.1, Math.min(1, (avgPoints - 7) / 53));
+    // Normalize to 0-1 scale (assumes 0-70 point range)
+    return Math.max(0, Math.min(1, avgPoints / 50));
   }
 
   calculateDefensiveEfficiency(games) {
@@ -1481,11 +1321,8 @@ class MatchupPredictor {
     if (!games || games.length === 0) return 0.5;
     
     const avgPointsAllowed = this.calculateAverage(games.map(g => g.pointsAllowed));
-    if (avgPointsAllowed === 0) return 0.7; // Default for no data
-    
     // Invert scale - lower points allowed = higher efficiency
-    // Assumes 7-60 point range
-    return Math.max(0.1, Math.min(1, 1 - ((avgPointsAllowed - 7) / 53)));
+    return Math.max(0, Math.min(1, 1 - (avgPointsAllowed / 50)));
   }
 
   calculateRedZoneEfficiency(games, type) {

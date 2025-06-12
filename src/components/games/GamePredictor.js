@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { gameService, teamService } from '../../services';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { gameService, teamService, rankingsService, bettingService } from '../../services';
 import graphqlService from '../../services/graphqlService';
 import matchupPredictor from '../../utils/MatchupPredictor';
 
@@ -14,7 +14,9 @@ const GamePredictor = () => {
   const [activeView, setActiveView] = useState('weekly'); // 'weekly', 'matchup', 'models'
   
   // Data state
+  const [games, setGames] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [predictions, setPredictions] = useState(new Map());
   const [weeklyPredictions, setWeeklyPredictions] = useState([]);
   const [weekAccuracy, setWeekAccuracy] = useState(null);
   const [predictorInitialized, setPredictorInitialized] = useState(false);
@@ -23,6 +25,8 @@ const GamePredictor = () => {
   const [homeTeam, setHomeTeam] = useState(null);
   const [awayTeam, setAwayTeam] = useState(null);
   const [matchupPrediction, setMatchupPrediction] = useState(null);
+  const [teamSearchResults, setTeamSearchResults] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const initializePredictor = useCallback(async () => {
     try {
@@ -79,6 +83,8 @@ const GamePredictor = () => {
           return;
         }
       }
+
+      setGames(weekGames);
 
       // Create a lookup map for teams by ID and name
       const teamLookup = new Map();
@@ -258,6 +264,17 @@ const GamePredictor = () => {
   useEffect(() => {
     loadPredictionData();
   }, [loadPredictionData]);
+
+  // Team search functionality
+  const handleTeamSearch = useCallback(async (query) => {
+    setSearchQuery(query);
+    if (query.length >= 2 && predictorInitialized) {
+      const suggestions = matchupPredictor.getTeamSuggestions(query);
+      setTeamSearchResults(suggestions);
+    } else {
+      setTeamSearchResults([]);
+    }
+  }, [predictorInitialized]);
 
   // Matchup prediction handler
   const handleMatchupPrediction = useCallback(async () => {
@@ -529,10 +546,11 @@ const WeeklyPredictionCard = ({ prediction }) => {
   const { 
     homeTeam, awayTeam, predictedScore, prediction: spread, total, winProbability, 
     confidence, summary, isCompleted, actualScore, correctWinner, scoreDifference,
-    excitementIndex, weatherImpact, eloRatings, talentGap 
+    excitementIndex, weatherImpact, eloRatings, talentGap, bettingInsights 
   } = prediction;
   
   const favorite = spread > 0 ? homeTeam : awayTeam;
+  const underdog = spread > 0 ? awayTeam : homeTeam;
   const spreadValue = Math.abs(spread);
 
   // Get team colors (fallback to default colors if not available)
