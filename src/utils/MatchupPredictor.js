@@ -1607,12 +1607,30 @@ class MatchupPredictor {
       if (this.graphqlAvailable) {
         console.log(`🚀 [API DEBUG] Fetching enhanced ratings for ${team.school}...`);
         try {
-          const enhancedRatings = await getEnhancedTeamRatings(team.school, 2024);
+          // Get enhanced ratings via direct GraphQL query
+          const ratingsQuery = `
+            query GetEnhancedRatings($team: String!, $year: smallint!) {
+              teamTalent(where: {team: {school: {_eq: $team}}, year: {_eq: $year}}) {
+                talent
+              }
+              recruitingTeam(where: {team: {school: {_eq: $team}}, year: {_eq: $year}}) {
+                rank
+                points
+              }
+            }
+          `;
+          
+          const enhancedRatings = await graphqlService.query(ratingsQuery, {
+            team: team.school,
+            year: 2024
+          });
+          
           if (enhancedRatings) {
             enhancedData = {
               ...enhancedData,
-              talentComposite: enhancedRatings.talent || null,
-              advancedMetrics: enhancedRatings.advanced || null
+              talentComposite: enhancedRatings.teamTalent?.[0]?.talent || null,
+              recruitingRank: enhancedRatings.recruitingTeam?.[0]?.rank || null,
+              recruitingPoints: enhancedRatings.recruitingTeam?.[0]?.points || null
             };
             console.log(`✅ [API DEBUG] Enhanced ratings loaded for ${team.school}`);
           }
