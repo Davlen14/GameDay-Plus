@@ -1,6 +1,6 @@
 // utilities/MatchupPredictor.js
 
-import { gameService, teamService, rankingsService } from '../services';
+import { gameService, teamService, rankingsService, bettingService } from '../services';
 import graphqlService from '../services/graphqlService';
 
 /**
@@ -59,8 +59,8 @@ class MatchupPredictor {
       // Load comprehensive data using GraphQL for better performance
       if (graphqlAvailable) {
         try {
-          const comprehensiveData = await graphqlService.getComprehensivePredictionData();
-          this.processComprehensiveData(comprehensiveData);
+          // Load data using available GraphQL services
+          await this.loadGraphQLData();
           console.log('✓ Loaded comprehensive data via GraphQL');
         } catch (graphqlError) {
           console.warn('GraphQL data loading failed, falling back to individual API calls:', graphqlError.message);
@@ -79,6 +79,57 @@ class MatchupPredictor {
       // Continue with basic functionality
       this.isInitialized = true;
       this.graphqlAvailable = false;
+    }
+  }
+
+  /**
+   * Load data using GraphQL services
+   */
+  async loadGraphQLData() {
+    console.log('🔄 Loading data via GraphQL...');
+    
+    // Load teams with GraphQL enhancement
+    try {
+      const teams = await graphqlService.teams.getCurrent();
+      teams.forEach(team => {
+        if (this.teams.has(team.id)) {
+          // Enhance existing team data with GraphQL data
+          const existing = this.teams.get(team.id);
+          this.teams.set(team.id, { ...existing, ...team });
+        }
+      });
+    } catch (error) {
+      console.warn('GraphQL teams loading failed:', error.message);
+    }
+
+    // Load ELO ratings via direct GraphQL query
+    try {
+      const eloQuery = `
+        query GetEloRatings($year: smallint!) {
+          game(where: {season: {_eq: $year}}, limit: 100) {
+            homeTeam
+            awayTeam
+            homeStartElo
+            awayStartElo
+          }
+        }
+      `;
+      const eloData = await graphqlService.query(eloQuery, { year: 2024 });
+      
+      // Process ELO data - get latest ratings for each team
+      const teamElos = new Map();
+      eloData.game.forEach(game => {
+        teamElos.set(game.homeTeam, game.homeStartElo);
+        teamElos.set(game.awayTeam, game.awayStartElo);
+      });
+      
+      teamElos.forEach((elo, team) => {
+        this.eloRatings.set(team, { rating: elo, team });
+      });
+      
+      console.log(`✓ Loaded ELO ratings for ${teamElos.size} teams`);
+    } catch (error) {
+      console.warn('GraphQL ELO loading failed:', error.message);
     }
   }
 
@@ -123,22 +174,50 @@ class MatchupPredictor {
   }
 
   /**
-   * Fallback data loading if GraphQL fails
+   * Fallback data loading using REST APIs for statistical data
    */
   async loadFallbackData() {
-    console.log('Loading fallback data...');
+    console.log('🔄 [API DEBUG] Loading fallback data via REST APIs...');
     
-    // Load SP+ ratings (most recent)
-    const spData = await this.loadSPRatings();
-    spData.forEach(rating => {
-      this.spRatings.set(rating.team, rating);
-    });
+    try {
+      // Load SP+ ratings using teamService
+      console.log('📊 [API DEBUG] Loading SP+ ratings...');
+      const spData = await teamService.getSPRatings(2024);
+      spData.forEach(rating => {
+        this.spRatings.set(rating.team, rating);
+      });
+      console.log(`✅ [API DEBUG] Loaded ${spData.length} SP+ ratings`);
 
-    // Load recruiting data
-    const recruitingData = await this.loadRecruitingData();
-    recruitingData.forEach(data => {
-      this.recruitingData.set(data.team, data);
-    });
+      // Load ELO ratings using teamService
+      console.log('📊 [API DEBUG] Loading ELO ratings...');
+      const eloData = await teamService.getEloRatings(2024);
+      eloData.forEach(rating => {
+        this.eloRatings.set(rating.team, rating);
+      });
+      console.log(`✅ [API DEBUG] Loaded ${eloData.length} ELO ratings`);
+
+      // Load recruiting data using teamService
+      console.log('📊 [API DEBUG] Loading recruiting data...');
+      const recruitingData = await teamService.getRecruitingRankings(2024);
+      recruitingData.forEach(data => {
+        this.recruitingData.set(data.team, data);
+      });
+      console.log(`✅ [API DEBUG] Loaded ${recruitingData.length} recruiting rankings`);
+
+      // Load talent ratings using teamService
+      console.log('📊 [API DEBUG] Loading talent ratings...');
+      const talentData = await teamService.getTalentRatings(2024);
+      talentData.forEach(data => {
+        this.recruitingData.set(data.team, { 
+          ...this.recruitingData.get(data.team), 
+          talent: data.talent 
+        });
+      });
+      console.log(`✅ [API DEBUG] Loaded ${talentData.length} talent ratings`);
+
+    } catch (error) {
+      console.error('❌ [API DEBUG] Error loading fallback data:', error);
+    }
   }
 
   /**
@@ -219,18 +298,59 @@ class MatchupPredictor {
   }
 
   /**
-   * Calculate team performance metrics
+   * Calculate team performance metrics using both game history and season stats
    */
-  calculateTeamMetrics(team, history) {
+  async calculateTeamMetrics(team, history) {
+    console.log(`📊 [API DEBUG] Calculating metrics for team: ${team.school}`);
+    
+    // Get season statistics from REST API for accurate metrics
+    let seasonStats = null;
+    try {
+      console.log(`📊 [API DEBUG] Loading season stats for ${team.school}...`);
+      const stats = await teamService.getTeamStats(2024, team.school);
+      if (stats && stats.length > 0) {
+        // Convert array of {statName, statValue} to object
+        seasonStats = {};
+        stats.forEach(stat => {
+          seasonStats[stat.statName] = stat.statValue;
+        });
+        console.log(`✅ [API DEBUG] Loaded ${stats.length} season stats for ${team.school}`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ [API DEBUG] Could not load season stats for ${team.school}:`, error.message);
+    }
+
     const recentGames = history.slice(-10); // Last 10 games
     const allGames = history;
 
-    // Basic stats
+    // Calculate from game history (fallback if season stats not available)
     const winPercentage = allGames.length > 0 ? 
       allGames.filter(g => g.isWin).length / allGames.length : 0.5;
 
-    const avgPointsScored = this.calculateAverage(allGames.map(g => g.pointsScored));
-    const avgPointsAllowed = this.calculateAverage(allGames.map(g => g.pointsAllowed));
+    // Use season stats if available, otherwise calculate from games
+    let avgPointsScored, avgPointsAllowed;
+    
+    if (seasonStats && seasonStats.games) {
+      // Calculate from season totals if available
+      const games = seasonStats.games;
+      
+      // Look for scoring stats in the season data
+      // Note: College Football API doesn't provide direct points per game, 
+      // so we still need to calculate from game history
+      avgPointsScored = allGames.length > 0 ? 
+        allGames.reduce((sum, g) => sum + g.pointsScored, 0) / allGames.length : 0;
+      avgPointsAllowed = allGames.length > 0 ? 
+        allGames.reduce((sum, g) => sum + g.pointsAllowed, 0) / allGames.length : 0;
+      
+      console.log(`📊 [API DEBUG] Calculated from games - PPG: ${avgPointsScored.toFixed(1)}, PAPG: ${avgPointsAllowed.toFixed(1)}`);
+    } else {
+      // Calculate from game history
+      avgPointsScored = this.calculateAverage(allGames.map(g => g.pointsScored));
+      avgPointsAllowed = this.calculateAverage(allGames.map(g => g.pointsAllowed));
+      
+      console.log(`📊 [API DEBUG] Calculated from game history - PPG: ${avgPointsScored.toFixed(1)}, PAPG: ${avgPointsAllowed.toFixed(1)}`);
+    }
+
     const pointDifferential = avgPointsScored - avgPointsAllowed;
 
     // Recent form
@@ -240,19 +360,23 @@ class MatchupPredictor {
     const recentPtsScored = this.calculateAverage(recentGames.map(g => g.pointsScored));
     const recentPtsAllowed = this.calculateAverage(recentGames.map(g => g.pointsAllowed));
 
-    // Get SP+ rating
+    // Get ratings with better error handling
     const spRating = this.spRatings.get(team.school) || { rating: 0, ranking: 64 };
-
-    // Get recruiting strength
     const recruiting = this.recruitingData.get(team.school) || { rank: 64, points: 0 };
+    const eloRating = this.eloRatings.get(team.school) || { elo: null };
 
-    // Advanced metrics
+    // Advanced metrics from game data
     const strengthOfSchedule = this.calculateSOS(allGames);
     const homeFieldAdvantage = this.calculateHomeFieldAdvantage(allGames);
     
-    // Efficiency metrics
-    const offensiveEfficiency = this.calculateOffensiveEfficiency(allGames);
-    const defensiveEfficiency = this.calculateDefensiveEfficiency(allGames);
+    // Enhanced efficiency metrics using season stats when available
+    const offensiveEfficiency = seasonStats ? 
+      this.calculateOffensiveEfficiencyFromStats(seasonStats) : 
+      this.calculateOffensiveEfficiency(allGames);
+      
+    const defensiveEfficiency = seasonStats ? 
+      this.calculateDefensiveEfficiencyFromStats(seasonStats) : 
+      this.calculateDefensiveEfficiency(allGames);
 
     // Red zone performance
     const redZoneScoring = this.calculateRedZoneEfficiency(allGames, 'offense');
@@ -261,7 +385,7 @@ class MatchupPredictor {
     // Turnover metrics
     const turnoverMargin = this.calculateTurnoverMargin(allGames);
 
-    return {
+    const metrics = {
       // Core metrics
       winPercentage,
       avgPointsScored,
@@ -279,6 +403,7 @@ class MatchupPredictor {
       spRanking: spRating.ranking || 64,
       recruitingRank: recruiting.rank || 64,
       recruitingPoints: recruiting.points || 0,
+      eloRating: eloRating.elo || null,
       
       // Situational
       strengthOfSchedule,
@@ -291,10 +416,31 @@ class MatchupPredictor {
       redZoneDefense,
       turnoverMargin,
       
+      // Enhanced metrics from season stats
+      totalYards: seasonStats?.totalYards || null,
+      rushingYards: seasonStats?.rushingYards || null,
+      passingYards: seasonStats?.netPassingYards || null,
+      firstDowns: seasonStats?.firstDowns || null,
+      thirdDownConversion: seasonStats ? 
+        (seasonStats.thirdDownConversions / Math.max(seasonStats.thirdDowns, 1)) : null,
+      
       // Game counts
       totalGames: allGames.length,
-      recentGames: recentGames.length
+      recentGames: recentGames.length,
+      
+      // Season stats reference
+      seasonStats
     };
+
+    console.log(`✅ [API DEBUG] Calculated metrics for ${team.school}:`, {
+      ppg: avgPointsScored.toFixed(1),
+      papg: avgPointsAllowed.toFixed(1),
+      spRating: metrics.spRating,
+      eloRating: metrics.eloRating,
+      winPct: (winPercentage * 100).toFixed(1) + '%'
+    });
+
+    return metrics;
   }
 
   /**
@@ -913,49 +1059,120 @@ class MatchupPredictor {
 
   // Placeholder implementations for data loading methods
   async loadSPRatings() {
-    // This would load SP+ ratings from your API
-    // For now, return mock data for testing
-    return [
-      { team: 'Georgia', rating: 28.5, ranking: 1 },
-      { team: 'Alabama', rating: 25.2, ranking: 2 },
-      { team: 'Ohio State', rating: 23.8, ranking: 3 },
-      { team: 'Texas', rating: 22.1, ranking: 4 },
-      { team: 'Oregon', rating: 20.5, ranking: 5 }
-    ];
+    // This method is now replaced by direct teamService calls in loadFallbackData
+    // Keeping for backward compatibility
+    console.warn('loadSPRatings is deprecated, use teamService.getSPRatings instead');
+    return await teamService.getSPRatings(2024);
   }
 
   async loadRecruitingData() {
-    // This would load recruiting data from your API
-    // For now, return mock data for testing
-    return [
-      { team: 'Georgia', rank: 1, points: 325.4 },
-      { team: 'Alabama', rank: 2, points: 315.8 },
-      { team: 'Ohio State', rank: 3, points: 310.2 },
-      { team: 'Texas', rank: 4, points: 295.6 },
-      { team: 'Oregon', rank: 5, points: 285.1 }
-    ];
+    // This method is now replaced by direct teamService calls in loadFallbackData
+    // Keeping for backward compatibility
+    console.warn('loadRecruitingData is deprecated, use teamService.getRecruitingRankings instead');
+    return await teamService.getRecruitingRankings(2024);
+  }
+
+  /**
+   * Calculate offensive efficiency from season statistics
+   */
+  calculateOffensiveEfficiencyFromStats(seasonStats) {
+    if (!seasonStats) return 0.5;
+    
+    const totalYards = seasonStats.totalYards || 0;
+    const games = seasonStats.games || 1;
+    const yardsPerGame = totalYards / games;
+    
+    // Normalize based on typical FBS averages (around 400-450 yards per game)
+    return Math.min(1.0, Math.max(0.0, (yardsPerGame - 200) / 400));
+  }
+
+  /**
+   * Calculate defensive efficiency from season statistics  
+   */
+  calculateDefensiveEfficiencyFromStats(seasonStats) {
+    if (!seasonStats) return 0.5;
+    
+    // Defensive efficiency is inverse - lower yards allowed = better
+    const totalYardsAllowed = seasonStats.totalYardsAllowed || seasonStats.totalYards || 0;
+    const games = seasonStats.games || 1;
+    const yardsAllowedPerGame = totalYardsAllowed / games;
+    
+    // Normalize - lower is better for defense
+    return Math.min(1.0, Math.max(0.0, 1.0 - (yardsAllowedPerGame - 200) / 400));
   }
 
   async getTeamHistory(teamId) {
     try {
       console.log(`📊 [API DEBUG] Attempting to fetch team history for team ${teamId}...`);
       
-      // Get team's recent games from game service
-      const games = await gameService.getGamesByTeam(teamId, 2024); // Use 2024 data for now
+      // First try to get the team name from our teams map
+      const team = this.teams.get(teamId);
+      const teamName = team?.school || teamId;
       
-      console.log(`✅ [API DEBUG] Successfully fetched ${games.length} games for team ${teamId}`);
+      console.log(`📊 [API DEBUG] Fetching games for team: ${teamName}`);
       
-      // Transform games into the expected format
-      return games.map(game => ({
-        isWin: game.completed && 
-               ((game.homeId === teamId && game.homePoints > game.awayPoints) ||
-                (game.awayId === teamId && game.awayPoints > game.homePoints)),
-        pointsScored: game.homeId === teamId ? game.homePoints : game.awayPoints,
-        pointsAllowed: game.homeId === teamId ? game.awayPoints : game.homePoints,
-        isHome: game.homeId === teamId,
-        opponent: game.homeId === teamId ? game.awayTeam : game.homeTeam,
-        week: game.week
-      })).filter(game => game.pointsScored !== undefined && game.pointsAllowed !== undefined);
+      // Get team's games from game service (this handles GraphQL/REST fallback internally)
+      const games = await gameService.getGamesByTeam(teamName, 2024);
+      
+      console.log(`✅ [API DEBUG] Successfully fetched ${games.length} games for team ${teamName}`);
+      
+      if (!games || games.length === 0) {
+        console.warn(`⚠️ [API DEBUG] No games found for team ${teamName}, generating mock data`);
+        return this.generateMockTeamHistory();
+      }
+      
+      // Transform games into the expected format with proper field mapping
+      const transformedGames = games.map(game => {
+        // Determine if this team was home or away
+        const isHome = game.homeTeam === teamName || game.home_team === teamName;
+        
+        // Get points scored and allowed
+        const pointsScored = isHome ? 
+          (game.homePoints || game.home_points || 0) : 
+          (game.awayPoints || game.away_points || 0);
+        const pointsAllowed = isHome ? 
+          (game.awayPoints || game.away_points || 0) : 
+          (game.homePoints || game.home_points || 0);
+        
+        // Determine win/loss
+        const isWin = pointsScored > pointsAllowed;
+        
+        // Get opponent name
+        const opponent = isHome ? 
+          (game.awayTeam || game.away_team) : 
+          (game.homeTeam || game.home_team);
+        
+        return {
+          isWin,
+          pointsScored,
+          pointsAllowed,
+          isHome,
+          opponent,
+          week: game.week,
+          season: game.season || game.year || 2024,
+          // Additional context for enhanced metrics
+          gameId: game.id,
+          neutralSite: game.neutralSite || game.neutral_site || false,
+          conferenceGame: game.conferenceGame || game.conference_game || false,
+          excitementIndex: game.excitement || game.excitementIndex || 0
+        };
+      }).filter(game => 
+        // Filter out games with invalid data
+        game.pointsScored !== undefined && 
+        game.pointsAllowed !== undefined &&
+        !isNaN(game.pointsScored) && 
+        !isNaN(game.pointsAllowed)
+      );
+      
+      console.log(`✅ [API DEBUG] Transformed ${transformedGames.length} valid games for team ${teamName}`);
+      
+      if (transformedGames.length === 0) {
+        console.warn(`⚠️ [API DEBUG] No valid games after transformation for team ${teamName}, using mock data`);
+        return this.generateMockTeamHistory();
+      }
+      
+      return transformedGames;
+      
     } catch (error) {
       console.error('❌ [API DEBUG] Error loading team history for team', teamId, '- using mock data:', error);
       // Return mock data for development - this prevents the prediction from failing
@@ -1016,27 +1233,63 @@ class MatchupPredictor {
     try {
       console.log(`📊 [API DEBUG] Attempting to fetch enhanced team history for team ${teamId}...`);
       
+      const team = this.teams.get(teamId);
+      const teamName = team?.school || teamId;
+      
       // Try to get comprehensive data from GraphQL first
-      const teamData = this.comprehensiveData.get(teamId);
-      if (teamData && teamData.games) {
-        console.log(`✅ [API DEBUG] Using cached enhanced team history for team ${teamId}`);
-        return teamData.games.map(game => ({
-          isWin: game.completed && 
-                 ((game.homeId === teamId && game.homePoints > game.awayPoints) ||
-                  (game.awayId === teamId && game.awayPoints > game.homePoints)),
-          pointsScored: game.homeId === teamId ? game.homePoints : game.awayPoints,
-          pointsAllowed: game.homeId === teamId ? game.awayPoints : game.homePoints,
-          isHome: game.homeId === teamId,
-          opponent: game.homeId === teamId ? game.awayTeam : game.homeTeam,
-          week: game.week,
-          // Enhanced data from GraphQL
-          excitementIndex: game.excitementIndex || 0,
-          eloRating: game.eloRating || null,
-          weatherConditions: game.weather || null
-        }));
+      if (this.graphqlAvailable) {
+        try {
+          console.log(`🚀 [API DEBUG] Fetching comprehensive GraphQL data for ${teamName}...`);
+          
+          // Use GraphQL to get enhanced game data
+          const games = await gameService.getGamesByTeam(teamName, 2024, null, true); // Force GraphQL
+          
+          if (games && games.length > 0) {
+            console.log(`✅ [API DEBUG] Successfully fetched ${games.length} enhanced games via GraphQL for ${teamName}`);
+            
+            return games.map(game => {
+              const isHome = game.homeTeam === teamName || game.home_team === teamName;
+              const pointsScored = isHome ? 
+                (game.homePoints || game.home_points || 0) : 
+                (game.awayPoints || game.away_points || 0);
+              const pointsAllowed = isHome ? 
+                (game.awayPoints || game.away_points || 0) : 
+                (game.homePoints || game.home_points || 0);
+              
+              return {
+                isWin: pointsScored > pointsAllowed,
+                pointsScored,
+                pointsAllowed,
+                isHome,
+                opponent: isHome ? 
+                  (game.awayTeam || game.away_team) : 
+                  (game.homeTeam || game.home_team),
+                week: game.week,
+                season: game.season || 2024,
+                // Enhanced GraphQL data
+                excitementIndex: game.excitement || game.excitementIndex || 0,
+                homeStartElo: game.homeStartElo || game.home_pregame_elo || null,
+                awayStartElo: game.awayStartElo || game.away_pregame_elo || null,
+                homeEndElo: game.homeEndElo || game.home_postgame_elo || null,
+                awayEndElo: game.awayEndElo || game.away_postgame_elo || null,
+                neutralSite: game.neutralSite || game.neutral_site || false,
+                conferenceGame: game.conferenceGame || game.conference_game || false,
+                weather: game.weather || null,
+                bettingLines: game.lines || null
+              };
+            }).filter(game => 
+              game.pointsScored !== undefined && 
+              game.pointsAllowed !== undefined &&
+              !isNaN(game.pointsScored) && 
+              !isNaN(game.pointsAllowed)
+            );
+          }
+        } catch (graphqlError) {
+          console.warn(`⚠️ [API DEBUG] GraphQL enhanced data fetch failed for ${teamName}:`, graphqlError.message);
+        }
       }
       
-      console.log(`🔄 [API DEBUG] No cached data, falling back to standard team history for team ${teamId}`);
+      console.log(`🔄 [API DEBUG] Falling back to standard team history for ${teamName}`);
       // Fallback to original method
       return await this.getTeamHistory(teamId);
     } catch (error) {
@@ -1050,33 +1303,142 @@ class MatchupPredictor {
    */
   async getEnhancedHeadToHeadHistory(team1Id, team2Id) {
     try {
-      // Try GraphQL enhanced head-to-head query
-      const h2hData = await graphqlService.getHeadToHeadHistory(team1Id, team2Id);
+      const team1 = this.teams.get(team1Id);
+      const team2 = this.teams.get(team2Id);
+      const team1Name = team1?.school || team1Id;
+      const team2Name = team2?.school || team2Id;
       
-      if (h2hData && h2hData.games) {
-        return {
-          games: h2hData.games.map(game => ({
-            ...game,
-            excitementIndex: game.excitementIndex || 0,
-            eloRatingDiff: game.eloRatingDiff || 0
-          })),
-          team1Wins: h2hData.team1Wins || 0,
-          team2Wins: h2hData.team2Wins || 0,
-          avgPointDiff: h2hData.avgPointDiff || 0,
-          lastMeeting: h2hData.lastMeeting || null
-        };
+      console.log(`📊 [API DEBUG] Fetching head-to-head history: ${team1Name} vs ${team2Name}`);
+      
+      // Try GraphQL enhanced head-to-head query if available
+      if (this.graphqlAvailable) {
+        try {
+          console.log(`🚀 [API DEBUG] Using GraphQL for enhanced head-to-head data...`);
+          
+          const h2hQuery = `
+            query GetHeadToHead($team1: String!, $team2: String!) {
+              game(where: {
+                _or: [
+                  {_and: [{homeTeam: {_eq: $team1}}, {awayTeam: {_eq: $team2}}]},
+                  {_and: [{homeTeam: {_eq: $team2}}, {awayTeam: {_eq: $team1}}]}
+                ]
+              }, order_by: {season: desc}) {
+                id
+                season
+                week
+                homeTeam
+                awayTeam
+                homePoints
+                awayPoints
+                homeStartElo
+                awayStartElo
+                excitement
+                neutralSite
+                conferenceGame
+              }
+            }
+          `;
+          
+          const h2hData = await graphqlService.query(h2hQuery, { 
+            team1: team1Name, 
+            team2: team2Name 
+          });
+          
+          if (h2hData && h2hData.game && h2hData.game.length > 0) {
+            console.log(`✅ [API DEBUG] GraphQL head-to-head data found: ${h2hData.game.length} games`);
+            
+            const games = h2hData.game;
+            let team1Wins = 0;
+            let team2Wins = 0;
+            let totalPointDiff = 0;
+            
+            games.forEach(game => {
+              const team1IsHome = game.homeTeam === team1Name;
+              const team1Points = team1IsHome ? game.homePoints : game.awayPoints;
+              const team2Points = team1IsHome ? game.awayPoints : game.homePoints;
+              
+              if (team1Points > team2Points) team1Wins++;
+              else if (team2Points > team1Points) team2Wins++;
+              
+              totalPointDiff += (team1Points - team2Points);
+            });
+            
+            return {
+              games: games.map(game => ({
+                ...game,
+                excitementIndex: game.excitement || 0,
+                eloRatingDiff: Math.abs((game.homeStartElo || 0) - (game.awayStartElo || 0))
+              })),
+              team1Wins,
+              team2Wins,
+              avgPointDiff: games.length > 0 ? totalPointDiff / games.length : 0,
+              lastMeeting: games[0] || null
+            };
+          }
+        } catch (graphqlError) {
+          console.warn(`⚠️ [API DEBUG] GraphQL head-to-head query failed:`, graphqlError.message);
+        }
       }
       
-      // Fallback to original method
+      // Fallback to REST API team matchup data
+      try {
+        console.log(`🔄 [API DEBUG] Using REST API for team matchup data...`);
+        const matchupData = await teamService.getTeamMatchup(team1Name, team2Name, 2020, 2024);
+        
+        if (matchupData && matchupData.games) {
+          console.log(`✅ [API DEBUG] REST matchup data found: ${matchupData.games.length} games`);
+          
+          // Calculate head-to-head record
+          let team1Wins = 0;
+          let team2Wins = 0;
+          let totalPointDiff = 0;
+          
+          matchupData.games.forEach(game => {
+            const isTeam1Home = game.homeTeam === team1Name;
+            const team1Score = isTeam1Home ? game.homeScore : game.awayScore;
+            const team2Score = isTeam1Home ? game.awayScore : game.homeScore;
+            
+            if (team1Score > team2Score) {
+              team1Wins++;
+            } else if (team2Score > team1Score) {
+              team2Wins++;
+            }
+            
+            totalPointDiff += (team1Score - team2Score);
+          });
+          
+          return {
+            games: matchupData.games.map(game => ({
+              id: game.id,
+              season: game.season,
+              week: game.week,
+              homeTeam: game.homeTeam,
+              awayTeam: game.awayTeam,
+              homeScore: game.homeScore,
+              awayScore: game.awayScore,
+              neutralSite: game.neutralSite || false,
+              excitementIndex: 0 // Not available in REST
+            })),
+            team1Wins,
+            team2Wins,
+            avgPointDiff: matchupData.games.length > 0 ? totalPointDiff / matchupData.games.length : 0,
+            lastMeeting: matchupData.games.length > 0 ? matchupData.games[matchupData.games.length - 1] : null
+          };
+        }
+      } catch (restError) {
+        console.warn(`⚠️ [API DEBUG] REST team matchup query failed:`, restError.message);
+      }
+      
+      // Final fallback to original method
       return await this.getHeadToHeadHistory(team1Id, team2Id);
     } catch (error) {
-      console.error('Error loading enhanced head-to-head history:', error);
+      console.error('❌ [API DEBUG] Error loading enhanced head-to-head history:', error);
       return await this.getHeadToHeadHistory(team1Id, team2Id);
     }
   }
 
   /**
-   * Get weather data for game location
+   * Get weather data for game location using GraphQL when available
    */
   async getWeatherData(homeTeam, options = {}) {
     try {
@@ -1086,6 +1448,9 @@ class MatchupPredictor {
         return options.weatherConditions;
       }
 
+      const teamName = homeTeam.school || homeTeam;
+      console.log(`🌤️ [API DEBUG] Fetching weather data for ${teamName}...`);
+
       // Check if weather data is available in comprehensive data
       const teamData = this.comprehensiveData.get(homeTeam.id);
       if (teamData && teamData.weather) {
@@ -1093,19 +1458,82 @@ class MatchupPredictor {
         return teamData.weather;
       }
 
-      // Only try GraphQL if available and CORS isn't an issue
+      // Try GraphQL weather conditions if available
       if (this.graphqlAvailable) {
         try {
           console.log('🌤️ [API DEBUG] Attempting to fetch weather data via GraphQL...');
-          const weatherData = await graphqlService.getWeatherConditions(homeTeam.id, options.week, options.season);
+          const weatherQuery = `
+            query GetWeatherData($homeTeam: String!, $season: smallint!, $week: smallint) {
+              game(where: {
+                homeTeam: {_eq: $homeTeam},
+                season: {_eq: $season},
+                week: {_eq: $week}
+              }, limit: 1) {
+                weather {
+                  temperature
+                  dewPoint
+                  humidity
+                  pressure
+                  windDirection
+                  windSpeed
+                  weatherCondition {
+                    name
+                  }
+                }
+              }
+            }
+          `;
+          
+          const weatherData = await graphqlService.query(weatherQuery, {
+            homeTeam: teamName,
+            season: options.season || 2024,
+            week: options.week || 1
+          });
           if (weatherData) {
             console.log('✅ [API DEBUG] Weather data fetched successfully via GraphQL');
-            return weatherData;
+            return {
+              temperature: weatherData.temperature || 70,
+              humidity: weatherData.humidity || 50,
+              windSpeed: weatherData.windSpeed || 5,
+              conditions: weatherData.weatherCondition || weatherData.conditions || 'Clear',
+              severity: this.getWeatherSeverity(weatherData),
+              impact: this.getWeatherImpact(weatherData),
+              precipitation: weatherData.precipitation || null,
+              detailedConditions: weatherData
+            };
           }
         } catch (graphqlError) {
-          console.log('❌ [API DEBUG] GraphQL weather fetch failed, using default weather data');
-          // Don't throw, just continue with fallback
+          console.log('❌ [API DEBUG] GraphQL weather fetch failed:', graphqlError.message);
         }
+      }
+
+      // Try REST API weather endpoint
+      try {
+        console.log('🌤️ [API DEBUG] Attempting to fetch weather data via REST API...');
+        const games = await gameService.getGamesByTeam(teamName, options.season || 2024);
+        
+        // Find the most recent home game for weather context
+        const homeGames = games.filter(game => 
+          (game.homeTeam === teamName || game.home_team === teamName) && 
+          game.week <= (options.week || 20)
+        );
+        
+        if (homeGames.length > 0) {
+          const recentGame = homeGames[homeGames.length - 1];
+          if (recentGame.weather) {
+            console.log('✅ [API DEBUG] Weather data found from recent game');
+            return {
+              temperature: recentGame.weather.temperature || 70,
+              humidity: recentGame.weather.humidity || 50,
+              windSpeed: recentGame.weather.windSpeed || 5,
+              conditions: recentGame.weather.description || 'Clear',
+              severity: this.getWeatherSeverity(recentGame.weather),
+              impact: this.getWeatherImpact(recentGame.weather)
+            };
+          }
+        }
+      } catch (restError) {
+        console.log('❌ [API DEBUG] REST weather fetch failed:', restError.message);
       }
 
       // Return default/mock weather data
@@ -1132,38 +1560,147 @@ class MatchupPredictor {
   }
 
   /**
-   * Enhanced team metrics calculation with GraphQL data
+   * Determine weather severity level
    */
-  calculateEnhancedTeamMetrics(team, history, teamId) {
-    // Start with base metrics
-    const baseMetrics = this.calculateTeamMetrics(team, history);
+  getWeatherSeverity(weather) {
+    if (!weather) return 'none';
     
-    // Add enhanced metrics from GraphQL data
+    const temp = weather.temperature || 70;
+    const wind = weather.windSpeed || 0;
+    const precipitation = weather.precipitation;
+    
+    if (temp < 20 || temp > 100 || wind > 25 || (precipitation && precipitation.intensity > 0.5)) {
+      return 'high';
+    } else if (temp < 35 || temp > 90 || wind > 15 || (precipitation && precipitation.intensity > 0.2)) {
+      return 'moderate';
+    }
+    
+    return 'low';
+  }
+
+  /**
+   * Determine weather impact on game
+   */
+  getWeatherImpact(weather) {
+    const severity = this.getWeatherSeverity(weather);
+    
+    switch (severity) {
+      case 'high': return 'significant';
+      case 'moderate': return 'moderate';
+      case 'low': return 'minimal';
+      default: return 'none';
+    }
+  }
+
+  /**
+   * Enhanced team metrics calculation with GraphQL data and REST statistics
+   */
+  async calculateEnhancedTeamMetrics(team, history, teamId) {
+    // Start with comprehensive base metrics (now includes REST season stats)
+    const baseMetrics = await this.calculateTeamMetrics(team, history);
+    
+    // Add enhanced metrics from GraphQL data and additional REST endpoints
+    let enhancedData = {};
+    
+    try {
+      // Try to get enhanced ratings via GraphQL
+      if (this.graphqlAvailable) {
+        console.log(`🚀 [API DEBUG] Fetching enhanced ratings for ${team.school}...`);
+        try {
+          const enhancedRatings = await getEnhancedTeamRatings(team.school, 2024);
+          if (enhancedRatings) {
+            enhancedData = {
+              ...enhancedData,
+              talentComposite: enhancedRatings.talent || null,
+              advancedMetrics: enhancedRatings.advanced || null
+            };
+            console.log(`✅ [API DEBUG] Enhanced ratings loaded for ${team.school}`);
+          }
+        } catch (graphqlError) {
+          console.warn(`⚠️ [API DEBUG] GraphQL enhanced ratings failed for ${team.school}:`, graphqlError.message);
+        }
+      }
+      
+      // Get talent data from REST API (more reliable)
+      try {
+        console.log(`📊 [API DEBUG] Loading talent data via REST for ${team.school}...`);
+        const talentData = await teamService.getTalentRatings(2024);
+        const teamTalent = talentData.find(t => t.team === team.school);
+        if (teamTalent) {
+          enhancedData.talentComposite = teamTalent.talent;
+          console.log(`✅ [API DEBUG] Talent rating loaded: ${teamTalent.talent}`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ [API DEBUG] Could not load talent data for ${team.school}:`, error.message);
+      }
+      
+      // Get advanced team stats via REST
+      try {
+        console.log(`📊 [API DEBUG] Loading advanced stats via REST for ${team.school}...`);
+        const advancedStats = await teamService.getAdvancedTeamStats(2024, team.school);
+        if (advancedStats && advancedStats.length > 0) {
+          const stats = advancedStats[0];
+          enhancedData = {
+            ...enhancedData,
+            offensiveSuccess: stats.offense?.successRate || null,
+            defensiveSuccess: stats.defense?.successRate || null,
+            explosiveness: stats.offense?.explosiveness || null,
+            defensiveExplosiveness: stats.defense?.explosiveness || null,
+            ppaOffense: stats.offense?.ppa || null,
+            ppaDefense: stats.defense?.ppa || null
+          };
+          console.log(`✅ [API DEBUG] Advanced stats loaded for ${team.school}`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ [API DEBUG] Could not load advanced stats for ${team.school}:`, error.message);
+      }
+      
+    } catch (error) {
+      console.warn(`⚠️ [API DEBUG] Error loading enhanced metrics for ${team.school}:`, error.message);
+    }
+    
+    // Get cached data from comprehensive data if available
     const teamData = this.comprehensiveData.get(teamId);
     const eloData = this.eloRatings.get(team.school);
     const bettingData = this.bettingData.get(team.school);
     
-    return {
+    const enhancedMetrics = {
       ...baseMetrics,
-      // Enhanced ratings
-      eloRating: eloData?.rating || null,
+      
+      // Enhanced ratings (prefer fresh data over cached)
+      eloRating: eloData?.elo || baseMetrics.eloRating,
       eloRanking: eloData?.ranking || null,
       
       // Betting insights
       impliedWinRate: bettingData?.impliedWinRate || null,
       avgClosingLine: bettingData?.avgClosingLine || null,
       
-      // Advanced analytics
+      // Advanced analytics from both GraphQL and REST
       excitementIndex: teamData?.excitementIndex || 0,
-      talentComposite: teamData?.talentComposite || null,
+      talentComposite: enhancedData.talentComposite || teamData?.talentComposite || null,
       transferPortalImpact: teamData?.transferPortalImpact || null,
       
-      // Enhanced efficiency metrics
-      thirdDownConversion: teamData?.thirdDownConversion || null,
-      redZoneSuccess: teamData?.redZoneSuccess || null,
-      yardsPerPlay: teamData?.yardsPerPlay || null,
-      timePossession: teamData?.timePossession || null
+      // Enhanced efficiency metrics from REST advanced stats
+      offensiveSuccess: enhancedData.offensiveSuccess || null,
+      defensiveSuccess: enhancedData.defensiveSuccess || null,
+      explosiveness: enhancedData.explosiveness || null,
+      ppaOffense: enhancedData.ppaOffense || null,
+      ppaDefense: enhancedData.ppaDefense || null,
+      
+      // Enhanced season stats (already included in base metrics)
+      yardsPerPlay: baseMetrics.seasonStats ? 
+        (baseMetrics.seasonStats.totalYards / Math.max(baseMetrics.seasonStats.plays || 1, 1)) : null,
+      timePossession: baseMetrics.seasonStats?.possessionTime || null
     };
+
+    console.log(`✅ [API DEBUG] Enhanced metrics calculated for ${team.school}:`, {
+      talent: enhancedMetrics.talentComposite,
+      eloRating: enhancedMetrics.eloRating,
+      offensiveSuccess: enhancedMetrics.offensiveSuccess,
+      yardsPerPlay: enhancedMetrics.yardsPerPlay
+    });
+
+    return enhancedMetrics;
   }
 
   /**
