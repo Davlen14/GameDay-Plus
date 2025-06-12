@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { teamService } from '../../services/teamService';
 import ADVScheduleTab from './ADVScheduleTab';
+import TeamAnalytics from './TeamAnalytics';
 
 const TeamDetailView = () => {
   const [team, setTeam] = useState(null);
@@ -591,6 +592,8 @@ const TeamDetailView = () => {
       <div className="px-4 py-8 max-w-6xl mx-auto">
         {activeTab === 4 ? (
           <ADVScheduleTab team={team} primaryTeamColor={primaryColor} />
+        ) : activeTab === 1 ? (
+          <TeamAnalytics team={team} />
         ) : (
           <div className="text-center py-20">
             <div className="mb-8">
