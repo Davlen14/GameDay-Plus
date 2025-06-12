@@ -41,7 +41,8 @@ export const teamService = {
         const isGraphQLAvailable = await graphqlService.utils.isAvailable();
         if (!isGraphQLAvailable) {
           console.log('🔄 [API DEBUG] GraphQL not available, using REST API for FBS teams');
-          return await fetchCollegeFootballData('/teams', { division: 'fbs' });
+          const allTeams = await fetchCollegeFootballData('/teams');
+          return allTeams.filter(team => team.classification === 'fbs');
         }
 
         console.log('✅ [API DEBUG] GraphQL available, fetching FBS teams via GraphQL...');
@@ -50,10 +51,11 @@ export const teamService = {
         });
         
         console.log('🔄 [API DEBUG] Supplementing with REST API for team logos...');
-        // Still need REST for logos
-        const restTeams = await fetchCollegeFootballData('/teams', { division: 'fbs' });
+        // Get all teams and filter for FBS only
+        const allRestTeams = await fetchCollegeFootballData('/teams');
+        const fbsRestTeams = allRestTeams.filter(team => team.classification === 'fbs');
         
-        return restTeams.map(restTeam => {
+        return fbsRestTeams.map(restTeam => {
           const graphqlTeam = graphqlTeams.find(gql => gql.school === restTeam.school);
           return {
             ...restTeam,
@@ -63,10 +65,12 @@ export const teamService = {
         });
       } catch (error) {
         console.warn('GraphQL FBS teams failed, falling back to REST:', error.message);
-        return await fetchCollegeFootballData('/teams', { division: 'fbs' });
+        const allTeams = await fetchCollegeFootballData('/teams');
+        return allTeams.filter(team => team.classification === 'fbs');
       }
     } else {
-      return await fetchCollegeFootballData('/teams', { division: 'fbs' });
+      const allTeams = await fetchCollegeFootballData('/teams');
+      return allTeams.filter(team => team.classification === 'fbs');
     }
   },
 
