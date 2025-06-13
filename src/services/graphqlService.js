@@ -1,10 +1,11 @@
 // Enhanced GraphQL service for College Football Data API
 // Optimized for prediction model with advanced metrics
+import { fetchCollegeFootballData } from './core';
 
 const GRAPHQL_ENDPOINT = 'https://graphql.collegefootballdata.com/v1/graphql';
 const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY || 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
 
-// Direct GraphQL API interaction with enhanced error handling
+// Direct GraphQL API interaction with enhanced error handling and REST fallback
 const fetchData = async (query, variables = {}) => {
   console.log('🚀 [API DEBUG] Attempting GraphQL request to:', GRAPHQL_ENDPOINT);
   try {
@@ -14,7 +15,6 @@ const fetchData = async (query, variables = {}) => {
         'Authorization': `Bearer ${COLLEGE_FOOTBALL_API_KEY}`,
         "Content-Type": "application/json",
         'Accept': 'application/json',
-        'Origin': window.location.origin,
       },
       mode: 'cors',
       credentials: 'omit',
@@ -40,8 +40,8 @@ const fetchData = async (query, variables = {}) => {
     return result.data;
   } catch (error) {
     console.error("❌ [API DEBUG] GraphQL Fetch Error:", error.message);
-    if (error.message.includes('CORS') || error.name === 'TypeError') {
-      console.log('🔄 [API DEBUG] CORS error detected - will fallback to REST API');
+    if (error.message.includes('CORS') || error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+      console.log('🔄 [API DEBUG] CORS/Network error detected - will fallback to REST API');
       throw new Error('CORS_ERROR');
     }
     throw error;
@@ -196,19 +196,152 @@ export const getComprehensivePredictionData = async (homeTeam, awayTeam, year = 
   `;
   
   const variables = { homeTeam, awayTeam, year };
-  const data = await fetchData(query, variables);
   
-  // Process and return structured data
-  return {
-    homeGames: data?.homeGames || [],
-    awayGames: data?.awayGames || [],
-    headToHead: data?.headToHead || [],
-    homeAggregates: data?.homeAggregates?.aggregate || null,
-    awayAggregates: data?.awayAggregates?.aggregate || null,
-    homeTalent: data?.homeTalent?.[0]?.talent || null,
-    awayTalent: data?.awayTalent?.[0]?.talent || null,
-    homeRecruiting: data?.homeRecruiting?.[0] || null,
-    awayRecruiting: data?.awayRecruiting?.[0] || null
+  try {
+    const data = await fetchData(query, variables);
+    
+    // Process and return structured data
+    return {
+      homeGames: data?.homeGames || [],
+      awayGames: data?.awayGames || [],
+      headToHead: data?.headToHead || [],
+      homeAggregates: data?.homeAggregates?.aggregate || null,
+      awayAggregates: data?.awayAggregates?.aggregate || null,
+      homeTalent: data?.homeTalent?.[0]?.talent || null,
+      awayTalent: data?.awayTalent?.[0]?.talent || null,
+      homeRecruiting: data?.homeRecruiting?.[0] || null,
+      awayRecruiting: data?.awayRecruiting?.[0] || null
+    };
+  } catch (error) {
+    console.error("❌ Comprehensive Prediction Data GraphQL Error, falling back to REST:", error);
+    
+    // REST API fallback using core service
+    try {
+      console.log('🔄 [FALLBACK] Using REST API for comprehensive prediction data...');
+      const [homeGames, awayGames, talentData, recruitingData] = await Promise.allSettled([
+        fetchCollegeFootballData('/games', { year, team: homeTeam }),
+        fetchCollegeFootballData('/games', { year, team: awayTeam }),
+        fetchCollegeFootballData('/talent', { year }),
+        fetchCollegeFootballData('/recruiting/teams', { year })
+      ]);
+
+      // Process the fallback data
+      const homeGamesData = homeGames.status === 'fulfilled' ? 
+        homeGames.value.filter(g => g.completed).slice(0, 10) : [];
+      const awayGamesData = awayGames.status === 'fulfilled' ? 
+        awayGames.value.filter(g => g.completed).slice(0, 10) : [];
+      
+      // Find head-to-head games
+      const headToHeadData = homeGamesData.filter(g => 
+        (g.home_team === homeTeam && g.away_team === awayTeam) ||
+        (g.home_team === awayTeam && g.away_team === homeTeam)
+      );
+      
+      const talent = talentData.status === 'fulfilled' ? talentData.value : [];
+      const recruiting = recruitingData.status === 'fulfilled' ? recruitingData.value : [];
+      
+      const homeTalent = talent.find(t => t.school === homeTeam);
+      const awayTalent = talent.find(t => t.school === awayTeam);
+      const homeRecruiting = recruiting.find(r => r.team === homeTeam);
+      const awayRecruiting = recruiting.find(r => r.team === awayTeam);
+      
+      // Calculate basic aggregates
+      const calculateAggregates = (games, team) => {
+        if (games.length === 0) return null;
+        
+        const teamGames = games.map(g => ({
+          points: g.home_team === team ? g.home_points : g.away_points,
+          pointsAllowed: g.home_team === team ? g.away_points : g.home_points
+        }));
+        
+        const totalPoints = teamGames.reduce((sum, g) => sum + g.points, 0);
+        const totalAllowed = teamGames.reduce((sum, g) => sum + g.pointsAllowed, 0);
+        
+        return {
+          count: games.length,
+          avg: {
+            homePoints: totalPoints / games.length,
+            awayPoints: totalAllowed / games.length,
+            homePostgameWinProb: null,
+            awayPostgameWinProb: null,
+            excitementIndex: null,
+            homeStartElo: null,
+            awayStartElo: null
+          },
+          max: {
+            homePoints: Math.max(...teamGames.map(g => g.points)),
+            awayPoints: Math.max(...teamGames.map(g => g.pointsAllowed))
+          },
+          min: {
+            homePoints: Math.min(...teamGames.map(g => g.points)),
+            awayPoints: Math.min(...teamGames.map(g => g.pointsAllowed))
+          }
+        };
+      };
+
+      return {
+        homeGames: homeGamesData.map(g => ({
+          id: g.id,
+          week: g.week,
+          homeTeam: g.home_team,
+          awayTeam: g.away_team,
+          homePoints: g.home_points,
+          awayPoints: g.away_points,
+          neutralSite: g.neutral_site,
+          conferenceGame: g.conference_game,
+          // GraphQL-only fields not available
+          homeStartElo: null,
+          awayStartElo: null,
+          homeEndElo: null,
+          awayEndElo: null,
+          homePostgameWinProb: null,
+          awayPostgameWinProb: null,
+          excitementIndex: null,
+          gameLines: [],
+          gameWeather: []
+        })),
+        awayGames: awayGamesData.map(g => ({
+          id: g.id,
+          week: g.week,
+          homeTeam: g.home_team,
+          awayTeam: g.away_team,
+          homePoints: g.home_points,
+          awayPoints: g.away_points,
+          neutralSite: g.neutral_site,
+          conferenceGame: g.conference_game,
+          // GraphQL-only fields not available
+          homeStartElo: null,
+          awayStartElo: null,
+          homeEndElo: null,
+          awayEndElo: null,
+          homePostgameWinProb: null,
+          awayPostgameWinProb: null,
+          excitementIndex: null,
+          gameLines: [],
+          gameWeather: []
+        })),
+        headToHead: headToHeadData.map(g => ({
+          season: g.season,
+          week: g.week,
+          homeTeam: g.home_team,
+          awayTeam: g.away_team,
+          homePoints: g.home_points,
+          awayPoints: g.away_points,
+          neutralSite: g.neutral_site,
+          excitementIndex: null,
+          gameLines: []
+        })),
+        homeAggregates: calculateAggregates(homeGamesData, homeTeam),
+        awayAggregates: calculateAggregates(awayGamesData, awayTeam),
+        homeTalent: homeTalent?.talent || null,
+        awayTalent: awayTalent?.talent || null,
+        homeRecruiting: homeRecruiting || null,
+        awayRecruiting: awayRecruiting || null
+      };
+    } catch (restError) {
+      console.error("❌ REST API fallback also failed:", restError);
+      throw error; // Throw original GraphQL error
+    }
   };
 };
 
@@ -342,40 +475,102 @@ export const getEnhancedTeamRatings = async (team, year = 2024) => {
   `;
   
   const variables = { team, year };
-  const data = await fetchData(query, variables);
   
-  const ratings = data?.ratings?.[0];
-  const talent = data?.teamTalent?.[0];
-  const recruiting = data?.recruitingTeam?.[0];
-  const stats = data?.seasonStats?.aggregate;
-  
-  return {
-    // Standard ratings
-    overall: ratings?.spOverall || null,
-    offense: ratings?.spOffense || null,
-    defense: ratings?.spDefense || null,
-    specialTeams: ratings?.spSpecialTeams || null,
+  try {
+    const data = await fetchData(query, variables);
     
-    // Advanced metrics
-    fpi: ratings?.fpi || null,
-    fpiOffense: ratings?.fpiOffensiveEfficiency || null,
-    fpiDefense: ratings?.fpiDefensiveEfficiency || null,
-    elo: ratings?.elo || null,
-    srs: ratings?.srs || null,
+    const ratings = data?.ratings?.[0];
+    const talent = data?.teamTalent?.[0];
+    const recruiting = data?.recruitingTeam?.[0];
+    const stats = data?.seasonStats?.aggregate;
     
-    // Talent and recruiting
-    talent: talent?.talent || null,
-    recruitingRank: recruiting?.rank || null,
-    recruitingPoints: recruiting?.points || null,
+    return {
+      // Standard ratings
+      overall: ratings?.spOverall || null,
+      offense: ratings?.spOffense || null,
+      defense: ratings?.spDefense || null,
+      specialTeams: ratings?.spSpecialTeams || null,
+      
+      // Advanced metrics
+      fpi: ratings?.fpi || null,
+      fpiOffense: ratings?.fpiOffensiveEfficiency || null,
+      fpiDefense: ratings?.fpiDefensiveEfficiency || null,
+      elo: ratings?.elo || null,
+      srs: ratings?.srs || null,
+      
+      // Talent and recruiting
+      talent: talent?.talent || null,
+      recruitingRank: recruiting?.rank || null,
+      recruitingPoints: recruiting?.points || null,
+      
+      // Season performance
+      avgPointsScored: stats?.avg?.homePoints || null,
+      avgPointsAllowed: stats?.avg?.awayPoints || null,
+      avgWinProbability: stats?.avg?.homePostgameWinProb || null,
+      avgExcitement: stats?.avg?.excitementIndex || null,
+      avgElo: stats?.avg?.homeStartElo || null,
+      gamesPlayed: stats?.count || 0
+    };
+  } catch (error) {
+    console.error("❌ Enhanced Team Ratings GraphQL Error, falling back to REST:", error);
     
-    // Season performance
-    avgPointsScored: stats?.avg?.homePoints || null,
-    avgPointsAllowed: stats?.avg?.awayPoints || null,
-    avgWinProbability: stats?.avg?.homePostgameWinProb || null,
-    avgExcitement: stats?.avg?.excitementIndex || null,
-    avgElo: stats?.avg?.homeStartElo || null,
-    gamesPlayed: stats?.count || 0
-  };
+    // REST API fallback using core service
+    try {
+      console.log('🔄 [FALLBACK] Using REST API for enhanced team ratings...');
+      const [ratingsData, talentData, recruitingData, gamesData] = await Promise.allSettled([
+        fetchCollegeFootballData('/ratings/sp', { year, team }),
+        fetchCollegeFootballData('/talent', { year }),
+        fetchCollegeFootballData('/recruiting/teams', { year }),
+        fetchCollegeFootballData('/games', { year, team })
+      ]);
+
+      // Process the fallback data
+      const ratings = ratingsData.status === 'fulfilled' ? 
+        ratingsData.value.find(r => r.team === team) : null;
+      const talent = talentData.status === 'fulfilled' ? 
+        talentData.value.find(t => t.school === team) : null;
+      const recruiting = recruitingData.status === 'fulfilled' ? 
+        recruitingData.value.find(r => r.team === team) : null;
+      const games = gamesData.status === 'fulfilled' ? gamesData.value : [];
+      
+      // Calculate averages from games
+      const completedGames = games.filter(g => g.completed);
+      const avgStats = completedGames.length > 0 ? {
+        avgPointsScored: completedGames.reduce((sum, g) => sum + (g.home_team === team ? g.home_points : g.away_points), 0) / completedGames.length,
+        avgPointsAllowed: completedGames.reduce((sum, g) => sum + (g.home_team === team ? g.away_points : g.home_points), 0) / completedGames.length,
+        gamesPlayed: completedGames.length
+      } : { avgPointsScored: null, avgPointsAllowed: null, gamesPlayed: 0 };
+
+      return {
+        // Standard ratings
+        overall: ratings?.rating || null,
+        offense: ratings?.offense || null,
+        defense: ratings?.defense || null,
+        specialTeams: ratings?.specialTeams || null,
+        
+        // Advanced metrics
+        fpi: null, // Not available in REST
+        fpiOffense: null,
+        fpiDefense: null,
+        elo: null,
+        srs: null,
+        
+        // Talent and recruiting
+        talent: talent?.talent || null,
+        recruitingRank: recruiting?.rank || null,
+        recruitingPoints: recruiting?.points || null,
+        
+        // Season performance from fallback
+        ...avgStats,
+        avgWinProbability: null,
+        avgExcitement: null,
+        avgElo: null
+      };
+    } catch (restError) {
+      console.error("❌ REST API fallback also failed:", restError);
+      throw error; // Throw original GraphQL error
+    }
+  }
 };
 
 // Betting lines analysis
@@ -596,20 +791,88 @@ export const getTeamDetailedRatings = async (team, year = 2024) => {
   `;
   
   const variables = { team: team.trim(), year };
-  const data = await fetchData(query, variables);
   
-  const ratings = data?.ratings?.[0];
-  const talent = data?.teamTalent?.[0];
-  const recruiting = data?.recruitingTeam?.[0];
-  
-  if (!ratings) return null;
-  
-  return {
-    ...ratings,
-    talent: talent?.talent || null,
-    recruitingRank: recruiting?.rank || null,
-    recruitingPoints: recruiting?.points || null
-  };
+  try {
+    const data = await fetchData(query, variables);
+    
+    const ratings = data?.ratings?.[0];
+    const talent = data?.teamTalent?.[0];
+    const recruiting = data?.recruitingTeam?.[0];
+    
+    if (!ratings) return null;
+    
+    return {
+      ...ratings,
+      talent: talent?.talent || null,
+      recruitingRank: recruiting?.rank || null,
+      recruitingPoints: recruiting?.points || null
+    };
+  } catch (error) {
+    console.error("❌ Team Detailed Ratings GraphQL Error, falling back to REST:", error);
+    
+    // REST API fallback using core service
+    try {
+      console.log('🔄 [FALLBACK] Using REST API for detailed team ratings...');
+      const [spRatings, fpiRatings, talentData, recruitingData] = await Promise.allSettled([
+        fetchCollegeFootballData('/ratings/sp', { year, team }),
+        fetchCollegeFootballData('/ratings/fpi', { year, team }),
+        fetchCollegeFootballData('/talent', { year }),
+        fetchCollegeFootballData('/recruiting/teams', { year })
+      ]);
+
+      // Process the fallback data
+      const spData = spRatings.status === 'fulfilled' ? 
+        spRatings.value.find(r => r.team === team) : null;
+      const fpiData = fpiRatings.status === 'fulfilled' ? 
+        fpiRatings.value.find(r => r.team === team) : null;
+      const talent = talentData.status === 'fulfilled' ? 
+        talentData.value.find(t => t.school === team) : null;
+      const recruiting = recruitingData.status === 'fulfilled' ? 
+        recruitingData.value.find(r => r.team === team) : null;
+      
+      if (!spData && !fpiData) return null;
+
+      return {
+        // Basic info
+        team,
+        year,
+        conference: spData?.conference || null,
+        conferenceId: null,
+        teamId: null,
+        
+        // SP+ Ratings
+        spOverall: spData?.rating || null,
+        spOffense: spData?.offense || null,
+        spDefense: spData?.defense || null,
+        spSpecialTeams: spData?.specialTeams || null,
+        
+        // FPI Ratings (may be limited in REST)
+        fpi: fpiData?.fpi || null,
+        fpiOffensiveEfficiency: fpiData?.offenseEfficiency || null,
+        fpiDefensiveEfficiency: fpiData?.defenseEfficiency || null,
+        fpiSpecialTeamsEfficiency: fpiData?.specialTeamsEfficiency || null,
+        fpiOverallEfficiency: fpiData?.overallEfficiency || null,
+        
+        // Rankings and SRS
+        elo: null, // Not available in REST
+        srs: null,
+        fpiAvgWinProbabilityRank: null,
+        fpiGameControlRank: null,
+        fpiRemainingSosRank: null,
+        fpiResumeRank: null,
+        fpiSosRank: null,
+        fpiStrengthOfRecordRank: null,
+        
+        // Talent and recruiting
+        talent: talent?.talent || null,
+        recruitingRank: recruiting?.rank || null,
+        recruitingPoints: recruiting?.points || null
+      };
+    } catch (restError) {
+      console.error("❌ REST API fallback also failed:", restError);
+      throw error; // Throw original GraphQL error
+    }
+  }
 };
 
 // Enhanced teams list
@@ -721,8 +984,56 @@ export const getGamesByTeam = async (team, season = 2024, seasonType = 'regular'
   `;
   
   const variables = { team, season, seasonType };
-  const data = await fetchData(query, variables);
-  return data?.game || [];
+  
+  try {
+    const data = await fetchData(query, variables);
+    return data?.game || [];
+  } catch (error) {
+    console.error("❌ Games by Team GraphQL Error, falling back to REST:", error);
+    
+    // REST API fallback using core service
+    try {
+      console.log('🔄 [FALLBACK] Using REST API for games by team...');
+      const gamesData = await fetchCollegeFootballData('/games', { 
+        year: season, 
+        team,
+        seasonType: seasonType === 'regular' ? 'regular' : seasonType
+      });
+
+      // Transform REST data to match GraphQL structure
+      return gamesData.map(game => ({
+        id: game.id,
+        season: game.season,
+        week: game.week,
+        seasonType: game.season_type,
+        startDate: game.start_date,
+        homeTeam: game.home_team,
+        homePoints: game.home_points,
+        awayTeam: game.away_team,
+        awayPoints: game.away_points,
+        neutralSite: game.neutral_site,
+        conferenceGame: game.conference_game,
+        attendance: game.attendance,
+        status: game.completed ? 'completed' : 'scheduled',
+        
+        // Enhanced metrics not available in REST
+        homeStartElo: null,
+        awayStartElo: null,
+        homeEndElo: null,
+        awayEndElo: null,
+        homePostgameWinProb: null,
+        awayPostgameWinProb: null,
+        excitementIndex: null,
+        
+        // Nested data not available in REST
+        gameLines: [],
+        gameWeather: []
+      }));
+    } catch (restError) {
+      console.error("❌ REST API fallback also failed:", restError);
+      throw error; // Throw original GraphQL error
+    }
+  }
 };
 
 // Keep existing functions for compatibility
