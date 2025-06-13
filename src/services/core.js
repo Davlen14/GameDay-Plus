@@ -5,20 +5,51 @@ const GNEWS_API_KEY = process.env.REACT_APP_GNEWS_API_KEY;
 const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
 const YOUTUBE_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY;
 
-// College Football Data API
+// College Football Data API with smart routing to YOUR existing Vercel Functions
 const fetchCollegeFootballData = async (endpoint, params = {}) => {
-  const url = new URL(`${COLLEGE_FOOTBALL_API_BASE}${endpoint}`);
-  
-  // Add parameters to URL
-  Object.keys(params).forEach(key => {
-    if (params[key] !== null && params[key] !== undefined) {
-      url.searchParams.append(key, params[key]);
-    }
-  });
-
   console.log(`📡 [API DEBUG] Making REST API request to: ${endpoint}`, params);
 
+  // Production: Use YOUR existing /api/college-football Vercel Function
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      const queryParams = new URLSearchParams({
+        endpoint,
+        ...params
+      });
+
+      const response = await fetch(`/api/college-football?${queryParams}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ [API DEBUG] Your Vercel Function successful for: ${endpoint}`);
+        return data;
+      } else {
+        console.warn(`⚠️ [API DEBUG] Your Vercel Function failed, trying direct API...`);
+        // Fall through to direct API call
+      }
+    } catch (error) {
+      console.warn(`⚠️ [API DEBUG] Your Vercel Function error, trying direct API:`, error.message);
+      // Fall through to direct API call
+    }
+  }
+
+  // Development: Use direct API call (KEEPS your working setup)
   try {
+    const url = new URL(`${COLLEGE_FOOTBALL_API_BASE}${endpoint}`);
+    
+    // Add parameters to URL
+    Object.keys(params).forEach(key => {
+      if (params[key] !== null && params[key] !== undefined) {
+        url.searchParams.append(key, params[key]);
+      }
+    });
+
     const response = await fetch(url.toString(), {
       method: "GET",
       headers: {
@@ -42,7 +73,7 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
     }
     
     const data = await response.json();
-    console.log(`✅ [API DEBUG] REST API request successful for: ${endpoint}`);
+    console.log(`✅ [API DEBUG] Direct API request successful for: ${endpoint}`);
     return data;
   } catch (error) {
     console.error(`❌ [API DEBUG] College Football API Error for ${endpoint}:`, error.message);

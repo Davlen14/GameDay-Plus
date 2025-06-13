@@ -1,21 +1,33 @@
-// Enhanced GraphQL service for College Football Data API
-// Optimized for prediction model with advanced metrics
+// Enhanced GraphQL service - WORKS WITH YOUR CREATE REACT APP SETUP
 import { fetchCollegeFootballData } from './core';
 
-const GRAPHQL_ENDPOINT = 'https://graphql.collegefootballdata.com/v1/graphql';
+// Smart endpoint selection based on environment
+const GRAPHQL_ENDPOINT = process.env.NODE_ENV === 'production' 
+  ? '/api/graphql'  // Use YOUR existing Vercel Function in production
+  : 'https://graphql.collegefootballdata.com/v1/graphql'; // Direct in development
+
+// KEEP your existing API key setup
 const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY || 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
 
-// Direct GraphQL API interaction with enhanced error handling and REST fallback
+// Direct GraphQL API interaction - RESPECTS your existing setup
 const fetchData = async (query, variables = {}) => {
   console.log('🚀 [API DEBUG] Attempting GraphQL request to:', GRAPHQL_ENDPOINT);
+  
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        'Authorization': `Bearer ${COLLEGE_FOOTBALL_API_KEY}`,
-        "Content-Type": "application/json",
-        'Accept': 'application/json',
-      },
+      headers: process.env.NODE_ENV === 'production' 
+        ? {
+            // Production: Let YOUR Vercel Function handle auth
+            "Content-Type": "application/json",
+            'Accept': 'application/json',
+          }
+        : {
+            // Development: Use direct API with your existing auth
+            'Authorization': `Bearer ${COLLEGE_FOOTBALL_API_KEY}`,
+            "Content-Type": "application/json",
+            'Accept': 'application/json',
+          },
       mode: 'cors',
       credentials: 'omit',
       body: JSON.stringify({ query, variables }),
@@ -23,7 +35,6 @@ const fetchData = async (query, variables = {}) => {
 
     if (!response.ok) {
       console.log('❌ [API DEBUG] GraphQL request failed with status:', response.status);
-      // Check for CORS or auth errors specifically
       if (response.status === 0 || response.status === 403 || response.status === 401) {
         throw new Error('CORS_ERROR');
       }
