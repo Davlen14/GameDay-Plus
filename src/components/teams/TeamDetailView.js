@@ -451,7 +451,7 @@ const TeamDetailView = () => {
 
         {/* Header Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 pt-6">
-          {/* Team Logo with Premium Effects - BIGGER SIZE */}
+          {/* Team Logo with Premium Effects - EXTRA LARGE SIZE */}
           <div 
             className="mb-5 metallic-3d-logo-container"
             style={{
@@ -464,7 +464,7 @@ const TeamDetailView = () => {
               <img
                 src={secureTeamLogo}
                 alt={team.school}
-                className="w-56 h-56 metallic-3d-logo-enhanced"
+                className="w-72 h-72 metallic-3d-logo-enhanced object-contain"
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextElementSibling.style.display = 'flex';
@@ -472,10 +472,10 @@ const TeamDetailView = () => {
               />
             ) : null}
             <div 
-              className="w-56 h-56 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30"
+              className="w-72 h-72 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30"
               style={{ display: secureTeamLogo ? 'none' : 'flex' }}
             >
-              <i className="fas fa-university text-white text-7xl filter drop-shadow-lg"></i>
+              <i className="fas fa-university text-white text-8xl filter drop-shadow-lg"></i>
             </div>
           </div>
 

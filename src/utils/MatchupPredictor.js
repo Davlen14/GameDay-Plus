@@ -1339,38 +1339,6 @@ class MatchupPredictor {
                 h2hResult.games.reduce((sum, game) => sum + (game.excitementIndex || 0), 0) / h2hResult.games.length : 0
             };
           }
-          
-          if (h2hData && h2hData.game && h2hData.game.length > 0) {
-            console.log(`✅ [API DEBUG] GraphQL head-to-head data found: ${h2hData.game.length} games`);
-            
-            const games = h2hData.game;
-            let team1Wins = 0;
-            let team2Wins = 0;
-            let totalPointDiff = 0;
-            
-            games.forEach(game => {
-              const team1IsHome = game.homeTeam === team1Name;
-              const team1Points = team1IsHome ? game.homePoints : game.awayPoints;
-              const team2Points = team1IsHome ? game.awayPoints : game.homePoints;
-              
-              if (team1Points > team2Points) team1Wins++;
-              else if (team2Points > team1Points) team2Wins++;
-              
-              totalPointDiff += (team1Points - team2Points);
-            });
-            
-            return {
-              games: games.map(game => ({
-                ...game,
-                excitementIndex: game.excitement || 0,
-                eloRatingDiff: Math.abs((game.homeStartElo || 0) - (game.awayStartElo || 0))
-              })),
-              team1Wins,
-              team2Wins,
-              avgPointDiff: games.length > 0 ? totalPointDiff / games.length : 0,
-              lastMeeting: games[0] || null
-            };
-          }
         } catch (graphqlError) {
           console.warn(`⚠️ [API DEBUG] GraphQL head-to-head query failed:`, graphqlError.message);
         }

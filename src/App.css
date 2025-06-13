@@ -37,20 +37,22 @@
   }
 }
 
-/* Metallic 3D HD Logo Effects - Mirroring Swift Implementation Exactly */
+/* Modern Premium Logo Effects - Sharp, Clean, and Bigger */
 .metallic-3d-logo {
-  /* Base image enhancement - exact Swift contrast and saturation boost */
-  filter: contrast(1.1) saturate(1.1) drop-shadow(0 5px 8px rgba(0,0,0,0.25));
+  /* Base image enhancement with sharp modern effects */
+  filter: contrast(1.25) saturate(1.3) brightness(1.1) drop-shadow(0 8px 16px rgba(0,0,0,0.3));
   position: relative;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  border-radius: 12px;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* Modern sharp edge enhancement */
+  -webkit-filter: contrast(1.25) saturate(1.3) brightness(1.1) drop-shadow(0 8px 16px rgba(0,0,0,0.3));
 }
 
-/* Metallic sheen overlay - exact Swift gradient implementation */
+/* Premium glass overlay effect */
 .metallic-3d-logo::before {
   content: '';
   position: absolute;
@@ -59,22 +61,20 @@
   right: 0;
   bottom: 0;
   border-radius: inherit;
-  background: linear-gradient(45deg, 
-    transparent 0%, 
-    rgba(255,255,255,0.6) 30%, 
+  background: linear-gradient(135deg, 
+    rgba(255,255,255,0.7) 0%, 
+    rgba(255,255,255,0.3) 25%, 
     transparent 50%, 
-    rgba(255,255,255,0.3) 80%, 
-    transparent 100%
+    rgba(255,255,255,0.2) 75%, 
+    rgba(255,255,255,0.5) 100%
   );
   pointer-events: none;
   mix-blend-mode: overlay;
   z-index: 1;
-  transform: rotate(45deg);
-  mask-image: radial-gradient(circle, white 70%, transparent 100%);
-  -webkit-mask-image: radial-gradient(circle, white 70%, transparent 100%);
+  opacity: 0.8;
 }
 
-/* 3D emboss effect - exact Swift shadow implementation */
+/* Modern depth shadow effect */
 .metallic-3d-logo::after {
   content: '';
   position: absolute;
@@ -84,69 +84,75 @@
   bottom: 0;
   border-radius: inherit;
   background: linear-gradient(180deg, 
-    rgba(255,255,255,0.9) 0%,
-    transparent 10%,
-    transparent 90%,
-    rgba(255,255,255,0.6) 100%
+    rgba(255,255,255,0.4) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(0,0,0,0.1) 100%
   );
-  mix-blend-mode: screen;
+  mix-blend-mode: multiply;
   pointer-events: none;
   z-index: 2;
 }
 
-/* Enhanced hover effect with exact Swift transformations */
+/* Premium hover effect with modern transformations */
 .metallic-3d-logo:hover {
-  filter: contrast(1.2) saturate(1.2) 
-    drop-shadow(-0.5px -0.5px 0 rgba(255,255,255,1))
-    drop-shadow(0.5px 0.5px 0 rgba(0,0,0,0.7))
-    drop-shadow(-1px -1px 1.5px rgba(255,255,255,0.3))
-    drop-shadow(2px 2px 2px rgba(0,0,0,0.4))
-    drop-shadow(0 8px 12px rgba(0,0,0,0.35));
-  transform: scale(1.1) translateY(-2px);
+  filter: contrast(1.4) saturate(1.5) brightness(1.2)
+    drop-shadow(0 0 20px rgba(255,255,255,0.5))
+    drop-shadow(0 12px 24px rgba(0,0,0,0.4))
+    drop-shadow(0 0 40px rgba(59, 130, 246, 0.3));
+  transform: scale(1.15) translateY(-4px) rotateX(5deg);
+  -webkit-filter: contrast(1.4) saturate(1.5) brightness(1.2)
+    drop-shadow(0 0 20px rgba(255,255,255,0.5))
+    drop-shadow(0 12px 24px rgba(0,0,0,0.4))
+    drop-shadow(0 0 40px rgba(59, 130, 246, 0.3));
 }
 
 .metallic-3d-logo:hover::before {
-  background: linear-gradient(45deg, 
-    transparent 0%, 
-    rgba(255,255,255,0.8) 30%, 
+  background: linear-gradient(135deg, 
+    rgba(255,255,255,0.9) 0%, 
+    rgba(255,255,255,0.5) 25%, 
     transparent 50%, 
-    rgba(255,255,255,0.5) 80%, 
-    transparent 100%
+    rgba(255,255,255,0.4) 75%, 
+    rgba(255,255,255,0.7) 100%
   );
-  animation: metallic-shine 1.5s ease-in-out infinite;
+  animation: premium-shine 2s ease-in-out infinite;
 }
 
-/* Metallic shine animation - smooth Swift-like movement */
-@keyframes metallic-shine {
+/* Modern shine animation */
+@keyframes premium-shine {
   0% {
-    transform: rotate(45deg) translateX(-200%);
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
   }
   50% {
-    transform: rotate(45deg) translateX(200%);
+    transform: translateX(100%) skewX(-15deg);
+    opacity: 1;
   }
   100% {
-    transform: rotate(45deg) translateX(-200%);
+    transform: translateX(300%) skewX(-15deg);
+    opacity: 0;
   }
 }
 
-/* Enhanced parent container for exact 3D perspective */
+/* Modern container with enhanced perspective */
 .metallic-3d-logo-container {
-  perspective: 1000px;
+  perspective: 1200px;
   transform-style: preserve-3d;
-  padding: 8px;
+  padding: 12px;
+  /* Remove any circular background */
+  background: none !important;
+  border-radius: 0 !important;
 }
 
-/* Enhanced version for featured game logos - exact Swift PremiumTeamLogoContent mirror */
+/* Enhanced version for featured logos - Maximum Premium Effect */
 .metallic-3d-logo-enhanced {
-  /* Exact Swift base effects: contrast, saturation, and all shadows */
-  filter: contrast(1.1) saturate(1.1) 
-    drop-shadow(-0.5px -0.5px 0 rgba(255,255,255,1))
-    drop-shadow(0.5px 0.5px 0 rgba(0,0,0,0.7))
-    drop-shadow(-1px -1px 1.5px rgba(255,255,255,0.3))
-    drop-shadow(2px 2px 2px rgba(0,0,0,0.4))
-    drop-shadow(0 5px 8px rgba(0,0,0,0.25));
+  /* Premium sharp effects with modern glow */
+  filter: contrast(1.3) saturate(1.4) brightness(1.15)
+    drop-shadow(0 0 15px rgba(255,255,255,0.4))
+    drop-shadow(0 8px 20px rgba(0,0,0,0.3))
+    drop-shadow(0 0 30px rgba(59, 130, 246, 0.2));
   position: relative;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   backface-visibility: hidden;

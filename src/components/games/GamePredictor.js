@@ -567,12 +567,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
               <img 
                 src={awayTeam?.logos?.[0] || '/photos/ncaaf.png'} 
                 alt={awayTeam?.school} 
-                className="w-16 h-16 mx-auto mb-2 rounded-full shadow-lg filter drop-shadow-lg transform group-hover:scale-110 transition-all duration-300"
-                style={{
-                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3)) drop-shadow(0 0 8px rgba(255,255,255,0.2))',
-                  background: 'linear-gradient(145deg, #f0f0f0, #d0d0d0)',
-                  padding: '4px'
-                }}
+                className="w-24 h-24 mx-auto mb-2 metallic-3d-logo-enhanced object-contain transform group-hover:scale-110 transition-all duration-500"
               />
               <div className="text-sm font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/40">
                 {awayTeam?.abbreviation || 'AWAY'}
@@ -591,12 +586,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
               <img 
                 src={homeTeam?.logos?.[0] || '/photos/ncaaf.png'} 
                 alt={homeTeam?.school} 
-                className="w-16 h-16 mx-auto mb-2 rounded-full shadow-lg filter drop-shadow-lg transform group-hover:scale-110 transition-all duration-300"
-                style={{
-                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3)) drop-shadow(0 0 8px rgba(255,255,255,0.2))',
-                  background: 'linear-gradient(145deg, #f0f0f0, #d0d0d0)',
-                  padding: '4px'
-                }}
+                className="w-24 h-24 mx-auto mb-2 metallic-3d-logo-enhanced object-contain transform group-hover:scale-110 transition-all duration-500"
               />
               <div className="text-sm font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/40">
                 {homeTeam?.abbreviation || 'HOME'}
@@ -733,7 +723,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
             <img 
               src={awayTeam?.logos?.[0] || '/photos/ncaaf.png'} 
               alt={awayTeam?.school} 
-              className="w-6 h-6 rounded-full"
+              className="w-8 h-8 metallic-3d-logo object-contain"
             />
             <span className="font-medium">{awayTeam?.school || 'Away Team'}</span>
           </div>
@@ -745,7 +735,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
             <img 
               src={homeTeam?.logos?.[0] || '/photos/ncaaf.png'} 
               alt={homeTeam?.school} 
-              className="w-6 h-6 rounded-full"
+              className="w-8 h-8 metallic-3d-logo object-contain"
             />
           </div>
         </div>
@@ -912,7 +902,7 @@ const MatchupPredictorInterface = ({
                 <img 
                   src={awayTeam.logos?.[0] || '/api/placeholder/40/40'} 
                   alt={awayTeam.school} 
-                  className="w-10 h-10"
+                  className="w-12 h-12 metallic-3d-logo object-contain"
                 />
                 <div>
                   <div className="font-semibold">{awayTeam.school}</div>
@@ -945,7 +935,7 @@ const MatchupPredictorInterface = ({
                 <img 
                   src={homeTeam.logos?.[0] || '/api/placeholder/40/40'} 
                   alt={homeTeam.school} 
-                  className="w-10 h-10"
+                  className="w-12 h-12 metallic-3d-logo object-contain"
                 />
                 <div>
                   <div className="font-semibold">{homeTeam.school}</div>
