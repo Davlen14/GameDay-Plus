@@ -44,10 +44,6 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
   } catch (error) {
     console.error(`❌ [API DEBUG] College Football API Error for ${endpoint}:`, error.message);
     
-    // Check if it's a CORS or network error
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      console.error('❌ [API DEBUG] Network/CORS error detected - REST API may be blocked');
-    
     // Check if it's a CORS or network error - should be less likely now
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       const corsError = new Error(`Network error accessing ${endpoint} via secure proxy`);
