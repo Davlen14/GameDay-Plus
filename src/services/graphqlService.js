@@ -396,38 +396,20 @@ export const getWeeklyGamesForPrediction = async (week, year = 2024, seasonType 
 };
 
 // Conference strength analysis
+// Conference strength analysis - FIXED QUERY
 export const getConferenceStrengthAnalysis = async (conference, year = 2024) => {
   const query = `
     query ConferenceStrengthAnalysis($conference: String!, $year: smallint!) {
-      teams: currentTeams(where: {conference: {_eq: $conference}}) {
+      currentTeams(where: {conference: {_eq: $conference}}) {
         school teamId
+        conference
         
-        # Season performance aggregates
-        gamesAggregate(
-          where: {
-            _and: [
-              {_or: [{homeTeam: {_eq: school}}, {awayTeam: {_eq: school}}]},
-              {season: {_eq: $year}},
-              {status: {_eq: "completed"}}
-            ]
-          }
-        ) {
-          aggregate {
-            count
-            avg {
-              homePoints awayPoints
-              homePostgameWinProb awayPostgameWinProb
-              excitementIndex
-            }
-          }
-        }
-        
-        # Talent rating
+        # Add talent rating
         teamTalents(where: {year: {_eq: $year}}) {
           talent
         }
         
-        # Recruiting
+        # Add recruiting
         recruitingTeams(where: {year: {_eq: $year}}) {
           rank points
         }
@@ -436,8 +418,38 @@ export const getConferenceStrengthAnalysis = async (conference, year = 2024) => 
   `;
   
   const variables = { conference, year };
-  const data = await fetchData(query, variables);
-  return data?.teams || [];
+  
+  try {
+    const data = await fetchData(query, variables);
+    return data?.currentTeams || [];
+  } catch (error) {
+    console.error("❌ Conference Analysis GraphQL Error, falling back to REST:", error);
+    
+    // REST API fallback
+    try {
+      console.log('🔄 [FALLBACK] Using REST API for conference analysis...');
+      const [teamsData, talentData, recruitingData] = await Promise.allSettled([
+        fetchCollegeFootballData('/teams', { conference }),
+        fetchCollegeFootballData('/talent', { year }),
+        fetchCollegeFootballData('/recruiting/teams', { year })
+      ]);
+
+      const teams = teamsData.status === 'fulfilled' ? teamsData.value : [];
+      const talent = talentData.status === 'fulfilled' ? talentData.value : [];
+      const recruiting = recruitingData.status === 'fulfilled' ? recruitingData.value : [];
+      
+      return teams.map(team => ({
+        school: team.school,
+        teamId: team.id,
+        conference: team.conference,
+        teamTalents: talent.filter(t => t.school === team.school).map(t => ({ talent: t.talent })),
+        recruitingTeams: recruiting.filter(r => r.team === team.school).map(r => ({ rank: r.rank, points: r.points }))
+      }));
+    } catch (restError) {
+      console.error("❌ REST API fallback also failed:", restError);
+      throw error;
+    }
+  }
 };
 
 // Enhanced team ratings with advanced metrics
@@ -585,6 +597,7 @@ export const getEnhancedTeamRatings = async (team, year = 2024) => {
 };
 
 // Betting lines analysis
+// Betting lines analysis - FIXED QUERY
 export const getBettingLinesAnalysis = async (homeTeam, awayTeam, year = 2024) => {
   const query = `
     query BettingLinesAnalysis($homeTeam: String!, $awayTeam: String!, $year: smallint!) {
@@ -597,15 +610,21 @@ export const getBettingLinesAnalysis = async (homeTeam, awayTeam, year = 2024) =
             {season: {_eq: $year}}
           ]
         }
+        limit: 1
       ) {
         id
+        homeTeam
+        awayTeam
         gameLines {
-          provider spread spreadOpen overUnder overUnderOpen
-          homeMoneyline awayMoneyline
+          provider 
+          spread 
+          overUnder 
+          homeMoneyline 
+          awayMoneyline
         }
       }
       
-      # Historical betting performance for both teams
+      # Historical betting performance for home team
       homeTeamLines: game(
         where: {
           _and: [
@@ -614,13 +633,20 @@ export const getBettingLinesAnalysis = async (homeTeam, awayTeam, year = 2024) =
             {status: {_eq: "completed"}}
           ]
         }
+        limit: 10
       ) {
-        homeTeam awayTeam homePoints awayPoints
+        homeTeam 
+        awayTeam 
+        homePoints 
+        awayPoints
         gameLines {
-          provider spread overUnder
+          provider 
+          spread 
+          overUnder
         }
       }
       
+      # Historical betting performance for away team  
       awayTeamLines: game(
         where: {
           _and: [
@@ -629,23 +655,74 @@ export const getBettingLinesAnalysis = async (homeTeam, awayTeam, year = 2024) =
             {status: {_eq: "completed"}}
           ]
         }
+        limit: 10
       ) {
-        homeTeam awayTeam homePoints awayPoints
+        homeTeam 
+        awayTeam 
+        homePoints 
+        awayPoints
         gameLines {
-          provider spread overUnder
+          provider 
+          spread 
+          overUnder
         }
       }
     }
   `;
   
   const variables = { homeTeam, awayTeam, year };
-  const data = await fetchData(query, variables);
   
-  return {
-    currentLines: data?.currentMatchup?.[0]?.gameLines || [],
-    homeTeamHistory: data?.homeTeamLines || [],
-    awayTeamHistory: data?.awayTeamLines || []
-  };
+  try {
+    const data = await fetchData(query, variables);
+    
+    return {
+      currentLines: data?.currentMatchup?.[0]?.gameLines || [],
+      homeTeamHistory: data?.homeTeamLines || [],
+      awayTeamHistory: data?.awayTeamLines || []
+    };
+  } catch (error) {
+    console.error("❌ Betting Analysis GraphQL Error, falling back to REST:", error);
+    
+    // REST API fallback
+    try {
+      console.log('🔄 [FALLBACK] Using REST API for betting analysis...');
+      const [homeGames, awayGames] = await Promise.allSettled([
+        fetchCollegeFootballData('/games', { year, team: homeTeam }),
+        fetchCollegeFootballData('/games', { year, team: awayTeam })
+      ]);
+
+      const homeGamesData = homeGames.status === 'fulfilled' ? homeGames.value : [];
+      const awayGamesData = awayGames.status === 'fulfilled' ? awayGames.value : [];
+      
+      // Look for current matchup
+      const currentMatchup = homeGamesData.find(g => 
+        (g.home_team === homeTeam && g.away_team === awayTeam) ||
+        (g.home_team === awayTeam && g.away_team === homeTeam)
+      );
+      
+      return {
+        currentLines: [], // Betting lines not available in REST
+        homeTeamHistory: homeGamesData.slice(0, 10).map(g => ({
+          homeTeam: g.home_team,
+          awayTeam: g.away_team,
+          homePoints: g.home_points,
+          awayPoints: g.away_points,
+          gameLines: [] // Not available in REST
+        })),
+        awayTeamHistory: awayGamesData.slice(0, 10).map(g => ({
+          homeTeam: g.home_team,
+          awayTeam: g.away_team,
+          homePoints: g.home_points,
+          awayPoints: g.away_points,
+          gameLines: [] // Not available in REST
+        })),
+        message: 'Betting lines only available through GraphQL - using game data only'
+      };
+    } catch (restError) {
+      console.error("❌ REST API fallback also failed:", restError);
+      throw error;
+    }
+  }
 };
 
 // Live game tracking for in-game predictions
@@ -725,9 +802,10 @@ export const getHeadToHeadHistory = async (team1, team2, year = 2024) => {
 };
 
 // Weather conditions for game prediction
+// Weather conditions for game prediction - FIXED QUERY
 export const getWeatherConditions = async (teamId, week, season = 2024) => {
   const query = `
-    query WeatherConditions($teamId: Int!, $week: Int!, $season: smallint!) {
+    query WeatherConditions($teamId: Int!, $week: smallint!, $season: smallint!) {
       game(
         where: {
           _and: [
@@ -738,34 +816,82 @@ export const getWeatherConditions = async (teamId, week, season = 2024) => {
         }
         limit: 1
       ) {
+        id
+        homeTeam
+        awayTeam
+        week
+        season
         gameWeather {
-          temperature windSpeed precipitation humidity
-          weatherCondition gameIndoors
+          temperature 
+          windSpeed 
+          precipitation 
+          humidity
+          weatherCondition 
+          gameIndoors
         }
       }
     }
   `;
   
   const variables = { teamId: parseInt(teamId), week, season };
-  const data = await fetchData(query, variables);
   
-  const weather = data?.game?.[0]?.gameWeather;
-  if (!weather) return null;
-  
-  return {
-    detailedConditions: {
-      temperature: weather.temperature,
-      windSpeed: weather.windSpeed,
-      precipitation: weather.precipitation ? {
-        type: weather.precipitation > 0.5 ? 'heavy' : 'light',
-        intensity: weather.precipitation
-      } : null,
-      humidity: weather.humidity,
-      visibility: weather.gameIndoors ? 1.0 : 0.75 // Indoor games have perfect visibility
-    },
-    severity: weather.temperature < 32 || weather.windSpeed > 25 ? 'high' : 
-              weather.temperature < 45 || weather.windSpeed > 15 ? 'moderate' : 'low'
-  };
+  try {
+    const data = await fetchData(query, variables);
+    
+    const game = data?.game?.[0];
+    const weather = game?.gameWeather;
+    
+    if (!weather) {
+      return {
+        game: game || null,
+        weather: null,
+        message: 'No weather data available for this game'
+      };
+    }
+    
+    return {
+      game: {
+        id: game.id,
+        homeTeam: game.homeTeam,
+        awayTeam: game.awayTeam,
+        week: game.week,
+        season: game.season
+      },
+      detailedConditions: {
+        temperature: weather.temperature,
+        windSpeed: weather.windSpeed,
+        precipitation: weather.precipitation ? {
+          type: weather.precipitation > 0.5 ? 'heavy' : 'light',
+          intensity: weather.precipitation
+        } : null,
+        humidity: weather.humidity,
+        visibility: weather.gameIndoors ? 1.0 : 0.75
+      },
+      severity: weather.temperature < 32 || weather.windSpeed > 25 ? 'high' : 
+                weather.temperature < 45 || weather.windSpeed > 15 ? 'moderate' : 'low'
+    };
+  } catch (error) {
+    console.error("❌ Weather Data GraphQL Error, falling back to REST:", error);
+    
+    // REST API fallback
+    try {
+      console.log('🔄 [FALLBACK] Using REST API for weather data...');
+      const gamesData = await fetchCollegeFootballData('/games', { 
+        year: season, 
+        week,
+        team: teamId // This might not work perfectly, but it's a fallback
+      });
+
+      return {
+        game: gamesData[0] || null,
+        weather: null,
+        message: 'Weather data only available through GraphQL - REST fallback has limited weather info'
+      };
+    } catch (restError) {
+      console.error("❌ REST API fallback also failed:", restError);
+      throw error;
+    }
+  }
 };
 
 // ====== EXISTING FUNCTIONS (ENHANCED) ======
