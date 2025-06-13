@@ -396,31 +396,25 @@ export const getWeeklyGamesForPrediction = async (week, year = 2024, seasonType 
 };
 
 // Conference strength analysis
-// Conference strength analysis - FIXED QUERY
+// Conference strength analysis - IMPROVED QUERY
 export const getConferenceStrengthAnalysis = async (conference, year = 2024) => {
   const query = `
-    query ConferenceStrengthAnalysis($conference: String!, $year: smallint!) {
+    query ConferenceStrengthAnalysis($conference: String!) {
       currentTeams(where: {conference: {_eq: $conference}}) {
-        school teamId
+        school 
+        teamId
         conference
-        
-        # Add talent rating
-        teamTalents(where: {year: {_eq: $year}}) {
-          talent
-        }
-        
-        # Add recruiting
-        recruitingTeams(where: {year: {_eq: $year}}) {
-          rank points
-        }
+        classification
+        division
       }
     }
   `;
   
-  const variables = { conference, year };
+  const variables = { conference };
   
   try {
     const data = await fetchData(query, variables);
+    console.log(`✅ Conference Analysis found ${data?.currentTeams?.length || 0} teams in ${conference}`);
     return data?.currentTeams || [];
   } catch (error) {
     console.error("❌ Conference Analysis GraphQL Error, falling back to REST:", error);
@@ -428,22 +422,16 @@ export const getConferenceStrengthAnalysis = async (conference, year = 2024) => 
     // REST API fallback
     try {
       console.log('🔄 [FALLBACK] Using REST API for conference analysis...');
-      const [teamsData, talentData, recruitingData] = await Promise.allSettled([
-        fetchCollegeFootballData('/teams', { conference }),
-        fetchCollegeFootballData('/talent', { year }),
-        fetchCollegeFootballData('/recruiting/teams', { year })
-      ]);
-
-      const teams = teamsData.status === 'fulfilled' ? teamsData.value : [];
-      const talent = talentData.status === 'fulfilled' ? talentData.value : [];
-      const recruiting = recruitingData.status === 'fulfilled' ? recruitingData.value : [];
+      const teamsData = await fetchCollegeFootballData('/teams', { conference });
       
-      return teams.map(team => ({
+      console.log(`✅ REST fallback found ${teamsData?.length || 0} teams in ${conference}`);
+      
+      return teamsData.map(team => ({
         school: team.school,
         teamId: team.id,
         conference: team.conference,
-        teamTalents: talent.filter(t => t.school === team.school).map(t => ({ talent: t.talent })),
-        recruitingTeams: recruiting.filter(r => r.team === team.school).map(r => ({ rank: r.rank, points: r.points }))
+        classification: team.classification,
+        division: team.division
       }));
     } catch (restError) {
       console.error("❌ REST API fallback also failed:", restError);

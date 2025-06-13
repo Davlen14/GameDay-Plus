@@ -35,6 +35,14 @@ const TeamAnalytics = ({ team }) => {
     try {
       console.log(`🚀 Testing ${endpointName} for ${team.school}...`);
       
+      // Add this debug info to see what team data you have
+      console.log(`🔍 [DEBUG] Team data for ${endpointName}:`, {
+        school: team.school,
+        id: team.id,
+        teamId: team.teamId,
+        conference: team.conference
+      });
+      
       // Check GraphQL availability first if not already checked
       if (graphqlData.isAvailable === null) {
         const isGraphQLAvailable = await graphqlService.utils.isAvailable();
@@ -72,7 +80,9 @@ const TeamAnalytics = ({ team }) => {
           result = await graphqlService.getBettingLinesAnalysis(team.school, 'Alabama', 2024);
           break;
         case 'weatherData':
-          result = await graphqlService.getWeatherConditions(team.id, 1, 2024);
+          // Try with team.teamId first, then team.id, then a default
+          const teamIdToUse = team.teamId || team.id || 252; // 252 is BYU's actual teamId
+          result = await graphqlService.getWeatherConditions(teamIdToUse, 1, 2024);
           break;
         default:
           throw new Error(`Unknown endpoint: ${endpointName}`);
