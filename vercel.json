@@ -1,0 +1,35 @@
+{
+  "functions": {
+    "api/college-football.js": {
+      "maxDuration": 30
+    },
+    "api/graphql.js": {
+      "maxDuration": 30
+    },
+    "api/news.js": {
+      "maxDuration": 30
+    },
+    "api/youtube.js": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ]
+}

@@ -1,39 +1,36 @@
-// Core API utility functions
-const COLLEGE_FOOTBALL_API_BASE = 'https://api.collegefootballdata.com';
-const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY || 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
-const GNEWS_API_KEY = process.env.REACT_APP_GNEWS_API_KEY;
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
-const YOUTUBE_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY;
+// Core API utility functions - Updated for Vercel API Functions (Secure)
+// ✅ No API keys exposed in client code
+// ✅ CORS issues resolved through API proxies
+// ✅ Secure for production deployment
 
-// College Football Data API
+// Use Vercel API Functions instead of direct API calls
+const COLLEGE_FOOTBALL_API_BASE = '/api/college-football';
+const NEWS_API_BASE = '/api/news';
+const YOUTUBE_API_BASE = '/api/youtube';
+
+// ✅ Secure College Football Data API (via Vercel Function)
 const fetchCollegeFootballData = async (endpoint, params = {}) => {
-  const url = new URL(`${COLLEGE_FOOTBALL_API_BASE}${endpoint}`);
-  
-  // Add parameters to URL
-  Object.keys(params).forEach(key => {
-    if (params[key] !== null && params[key] !== undefined) {
-      url.searchParams.append(key, params[key]);
-    }
-  });
-
-  console.log(`📡 [API DEBUG] Making REST API request to: ${endpoint}`, params);
+  console.log(`📡 [API DEBUG] Making secure REST API request to: ${endpoint}`, params);
 
   try {
-    const response = await fetch(url.toString(), {
+    // Build query string for the proxy API
+    const queryParams = new URLSearchParams({
+      endpoint,
+      ...params
+    });
+
+    const response = await fetch(`${COLLEGE_FOOTBALL_API_BASE}?${queryParams}`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${COLLEGE_FOOTBALL_API_KEY}`,
         "Content-Type": "application/json",
         "Accept": "application/json"
-      },
-      mode: 'cors',
-      credentials: 'omit'
+      }
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ [API DEBUG] REST API Error: ${response.status} ${response.statusText}`, errorText);
-      const error = new Error(`College Football API Error: ${response.status} ${response.statusText} - ${errorText || 'No additional details'}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error(`❌ [API DEBUG] REST API Error: ${response.status}`, errorData);
+      const error = new Error(`College Football API Error: ${response.status} ${response.statusText} - ${errorData.error || 'No additional details'}`);
       error.status = response.status;
       error.statusText = response.statusText;
       error.endpoint = endpoint;
@@ -42,7 +39,7 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
     }
     
     const data = await response.json();
-    console.log(`✅ [API DEBUG] REST API request successful for: ${endpoint}`);
+    console.log(`✅ [API DEBUG] Secure REST API request successful for: ${endpoint}`);
     return data;
   } catch (error) {
     console.error(`❌ [API DEBUG] College Football API Error for ${endpoint}:`, error.message);
@@ -50,7 +47,10 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
     // Check if it's a CORS or network error
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       console.error('❌ [API DEBUG] Network/CORS error detected - REST API may be blocked');
-      const corsError = new Error(`CORS/Network error accessing ${endpoint}`);
+    
+    // Check if it's a CORS or network error - should be less likely now
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      const corsError = new Error(`Network error accessing ${endpoint} via secure proxy`);
       corsError.isCorsError = true;
       corsError.originalError = error;
       throw corsError;
@@ -60,34 +60,57 @@ const fetchCollegeFootballData = async (endpoint, params = {}) => {
   }
 };
 
-// News API (GNews)
+// ✅ Secure News API (via Vercel Function)
 const fetchNewsData = async (query, category = 'sports', lang = 'en', country = 'us', max = 10) => {
-  const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&category=${category}&lang=${lang}&country=${country}&max=${max}&apikey=${GNEWS_API_KEY}`;
-  
   try {
-    const response = await fetch(url);
+    const queryParams = new URLSearchParams({
+      query,
+      category,
+      lang,
+      country,
+      max: max.toString()
+    });
+
+    console.log(`📡 [API DEBUG] Making secure news request for: ${query}`);
+
+    const response = await fetch(`${NEWS_API_BASE}?${queryParams}`);
+    
     if (!response.ok) {
-      throw new Error(`News API Error: ${response.status} ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`News API Error: ${response.status} ${response.statusText} - ${errorData.error || ''}`);
     }
-    return await response.json();
+    
+    const data = await response.json();
+    console.log(`✅ [API DEBUG] Secure news request successful`);
+    return data;
   } catch (error) {
-    console.error("News API Error:", error.message);
+    console.error("❌ [API DEBUG] News API Error:", error.message);
     throw error;
   }
 };
 
-// YouTube API
+// ✅ Secure YouTube API (via Vercel Function)
 const fetchYouTubeData = async (query, maxResults = 25) => {
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=${maxResults}&key=${YOUTUBE_API_KEY}`;
-  
   try {
-    const response = await fetch(url);
+    const queryParams = new URLSearchParams({
+      query,
+      maxResults: maxResults.toString()
+    });
+
+    console.log(`📡 [API DEBUG] Making secure YouTube request for: ${query}`);
+
+    const response = await fetch(`${YOUTUBE_API_BASE}?${queryParams}`);
+    
     if (!response.ok) {
-      throw new Error(`YouTube API Error: ${response.status} ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`YouTube API Error: ${response.status} ${response.statusText} - ${errorData.error || ''}`);
     }
-    return await response.json();
+    
+    const data = await response.json();
+    console.log(`✅ [API DEBUG] Secure YouTube request successful`);
+    return data;
   } catch (error) {
-    console.error("YouTube API Error:", error.message);
+    console.error("❌ [API DEBUG] YouTube API Error:", error.message);
     throw error;
   }
 };
