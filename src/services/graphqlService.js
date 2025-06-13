@@ -1,31 +1,33 @@
 // Enhanced GraphQL service for College Football Data API
 // Optimized for prediction model with advanced metrics
-// ✅ Updated to use secure Vercel API Functions
 import { fetchCollegeFootballData } from './core';
 
-const GRAPHQL_ENDPOINT = '/api/graphql'; // Use secure Vercel API Function
+const GRAPHQL_ENDPOINT = 'https://graphql.collegefootballdata.com/v1/graphql';
+const COLLEGE_FOOTBALL_API_KEY = process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY || 'p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq';
 
-// ✅ Secure GraphQL API interaction with enhanced error handling and REST fallback
+// Direct GraphQL API interaction with enhanced error handling and REST fallback
 const fetchData = async (query, variables = {}) => {
-  console.log('🚀 [API DEBUG] Attempting secure GraphQL request...');
+  console.log('🚀 [API DEBUG] Attempting GraphQL request to:', GRAPHQL_ENDPOINT);
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       headers: {
+        'Authorization': `Bearer ${COLLEGE_FOOTBALL_API_KEY}`,
         "Content-Type": "application/json",
         'Accept': 'application/json',
       },
+      mode: 'cors',
+      credentials: 'omit',
       body: JSON.stringify({ query, variables }),
     });
 
     if (!response.ok) {
-      console.log('❌ [API DEBUG] Secure GraphQL request failed with status:', response.status);
-      const errorData = await response.json().catch(() => ({}));
+      console.log('❌ [API DEBUG] GraphQL request failed with status:', response.status);
       // Check for CORS or auth errors specifically
       if (response.status === 0 || response.status === 403 || response.status === 401) {
         throw new Error('CORS_ERROR');
       }
-      throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.error || ''}`);
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
@@ -34,10 +36,10 @@ const fetchData = async (query, variables = {}) => {
       throw new Error(result.errors.map((e) => e.message).join(", "));
     }
     
-    console.log('✅ [API DEBUG] Secure GraphQL request successful - data received');
+    console.log('✅ [API DEBUG] GraphQL request successful - data received');
     return result.data;
   } catch (error) {
-    console.error("❌ [API DEBUG] Secure GraphQL Fetch Error:", error.message);
+    console.error("❌ [API DEBUG] GraphQL Fetch Error:", error.message);
     if (error.message.includes('CORS') || error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
       console.log('🔄 [API DEBUG] CORS/Network error detected - will fallback to REST API');
       throw new Error('CORS_ERROR');
