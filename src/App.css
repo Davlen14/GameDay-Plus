@@ -37,22 +37,22 @@
   }
 }
 
-/* Modern Premium Logo Effects - Sharp, Clean, and Bigger */
+/* Modern Premium Logo Effects - Preserving Natural Colors */
 .metallic-3d-logo {
-  /* Base image enhancement with sharp modern effects */
-  filter: contrast(1.25) saturate(1.3) brightness(1.1) drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+  /* Base image enhancement with natural color preservation */
+  filter: contrast(1.15) saturate(1.4) brightness(1.05) drop-shadow(0 4px 12px rgba(0,0,0,0.25));
   position: relative;
-  border-radius: 12px;
+  border-radius: 8px;
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  /* Modern sharp edge enhancement */
-  -webkit-filter: contrast(1.25) saturate(1.3) brightness(1.1) drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+  /* Subtle natural color enhancement */
+  -webkit-filter: contrast(1.15) saturate(1.4) brightness(1.05) drop-shadow(0 4px 12px rgba(0,0,0,0.25));
 }
 
-/* Premium glass overlay effect */
+/* Subtle glass overlay effect - minimal impact on colors */
 .metallic-3d-logo::before {
   content: '';
   position: absolute;
@@ -62,19 +62,18 @@
   bottom: 0;
   border-radius: inherit;
   background: linear-gradient(135deg, 
-    rgba(255,255,255,0.7) 0%, 
-    rgba(255,255,255,0.3) 25%, 
-    transparent 50%, 
-    rgba(255,255,255,0.2) 75%, 
-    rgba(255,255,255,0.5) 100%
+    rgba(255,255,255,0.15) 0%, 
+    transparent 30%, 
+    transparent 70%, 
+    rgba(255,255,255,0.1) 100%
   );
   pointer-events: none;
-  mix-blend-mode: overlay;
+  mix-blend-mode: soft-light;
   z-index: 1;
-  opacity: 0.8;
+  opacity: 0.6;
 }
 
-/* Modern depth shadow effect */
+/* Minimal depth effect - preserves logo colors */
 .metallic-3d-logo::after {
   content: '';
   position: absolute;
@@ -84,49 +83,49 @@
   bottom: 0;
   border-radius: inherit;
   background: linear-gradient(180deg, 
-    rgba(255,255,255,0.4) 0%,
-    transparent 30%,
-    transparent 70%,
-    rgba(0,0,0,0.1) 100%
+    rgba(255,255,255,0.1) 0%,
+    transparent 20%,
+    transparent 80%,
+    rgba(0,0,0,0.05) 100%
   );
   mix-blend-mode: multiply;
   pointer-events: none;
   z-index: 2;
+  opacity: 0.3;
 }
 
-/* Premium hover effect with modern transformations */
+/* Premium hover effect with color-preserving glow */
 .metallic-3d-logo:hover {
-  filter: contrast(1.4) saturate(1.5) brightness(1.2)
-    drop-shadow(0 0 20px rgba(255,255,255,0.5))
-    drop-shadow(0 12px 24px rgba(0,0,0,0.4))
-    drop-shadow(0 0 40px rgba(59, 130, 246, 0.3));
-  transform: scale(1.15) translateY(-4px) rotateX(5deg);
-  -webkit-filter: contrast(1.4) saturate(1.5) brightness(1.2)
-    drop-shadow(0 0 20px rgba(255,255,255,0.5))
-    drop-shadow(0 12px 24px rgba(0,0,0,0.4))
-    drop-shadow(0 0 40px rgba(59, 130, 246, 0.3));
+  filter: contrast(1.25) saturate(1.6) brightness(1.1)
+    drop-shadow(0 0 15px rgba(59, 130, 246, 0.4))
+    drop-shadow(0 8px 20px rgba(0,0,0,0.3))
+    drop-shadow(0 0 25px rgba(255,255,255,0.2));
+  transform: scale(1.1) translateY(-2px);
+  -webkit-filter: contrast(1.25) saturate(1.6) brightness(1.1)
+    drop-shadow(0 0 15px rgba(59, 130, 246, 0.4))
+    drop-shadow(0 8px 20px rgba(0,0,0,0.3))
+    drop-shadow(0 0 25px rgba(255,255,255,0.2));
 }
 
 .metallic-3d-logo:hover::before {
   background: linear-gradient(135deg, 
-    rgba(255,255,255,0.9) 0%, 
-    rgba(255,255,255,0.5) 25%, 
-    transparent 50%, 
-    rgba(255,255,255,0.4) 75%, 
-    rgba(255,255,255,0.7) 100%
+    rgba(255,255,255,0.2) 0%, 
+    transparent 30%, 
+    transparent 70%, 
+    rgba(255,255,255,0.15) 100%
   );
-  animation: premium-shine 2s ease-in-out infinite;
+  animation: natural-shine 2s ease-in-out infinite;
 }
 
-/* Modern shine animation */
-@keyframes premium-shine {
+/* Natural shine animation - preserves logo colors */
+@keyframes natural-shine {
   0% {
     transform: translateX(-100%) skewX(-15deg);
     opacity: 0;
   }
   50% {
     transform: translateX(100%) skewX(-15deg);
-    opacity: 1;
+    opacity: 0.7;
   }
   100% {
     transform: translateX(300%) skewX(-15deg);
@@ -138,19 +137,19 @@
 .metallic-3d-logo-container {
   perspective: 1200px;
   transform-style: preserve-3d;
-  padding: 12px;
+  padding: 8px;
   /* Remove any circular background */
   background: none !important;
   border-radius: 0 !important;
 }
 
-/* Enhanced version for featured logos - Maximum Premium Effect */
+/* Enhanced version for featured logos - Maximum Premium with Natural Colors */
 .metallic-3d-logo-enhanced {
-  /* Premium sharp effects with modern glow */
-  filter: contrast(1.3) saturate(1.4) brightness(1.15)
-    drop-shadow(0 0 15px rgba(255,255,255,0.4))
-    drop-shadow(0 8px 20px rgba(0,0,0,0.3))
-    drop-shadow(0 0 30px rgba(59, 130, 246, 0.2));
+  /* Premium effects while preserving natural logo colors */
+  filter: contrast(1.2) saturate(1.5) brightness(1.08)
+    drop-shadow(0 0 20px rgba(59, 130, 246, 0.3))
+    drop-shadow(0 6px 16px rgba(0,0,0,0.25))
+    drop-shadow(0 0 30px rgba(255,255,255,0.15));
   position: relative;
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   image-rendering: -webkit-optimize-contrast;
@@ -160,30 +159,29 @@
   will-change: transform, filter;
 }
 
-/* Exact Swift metallic sheen overlay - 45° angle with precise gradient stops */
+/* Subtle enhanced sheen overlay - preserves logo colors */
 .metallic-3d-logo-enhanced::before {
   content: '';
   position: absolute;
-  top: -5%;
-  left: -5%;
-  right: -5%;
-  bottom: -5%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: linear-gradient(45deg, 
-    rgba(255,255,255,0) 0%, 
-    rgba(255,255,255,0.6) 30%, 
-    rgba(255,255,255,0) 50%, 
-    rgba(255,255,255,0.3) 80%, 
-    rgba(255,255,255,0) 100%
+    transparent 0%, 
+    rgba(255,255,255,0.2) 30%, 
+    transparent 50%, 
+    rgba(255,255,255,0.1) 80%, 
+    transparent 100%
   );
-  mix-blend-mode: overlay;
+  mix-blend-mode: soft-light;
   pointer-events: none;
   z-index: 1;
   border-radius: inherit;
-  mask: radial-gradient(ellipse at center, white 80%, transparent 100%);
-  -webkit-mask: radial-gradient(ellipse at center, white 80%, transparent 100%);
+  opacity: 0.5;
 }
 
-/* Exact Swift edge highlights - vertical gradient with precise opacity */
+/* Minimal edge enhancement - maintains natural colors */
 .metallic-3d-logo-enhanced::after {
   content: '';
   position: absolute;
@@ -192,34 +190,32 @@
   right: 0;
   bottom: 0;
   background: linear-gradient(180deg, 
-    rgba(255,255,255,0.9) 0%, 
-    rgba(255,255,255,0) 10%, 
-    rgba(255,255,255,0) 90%, 
-    rgba(255,255,255,0.6) 100%
+    rgba(255,255,255,0.08) 0%, 
+    transparent 15%, 
+    transparent 85%, 
+    rgba(0,0,0,0.03) 100%
   );
-  mix-blend-mode: screen;
+  mix-blend-mode: multiply;
   pointer-events: none;
   z-index: 2;
   border-radius: inherit;
 }
 
-/* Exact Swift hover effect with enhanced transformations */
+/* Natural color-preserving hover effect with premium glow */
 .metallic-3d-logo-enhanced:hover {
-  filter: contrast(1.2) saturate(1.2) 
-    drop-shadow(-0.5px -0.5px 0 rgba(255,255,255,1))
-    drop-shadow(0.5px 0.5px 0 rgba(0,0,0,0.8))
-    drop-shadow(-1px -1px 2px rgba(255,255,255,0.4))
-    drop-shadow(3px 3px 3px rgba(0,0,0,0.5))
-    drop-shadow(0 8px 16px rgba(0,0,0,0.35));
-  transform: scale(1.1) translateY(-3px) rotateY(2deg);
+  filter: contrast(1.3) saturate(1.7) brightness(1.12)
+    drop-shadow(0 0 25px rgba(59, 130, 246, 0.5))
+    drop-shadow(0 8px 20px rgba(0,0,0,0.3))
+    drop-shadow(0 0 35px rgba(255,255,255,0.2));
+  transform: scale(1.15) translateY(-3px);
 }
 
 .metallic-3d-logo-enhanced:hover::before {
   background: linear-gradient(45deg, 
-    rgba(255,255,255,0) 0%, 
-    rgba(255,255,255,0.8) 30%, 
-    rgba(255,255,255,0) 50%, 
-    rgba(255,255,255,0.5) 80%, 
+    transparent 0%, 
+    rgba(255,255,255,0.25) 30%, 
+    transparent 50%, 
+    rgba(255,255,255,0.15) 80%, 
     rgba(255,255,255,0) 100%
   );
   animation: swift-metallic-shine 2s ease-in-out infinite;
