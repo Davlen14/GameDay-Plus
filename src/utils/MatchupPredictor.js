@@ -243,12 +243,18 @@ class MatchupPredictor {
       }
 
       // Get historical data for both teams using enhanced GraphQL queries
-      const [homeHistory, awayHistory, headToHead, weatherData] = await Promise.all([
+      const [homeHistory, awayHistory, headToHead, weatherData, comprehensiveData] = await Promise.all([
         this.getEnhancedTeamHistory(homeTeamId),
         this.getEnhancedTeamHistory(awayTeamId),
         this.getEnhancedHeadToHeadHistory(homeTeamId, awayTeamId),
-        this.getWeatherData(homeTeam, options)
+        this.getWeatherData(homeTeam, options),
+        this.loadComprehensivePredictionData(homeTeam.school, awayTeam.school, season)
       ]);
+
+      // Store comprehensive data for use in calculations
+      if (comprehensiveData) {
+        this.comprehensiveDataCache.set(`${homeTeam.school}_${awayTeam.school}_${season}`, comprehensiveData);
+      }
 
       // Calculate enhanced metrics with GraphQL data
       const homeMetrics = this.calculateEnhancedTeamMetrics(homeTeam, homeHistory, homeTeamId);
@@ -1313,36 +1319,26 @@ class MatchupPredictor {
       // Try GraphQL enhanced head-to-head query if available
       if (this.graphqlAvailable) {
         try {
-          console.log(`🚀 [API DEBUG] Using GraphQL for enhanced head-to-head data...`);
+          console.log(`🚀 [API DEBUG] Using improved GraphQL function for enhanced head-to-head data...`);
           
-          const h2hQuery = `
-            query GetHeadToHead($team1: String!, $team2: String!) {
-              game(where: {
-                _or: [
-                  {_and: [{homeTeam: {_eq: $team1}}, {awayTeam: {_eq: $team2}}]},
-                  {_and: [{homeTeam: {_eq: $team2}}, {awayTeam: {_eq: $team1}}]}
-                ]
-              }, order_by: {season: desc}) {
-                id
-                season
-                week
-                homeTeam
-                awayTeam
-                homePoints
-                awayPoints
-                homeStartElo
-                awayStartElo
-                excitement
-                neutralSite
-                conferenceGame
-              }
-            }
-          `;
+          const h2hResult = await graphqlService.getHeadToHeadHistory(team1Name, team2Name, 2024);
           
-          const h2hData = await graphqlService.query(h2hQuery, { 
-            team1: team1Name, 
-            team2: team2Name 
-          });
+          if (h2hResult && h2hResult.games && h2hResult.games.length > 0) {
+            console.log(`✅ [API DEBUG] Improved GraphQL head-to-head data found: ${h2hResult.games.length} games`);
+            
+            return {
+              games: h2hResult.games,
+              team1Wins: h2hResult.team1Wins,
+              team2Wins: h2hResult.team2Wins,
+              avgPointDiff: h2hResult.avgPointDiff,
+              lastMeeting: h2hResult.lastMeeting,
+              totalGames: h2hResult.games.length,
+              averageEloDiff: h2hResult.games.length > 0 ? 
+                h2hResult.games.reduce((sum, game) => sum + (game.eloRatingDiff || 0), 0) / h2hResult.games.length : 0,
+              averageExcitement: h2hResult.games.length > 0 ? 
+                h2hResult.games.reduce((sum, game) => sum + (game.excitementIndex || 0), 0) / h2hResult.games.length : 0
+            };
+          }
           
           if (h2hData && h2hData.game && h2hData.game.length > 0) {
             console.log(`✅ [API DEBUG] GraphQL head-to-head data found: ${h2hData.game.length} games`);
@@ -1461,46 +1457,30 @@ class MatchupPredictor {
       // Try GraphQL weather conditions if available
       if (this.graphqlAvailable) {
         try {
-          console.log('🌤️ [API DEBUG] Attempting to fetch weather data via GraphQL...');
-          const weatherQuery = `
-            query GetWeatherData($homeTeam: String!, $season: smallint!, $week: smallint) {
-              game(where: {
-                homeTeam: {_eq: $homeTeam},
-                season: {_eq: $season},
-                week: {_eq: $week}
-              }, limit: 1) {
-                weather {
-                  temperature
-                  dewPoint
-                  humidity
-                  pressure
-                  windDirection
-                  windSpeed
-                  weatherCondition {
-                    name
-                  }
-                }
-              }
-            }
-          `;
+          console.log('🌤️ [API DEBUG] Attempting to fetch weather data via improved GraphQL function...');
           
-          const weatherData = await graphqlService.query(weatherQuery, {
-            homeTeam: teamName,
-            season: options.season || 2024,
-            week: options.week || 1
-          });
-          if (weatherData) {
-            console.log('✅ [API DEBUG] Weather data fetched successfully via GraphQL');
+          // Get team ID for weather lookup
+          const teamId = homeTeam.teamId || homeTeam.id || 252; // Default to BYU if no ID
+          const week = options.week || 1;
+          const season = options.season || 2024;
+          
+          const weatherResult = await graphqlService.getWeatherConditions(teamId, week, season);
+          
+          if (weatherResult && weatherResult.detailedConditions) {
+            console.log('✅ [API DEBUG] Weather data fetched successfully via improved GraphQL function');
             return {
-              temperature: weatherData.temperature || 70,
-              humidity: weatherData.humidity || 50,
-              windSpeed: weatherData.windSpeed || 5,
-              conditions: weatherData.weatherCondition || weatherData.conditions || 'Clear',
-              severity: this.getWeatherSeverity(weatherData),
-              impact: this.getWeatherImpact(weatherData),
-              precipitation: weatherData.precipitation || null,
-              detailedConditions: weatherData
+              temperature: weatherResult.detailedConditions.temperature || 70,
+              humidity: weatherResult.detailedConditions.humidity || 50,
+              windSpeed: weatherResult.detailedConditions.windSpeed || 5,
+              conditions: weatherResult.detailedConditions.weatherCondition || 'Clear',
+              severity: weatherResult.severity || 'low',
+              impact: this.getWeatherImpact(weatherResult.detailedConditions),
+              precipitation: weatherResult.detailedConditions.precipitation || null,
+              detailedConditions: weatherResult.detailedConditions,
+              game: weatherResult.game
             };
+          } else if (weatherResult && weatherResult.message) {
+            console.log(`ℹ️ [API DEBUG] Weather message: ${weatherResult.message}`);
           }
         } catch (graphqlError) {
           console.log('❌ [API DEBUG] GraphQL weather fetch failed:', graphqlError.message);
@@ -1607,32 +1587,29 @@ class MatchupPredictor {
       if (this.graphqlAvailable) {
         console.log(`🚀 [API DEBUG] Fetching enhanced ratings for ${team.school}...`);
         try {
-          // Get enhanced ratings via direct GraphQL query
-          const ratingsQuery = `
-            query GetEnhancedRatings($team: String!, $year: smallint!) {
-              teamTalent(where: {team: {school: {_eq: $team}}, year: {_eq: $year}}) {
-                talent
-              }
-              recruitingTeam(where: {team: {school: {_eq: $team}}, year: {_eq: $year}}) {
-                rank
-                points
-              }
-            }
-          `;
-          
-          const enhancedRatings = await graphqlService.query(ratingsQuery, {
-            team: team.school,
-            year: 2024
-          });
+          // Use improved GraphQL function for enhanced ratings
+          const enhancedRatings = await graphqlService.getEnhancedTeamRatings(team.school, 2024);
           
           if (enhancedRatings) {
             enhancedData = {
               ...enhancedData,
-              talentComposite: enhancedRatings.teamTalent?.[0]?.talent || null,
-              recruitingRank: enhancedRatings.recruitingTeam?.[0]?.rank || null,
-              recruitingPoints: enhancedRatings.recruitingTeam?.[0]?.points || null
+              talentComposite: enhancedRatings.talent || null,
+              recruitingRank: enhancedRatings.recruitingRank || null,
+              recruitingPoints: enhancedRatings.recruitingPoints || null,
+              overall: enhancedRatings.overall || null,
+              offense: enhancedRatings.offense || null,
+              defense: enhancedRatings.defense || null,
+              specialTeams: enhancedRatings.specialTeams || null,
+              fpi: enhancedRatings.fpi || null,
+              fpiOffense: enhancedRatings.fpiOffense || null,
+              fpiDefense: enhancedRatings.fpiDefense || null,
+              elo: enhancedRatings.elo || null,
+              srs: enhancedRatings.srs || null,
+              avgPointsScored: enhancedRatings.avgPointsScored || null,
+              avgPointsAllowed: enhancedRatings.avgPointsAllowed || null,
+              gamesPlayed: enhancedRatings.gamesPlayed || 0
             };
-            console.log(`✅ [API DEBUG] Enhanced ratings loaded for ${team.school}`);
+            console.log(`✅ [API DEBUG] Enhanced ratings loaded for ${team.school} via improved function`);
           }
         } catch (graphqlError) {
           console.warn(`⚠️ [API DEBUG] GraphQL enhanced ratings failed for ${team.school}:`, graphqlError.message);
@@ -2058,6 +2035,33 @@ class MatchupPredictor {
     });
     
     return factors;
+  }
+
+  /**
+   * Load comprehensive prediction data using improved GraphQL function
+   */
+  async loadComprehensivePredictionData(homeTeam, awayTeam, year = 2024) {
+    if (!this.graphqlAvailable) return null;
+    
+    try {
+      console.log(`🚀 [API DEBUG] Loading comprehensive prediction data for ${homeTeam} vs ${awayTeam}...`);
+      
+      const comprehensiveData = await graphqlService.getComprehensivePredictionData(homeTeam, awayTeam, year);
+      
+      if (comprehensiveData) {
+        console.log(`✅ [API DEBUG] Comprehensive prediction data loaded successfully`);
+        
+        // Cache the data for future use
+        const cacheKey = `${homeTeam}_${awayTeam}_${year}`;
+        this.comprehensiveDataCache.set(cacheKey, comprehensiveData);
+        
+        return comprehensiveData;
+      }
+    } catch (error) {
+      console.warn(`⚠️ [API DEBUG] Failed to load comprehensive prediction data:`, error.message);
+    }
+    
+    return null;
   }
 }
 
