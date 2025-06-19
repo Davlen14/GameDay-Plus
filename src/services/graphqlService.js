@@ -372,6 +372,7 @@ export const getWeeklyGamesForPrediction = async (week, year = 2024, seasonType 
       ) {
         id
         homeTeam awayTeam
+        home_id away_id
         startDate
         neutralSite conferenceGame
         status

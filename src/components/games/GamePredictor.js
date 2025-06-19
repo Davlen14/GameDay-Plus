@@ -74,7 +74,7 @@ const GamePredictor = () => {
       } catch (graphqlError) {
         console.warn('⚠️ GraphQL loading failed, falling back to REST API:', graphqlError.message);
         try {
-          weekGames = await gameService.getGamesByWeek(selectedYear, selectedWeek, 'regular', false);
+          weekGames = await gameService.getGames(selectedYear, selectedWeek, 'regular', null, null, null, null, 'fbs', null, false);
           allTeams = await teamService.getFBSTeams(false); // Force REST API
         } catch (restError) {
           console.error('❌ REST API fallback also failed:', restError.message);
@@ -113,7 +113,8 @@ const GamePredictor = () => {
                              school: homeTeamName, 
                              abbreviation: homeTeamName?.substring(0, 4)?.toUpperCase() || 'HOME',
                              logos: ['/photos/ncaaf.png'],
-                             conference: 'Unknown'
+                             conference: 'Unknown',
+                             classification: 'unknown' // Mark unknown teams as non-FBS
                            };
             
             const awayTeam = teamLookup.get(awayTeamId) || 
@@ -123,8 +124,19 @@ const GamePredictor = () => {
                              school: awayTeamName, 
                              abbreviation: awayTeamName?.substring(0, 4)?.toUpperCase() || 'AWAY',
                              logos: ['/photos/ncaaf.png'],
-                             conference: 'Unknown'
+                             conference: 'Unknown',
+                             classification: 'unknown' // Mark unknown teams as non-FBS
                            };
+
+            // Filter to only include FBS vs FBS games
+            const homeTeamIsFBS = homeTeam.classification === 'fbs';
+            const awayTeamIsFBS = awayTeam.classification === 'fbs';
+            
+            // Skip games that don't involve two FBS teams
+            if (!homeTeamIsFBS || !awayTeamIsFBS) {
+              console.log(`🚫 Skipping non-FBS game: ${awayTeamName} @ ${homeTeamName} (Home: ${homeTeam.classification || 'unknown'}, Away: ${awayTeam.classification || 'unknown'})`);
+              continue;
+            }
 
             // Enhanced prediction options with GraphQL data
             const predictionOptions = {
