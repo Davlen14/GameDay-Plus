@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { gameService, teamService, rankingsService, bettingService } from '../../services';
 import graphqlService from '../../services/graphqlService';
 import matchupPredictor from '../../utils/MatchupPredictor';
+import { useScrollPerformance } from '../../hooks/usePerformance';
 
 const GamePredictor = () => {
+  // Performance optimization hook
+  const { throttledScrollHandler, optimizeElement } = useScrollPerformance();
+  
   const [animateShine, setAnimateShine] = useState(false);
   
   // Core state management
@@ -332,8 +336,19 @@ const GamePredictor = () => {
   const yearOptions = [2024, 2025];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-none mx-auto">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 py-12 px-4 sm:px-6 lg:px-8 gpu-optimized"
+      style={{
+        willChange: 'auto',
+        contain: 'layout style paint',
+        overflowX: 'hidden',
+        transform: 'translateZ(0)'
+      }}
+    >
+      <div 
+        className="w-full max-w-none mx-auto"
+        ref={(el) => optimizeElement(el)}
+      >
         {/* Header Section */}
         <div className="text-center mb-16" data-aos="fade-up">
           <div className="flex items-center justify-center mb-6">
@@ -695,10 +710,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
       ) : (
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
-            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
-              <i className="fas fa-calculator text-purple-600"></i>
-              <span>Predicted Score</span>
-            </div>
+            <div className="text-sm text-gray-500 mb-2">Predicted Score</div>
             <div className="font-bold text-gray-800 text-lg">
               {predictedScore.away.toFixed(0)} - {predictedScore.home.toFixed(0)}
             </div>
@@ -710,19 +722,13 @@ const WeeklyPredictionCard = ({ prediction }) => {
             )}
           </div>
           <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
-            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
-              <i className="fas fa-chart-line text-orange-600"></i>
-              <span>Spread</span>
-            </div>
+            <div className="text-sm text-gray-500 mb-2">Spread</div>
             <div className="font-bold gradient-text text-lg">
               {favorite?.abbreviation || 'FAV'} -{spreadValue.toFixed(1)}
             </div>
           </div>
           <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
-            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
-              <i className="fas fa-plus text-green-600"></i>
-              <span>Total</span>
-            </div>
+            <div className="text-sm text-gray-500 mb-2">Total</div>
             <div className="font-bold text-gray-800 text-lg">{total.toFixed(1)}</div>
           </div>
         </div>
@@ -1418,4 +1424,5 @@ const ModelDetailsView = () => {
   );
 };
 
-export default GamePredictor;
+// Export with memo for performance optimization
+export default memo(GamePredictor);

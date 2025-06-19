@@ -230,6 +230,32 @@
   );
 }
 
+/* Performance-optimized animation classes */
+.performance-mode .metallic-3d-logo-enhanced:hover::before {
+  /* Disable heavy shine animation in performance mode */
+  animation: none;
+}
+
+.performance-mode .swift-metallic-shine {
+  /* Simplified animation for better performance */
+  animation: simple-shine 1s ease-out;
+}
+
+/* Lighter shine animation for better scroll performance */
+@keyframes simple-shine {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+    opacity: 0;
+  }
+}
+
 /* Swift-inspired metallic shine animation with exact timing */
 @keyframes swift-metallic-shine {
   0% {

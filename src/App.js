@@ -79,11 +79,20 @@ function App() {
   const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
-    // Initialize AOS (Animate On Scroll)
+    // Initialize AOS (Animate On Scroll) with performance optimizations
     AOS.init({
-      duration: 1000,
-      once: true,
-      offset: 100
+      duration: 600,        // Reduced from 1000ms for better performance
+      once: true,           // Only animate once to reduce reflows
+      offset: 50,           // Reduced offset for earlier triggering
+      easing: 'ease-out',   // Smoother easing
+      delay: 0,             // No delay for immediate response
+      anchorPlacement: 'top-bottom',
+      disable: 'mobile',    // Disable on mobile for better performance
+      startEvent: 'DOMContentLoaded',
+      useClassNames: false,
+      disableMutationObserver: false,
+      debounceDelay: 50,    // Debounce scroll events
+      throttleDelay: 99,    // Throttle scroll events for performance
     });
 
     // Load particles.js script

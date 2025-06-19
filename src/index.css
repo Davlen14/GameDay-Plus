@@ -18,6 +18,9 @@ body {
   background-color: #ffffff;
   scroll-behavior: smooth;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -28,6 +31,11 @@ body {
 /* Ensure all elements inherit Orbitron font with fallbacks */
 * {
   font-family: 'Orbitron', 'Orbitron-Fallback', 'Arial', sans-serif;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Gradient text - no shine */
@@ -514,4 +522,120 @@ body {
 @keyframes dataFlow {
   0% { background-position: 0 0, 0 0, 0 0; }
   100% { background-position: 100px 100px, -150px 150px, 200px -200px; }
+}
+
+/* Performance optimizations for smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Optimize scrolling performance */
+* {
+  /* Enable hardware acceleration for smoother animations */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Optimize scroll performance */
+  will-change: auto;
+  /* Better text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optimize body for scroll performance */
+body {
+  /* Better scroll performance */
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Remove momentum scrolling issues on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Optimize scroll containment */
+  overscroll-behavior: contain;
+  /* Better scroll performance */
+  scroll-snap-type: none;
+}
+
+/* Optimize container elements */
+.container, .main-content, .app-container {
+  /* Contain layout shifts */
+  contain: layout style paint;
+  /* Better scroll performance */
+  will-change: auto;
+}
+
+/* Optimize animations to not block scrolling */
+@media (prefers-reduced-motion: no-preference) {
+  /* Only enable heavy animations if user prefers them */
+  .animation-enabled {
+    animation-play-state: running;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Disable heavy animations for better performance */
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Optimize GPU compositing for smooth scrolling */
+.gpu-optimized {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Additional scroll performance optimizations */
+.game-prediction-card, .weekly-prediction-card, .matchup-card {
+  /* Enable hardware acceleration for individual cards */
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  /* Optimize paint containment */
+  contain: layout style paint;
+}
+
+/* Optimize grid containers for better scroll performance */
+.predictions-grid {
+  /* Enable GPU compositing for the grid */
+  transform: translateZ(0);
+  /* Optimize layout shifts */
+  contain: layout;
+}
+
+/* Smooth transitions with hardware acceleration */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: translateZ(0);
+}
+
+/* Optimize images for better scroll performance */
+img, .team-logo {
+  /* Prevent layout shifts during scroll */
+  contain: layout;
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+  /* Optimize image rendering */
+  image-rendering: optimizeQuality;
+}
+
+/* Debounce hover effects to prevent scroll lag */
+.hover-optimized {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.hover-optimized:hover {
+  transform: translateY(-2px) translateZ(0);
+}
+
+/* Optimize backdrop blur for better performance */
+.backdrop-blur-optimized {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+  /* Optimize compositing */
+  will-change: auto;
 }
