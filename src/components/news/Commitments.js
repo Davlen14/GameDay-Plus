@@ -14,13 +14,10 @@ try {
   Popup = leafletComponents.Popup;
   useMap = leafletComponents.useMap;
   
-  // Try to import clustering (optional)
-  try {
-    require('react-leaflet-cluster');
-    console.log('Clustering available');
-  } catch (clusterError) {
-    console.warn('Clustering not available, using standard markers');
-  }
+  // Clustering functionality removed due to React 19 compatibility issues
+  // Using standard markers instead
+  console.log('Using standard markers (clustering disabled for React 19 compatibility)');
+  
   
   const leaflet = require('leaflet');
   L = leaflet;

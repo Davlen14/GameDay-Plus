@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm install --legacy-peer-deps && npm run build",
   "functions": {
     "api/college-football.js": {
       "maxDuration": 30
