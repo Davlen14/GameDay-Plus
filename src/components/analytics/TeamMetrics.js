@@ -4,7 +4,7 @@ import {
   FaTrophy, FaFootballBall, FaFire, FaShieldAlt, FaBullseye, FaBolt,
   FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle, FaExchangeAlt,
   FaEye, FaChartBar, FaUsers, FaMapMarkerAlt, FaStar, FaCalendarAlt,
-  FaGraduationCap, FaTarget, FaTrendingUp, FaTrendingDown
+  FaGraduationCap, FaTarget
 } from 'react-icons/fa';
 import { teamService } from '../../services/teamService';
 import { analyticsService } from '../../services/analyticsService';
@@ -529,8 +529,8 @@ const TeamMetrics = ({ onNavigate }) => {
 
   const getTrendIcon = (trending) => {
     switch (trending) {
-      case 'up': return <FaTrendingUp className="text-green-500" />;
-      case 'down': return <FaTrendingDown className="text-red-500" />;
+      case 'up': return <FaArrowUp className="text-green-500" />;
+      case 'down': return <FaArrowDown className="text-red-500" />;
       default: return <FaMinus className="text-gray-500" />;
     }
   };
