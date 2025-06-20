@@ -124,7 +124,7 @@ const TeamMetrics = () => {
         const batch = allTeams.slice(i, i + batchSize);
         const batchPromises = batch.map(async (team) => {
           try {
-            // Get comprehensive team analytics
+            // Get comprehensive team analytics including betting data
             const [
               teamStats,
               advancedStats,
@@ -133,7 +133,9 @@ const TeamMetrics = () => {
               fpiRatings,
               ppaData,
               recruitingData,
-              talentData
+              talentData,
+              enhancedAnalytics,
+              bettingData
             ] = await Promise.all([
               teamService.getTeamStats(selectedYear, team.school).catch(() => null),
               teamService.getAdvancedTeamStats(selectedYear, team.school).catch(() => null),
@@ -144,7 +146,9 @@ const TeamMetrics = () => {
               teamService.getRecruitingRankings(selectedYear, team.school).catch(() => null),
               teamService.getTalentRatings(selectedYear).then(data => 
                 data?.find(t => t.school === team.school)
-              ).catch(() => null)
+              ).catch(() => null),
+              analyticsService.getEnhancedTeamMetrics(team, selectedYear).catch(() => null),
+              bettingService.getTeamLines(team.school, selectedYear).catch(() => null)
             ]);
             
             // Calculate composite metrics
@@ -164,8 +168,12 @@ const TeamMetrics = () => {
               recruiting: recruitingData?.[0] || {},
               talent: talentData || {},
               
+              // Enhanced analytics and betting
+              enhancedAnalytics: enhancedAnalytics || {},
+              bettingLines: bettingData || [],
+              
               // Calculated metrics
-              ...calculateCompositeMetrics(teamStats?.[0], advancedStats?.[0], spRatings?.[0], eloRatings?.[0], ppaData?.[0])
+              ...calculateCompositeMetrics(teamStats?.[0], advancedStats?.[0], spRatings?.[0], eloRatings?.[0], ppaData?.[0], enhancedAnalytics, bettingData)
             };
             
             return enhancedTeam;
@@ -224,7 +232,7 @@ const TeamMetrics = () => {
     }
   };
 
-  const calculateCompositeMetrics = (stats, advanced, sp, elo, ppa) => {
+  const calculateCompositeMetrics = (stats, advanced, sp, elo, ppa, enhancedAnalytics, bettingData) => {
     const metrics = {};
     
     try {
@@ -234,6 +242,11 @@ const TeamMetrics = () => {
       if (sp?.overall) overallRating += (sp.overall / 30) * 25; // SP+ contribution
       if (elo?.elo) overallRating += ((elo.elo - 1500) / 500) * 15; // Elo contribution
       if (ppa?.overall?.ppa) overallRating += (ppa.overall.ppa * 10); // PPA contribution
+      
+      // Factor in enhanced analytics if available
+      if (enhancedAnalytics?.compositeScore) {
+        overallRating = (overallRating * 0.7) + (enhancedAnalytics.compositeScore * 0.3);
+      }
       
       metrics.overallRating = Math.max(0, Math.min(100, overallRating));
       
@@ -265,10 +278,38 @@ const TeamMetrics = () => {
         metrics.strengthOfSchedule = sp.strengthOfSchedule;
       }
       
+      // Betting Market Confidence (if betting data available)
+      if (bettingData && bettingData.length > 0) {
+        // Calculate average spread as market confidence indicator
+        const spreads = bettingData
+          .filter(game => game.lines && game.lines.length > 0)
+          .map(game => {
+            const latestLine = game.lines[game.lines.length - 1];
+            return latestLine.spread ? Math.abs(parseFloat(latestLine.spread)) : 0;
+          })
+          .filter(spread => spread > 0);
+        
+        if (spreads.length > 0) {
+          metrics.marketConfidence = spreads.reduce((avg, spread) => avg + spread, 0) / spreads.length;
+        }
+      }
+      
       // Trend indicators
       metrics.trending = 'stable';
       if (metrics.overallRating > 70) metrics.trending = 'up';
       if (metrics.overallRating < 40) metrics.trending = 'down';
+      
+      // Add betting insights
+      if (bettingData && bettingData.length > 0) {
+        metrics.bettingInsights = {
+          totalGames: bettingData.length,
+          avgSpread: metrics.marketConfidence || 0,
+          favoredCount: bettingData.filter(game => {
+            const line = game.lines?.[game.lines.length - 1];
+            return line && parseFloat(line.spread || 0) < 0;
+          }).length
+        };
+      }
       
     } catch (error) {
       console.warn('Error calculating composite metrics:', error);
@@ -612,7 +653,7 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <MetricCard
           icon={<FaTrophy />}
           label="Overall Rating"
@@ -638,6 +679,14 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
           value={`${(team.winPercentage || 0).toFixed(1)}%`}
           color={getRatingColor(team.winPercentage || 0)}
         />
+        {team.marketConfidence && (
+          <MetricCard
+            icon={<FaChartLine />}
+            label="Market Confidence"
+            value={`±${team.marketConfidence.toFixed(1)}`}
+            color="text-purple-600 bg-purple-100"
+          />
+        )}
       </div>
 
       {/* Advanced Metrics (Expandable) */}
@@ -651,41 +700,102 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
         </button>
         
         {expanded && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {team.spRating?.overall && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-600">SP+ Overall</div>
-                <div className="text-xl font-bold">{team.spRating.overall.toFixed(1)}</div>
+          <div className="mt-4 space-y-4">
+            {/* Traditional Advanced Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {team.spRating?.overall && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm text-gray-600">SP+ Overall</div>
+                  <div className="text-xl font-bold">{team.spRating.overall.toFixed(1)}</div>
+                </div>
+              )}
+              {team.eloRating?.elo && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm text-gray-600">Elo Rating</div>
+                  <div className="text-xl font-bold">{Math.round(team.eloRating.elo)}</div>
+                </div>
+              )}
+              {team.fpiRating?.fpi && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm text-gray-600">FPI</div>
+                  <div className="text-xl font-bold">{team.fpiRating.fpi.toFixed(1)}</div>
+                </div>
+              )}
+              {team.recruiting?.rank && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm text-gray-600">Recruiting Rank</div>
+                  <div className="text-xl font-bold">#{team.recruiting.rank}</div>
+                </div>
+              )}
+              {team.talent?.talent && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm text-gray-600">Talent Rating</div>
+                  <div className="text-xl font-bold">{team.talent.talent.toFixed(1)}</div>
+                </div>
+              )}
+              {team.strengthOfSchedule && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm text-gray-600">SOS</div>
+                  <div className="text-xl font-bold">{team.strengthOfSchedule.toFixed(1)}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Betting Market Insights */}
+            {team.bettingInsights && team.bettingInsights.totalGames > 0 && (
+              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <h4 className="font-semibold text-purple-800 mb-3 flex items-center">
+                  <FaChartLine className="mr-2" />
+                  Betting Market Analysis
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-800">
+                      {team.bettingInsights.totalGames}
+                    </div>
+                    <div className="text-sm text-purple-600">Games with Lines</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-800">
+                      ±{team.bettingInsights.avgSpread.toFixed(1)}
+                    </div>
+                    <div className="text-sm text-purple-600">Avg Point Spread</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-800">
+                      {((team.bettingInsights.favoredCount / team.bettingInsights.totalGames) * 100).toFixed(0)}%
+                    </div>
+                    <div className="text-sm text-purple-600">Favored Games</div>
+                  </div>
+                </div>
               </div>
             )}
-            {team.eloRating?.elo && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-600">Elo Rating</div>
-                <div className="text-xl font-bold">{Math.round(team.eloRating.elo)}</div>
-              </div>
-            )}
-            {team.fpiRating?.fpi && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-600">FPI</div>
-                <div className="text-xl font-bold">{team.fpiRating.fpi.toFixed(1)}</div>
-              </div>
-            )}
-            {team.recruiting?.rank && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-600">Recruiting Rank</div>
-                <div className="text-xl font-bold">#{team.recruiting.rank}</div>
-              </div>
-            )}
-            {team.talent?.talent && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-600">Talent Rating</div>
-                <div className="text-xl font-bold">{team.talent.talent.toFixed(1)}</div>
-              </div>
-            )}
-            {team.strengthOfSchedule && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-600">SOS</div>
-                <div className="text-xl font-bold">{team.strengthOfSchedule.toFixed(1)}</div>
+
+            {/* Enhanced Analytics */}
+            {team.enhancedAnalytics && Object.keys(team.enhancedAnalytics).length > 0 && (
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                  <FaChartBar className="mr-2" />
+                  Enhanced Analytics
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {team.enhancedAnalytics.compositeScore && (
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-blue-800">
+                        {team.enhancedAnalytics.compositeScore.toFixed(1)}
+                      </div>
+                      <div className="text-sm text-blue-600">Composite Score</div>
+                    </div>
+                  )}
+                  {team.enhancedAnalytics.efficiency && (
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-blue-800">
+                        {team.enhancedAnalytics.efficiency.toFixed(1)}%
+                      </div>
+                      <div className="text-sm text-blue-600">Overall Efficiency</div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -773,14 +883,20 @@ const ComparisonModal = ({ teams, onClose, getTeamLogo, getRatingColor }) => {
                   { key: "spRating.overall", label: "SP+ Overall", format: (val) => val?.toFixed(1) || 'N/A' },
                   { key: "eloRating.elo", label: "Elo Rating", format: (val) => val ? Math.round(val) : 'N/A' },
                   { key: "recruiting.rank", label: "Recruiting Rank", format: (val) => val ? `#${val}` : 'N/A' },
-                  { key: "talent.talent", label: "Talent Rating", format: (val) => val?.toFixed(1) || 'N/A' }
+                  { key: "talent.talent", label: "Talent Rating", format: (val) => val?.toFixed(1) || 'N/A' },
+                  { key: "marketConfidence", label: "Market Confidence", format: (val) => val ? `±${val.toFixed(1)}` : 'N/A' },
+                  { key: "bettingInsights.favoredCount", label: "Games Favored", format: (val, team) => {
+                    if (val && team.bettingInsights?.totalGames) {
+                      return `${val}/${team.bettingInsights.totalGames}`;
+                    }
+                    return 'N/A';
+                  }}
                 ].map((metric) => (
                   <tr key={metric.key} className="border-b border-gray-100">
                     <td className="py-3 px-4 font-medium text-gray-700">{metric.label}</td>
-                    {teams.map((team) => (
-                      <td key={team.school} className="py-3 px-4 text-center">
-                        {metric.format(getNestedValue(team, metric.key))}
-                      </td>
+                    {teams.map((team) => (                          <td key={team.school} className="py-3 px-4 text-center">
+                            {metric.format ? metric.format(getNestedValue(team, metric.key), team) : getNestedValue(team, metric.key)}
+                          </td>
                     ))}
                   </tr>
                 ))}
