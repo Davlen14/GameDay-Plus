@@ -1,19 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  FaStar,
-  FaSearch,
-  FaInfoCircle,
-  FaMapMarkedAlt,
-  FaTrophy,
-  FaFootballBall,
-  FaSyncAlt,
-  FaChartBar
-} from "react-icons/fa";
 import { rankingsService } from '../../services/rankingsService';
 import { teamService } from '../../services/teamService';
 
 // Conditionally import Leaflet components
-let MapContainer, TileLayer, Marker, Popup, useMap, Icon, L, MarkerClusterGroup;
+let MapContainer, TileLayer, Marker, Popup, useMap, L;
 let leafletAvailable = true;
 
 try {
@@ -26,15 +16,13 @@ try {
   
   // Try to import clustering (optional)
   try {
-    const clusterComponents = require('react-leaflet-cluster');
-    MarkerClusterGroup = clusterComponents.default || clusterComponents;
+    require('react-leaflet-cluster');
+    console.log('Clustering available');
   } catch (clusterError) {
     console.warn('Clustering not available, using standard markers');
-    MarkerClusterGroup = null;
   }
   
   const leaflet = require('leaflet');
-  Icon = leaflet.Icon;
   L = leaflet;
   
   // Import CSS
@@ -138,6 +126,15 @@ const Commitments = () => {
   const [selectedRating, setSelectedRating] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Add filters state for the advanced filtering
+  const [filters] = useState({
+    position: "All",
+    stars: 0,
+    team: "",
+    committed: "all",
+    state: "All",
+  });
+
   // State for team data to map to conferences and images
   const [teams, setTeams] = useState([]);
 
@@ -166,7 +163,7 @@ const Commitments = () => {
   };
 
   // Helper function to get team conference and image
-  const getTeamInfo = (teamName) => {
+  const getTeamInfo = useCallback((teamName) => {
     const team = teams.find(t => 
       t.school?.toLowerCase() === teamName?.toLowerCase() ||
       t.mascot?.toLowerCase() === teamName?.toLowerCase()
@@ -175,7 +172,7 @@ const Commitments = () => {
       conference: team?.conference || 'Independent',
       image: team?.logos?.[0] || `/photos/${teamName?.replace(/\s+/g, '')}.jpg`
     };
-  };
+  }, [teams]);
 
   // Convert API recruit data to component format
   const transformRecruitData = useCallback((recruits) => {
@@ -204,7 +201,7 @@ const Commitments = () => {
         image: teamInfo.image
       };
     });
-  }, [teams]);
+  }, [getTeamInfo]);
 
   useEffect(() => {
     const fetchCommitments = async () => {
