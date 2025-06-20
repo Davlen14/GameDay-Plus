@@ -21,7 +21,7 @@ const TeamMetrics = ({ onNavigate }) => {
   const [error, setError] = useState(null);
   
   // API Testing State
-  const [showTester, setShowTester] = useState(true);
+  const [showTester, setShowTester] = useState(false);
   const [apiTests, setApiTests] = useState({
     teams: { status: 'pending', data: null, error: null },
     records: { status: 'pending', data: null, error: null },
@@ -62,12 +62,10 @@ const TeamMetrics = ({ onNavigate }) => {
     trends: 'Performance Trends'
   };
 
-  // Load initial data - Only load when not showing tester
+  // Load initial data
   useEffect(() => {
-    if (!showTester) {
-      loadTeamData();
-    }
-  }, [selectedYear, showTester]);
+    loadTeamData();
+  }, [selectedYear]);
 
   // Filter teams based on search and filters
   useEffect(() => {
@@ -164,12 +162,6 @@ const TeamMetrics = ({ onNavigate }) => {
     console.log(`🎯 API Tests Complete: ${passedTests}/${testResults.length} passed`);
     
     return allPassed;
-  };
-
-  const proceedToMetrics = () => {
-    setShowTester(false);
-    setLoading(true);
-    loadTeamData();
   };
 
   const loadTeamData = async () => {
@@ -663,129 +655,6 @@ const TeamMetrics = ({ onNavigate }) => {
     );
   }
 
-  // API Endpoint Tester UI
-  if (showTester) {
-    return (
-      <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4 gradient-text">API Endpoint Tester</h1>
-            <p className="text-lg text-gray-600">
-              Test all API endpoints before loading team metrics to ensure real data availability
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {Object.entries({
-                teams: { name: 'FBS Teams', endpoint: 'GET /teams' },
-                records: { name: 'Team Records', endpoint: 'GET /records' },
-                spRatings: { name: 'SP+ Ratings', endpoint: 'GET /ratings/sp' },
-                eloRatings: { name: 'Elo Ratings', endpoint: 'GET /ratings/elo' },
-                fpiRatings: { name: 'FPI Ratings', endpoint: 'GET /ratings/fpi' },
-                recruiting: { name: 'Recruiting Rankings', endpoint: 'GET /recruiting/teams' },
-                rankings: { name: 'Poll Rankings', endpoint: 'GET /rankings' },
-                betting: { name: 'Betting Lines', endpoint: 'GET /lines' }
-              }).map(([key, config]) => {
-                const test = apiTests[key];
-                return (
-                  <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{config.name}</h3>
-                      <p className="text-sm text-gray-500">{config.endpoint}</p>
-                      {test.error && (
-                        <p className="text-xs text-red-600 mt-1">Error: {test.error}</p>
-                      )}
-                      {test.data && (
-                        <p className="text-xs text-green-600 mt-1">
-                          ✅ {Array.isArray(test.data) ? `${test.data.length} records` : 'Data loaded'}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => testEndpoint(key, () => {
-                          switch(key) {
-                            case 'teams': return teamService.getFBSTeams(true);
-                            case 'records': return teamService.getTeamRecords('Alabama', selectedYear);
-                            case 'spRatings': return teamService.getSPRatings(selectedYear, 'Alabama');
-                            case 'eloRatings': return teamService.getEloRatings(selectedYear, null, 'Alabama');
-                            case 'fpiRatings': return teamService.getFPIRatings(selectedYear, 'Alabama');
-                            case 'recruiting': return teamService.getRecruitingRankings(selectedYear, 'Alabama');
-                            case 'rankings': return rankingsService.getHistoricalRankings(selectedYear, 1);
-                            case 'betting': return bettingService.getBettingLines(null, selectedYear, 1, 'regular', 'Alabama');
-                            default: return Promise.resolve([]);
-                          }
-                        })}
-                        disabled={test.status === 'testing'}
-                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        {test.status === 'testing' ? (
-                          <FaBolt className="animate-spin" />
-                        ) : (
-                          <FaEye />
-                        )}
-                      </button>
-                      <div className={`w-3 h-3 rounded-full ${
-                        test.status === 'success' ? 'bg-green-500' :
-                        test.status === 'error' ? 'bg-red-500' :
-                        test.status === 'testing' ? 'bg-yellow-500 animate-pulse' :
-                        'bg-gray-300'
-                      }`} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={runAllTests}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center space-x-2"
-              >
-                <FaBolt />
-                <span>Test All Endpoints</span>
-              </button>
-              
-              <button
-                onClick={proceedToMetrics}
-                disabled={!allTestsPassed}
-                className={`px-6 py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 ${
-                  allTestsPassed 
-                    ? 'bg-green-600 text-white hover:bg-green-700' 
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <FaChartLine />
-                <span>Load Team Metrics</span>
-              </button>
-              
-              <button
-                onClick={() => {
-                  setShowTester(false);
-                  setLoading(true);
-                  loadTeamData();
-                }}
-                className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold flex items-center justify-center space-x-2"
-              >
-                <FaInfoCircle />
-                <span>Skip Tests (Use Mock Data)</span>
-              </button>
-            </div>
-
-            {allTestsPassed && (
-              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-                <p className="text-green-800 font-semibold">
-                  🎉 All API endpoints are working! Ready to load real team metrics.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
       <div className="w-[97%] mx-auto">
@@ -795,6 +664,127 @@ const TeamMetrics = ({ onNavigate }) => {
           <p className="text-xl text-gray-600 max-w-4xl mx-auto">
             Comprehensive team analysis featuring advanced metrics, efficiency ratings, and predictive analytics
           </p>
+        </div>
+
+        {/* API Endpoint Tester Panel */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 border-blue-500">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <FaBolt className="text-blue-600 text-xl" />
+              <h2 className="text-xl font-bold text-gray-900">API Endpoint Tester</h2>
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                Test Real Data Endpoints
+              </span>
+            </div>
+            <button
+              onClick={() => setShowTester(!showTester)}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <span className="text-sm font-medium">
+                {showTester ? 'Hide Tester' : 'Show Tester'}
+              </span>
+              <FaChartBar className={`transform transition-transform ${showTester ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+
+          {showTester && (
+            <div className="space-y-6">
+              <p className="text-gray-600">
+                Test all API endpoints to ensure real data availability. Green = Success, Red = Error, Yellow = Testing.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries({
+                  teams: { name: 'FBS Teams', endpoint: 'GET /teams' },
+                  records: { name: 'Team Records', endpoint: 'GET /records' },
+                  spRatings: { name: 'SP+ Ratings', endpoint: 'GET /ratings/sp' },
+                  eloRatings: { name: 'Elo Ratings', endpoint: 'GET /ratings/elo' },
+                  fpiRatings: { name: 'FPI Ratings', endpoint: 'GET /ratings/fpi' },
+                  recruiting: { name: 'Recruiting Rankings', endpoint: 'GET /recruiting/teams' },
+                  rankings: { name: 'Poll Rankings', endpoint: 'GET /rankings' },
+                  betting: { name: 'Betting Lines', endpoint: 'GET /lines' }
+                }).map(([key, config]) => {
+                  const test = apiTests[key];
+                  return (
+                    <div key={key} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate">{config.name}</h3>
+                        <p className="text-xs text-gray-500">{config.endpoint}</p>
+                        {test.error && (
+                          <p className="text-xs text-red-600 mt-1 truncate">Error: {test.error}</p>
+                        )}
+                        {test.data && (
+                          <p className="text-xs text-green-600 mt-1">
+                            ✅ {Array.isArray(test.data) ? `${test.data.length} records` : 'Data loaded'}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2 ml-2">
+                        <button
+                          onClick={() => testEndpoint(key, () => {
+                            switch(key) {
+                              case 'teams': return teamService.getFBSTeams(true);
+                              case 'records': return teamService.getTeamRecords('Alabama', selectedYear);
+                              case 'spRatings': return teamService.getSPRatings(selectedYear, 'Alabama');
+                              case 'eloRatings': return teamService.getEloRatings(selectedYear, null, 'Alabama');
+                              case 'fpiRatings': return teamService.getFPIRatings(selectedYear, 'Alabama');
+                              case 'recruiting': return teamService.getRecruitingRankings(selectedYear, 'Alabama');
+                              case 'rankings': return rankingsService.getHistoricalRankings(selectedYear, 1);
+                              case 'betting': return bettingService.getBettingLines(null, selectedYear, 1, 'regular', 'Alabama');
+                              default: return Promise.resolve([]);
+                            }
+                          })}
+                          disabled={test.status === 'testing'}
+                          className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        >
+                          {test.status === 'testing' ? (
+                            <FaBolt className="animate-spin" />
+                          ) : (
+                            <FaEye />
+                          )}
+                        </button>
+                        <div className={`w-3 h-3 rounded-full transition-colors ${
+                          test.status === 'success' ? 'bg-green-500' :
+                          test.status === 'error' ? 'bg-red-500' :
+                          test.status === 'testing' ? 'bg-yellow-500 animate-pulse' :
+                          'bg-gray-300'
+                        }`} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex flex-wrap gap-3 justify-center pt-4 border-t">
+                <button
+                  onClick={runAllTests}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center space-x-2 transition-colors"
+                >
+                  <FaBolt />
+                  <span>Test All Endpoints</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setLoading(true);
+                    loadTeamData();
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center space-x-2 transition-colors"
+                >
+                  <FaChartLine />
+                  <span>Reload Team Data</span>
+                </button>
+              </div>
+
+              {allTestsPassed && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+                  <p className="text-green-800 font-medium text-sm">
+                    🎉 All API endpoints are working! Team metrics are using real data.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Controls Panel */}
