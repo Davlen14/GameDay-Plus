@@ -1,105 +1,136 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import './App.css';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import usePreloader from './hooks/usePreloader';
 
-// Layout Components
+// Layout Components (always loaded)
 import Header from './components/layout/Header';
 import Hero from './components/layout/Hero';  
 import Features from './components/layout/Features';
 import CTA from './components/layout/CTA';
 import Footer from './components/layout/Footer';
-import HomePageView from './components/layout/HomePageView';
+import LoadingSpinner from './components/UI/LoadingSpinner';
 
-// Team Components
-import AllTeams from './components/teams/AllTeams';
-import TeamDetailView from './components/teams/TeamDetailView';
-import SEC from './components/teams/SEC';
-import BigTen from './components/teams/BigTen';
-import ACC from './components/teams/ACC';
-import Big12 from './components/teams/Big12';
-import Pac12 from './components/teams/Pac12';
-import AmericanAthletic from './components/teams/AmericanAthletic';
-import ConferenceUSA from './components/teams/ConferenceUSA';
-import MidAmerican from './components/teams/MidAmerican';
-import MountainWest from './components/teams/MountainWest';
-import FBSIndependents from './components/teams/FBSIndependents';
-import TeamOutlook from './components/teams/TeamOutlook';
+// Lazy load heavy components
+const HomePageView = React.lazy(() => import('./components/layout/HomePageView'));
+const AllTeams = React.lazy(() => import('./components/teams/AllTeams'));
+const TeamDetailView = React.lazy(() => import('./components/teams/TeamDetailView'));
+const SEC = React.lazy(() => import('./components/teams/SEC'));
+const BigTen = React.lazy(() => import('./components/teams/BigTen'));
+const ACC = React.lazy(() => import('./components/teams/ACC'));
+const Big12 = React.lazy(() => import('./components/teams/Big12'));
+const Pac12 = React.lazy(() => import('./components/teams/Pac12'));
+const AmericanAthletic = React.lazy(() => import('./components/teams/AmericanAthletic'));
+const ConferenceUSA = React.lazy(() => import('./components/teams/ConferenceUSA'));
+const MidAmerican = React.lazy(() => import('./components/teams/MidAmerican'));
+const MountainWest = React.lazy(() => import('./components/teams/MountainWest'));
+const FBSIndependents = React.lazy(() => import('./components/teams/FBSIndependents'));
+const TeamOutlook = React.lazy(() => import('./components/teams/TeamOutlook'));
 
 // Analytics Components
-import TeamMetrics from './components/analytics/TeamMetrics';
-import GamedayGPT from './components/analytics/GamedayGPT';
-import PlayerMetrics from './components/analytics/PlayerMetrics';
-import CoachOverview from './components/analytics/CoachOverview';
-import PlayerGrade from './components/analytics/PlayerGrade';
-import PredictOutcomes from './components/analytics/PredictOutcomes';
-import AskQuestions from './components/analytics/AskQuestions';
-import AIInsights from './components/analytics/AIInsights';
+const TeamMetrics = React.lazy(() => import('./components/analytics/TeamMetrics'));
+const GamedayGPT = React.lazy(() => import('./components/analytics/GamedayGPT'));
+const PlayerMetrics = React.lazy(() => import('./components/analytics/PlayerMetrics'));
+const CoachOverview = React.lazy(() => import('./components/analytics/CoachOverview'));
+const PlayerGrade = React.lazy(() => import('./components/analytics/PlayerGrade'));
+const PredictOutcomes = React.lazy(() => import('./components/analytics/PredictOutcomes'));
+const AskQuestions = React.lazy(() => import('./components/analytics/AskQuestions'));
+const AIInsights = React.lazy(() => import('./components/analytics/AIInsights'));
 
 // Betting Components
-import BettingModels from './components/betting/BettingModels';
-import SpreadAnalysis from './components/betting/SpreadAnalysis';
-import ArbitrageEV from './components/betting/ArbitrageEV';
-import OverUnderMetrics from './components/betting/OverUnderMetrics';
-import BettingSuggestions from './components/betting/BettingSuggestions';
+const BettingModels = React.lazy(() => import('./components/betting/BettingModels'));
+const SpreadAnalysis = React.lazy(() => import('./components/betting/SpreadAnalysis'));
+const ArbitrageEV = React.lazy(() => import('./components/betting/ArbitrageEV'));
+const OverUnderMetrics = React.lazy(() => import('./components/betting/OverUnderMetrics'));
+const BettingSuggestions = React.lazy(() => import('./components/betting/BettingSuggestions'));
 
 // News Components
-import LatestNews from './components/news/LatestNews';
-import DraftNews from './components/news/DraftNews';
-import InjuryReports from './components/news/InjuryReports';
-import Rankings from './components/news/Rankings';
-import CoachingChanges from './components/news/CoachingChanges';
-import TopProspects from './components/news/TopProspects';
-import Commitments from './components/news/Commitments';
-import TransferPortal from './components/news/TransferPortal';
-import Videos from './components/news/Videos';
-import Highlights from './components/news/Highlights';
-import Analysis from './components/news/Analysis';
-import PressConferences from './components/news/PressConferences';
+const LatestNews = React.lazy(() => import('./components/news/LatestNews'));
+const DraftNews = React.lazy(() => import('./components/news/DraftNews'));
+const InjuryReports = React.lazy(() => import('./components/news/InjuryReports'));
+const Rankings = React.lazy(() => import('./components/news/Rankings'));
+const CoachingChanges = React.lazy(() => import('./components/news/CoachingChanges'));
+const TopProspects = React.lazy(() => import('./components/news/TopProspects'));
+const Commitments = React.lazy(() => import('./components/news/Commitments'));
+const TransferPortal = React.lazy(() => import('./components/news/TransferPortal'));
+const Videos = React.lazy(() => import('./components/news/Videos'));
+const Highlights = React.lazy(() => import('./components/news/Highlights'));
+const Analysis = React.lazy(() => import('./components/news/Analysis'));
+const PressConferences = React.lazy(() => import('./components/news/PressConferences'));
 
 // FanHub Components
-import FanForums from './components/fanhub/FanForums';
-import FanPredictions from './components/fanhub/FanPredictions';
-import Polls from './components/fanhub/Polls';
-import SocialFeed from './components/fanhub/SocialFeed';
-import FanStats from './components/fanhub/FanStats';
+const FanForums = React.lazy(() => import('./components/fanhub/FanForums'));
+const FanPredictions = React.lazy(() => import('./components/fanhub/FanPredictions'));
+const Polls = React.lazy(() => import('./components/fanhub/Polls'));
+const SocialFeed = React.lazy(() => import('./components/fanhub/SocialFeed'));
+const FanStats = React.lazy(() => import('./components/fanhub/FanStats'));
 
 // Games Components
-import Schedule from './components/games/Schedule';
-import Schedule2024Recap from './components/games/Schedule2024Recap';
-import GamePredictor from './components/games/GamePredictor';
-import LiveGames from './components/games/LiveGames';
-import GameDetailView from './components/games/GameDetailView';
+const Schedule = React.lazy(() => import('./components/games/Schedule'));
+const Schedule2024Recap = React.lazy(() => import('./components/games/Schedule2024Recap'));
+const GamePredictor = React.lazy(() => import('./components/games/GamePredictor'));
+const LiveGames = React.lazy(() => import('./components/games/LiveGames'));
+const GameDetailView = React.lazy(() => import('./components/games/GameDetailView'));
 
 // Testing Component
-import APITester from './components/APITester';
-import GraphQLDemo from './components/GraphQLDemo';
+const APITester = React.lazy(() => import('./components/APITester'));
+const GraphQLDemo = React.lazy(() => import('./components/GraphQLDemo'));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <LoadingSpinner size="xl" />
+  </div>
+);
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
+  
+  // Initialize preloader
+  usePreloader();
 
   useEffect(() => {
-    // Initialize AOS (Animate On Scroll) with performance optimizations
-    AOS.init({
-      duration: 600,        // Reduced from 1000ms for better performance
-      once: true,           // Only animate once to reduce reflows
-      offset: 50,           // Reduced offset for earlier triggering
-      easing: 'ease-out',   // Smoother easing
-      delay: 0,             // No delay for immediate response
-      anchorPlacement: 'top-bottom',
-      disable: 'mobile',    // Disable on mobile for better performance
-      startEvent: 'DOMContentLoaded',
-      useClassNames: false,
-      disableMutationObserver: false,
-      debounceDelay: 50,    // Debounce scroll events
-      throttleDelay: 99,    // Throttle scroll events for performance
-    });
+    // Initialize AOS with heavy performance optimizations
+    const initAOS = () => {
+      AOS.init({
+        duration: 400,        // Faster animations
+        once: true,           // Only animate once
+        offset: 30,           // Earlier trigger
+        easing: 'ease-out-quart',
+        delay: 0,
+        anchorPlacement: 'top-bottom',
+        disable: window.innerWidth < 768, // Disable on mobile/tablet
+        startEvent: 'DOMContentLoaded',
+        useClassNames: false,
+        disableMutationObserver: true,    // Disable for better performance
+        debounceDelay: 100,   // Increased debounce
+        throttleDelay: 150,   // Increased throttle
+      });
+    };
 
-    // Load particles.js script
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
-    script.async = true;
-    document.body.appendChild(script);
+    // Defer AOS initialization
+    if (document.readyState === 'complete') {
+      setTimeout(initAOS, 100);
+    } else {
+      window.addEventListener('load', () => setTimeout(initAOS, 100));
+    }
+
+    // Lazy load particles.js only when needed
+    const loadParticles = () => {
+      if (!window.particlesJS && currentPage === 'home') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+    };
+
+    // Load particles only for home page
+    if (currentPage === 'home') {
+      setTimeout(loadParticles, 1000);
+    }
 
     // Handle hash changes for simple routing
     const handleHashChange = () => {
@@ -122,13 +153,21 @@ function App() {
   const renderPage = () => {
     // Check for team detail routes (team-detail-{id})
     if (currentPage.startsWith('team-detail-')) {
-      return <TeamDetailView />;
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <TeamDetailView />
+        </Suspense>
+      );
     }
     
     // Check for game detail routes (game-detail-{id})
     if (currentPage.startsWith('game-detail-')) {
       const gameId = currentPage.split('-')[2];
-      return <GameDetailView gameId={gameId} />;
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <GameDetailView gameId={gameId} />
+        </Suspense>
+      );
     }
     
     switch (currentPage) {
@@ -144,15 +183,31 @@ function App() {
       
       // Home page route
       case 'home-page':
-        return <HomePageView />;
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <HomePageView />
+          </Suspense>
+        );
       
       // Team routes
       case 'teams':
-        return <AllTeams />;
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <AllTeams />
+          </Suspense>
+        );
       case 'sec':
-        return <SEC />;
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <SEC />
+          </Suspense>
+        );
       case 'big-ten':
-        return <BigTen />;
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <BigTen />
+          </Suspense>
+        );
       case 'acc':
         return <ACC />;
       case 'big-12':

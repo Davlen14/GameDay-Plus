@@ -1,3 +1,113 @@
+/* PERFORMANCE OPTIMIZATIONS - Add at the top */
+
+/* Enable hardware acceleration globally */
+* {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Optimize scrolling */
+  -webkit-overflow-scrolling: touch;
+  /* Better font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Optimize animations */
+  will-change: auto;
+}
+
+/* Critical performance styles */
+html {
+  scroll-behavior: smooth;
+  /* Enable scroll snapping for better UX */
+  scroll-snap-type: y proximity;
+}
+
+body {
+  /* Better scroll performance */
+  overflow-x: hidden;
+  /* Optimize layout shifts */
+  contain: layout style;
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+}
+
+/* GPU optimization classes */
+.gpu-optimized {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  /* Optimize compositing */
+  will-change: transform;
+  /* Contain paint operations */
+  contain: layout style paint;
+}
+
+/* Fast transitions */
+.transition-fast {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  transform: translateZ(0);
+}
+
+/* Optimized hover effects */
+.hover-lift {
+  transition: transform 0.2s ease-out;
+}
+.hover-lift:hover {
+  transform: translateY(-2px) translateZ(0);
+}
+
+/* Lazy loading placeholder */
+.lazy-placeholder {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .gpu-optimized {
+    transform: none !important;
+  }
+}
+
+/* Optimize images */
+img {
+  /* Prevent layout shifts */
+  contain: layout;
+  /* Better image rendering */
+  image-rendering: optimizeQuality;
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+}
+
+/* Optimize game cards and components */
+.game-card, .team-card, .prediction-card {
+  contain: layout style paint;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Virtual scroll optimizations */
+.virtual-scroll-container {
+  contain: strict;
+  transform: translateZ(0);
+}
+
+.virtual-scroll-item {
+  contain: layout style;
+  will-change: transform;
+}
+
 /* Font loading with fallbacks for better performance */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
 @import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
@@ -638,4 +748,73 @@ img, .team-logo {
   transform: translateZ(0);
   /* Optimize compositing */
   will-change: auto;
+}
+
+/* Mobile and Performance Optimizations */
+
+/* Disable heavy animations on slower devices */
+@media (max-width: 768px), (prefers-reduced-motion: reduce) {
+  .metallic-3d-logo, 
+  .metallic-3d-logo-enhanced,
+  .animate-pulse,
+  .animate-spin:not(.loading-spinner) {
+    animation: none !important;
+    transform: none !important;
+  }
+  
+  /* Simplify gradients on mobile */
+  .gradient-bg {
+    background: #cc001c !important;
+  }
+  
+  /* Remove complex filters */
+  img, .team-logo {
+    filter: none !important;
+  }
+}
+
+/* Optimize scrolling for mobile */
+@media (max-width: 768px) {
+  body {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+  
+  /* Reduce backdrop blur on mobile */
+  .backdrop-blur-xl {
+    backdrop-filter: blur(4px) !important;
+  }
+}
+
+/* Critical loading state optimizations */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Fast fade transitions for page changes */
+.page-transition {
+  transition: opacity 0.2s ease-out;
+}
+
+/* Optimize news card images */
+.news-card-image {
+  transition: transform 0.2s ease-out;
+  will-change: transform;
+  contain: layout;
+}
+
+.news-card-image:hover {
+  transform: scale(1.02) translateZ(0);
+}
+
+/* Reduce animation complexity for better performance */
+@keyframes quickFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in-fast {
+  animation: quickFade 0.3s ease-out;
 }

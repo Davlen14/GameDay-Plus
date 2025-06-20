@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { gameService, teamService } from '../../services';
-import GameOverview from './GameOverview';
-import GameStats from './GameStats';
-import GamePlayByPlay from './GamePlayByPlay';
-import GameStandings from './GameStandings';
-import GameChat from './GameChat';
+import LazyImage from '../UI/LazyImage';
+
+// Lazy load tab components to improve initial loading
+const GameOverview = React.lazy(() => import('./GameOverview'));
+const GameStats = React.lazy(() => import('./GameStats'));
+const GamePlayByPlay = React.lazy(() => import('./GamePlayByPlay'));
+const GameStandings = React.lazy(() => import('./GameStandings'));
+const GameChat = React.lazy(() => import('./GameChat'));
 
 const GameDetailView = ({ gameId }) => {
   const scrollRef = useRef(null);
@@ -499,21 +502,12 @@ const GameDetailView = ({ gameId }) => {
                   }}
                 />
                 
-                {/* Main Logo - Authentic Colors with 3D Effects */}
-                <img
+                {/* Main Logo - Optimized for Performance */}
+                <LazyImage
                   src={getTeamLogo(currentGame?.away_id || currentGame?.awayId)}
                   alt={awayTeam?.school || 'Away Team'}
-                  className="w-32 h-32 object-contain relative z-10 group-hover:scale-110 transition-all duration-500"
-                  style={{
-                    filter: `
-                      drop-shadow(0 0 15px rgba(${awayColorRgb}, 0.7))
-                      drop-shadow(0 8px 25px rgba(0,0,0,0.4))
-                      drop-shadow(0 15px 35px rgba(${awayColorRgb}, 0.3))
-                      drop-shadow(0 0 8px rgba(255,255,255,0.2))
-                    `,
-                    transform: 'translateZ(20px)',
-                  }}
-                  onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                  className="w-32 h-32 object-contain relative z-10 transition-transform duration-300 hover:scale-105"
+                  placeholder="/photos/ncaaf.png"
                 />
                 
                 {/* Glowing Ring Effect */}
@@ -705,21 +699,12 @@ const GameDetailView = ({ gameId }) => {
                   }}
                 />
                 
-                {/* Main Logo - Authentic Colors with 3D Effects */}
-                <img
+                {/* Main Logo - Optimized for Performance */}
+                <LazyImage
                   src={getTeamLogo(currentGame?.home_id || currentGame?.homeId)}
                   alt={homeTeam?.school || 'Home Team'}
-                  className="w-32 h-32 object-contain relative z-10 group-hover:scale-110 transition-all duration-500"
-                  style={{
-                    filter: `
-                      drop-shadow(0 0 15px rgba(${homeColorRgb}, 0.7))
-                      drop-shadow(0 8px 25px rgba(0,0,0,0.4))
-                      drop-shadow(0 15px 35px rgba(${homeColorRgb}, 0.3))
-                      drop-shadow(0 0 8px rgba(255,255,255,0.2))
-                    `,
-                    transform: 'translateZ(20px)',
-                  }}
-                  onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                  className="w-32 h-32 object-contain relative z-10 transition-transform duration-300 hover:scale-105"
+                  placeholder="/photos/ncaaf.png"
                 />
                 
                 {/* Glowing Ring Effect */}
@@ -888,41 +873,47 @@ const GameDetailView = ({ gameId }) => {
 
       {/* Content Area */}
       <div className="px-4 py-8 max-w-6xl mx-auto">
-        {selectedTab === 'overview' && (
-          <GameOverview 
-            game={currentGame}
-            awayTeam={awayTeam}
-            homeTeam={homeTeam}
-          />
-        )}
-        {selectedTab === 'stats' && (
-          <GameStats 
-            game={currentGame}
-            awayTeam={awayTeam}
-            homeTeam={homeTeam}
-          />
-        )}
-        {selectedTab === 'playByPlay' && (
-          <GamePlayByPlay 
-            game={currentGame}
-            awayTeam={awayTeam}
-            homeTeam={homeTeam}
-          />
-        )}
-        {selectedTab === 'standings' && (
-          <GameStandings 
-            game={currentGame}
-            awayTeam={awayTeam}
-            homeTeam={homeTeam}
-          />
-        )}
-        {selectedTab === 'chat' && (
-          <GameChat 
-            game={currentGame}
-            awayTeam={awayTeam}
-            homeTeam={homeTeam}
-          />
-        )}
+        <React.Suspense fallback={
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-600"></div>
+          </div>
+        }>
+          {selectedTab === 'overview' && (
+            <GameOverview 
+              game={currentGame}
+              awayTeam={awayTeam}
+              homeTeam={homeTeam}
+            />
+          )}
+          {selectedTab === 'stats' && (
+            <GameStats 
+              game={currentGame}
+              awayTeam={awayTeam}
+              homeTeam={homeTeam}
+            />
+          )}
+          {selectedTab === 'playByPlay' && (
+            <GamePlayByPlay 
+              game={currentGame}
+              awayTeam={awayTeam}
+              homeTeam={homeTeam}
+            />
+          )}
+          {selectedTab === 'standings' && (
+            <GameStandings 
+              game={currentGame}
+              awayTeam={awayTeam}
+              homeTeam={homeTeam}
+            />
+          )}
+          {selectedTab === 'chat' && (
+            <GameChat 
+              game={currentGame}
+              awayTeam={awayTeam}
+              homeTeam={homeTeam}
+            />
+          )}
+        </React.Suspense>
       </div>
       
       {/* Enhanced CSS for Rich Color Animations */}

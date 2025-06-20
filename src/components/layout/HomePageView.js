@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { newsService, teamService, rankingsService } from '../../services';
+import LazyImage from '../UI/LazyImage';
 
 const HomePageView = () => {
   const [loading, setLoading] = useState(true);
@@ -487,13 +488,11 @@ const HomePageView = () => {
                 >
                   {/* Image container */}
                   <div className="h-64 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative">
-                    <img 
-                      src={article.image || "/photos/ncaaf.png"} 
+                    <LazyImage
+                      src={article.image || "/photos/ncaaf.png"}
                       alt={article.title}
                       className="news-card-image"
-                      onError={(e) => {
-                        e.target.src = "/photos/ncaaf.png";
-                      }}
+                      placeholder="/photos/ncaaf.png"
                     />
                     <div className="news-image-overlay"></div>
                   </div>
