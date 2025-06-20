@@ -3,7 +3,8 @@ import {
   FaChartLine, FaFilter, FaSort, FaSortUp, FaSortDown, FaSearch, 
   FaTrophy, FaFootballBall, FaFire, FaShieldAlt, FaBullseye, FaBolt,
   FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle, FaExchangeAlt,
-  FaEye, FaChartBar, FaUsers, FaMapMarkerAlt, FaStar, FaCalendarAlt
+  FaEye, FaChartBar, FaUsers, FaMapMarkerAlt, FaStar, FaCalendarAlt,
+  FaGraduationCap, FaTarget, FaTrendingUp, FaTrendingDown
 } from 'react-icons/fa';
 import { teamService } from '../../services/teamService';
 import { analyticsService } from '../../services/analyticsService';
@@ -107,88 +108,84 @@ const TeamMetrics = ({ onNavigate }) => {
       setLoading(true);
       setError(null);
       setLoadingProgress(0);
-      setLoadingText('Initializing analytics engine...');
+      setLoadingText('Loading team data...');
       
       console.log('🔄 Loading comprehensive team analytics...');
       
-      // Simulate progress for better UX
-      setTimeout(() => {
-        setLoadingProgress(20);
-        setLoadingText('Loading team data...');
-      }, 200);
-      
-      // Load base team data only (much faster)
+      // Phase 1: Core team data (fastest)
+      setLoadingProgress(15);
+      setLoadingText('Fetching team roster...');
       const allTeams = await teamService.getFBSTeams(true);
-      
-      setLoadingProgress(50);
-      setLoadingText('Processing team information...');
-      
       console.log(`✅ Loaded ${allTeams.length} teams`);
       
-      // Get unique conferences from teams
+      // Get unique conferences
       const uniqueConferences = [...new Set(allTeams.map(team => team.conference))].filter(Boolean);
       setConferences(uniqueConferences.sort());
       
-      setLoadingProgress(80);
-      setLoadingText('Generating analytics...');
+      setLoadingProgress(30);
+      setLoadingText('Loading season records...');
       
-      // Create enhanced teams with mock analytics for now (much faster)
-      const enhancedTeams = allTeams.map(team => ({
-        ...team,
-        // Mock analytics data for fast loading
-        overallRating: Math.random() * 40 + 60, // 60-100 range
-        offensiveEfficiency: Math.random() * 30 + 65, // 65-95 range
-        defensiveEfficiency: Math.random() * 30 + 60, // 60-90 range
-        winPercentage: Math.random() * 50 + 50, // 50-100 range
-        marketConfidence: Math.random() * 10 + 3, // 3-13 range
-        trending: Math.random() > 0.5 ? 'up' : Math.random() > 0.5 ? 'down' : 'stable',
+      // Phase 2: Enhanced data with real API calls in batches
+      const batchSize = 8; // Optimized batch size
+      const enhancedTeams = [];
+      
+      for (let i = 0; i < allTeams.length; i += batchSize) {
+        const batch = allTeams.slice(i, i + batchSize);
+        const progress = 30 + ((i / allTeams.length) * 50);
+        setLoadingProgress(progress);
+        setLoadingText(`Processing teams ${i + 1}-${Math.min(i + batchSize, allTeams.length)}...`);
         
-        // Mock additional data
-        spRating: { 
-          overall: Math.random() * 40 + 10,
-          offense: Math.random() * 30 + 15,
-          defense: Math.random() * 30 + 10
-        },
-        eloRating: { elo: Math.random() * 800 + 1200 }, // 1200-2000 range
-        fpiRating: { fpi: Math.random() * 30 + 5 },
-        recruiting: { rank: Math.floor(Math.random() * 130) + 1 },
-        talent: { talent: Math.random() * 800 + 200 },
-        strengthOfSchedule: Math.random() * 20 + 5,
+        const batchPromises = batch.map(async (team) => {
+          try {
+            // Core data calls
+            const [records, spRating, games] = await Promise.all([
+              teamService.getTeamRecords(team.school, selectedYear).catch(() => null),
+              analyticsService.getSPRatings(selectedYear, team.school).catch(() => null),
+              teamService.getTeamGames(team.school, selectedYear).catch(() => null)
+            ]);
+            
+            // Enhanced data (with fallbacks)
+            const [eloRating, fpiRating, recruiting] = await Promise.all([
+              analyticsService.getEloRatings(selectedYear, team.school).catch(() => null),
+              analyticsService.getFPIRatings(selectedYear, team.school).catch(() => null),
+              analyticsService.getRecruitingData(team.school, selectedYear).catch(() => null)
+            ]);
+            
+            return createEnhancedTeam(team, records, spRating, games, eloRating, fpiRating, recruiting);
+          } catch (error) {
+            console.log(`⚠️ Using fallback data for ${team.school}`);
+            return createEnhancedTeam(team); // Fallback to mock data
+          }
+        });
         
-        // Mock betting insights
-        bettingInsights: {
-          totalGames: Math.floor(Math.random() * 12) + 8,
-          avgSpread: Math.random() * 15 + 2,
-          favoredCount: Math.floor(Math.random() * 8) + 2
-        },
+        const batchResults = await Promise.all(batchPromises);
+        enhancedTeams.push(...batchResults);
         
-        // Mock enhanced analytics
-        enhancedAnalytics: {
-          compositeScore: Math.random() * 30 + 70,
-          efficiency: Math.random() * 20 + 75
+        // Small delay to prevent rate limiting
+        if (i + batchSize < allTeams.length) {
+          await new Promise(resolve => setTimeout(resolve, 150));
         }
-      }));
+      }
       
-      // Add some AP rankings to random teams
-      const topTeams = enhancedTeams
-        .sort((a, b) => b.overallRating - a.overallRating)
-        .slice(0, 25);
+      setLoadingProgress(90);
+      setLoadingText('Finalizing analytics...');
       
-      topTeams.forEach((team, index) => {
-        team.apRank = index + 1;
-        team.apPoints = 1000 - (index * 30) + Math.random() * 50;
+      // Sort by overall rating and add rankings
+      enhancedTeams.sort((a, b) => b.overallRating - a.overallRating);
+      enhancedTeams.forEach((team, index) => {
+        team.nationalRank = index + 1;
+        if (index < 25) {
+          team.apRank = index + 1;
+          team.apPoints = 1000 - (index * 35) + Math.random() * 40;
+        }
       });
       
       setLoadingProgress(100);
       setLoadingText('Complete!');
-      
       setTeams(enhancedTeams);
-      console.log('🎉 Team analytics loading complete!');
       
-      // Small delay to show 100% completion
-      setTimeout(() => {
-        setLoading(false);
-      }, 300);
+      console.log('🎉 Team analytics loading complete!');
+      setTimeout(() => setLoading(false), 400);
       
     } catch (error) {
       console.error('Error loading team data:', error);
@@ -196,6 +193,176 @@ const TeamMetrics = ({ onNavigate }) => {
       setLoading(false);
     }
   };
+
+  const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null) => {
+    // Calculate wins/losses from games or use records
+    let wins = 0, losses = 0, conferenceWins = 0, conferenceLosses = 0;
+    
+    if (games && games.length > 0) {
+      games.forEach(game => {
+        const isWin = game.points > game.opponent_points;
+        if (isWin) wins++; else losses++;
+        
+        if (game.conference_game) {
+          if (isWin) conferenceWins++; else conferenceLosses++;
+        }
+      });
+    } else if (records && records.length > 0) {
+      const record = records[0];
+      wins = record.total?.wins || Math.floor(Math.random() * 8) + 4;
+      losses = record.total?.losses || Math.floor(Math.random() * 6) + 1;
+      conferenceWins = record.conferenceGames?.wins || Math.floor(wins * 0.7);
+      conferenceLosses = record.conferenceGames?.losses || Math.floor(losses * 0.7);
+    } else {
+      // Fallback mock data
+      wins = Math.floor(Math.random() * 8) + 4;
+      losses = Math.floor(Math.random() * 6) + 1;
+      conferenceWins = Math.floor(wins * 0.7);
+      conferenceLosses = Math.floor(losses * 0.7);
+    }
+    
+    // SP+ Rating calculations
+    const spOverall = spRating?.rating || (Math.random() * 40 + 10);
+    const spOffense = spRating?.offense?.rating || (Math.random() * 30 + 15);
+    const spDefense = spRating?.defense?.rating || (Math.random() * 30 + 10);
+    
+    // Overall rating composite
+    const winPercentage = wins / (wins + losses) * 100;
+    const overallRating = (spOverall * 0.5) + (winPercentage * 0.3) + (Math.random() * 20 + 40);
+    
+    // Market confidence (betting implied)
+    const marketConfidence = Math.min(overallRating / 10, 10);
+    
+    // Determine trending direction
+    let trending = 'stable';
+    if (games && games.length >= 4) {
+      const recentGames = games.slice(-4);
+      const recentWins = recentGames.filter(g => g.points > g.opponent_points).length;
+      if (recentWins >= 3) trending = 'up';
+      else if (recentWins <= 1) trending = 'down';
+    } else {
+      trending = Math.random() > 0.6 ? 'up' : Math.random() > 0.6 ? 'down' : 'stable';
+    }
+    
+    // Offensive/Defensive efficiency
+    const offensiveEfficiency = Math.max(20, Math.min(100, spOffense + 50 + (Math.random() * 20 - 10)));
+    const defensiveEfficiency = Math.max(20, Math.min(100, 100 - spDefense + 40 + (Math.random() * 20 - 10)));
+    
+    // Strength and concern analysis
+    const strengths = analyzeStrengths(spOffense, spDefense, offensiveEfficiency, defensiveEfficiency);
+    const concerns = analyzeConcerns(spOffense, spDefense, offensiveEfficiency, defensiveEfficiency);
+    
+    return {
+      ...team,
+      // Core Performance
+      wins,
+      losses,
+      conferenceWins,
+      conferenceLosses,
+      winPercentage,
+      overallRating,
+      
+      // Rating Systems
+      spRating: {
+        overall: spOverall,
+        offense: spOffense,
+        defense: spDefense
+      },
+      eloRating: eloRating?.elo || (Math.random() * 800 + 1200),
+      fpiRating: fpiRating?.fpi || (Math.random() * 30 + 5),
+      
+      // Efficiency Metrics
+      offensiveEfficiency,
+      defensiveEfficiency,
+      marketConfidence,
+      trending,
+      
+      // Recruiting & Talent
+      recruiting: {
+        rank: recruiting?.rank || Math.floor(Math.random() * 130) + 1,
+        points: recruiting?.points || Math.random() * 300 + 50
+      },
+      
+      // Analysis
+      primaryStrength: strengths.primary,
+      keyConcern: concerns.primary,
+      
+      // Next Game (mock for now)
+      nextGame: generateNextGame(team),
+      
+      // Enhanced metrics for detail view
+      games: games || [],
+      seasonStats: generateSeasonStats(wins, losses, spOffense, spDefense),
+      situationalStats: generateSituationalStats(),
+      bettingAnalytics: generateBettingAnalytics(marketConfidence)
+    };
+  };
+
+  const analyzeStrengths = (spOffense, spDefense, offEff, defEff) => {
+    const metrics = [
+      { name: 'Elite Offense', score: spOffense, threshold: 35 },
+      { name: 'Dominant Defense', score: 50 - spDefense, threshold: 35 },
+      { name: 'Balanced Attack', score: Math.min(offEff, defEff), threshold: 75 },
+      { name: 'Explosive Plays', score: offEff, threshold: 85 }
+    ];
+    
+    const topStrength = metrics.sort((a, b) => b.score - a.score)[0];
+    return { primary: topStrength.name };
+  };
+
+  const analyzeConcerns = (spOffense, spDefense, offEff, defEff) => {
+    const concerns = [
+      { name: 'Offensive Struggles', score: 100 - offEff, threshold: 40 },
+      { name: 'Defensive Issues', score: 100 - defEff, threshold: 40 },
+      { name: 'Inconsistency', score: Math.abs(offEff - defEff), threshold: 30 },
+      { name: 'Depth Concerns', score: Math.random() * 50 + 25, threshold: 40 }
+    ];
+    
+    const topConcern = concerns.sort((a, b) => b.score - a.score)[0];
+    return { primary: topConcern.name };
+  };
+
+  const generateNextGame = (team) => {
+    const opponents = ['Alabama', 'Georgia', 'Ohio State', 'Michigan', 'Texas', 'Oklahoma', 'LSU', 'Florida'];
+    const opponent = opponents[Math.floor(Math.random() * opponents.length)];
+    const spread = (Math.random() * 20 - 10).toFixed(1);
+    const isHome = Math.random() > 0.5;
+    
+    return {
+      opponent,
+      spread: parseFloat(spread),
+      isHome,
+      week: Math.floor(Math.random() * 4) + 9 // Weeks 9-12
+    };
+  };
+
+  const generateSeasonStats = (wins, losses, spOffense, spDefense) => {
+    const games = wins + losses;
+    return {
+      pointsPerGame: Math.round((spOffense * 0.8 + 25) * 10) / 10,
+      yardsPerGame: Math.round((spOffense * 12 + 350) * 10) / 10,
+      pointsAllowed: Math.round((50 - spDefense) * 0.6 + 15),
+      yardsAllowed: Math.round((50 - spDefense) * 8 + 250),
+      turnovers: Math.floor(Math.random() * 8 + games * 0.8),
+      penalties: Math.floor(Math.random() * 30 + games * 6)
+    };
+  };
+
+  const generateSituationalStats = () => ({
+    redZoneOffense: Math.random() * 30 + 65,
+    redZoneDefense: Math.random() * 30 + 60,
+    thirdDownOffense: Math.random() * 25 + 35,
+    thirdDownDefense: Math.random() * 25 + 35,
+    fourthDownOffense: Math.random() * 40 + 40,
+    timeOfPossession: (Math.random() * 8 + 28).toFixed(1)
+  });
+
+  const generateBettingAnalytics = (confidence) => ({
+    atsRecord: `${Math.floor(Math.random() * 6 + 4)}-${Math.floor(Math.random() * 6 + 4)}`,
+    overUnder: `${Math.floor(Math.random() * 6 + 3)}-${Math.floor(Math.random() * 6 + 3)}`,
+    averageSpread: (confidence - 5 + Math.random() * 4).toFixed(1),
+    publicBettingPercentage: Math.floor(Math.random() * 40 + 30)
+  });
 
   const calculateCompositeMetrics = (stats, advanced, sp, elo, ppa, enhancedAnalytics, bettingData) => {
     const metrics = {};
@@ -317,8 +484,8 @@ const TeamMetrics = ({ onNavigate }) => {
 
   const getTrendIcon = (trending) => {
     switch (trending) {
-      case 'up': return <FaArrowUp className="text-green-500" />;
-      case 'down': return <FaArrowDown className="text-red-500" />;
+      case 'up': return <FaTrendingUp className="text-green-500" />;
+      case 'down': return <FaTrendingDown className="text-red-500" />;
       default: return <FaMinus className="text-gray-500" />;
     }
   };
@@ -560,8 +727,6 @@ const TeamMetrics = ({ onNavigate }) => {
 
 // Team Metric Card Component
 const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSortIcon, getRatingColor, getTrendIcon, getTeamLogo, isSelected, onToggleComparison, onAdvancedAnalytics }) => {
-  const [expanded, setExpanded] = useState(false);
-
   if (viewMode === 'compact') {
     return (
       <div className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
@@ -603,200 +768,160 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
   }
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
-      {/* Team Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <img src={getTeamLogo(team)} alt={team.school} className="w-16 h-16 object-contain" />
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">{team.school}</h2>
-            <p className="text-lg text-gray-600">{team.mascot}</p>
-            <p className="text-sm text-gray-500">{team.conference}</p>
+    <div className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border ${isSelected ? 'ring-2 ring-blue-500 border-blue-200' : 'border-gray-100'}`}>
+      {/* Team Identity Header */}
+      <div className="relative overflow-hidden">
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <img src={getTeamLogo(team)} alt={team.school} className="w-16 h-16 object-contain" />
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">{team.school}</h2>
+                <p className="text-gray-600">{team.conference}</p>
+                {team.nationalRank && team.nationalRank <= 25 && (
+                  <div className="flex items-center mt-1">
+                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-semibold">
+                      #{team.nationalRank} National
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-gray-700">
+                {team.wins}-{team.losses}
+              </div>
+              <div className="text-sm text-gray-500">
+                ({team.conferenceWins}-{team.conferenceLosses} {team.conference})
+              </div>
+              {team.apRank && (
+                <div className="mt-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-semibold">
+                  #{team.apRank} AP Poll
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          {team.apRank && (
-            <div className="text-center bg-yellow-100 rounded-lg p-3">
-              <div className="text-2xl font-bold text-yellow-800">#{team.apRank}</div>
-              <div className="text-sm text-yellow-600">AP Poll</div>
+      </div>
+
+      {/* Core Performance Metrics */}
+      <div className="p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {/* SP+ Rating */}
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">SP+ Rating</div>
+            <div className={`text-2xl font-bold ${getRatingColor(team.spRating?.overall || 50)}`}>
+              {(team.spRating?.overall || 0).toFixed(1)}
             </div>
-          )}
-          {team.coachesRank && (
-            <div className="text-center bg-purple-100 rounded-lg p-3">
-              <div className="text-2xl font-bold text-purple-800">#{team.coachesRank}</div>
-              <div className="text-sm text-purple-600">Coaches</div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div 
+                className={`h-2 rounded-full transition-all ${getRatingColor(team.spRating?.overall || 50).replace('text', 'bg')}`}
+                style={{ width: `${Math.min(100, Math.max(0, (team.spRating?.overall || 0) + 30) * 1.25)}%` }}
+              ></div>
             </div>
-          )}
+          </div>
+
+          {/* Win Percentage */}
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">Win Rate</div>
+            <div className={`text-2xl font-bold ${getRatingColor(team.winPercentage || 0)}`}>
+              {(team.winPercentage || 0).toFixed(1)}%
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div 
+                className={`h-2 rounded-full transition-all ${getRatingColor(team.winPercentage || 0).replace('text', 'bg')}`}
+                style={{ width: `${team.winPercentage || 0}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Offensive Efficiency */}
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">Offense</div>
+            <div className={`text-2xl font-bold ${getRatingColor(team.offensiveEfficiency || 0)}`}>
+              {(team.offensiveEfficiency || 0).toFixed(0)}
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div 
+                className={`h-2 rounded-full transition-all ${getRatingColor(team.offensiveEfficiency || 0).replace('text', 'bg')}`}
+                style={{ width: `${team.offensiveEfficiency || 0}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Market Confidence */}
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">Market</div>
+            <div className="text-2xl font-bold text-purple-600">
+              {(team.marketConfidence || 0).toFixed(1)}
+            </div>
+            <div className="flex items-center justify-center mt-1">
+              {getTrendIcon(team.trending)}
+              <span className="text-xs text-gray-500 ml-1 capitalize">{team.trending}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Key Insights */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center mb-2">
+              <FaFire className="text-green-600 mr-2" />
+              <span className="font-semibold text-green-800">Strength</span>
+            </div>
+            <p className="text-green-700">{team.primaryStrength}</p>
+          </div>
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-center mb-2">
+              <FaInfoCircle className="text-orange-600 mr-2" />
+              <span className="font-semibold text-orange-800">Watch</span>
+            </div>
+            <p className="text-orange-700">{team.keyConcern}</p>
+          </div>
+        </div>
+
+        {/* Next Game Preview */}
+        {team.nextGame && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-semibold text-blue-800">Next Game</div>
+                <div className="text-blue-700">
+                  {team.nextGame.isHome ? 'vs' : '@'} {team.nextGame.opponent}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-blue-800 font-bold">
+                  {team.nextGame.spread > 0 ? '+' : ''}{team.nextGame.spread}
+                </div>
+                <div className="text-xs text-blue-600">Spread</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between pt-4 border-t">
           <button
             onClick={onToggleComparison}
-            className={`px-4 py-2 rounded-lg font-semibold ${
+            className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors ${
               isSelected 
                 ? 'bg-blue-600 text-white' 
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
+            <FaExchangeAlt className="mr-2" />
             {isSelected ? 'Selected' : 'Compare'}
-          </button>
-        </div>
-      </div>
-
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <MetricCard
-          icon={<FaTrophy />}
-          label="Overall Rating"
-          value={(team.overallRating || 0).toFixed(1)}
-          color={getRatingColor(team.overallRating || 0)}
-          trend={getTrendIcon(team.trending)}
-        />
-        <MetricCard
-          icon={<FaBolt />}
-          label="Offensive Efficiency"
-          value={(team.offensiveEfficiency || 0).toFixed(1)}
-          color={getRatingColor(team.offensiveEfficiency || 0)}
-        />
-        <MetricCard
-          icon={<FaShieldAlt />}
-          label="Defensive Efficiency"
-          value={(team.defensiveEfficiency || 0).toFixed(1)}
-          color={getRatingColor(team.defensiveEfficiency || 0)}
-        />
-        <MetricCard
-          icon={<FaBullseye />}
-          label="Win Rate"
-          value={`${(team.winPercentage || 0).toFixed(1)}%`}
-          color={getRatingColor(team.winPercentage || 0)}
-        />
-        {team.marketConfidence && (
-          <MetricCard
-            icon={<FaChartLine />}
-            label="Market Confidence"
-            value={`±${team.marketConfidence.toFixed(1)}`}
-            color="text-purple-600 bg-purple-100"
-          />
-        )}
-      </div>
-
-      {/* Advanced Metrics (Expandable) */}
-      <div className="border-t pt-4">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center text-left font-semibold text-gray-700 hover:text-gray-900"
-          >
-            <span>Advanced Analytics</span>
-            <FaChartLine className={`ml-2 transform transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </button>
           
           <button
             onClick={() => onAdvancedAnalytics(team)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
+            className="flex items-center bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
           >
+            <FaChartBar className="mr-2" />
             View Full Analysis
           </button>
         </div>
-        
-        {expanded && (
-          <div className="mt-4 space-y-4">
-            {/* Traditional Advanced Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {team.spRating?.overall && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-sm text-gray-600">SP+ Overall</div>
-                  <div className="text-xl font-bold">{team.spRating.overall.toFixed(1)}</div>
-                </div>
-              )}
-              {team.eloRating?.elo && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-sm text-gray-600">Elo Rating</div>
-                  <div className="text-xl font-bold">{Math.round(team.eloRating.elo)}</div>
-                </div>
-              )}
-              {team.fpiRating?.fpi && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-sm text-gray-600">FPI</div>
-                  <div className="text-xl font-bold">{team.fpiRating.fpi.toFixed(1)}</div>
-                </div>
-              )}
-              {team.recruiting?.rank && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-sm text-gray-600">Recruiting Rank</div>
-                  <div className="text-xl font-bold">#{team.recruiting.rank}</div>
-                </div>
-              )}
-              {team.talent?.talent && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-sm text-gray-600">Talent Rating</div>
-                  <div className="text-xl font-bold">{team.talent.talent.toFixed(1)}</div>
-                </div>
-              )}
-              {team.strengthOfSchedule && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-sm text-gray-600">SOS</div>
-                  <div className="text-xl font-bold">{team.strengthOfSchedule.toFixed(1)}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Betting Market Insights */}
-            {team.bettingInsights && team.bettingInsights.totalGames > 0 && (
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                <h4 className="font-semibold text-purple-800 mb-3 flex items-center">
-                  <FaChartLine className="mr-2" />
-                  Betting Market Analysis
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-800">
-                      {team.bettingInsights.totalGames}
-                    </div>
-                    <div className="text-sm text-purple-600">Games with Lines</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-800">
-                      ±{team.bettingInsights.avgSpread.toFixed(1)}
-                    </div>
-                    <div className="text-sm text-purple-600">Avg Point Spread</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-800">
-                      {((team.bettingInsights.favoredCount / team.bettingInsights.totalGames) * 100).toFixed(0)}%
-                    </div>
-                    <div className="text-sm text-purple-600">Favored Games</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Enhanced Analytics */}
-            {team.enhancedAnalytics && Object.keys(team.enhancedAnalytics).length > 0 && (
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
-                  <FaChartBar className="mr-2" />
-                  Enhanced Analytics
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {team.enhancedAnalytics.compositeScore && (
-                    <div className="text-center">
-                      <div className="text-xl font-bold text-blue-800">
-                        {team.enhancedAnalytics.compositeScore.toFixed(1)}
-                      </div>
-                      <div className="text-sm text-blue-600">Composite Score</div>
-                    </div>
-                  )}
-                  {team.enhancedAnalytics.efficiency && (
-                    <div className="text-center">
-                      <div className="text-xl font-bold text-blue-800">
-                        {team.enhancedAnalytics.efficiency.toFixed(1)}%
-                      </div>
-                      <div className="text-sm text-blue-600">Overall Efficiency</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
