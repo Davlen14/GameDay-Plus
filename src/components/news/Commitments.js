@@ -1,50 +1,486 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Icon } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { rankingsService } from '../../services/rankingsService';
+import { teamService } from '../../services/teamService';
+
+// Fix for default markers in React-Leaflet
+import L from 'leaflet';
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
+
+// Custom icon for markers
+const customIcon = new Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Component to auto-fit map to markers
+const MapBounds = ({ commitments }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (commitments.length > 0) {
+      const group = new L.featureGroup(commitments.map(c => 
+        L.marker([c.coordinates[0], c.coordinates[1]])
+      ));
+      map.fitBounds(group.getBounds().pad(0.1));
+    }
+  }, [commitments, map]);
+  
+  return null;
+};
 
 const Commitments = () => {
+  const [commitments, setCommitments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedConference, setSelectedConference] = useState('all');
+  const [selectedPosition, setSelectedPosition] = useState('all');
+  const [selectedRating, setSelectedRating] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // State for team data to map to conferences and images
+  const [teams, setTeams] = useState([]);
+
+  // Helper function to get state coordinates (simplified for major states)
+  const getStateCoordinates = (state) => {
+    const stateCoords = {
+      'AL': [32.3182, -86.9023], 'AK': [61.2176, -149.8997], 'AZ': [33.7712, -111.3877],
+      'AR': [34.9513, -92.3809], 'CA': [36.1162, -119.6816], 'CO': [39.0646, -105.3272],
+      'CT': [41.5834, -72.7622], 'DE': [39.318, -75.5071], 'FL': [27.8333, -81.717],
+      'GA': [32.9866, -83.6487], 'HI': [21.1098, -157.5311], 'ID': [44.2394, -114.5103],
+      'IL': [40.3363, -89.0022], 'IN': [39.8647, -86.2604], 'IA': [42.0046, -93.214],
+      'KS': [38.5111, -96.8005], 'KY': [37.669, -84.6514], 'LA': [31.1801, -91.8749],
+      'ME': [44.323, -69.765], 'MD': [39.0724, -76.7902], 'MA': [42.2373, -71.5314],
+      'MI': [43.3504, -84.5603], 'MN': [45.7326, -93.9196], 'MS': [32.7673, -89.6812],
+      'MO': [38.4623, -92.302], 'MT': [47.0527, -110.2181], 'NE': [41.1289, -98.2883],
+      'NV': [38.4199, -117.1219], 'NH': [43.4108, -71.5653], 'NJ': [40.314, -74.5089],
+      'NM': [34.8375, -106.2371], 'NY': [42.9538, -75.5268], 'NC': [35.630, -79.8064],
+      'ND': [47.5362, -99.793], 'OH': [40.3467, -82.7344], 'OK': [35.5376, -96.9247],
+      'OR': [44.931, -123.0351], 'PA': [40.5773, -77.264], 'RI': [41.6772, -71.5101],
+      'SC': [33.8191, -80.9066], 'SD': [44.2853, -99.4632], 'TN': [35.7449, -86.7489],
+      'TX': [31.106, -97.6475], 'UT': [40.1135, -111.8535], 'VT': [44.0407, -72.7093],
+      'VA': [37.768, -78.2057], 'WA': [47.3826, -121.5304], 'WV': [38.468, -80.9696],
+      'WI': [44.2563, -89.6385], 'WY': [42.7475, -107.2085]
+    };
+    return stateCoords[state] || [39.8283, -98.5795]; // Default to center of US
+  };
+
+  // Helper function to get team conference and image
+  const getTeamInfo = (teamName) => {
+    const team = teams.find(t => 
+      t.school?.toLowerCase() === teamName?.toLowerCase() ||
+      t.mascot?.toLowerCase() === teamName?.toLowerCase()
+    );
+    return {
+      conference: team?.conference || 'Independent',
+      image: team?.logos?.[0] || `/photos/${teamName?.replace(/\s+/g, '')}.jpg`
+    };
+  };
+
+  // Convert API recruit data to component format
+  const transformRecruitData = (recruits) => {
+    return recruits.map((recruit, index) => {
+      const teamInfo = getTeamInfo(recruit.recruitedBy || recruit.college);
+      const coordinates = recruit.stateProvince ? 
+        getStateCoordinates(recruit.stateProvince) : 
+        [39.8283, -98.5795]; // Default to center of US
+
+      return {
+        id: recruit.id || `recruit-${index}`,
+        name: `${recruit.name || 'Unknown Recruit'}`,
+        position: recruit.position || 'ATH',
+        rating: recruit.stars || recruit.rating || 3,
+        height: recruit.height || 'N/A',
+        weight: recruit.weight || 'N/A',
+        school: recruit.recruitedBy || recruit.college || 'Uncommitted',
+        conference: teamInfo.conference,
+        highSchool: recruit.school || 'Unknown High School',
+        city: recruit.city || 'Unknown',
+        state: recruit.stateProvince || 'Unknown',
+        coordinates: coordinates,
+        committed: recruit.recruitedBy ? true : false,
+        commitDate: recruit.committedTo || new Date().toISOString(),
+        recruitingRank: recruit.ranking || index + 1,
+        image: teamInfo.image
+      };
+    });
+  };
+
+  useEffect(() => {
+    const fetchCommitments = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch teams data for conference mapping and images
+        const [teamsData, recruitsData] = await Promise.all([
+          teamService.getTeams().catch(() => []),
+          rankingsService.getPlayerRecruitingRankings(2024).catch(() => [])
+        ]);
+
+        setTeams(teamsData || []);
+        
+        // Transform and set recruit data
+        const transformedRecruits = transformRecruitData(recruitsData || []);
+        setCommitments(transformedRecruits);
+
+        // If no real data, provide fallback
+        if (!transformedRecruits.length) {
+          const fallbackCommitments = [
+            {
+              id: 'fallback-1',
+              name: "Elite Recruit",
+              position: "QB",
+              rating: 5,
+              height: "6'3\"",
+              weight: "210",
+              school: "Ohio State",
+              conference: "Big Ten",
+              highSchool: "National Prep Academy",
+              city: "Columbus",
+              state: "OH",
+              coordinates: [39.9612, -82.9988],
+              committed: true,
+              commitDate: new Date().toISOString(),
+              recruitingRank: 1,
+              image: "/photos/ncaaf.png"
+            }
+          ];
+          setCommitments(fallbackCommitments);
+        }
+
+      } catch (err) {
+        console.error('Error fetching commitments:', err);
+        setError('Failed to load recruiting commitments data');
+        
+        // Provide fallback data on error
+        const fallbackCommitments = [
+          {
+            id: 'error-fallback-1',
+            name: "Recruiting Data Unavailable",
+            position: "N/A",
+            rating: 3,
+            height: "N/A",
+            weight: "N/A",
+            school: "Loading...",
+            conference: "Unknown",
+            highSchool: "Please check back later",
+            city: "Unknown",
+            state: "US",
+            coordinates: [39.8283, -98.5795],
+            committed: false,
+            commitDate: new Date().toISOString(),
+            recruitingRank: 1,
+            image: "/photos/ncaaf.png"
+          }
+        ];
+        setCommitments(fallbackCommitments);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCommitments();
+  }, []);
+
+  // Filter commitments based on selected filters
+  const filteredCommitments = useMemo(() => {
+    return commitments.filter(commitment => {
+      const matchesConference = selectedConference === 'all' || commitment.conference === selectedConference;
+      const matchesPosition = selectedPosition === 'all' || commitment.position === selectedPosition;
+      const matchesRating = selectedRating === 'all' || commitment.rating.toString() === selectedRating;
+      const matchesSearch = searchTerm === '' || 
+        commitment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        commitment.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        commitment.highSchool.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return matchesConference && matchesPosition && matchesRating && matchesSearch;
+    });
+  }, [commitments, selectedConference, selectedPosition, selectedRating, searchTerm]);
+
+  // Get unique values for filters
+  const conferences = [...new Set(commitments.map(c => c.conference))];
+  const positions = [...new Set(commitments.map(c => c.position))];
+  const ratings = [...new Set(commitments.map(c => c.rating.toString()))];
+
+  const getStarRating = (rating) => {
+    return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+  };
+
+  const formatCommitDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-700 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center text-white">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-xl">Loading commitments data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-700 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center text-white">
+            <p className="text-xl text-red-200 mb-4">⚠️ {error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-white text-red-800 px-6 py-2 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold gradient-text mb-4">Commitments</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Latest recruiting commitments and signing day updates
+    <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-700 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-white to-red-200 bg-clip-text text-transparent">
+            🏈 Player Commitments
+          </h1>
+          <p className="text-xl text-red-200">
+            Track the latest commitments from top recruits across the nation
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="mb-6">
-              <i className="fas fa-pen-fancy text-6xl icon-gradient mb-4"></i>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-white">{commitments.length}</div>
+              <div className="text-red-200">Total Commits</div>
             </div>
-            <h2 className="text-3xl font-bold gradient-text mb-4">Coming Soon</h2>
-            <p className="text-lg text-gray-600 mb-6">
-              Track the latest recruiting commitments and national signing day updates.
-            </p>
-            
-            <div className="grid md:grid-cols-2 gap-6 mt-8">
-              <div className="bg-gray-50 rounded-lg p-6">
-                <i className="fas fa-calendar text-3xl icon-gradient mb-3"></i>
-                <h3 className="text-xl font-semibold mb-2">Recent Commits</h3>
-                <p className="text-gray-600">Latest commitment announcements</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-white">
+                {commitments.filter(c => c.rating === 5).length}
               </div>
-              <div className="bg-gray-50 rounded-lg p-6">
-                <i className="fas fa-university text-3xl icon-gradient mb-3"></i>
-                <h3 className="text-xl font-semibold mb-2">By School</h3>
-                <p className="text-gray-600">Recruiting class breakdowns</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-6">
-                <i className="fas fa-star text-3xl icon-gradient mb-3"></i>
-                <h3 className="text-xl font-semibold mb-2">Top Targets</h3>
-                <p className="text-gray-600">Most sought-after uncommitted players</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-6">
-                <i className="fas fa-chart-bar text-3xl icon-gradient mb-3"></i>
-                <h3 className="text-xl font-semibold mb-2">Class Rankings</h3>
-                <p className="text-gray-600">National and conference rankings</p>
-              </div>
+              <div className="text-red-200">5-Star Recruits</div>
+            </div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-white">{conferences.length}</div>
+              <div className="text-red-200">Conferences</div>
+            </div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-white">{positions.length}</div>
+              <div className="text-red-200">Positions</div>
             </div>
           </div>
         </div>
+
+        {/* Filters */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-red-200 text-sm font-medium mb-2">Search</label>
+              <input
+                type="text"
+                placeholder="Search players, schools..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-red-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+              />
+            </div>
+            <div>
+              <label className="block text-red-200 text-sm font-medium mb-2">Conference</label>
+              <select
+                value={selectedConference}
+                onChange={(e) => setSelectedConference(e.target.value)}
+                className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+              >
+                <option value="all">All Conferences</option>
+                {conferences.map(conf => (
+                  <option key={conf} value={conf} className="text-black">{conf}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-red-200 text-sm font-medium mb-2">Position</label>
+              <select
+                value={selectedPosition}
+                onChange={(e) => setSelectedPosition(e.target.value)}
+                className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+              >
+                <option value="all">All Positions</option>
+                {positions.map(pos => (
+                  <option key={pos} value={pos} className="text-black">{pos}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-red-200 text-sm font-medium mb-2">Rating</label>
+              <select
+                value={selectedRating}
+                onChange={(e) => setSelectedRating(e.target.value)}
+                className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+              >
+                <option value="all">All Ratings</option>
+                {ratings.sort((a, b) => b - a).map(rating => (
+                  <option key={rating} value={rating} className="text-black">{rating} Star</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSelectedConference('all');
+                  setSelectedPosition('all');
+                  setSelectedRating('all');
+                  setSearchTerm('');
+                }}
+                className="w-full bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors border border-white/30"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Map */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/20">
+          <h2 className="text-2xl font-bold text-white mb-4">📍 Commitment Map</h2>
+          <div className="h-96 rounded-lg overflow-hidden">
+            <MapContainer
+              center={[39.8283, -98.5795]} // Center of USA
+              zoom={4}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <MapBounds commitments={filteredCommitments} />
+              {filteredCommitments.map((commitment) => (
+                <Marker
+                  key={commitment.id}
+                  position={commitment.coordinates}
+                  icon={customIcon}
+                >
+                  <Popup>
+                    <div className="p-2 min-w-48">
+                      <div className="font-bold text-lg text-red-800">{commitment.name}</div>
+                      <div className="text-sm text-gray-600 mb-2">
+                        {commitment.position} • {getStarRating(commitment.rating)}
+                      </div>
+                      <div className="text-sm">
+                        <div><strong>School:</strong> {commitment.school}</div>
+                        <div><strong>High School:</strong> {commitment.highSchool}</div>
+                        <div><strong>Size:</strong> {commitment.height}, {commitment.weight}</div>
+                        <div><strong>Committed:</strong> {formatCommitDate(commitment.commitDate)}</div>
+                        <div><strong>Rank:</strong> #{commitment.recruitingRank}</div>
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
+        </div>
+
+        {/* Results Summary */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Showing {filteredCommitments.length} of {commitments.length} commitments
+          </h2>
+        </div>
+
+        {/* Commitments Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCommitments.map((commitment) => (
+            <div
+              key={commitment.id}
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-white mb-1">{commitment.name}</h3>
+                  <div className="text-red-200 text-sm">
+                    {commitment.position} • {commitment.height}, {commitment.weight}
+                  </div>
+                  <div className="text-yellow-300 text-lg mt-1">
+                    {getStarRating(commitment.rating)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
+                    #{commitment.recruitingRank}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-red-200">School:</span>
+                  <span className="text-white font-medium">{commitment.school}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-red-200">Conference:</span>
+                  <span className="text-white">{commitment.conference}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-red-200">High School:</span>
+                  <span className="text-white">{commitment.highSchool}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-red-200">Location:</span>
+                  <span className="text-white">{commitment.city}, {commitment.state}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-red-200">Committed:</span>
+                  <span className="text-white">{formatCommitDate(commitment.commitDate)}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-white/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-green-300 text-sm font-medium">✓ Committed</span>
+                  <button className="text-white hover:text-red-200 transition-colors text-sm">
+                    View Profile →
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filteredCommitments.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-white text-xl mb-2">No commitments found</div>
+            <div className="text-red-200">Try adjusting your filters to see more results</div>
+          </div>
+        )}
       </div>
     </div>
   );
