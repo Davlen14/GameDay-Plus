@@ -230,16 +230,16 @@ const TeamMetrics = ({ onNavigate }) => {
               teamService.getTeamGames(team.school, selectedYear).catch(() => null)
             ]);
             
-            // Enhanced data (FIXED - using correct services with fallbacks)
-            const [eloRating, fpiRating, recruiting, rankings, bettingData] = await Promise.all([
+      // Enhanced data (FIXED - using correct services with fallbacks)
+            const [eloRating, fpiRating, recruiting, rankingsData, bettingData] = await Promise.all([
               teamService.getEloRatings(selectedYear, null, team.school).catch(() => null),
               teamService.getFPIRatings(selectedYear, team.school).catch(() => null),
               teamService.getRecruitingRankings(selectedYear, team.school).catch(() => null),
-              rankingsService.getHistoricalRankings(selectedYear, 1).catch(() => null), // Week 1 rankings as fallback
+              teamService.getRankings(selectedYear, 15).catch(() => null), // Get all rankings data
               bettingService.getBettingLines(null, selectedYear, 1, 'regular', team.school).catch(() => null) // Week 1 lines as fallback
             ]);
             
-            return createEnhancedTeam(team, records, spRating, games, eloRating, fpiRating, recruiting, rankings, bettingData);
+            return createEnhancedTeam(team, records, spRating, games, eloRating, fpiRating, recruiting, rankingsData, bettingData);
           } catch (error) {
             console.log(`⚠️ Using fallback data for ${team.school}`);
             return createEnhancedTeam(team); // Fallback to mock data
@@ -258,13 +258,16 @@ const TeamMetrics = ({ onNavigate }) => {
       setLoadingProgress(90);
       setLoadingText('Finalizing analytics...');
       
-      // Sort by overall rating and add rankings
+      // Sort by overall rating but don't assign fake rankings
       enhancedTeams.sort((a, b) => b.overallRating - a.overallRating);
+      
+      // Use real AP poll rankings only - no fake rankings
       enhancedTeams.forEach((team, index) => {
-        team.nationalRank = index + 1;
-        if (index < 25) {
-          team.apRank = index + 1;
-          team.apPoints = 1000 - (index * 35) + Math.random() * 40;
+        // Only set nationalRank for teams that actually have AP ranking
+        if (team.rankings.ap) {
+          team.nationalRank = team.rankings.ap;
+        } else {
+          team.nationalRank = null; // Not ranked = NR
         }
       });
       
@@ -282,25 +285,30 @@ const TeamMetrics = ({ onNavigate }) => {
     }
   };
 
-  const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null, rankings = null, bettingData = null) => {
+  const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null, rankingsData = null, bettingData = null) => {
     // Calculate wins/losses from games or use records
     let wins = 0, losses = 0, conferenceWins = 0, conferenceLosses = 0;
     
     if (games && games.length > 0) {
       games.forEach(game => {
-        const isWin = game.points > game.opponent_points;
-        if (isWin) wins++; else losses++;
+        const isHomeTeam = game.home_team === team.school || game.homeTeam === team.school;
+        const teamPoints = isHomeTeam ? (game.home_points || game.homeScore) : (game.away_points || game.awayScore);
+        const opponentPoints = isHomeTeam ? (game.away_points || game.awayScore) : (game.home_points || game.homeScore);
         
-        if (game.conference_game) {
-          if (isWin) conferenceWins++; else conferenceLosses++;
+        if (teamPoints > opponentPoints) wins++;
+        else if (teamPoints < opponentPoints) losses++;
+        
+        if (game.conference_game || game.conferenceGame) {
+          if (teamPoints > opponentPoints) conferenceWins++;
+          else if (teamPoints < opponentPoints) conferenceLosses++;
         }
       });
     } else if (records && records.length > 0) {
       const record = records[0];
-      wins = record.total?.wins || Math.floor(Math.random() * 8) + 4;
-      losses = record.total?.losses || Math.floor(Math.random() * 6) + 1;
-      conferenceWins = record.conferenceGames?.wins || Math.floor(wins * 0.7);
-      conferenceLosses = record.conferenceGames?.losses || Math.floor(losses * 0.7);
+      wins = record.total?.wins || 0;
+      losses = record.total?.losses || 0;
+      conferenceWins = record.conferenceGames?.wins || 0;
+      conferenceLosses = record.conferenceGames?.losses || 0;
     } else {
       // Fallback mock data
       wins = Math.floor(Math.random() * 8) + 4;
@@ -309,14 +317,39 @@ const TeamMetrics = ({ onNavigate }) => {
       conferenceLosses = Math.floor(losses * 0.7);
     }
     
+    // Extract real rankings from API data
+    let apRank = null, coachesRank = null, playoffRank = null;
+    if (rankingsData && rankingsData.polls) {
+      // Find AP Top 25 ranking
+      const apPoll = rankingsData.polls.find(poll => poll.poll === 'AP Top 25');
+      if (apPoll) {
+        const teamRanking = apPoll.ranks.find(rank => rank.school === team.school);
+        if (teamRanking) apRank = teamRanking.rank;
+      }
+      
+      // Find Coaches Poll ranking
+      const coachesPoll = rankingsData.polls.find(poll => poll.poll === 'Coaches Poll');
+      if (coachesPoll) {
+        const teamRanking = coachesPoll.ranks.find(rank => rank.school === team.school);
+        if (teamRanking) coachesRank = teamRanking.rank;
+      }
+      
+      // Find Playoff Committee ranking
+      const playoffPoll = rankingsData.polls.find(poll => poll.poll === 'Playoff Committee Rankings');
+      if (playoffPoll) {
+        const teamRanking = playoffPoll.ranks.find(rank => rank.school === team.school);
+        if (teamRanking) playoffRank = teamRanking.rank;
+      }
+    }
+    
     // SP+ Rating calculations
     const spOverall = spRating?.rating || (Math.random() * 40 + 10);
     const spOffense = spRating?.offense?.rating || (Math.random() * 30 + 15);
     const spDefense = spRating?.defense?.rating || (Math.random() * 30 + 10);
     
     // Overall rating composite
-    const winPercentage = wins / (wins + losses) * 100;
-    const overallRating = (spOverall * 0.5) + (winPercentage * 0.3) + (Math.random() * 20 + 40);
+    const winPercentage = wins / (wins + losses) || 0.5;
+    const overallRating = (spOverall * 0.5) + (winPercentage * 100 * 0.3) + (Math.random() * 20 + 40);
     
     // Market confidence (betting implied)
     const marketConfidence = Math.min(overallRating / 10, 10);
@@ -325,7 +358,12 @@ const TeamMetrics = ({ onNavigate }) => {
     let trending = 'stable';
     if (games && games.length >= 4) {
       const recentGames = games.slice(-4);
-      const recentWins = recentGames.filter(g => g.points > g.opponent_points).length;
+      const recentWins = recentGames.filter(g => {
+        const isHomeTeam = g.home_team === team.school || g.homeTeam === team.school;
+        const teamPoints = isHomeTeam ? (g.home_points || g.homeScore) : (g.away_points || g.awayScore);
+        const opponentPoints = isHomeTeam ? (g.away_points || g.awayScore) : (g.home_points || g.homeScore);
+        return teamPoints > opponentPoints;
+      }).length;
       if (recentWins >= 3) trending = 'up';
       else if (recentWins <= 1) trending = 'down';
     } else {
@@ -347,7 +385,7 @@ const TeamMetrics = ({ onNavigate }) => {
       losses,
       conferenceWins,
       conferenceLosses,
-      winPercentage,
+      winPercentage: winPercentage * 100,
       overallRating,
       
       // Rating Systems
@@ -371,13 +409,13 @@ const TeamMetrics = ({ onNavigate }) => {
         points: recruiting?.points || Math.random() * 300 + 50
       },
       
-      // Rankings data (from rankingsService)
+      // Real Rankings data from API
       rankings: {
-        ap: rankings?.find(r => (r.school === team.school || r.team === team.school))?.rank || null,
-        coaches: rankings?.find(r => (r.school === team.school || r.team === team.school))?.rank || null,
-        playoff: rankings?.find(r => (r.school === team.school || r.team === team.school))?.rank <= 4 ? 
-                rankings.find(r => (r.school === team.school || r.team === team.school))?.rank : null
+        ap: apRank,
+        coaches: coachesRank,
+        playoff: playoffRank
       },
+      apRank, // For backwards compatibility
       
       // Betting market insights (from bettingService)
       bettingInsights: generateBettingInsights(bettingData, marketConfidence),
@@ -1035,12 +1073,12 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
               </div>
               <div className="text-xs text-gray-500">Overall</div>
             </div>
-            {(team.rankings?.ap || team.apRank) && (
-              <div className="text-center">
-                <div className="text-xl font-bold text-yellow-600">#{team.rankings?.ap || team.apRank}</div>
-                <div className="text-xs text-gray-500">AP</div>
+            <div className="text-center">
+              <div className="text-xl font-bold text-yellow-600">
+                {team.rankings?.ap ? `#${team.rankings.ap}` : 'NR'}
               </div>
-            )}
+              <div className="text-xs text-gray-500">AP</div>
+            </div>
             <button
               onClick={onToggleComparison}
               className={`px-3 py-1 rounded text-sm font-medium ${
@@ -1084,9 +1122,9 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
                       #{team.rankings.playoff} CFP
                     </span>
                   )}
-                  {team.nationalRank && team.nationalRank <= 25 && !team.rankings?.ap && (
-                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold">
-                      #{team.nationalRank} Composite
+                  {!team.rankings?.ap && !team.rankings?.coaches && !team.rankings?.playoff && (
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-sm font-medium">
+                      NR
                     </span>
                   )}
                 </div>
