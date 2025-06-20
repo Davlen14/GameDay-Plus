@@ -239,6 +239,43 @@ const CoachOverview = () => {
     fetchAllData();
   }, []);
 
+  // Handle modal scroll behavior
+  useEffect(() => {
+    if (showComparison) {
+      // Prevent background scrolling when modal is open
+      document.body.style.overflow = 'hidden';
+      
+      // Handle ESC key to close modal
+      const handleEscKey = (event) => {
+        if (event.key === 'Escape') {
+          setShowComparison(false);
+        }
+      };
+      
+      document.addEventListener('keydown', handleEscKey);
+      
+      // Ensure modal is visible by scrolling to top of modal content
+      setTimeout(() => {
+        const modalElement = document.querySelector('[data-modal="comparison"]');
+        if (modalElement) {
+          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      
+      return () => {
+        document.removeEventListener('keydown', handleEscKey);
+      };
+    } else {
+      // Restore background scrolling when modal is closed
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to restore scrolling if component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showComparison]);
+
   // Filter and sort coaches
   useEffect(() => {
     let filtered = [...coaches];
@@ -406,7 +443,7 @@ const CoachOverview = () => {
                 <button
                   key={filter.key}
                   onClick={() => setStatusFilter(filter.key)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 shadow-lg border ${
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg border ${
                     statusFilter === filter.key
                       ? `${filter.gradient} text-white shadow-lg border-white/20 transform hover:-translate-y-0.5`
                       : "bg-white text-gray-600 hover:bg-gray-50 border-gray-200"
@@ -603,13 +640,25 @@ const CoachOverview = () => {
 
         {/* Comparison Modal */}
         {showComparison && selectedCoaches.length >= 2 && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+            onClick={(e) => {
+              // Close modal when clicking the backdrop
+              if (e.target === e.currentTarget) {
+                setShowComparison(false);
+              }
+            }}
+          >
+            <div 
+              data-modal="comparison"
+              className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto my-8 mx-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
                 <h2 className="text-2xl font-bold gradient-text">Coach Comparison</h2>
                 <button
                   onClick={() => setShowComparison(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"
                 >
                   ×
                 </button>
