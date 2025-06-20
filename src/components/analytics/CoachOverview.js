@@ -328,17 +328,17 @@ const CoachOverview = () => {
   };
 
   const getStatusBadge = (status) => {
-    const baseClasses = "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold shadow-md transition-all duration-300";
+    const baseClasses = "inline-flex items-center justify-center gap-1 px-3 py-2 rounded-md text-xs font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5";
     
     switch (status.className) {
       case "status-premiere":
-        return `${baseClasses} bg-gradient-to-r from-emerald-500 to-emerald-600 text-white`;
+        return `${baseClasses} bg-gradient-to-br from-green-400 via-green-500 to-green-700 shadow-green-200 border border-green-300`;
       case "status-hotseat":
-        return `${baseClasses} bg-gradient-to-r from-red-500 to-red-600 text-white`;
+        return `${baseClasses} bg-gradient-to-br from-red-400 via-red-500 to-red-800 shadow-red-200 border border-red-300`;
       case "status-average":
-        return `${baseClasses} bg-gradient-to-r from-blue-500 to-blue-600 text-white`;
+        return `${baseClasses} bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 shadow-yellow-200 border border-yellow-300`;
       case "status-unproven":
-        return `${baseClasses} bg-gradient-to-r from-slate-400 to-slate-500 text-white`;
+        return `${baseClasses} bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 shadow-gray-200 border border-gray-300`;
       default:
         return `${baseClasses} bg-gray-500 text-white`;
     }
@@ -397,19 +397,19 @@ const CoachOverview = () => {
             {/* Status Filter */}
             <div className="flex gap-3 flex-wrap">
               {[
-                { key: "all", label: "All", icon: <FaUsers /> },
-                { key: "premiere", label: "Premiere", icon: <FaTrophy /> },
-                { key: "average", label: "Average", icon: <FaTachometerAlt /> },
-                { key: "hotseat", label: "Hot Seat", icon: <FaFire /> },
-                { key: "unproven", label: "Unproven", icon: <FaInfoCircle /> }
+                { key: "all", label: "All", icon: <FaUsers />, gradient: "bg-gradient-to-br from-gray-500 via-gray-600 to-gray-700" },
+                { key: "premiere", label: "Premiere", icon: <FaTrophy />, gradient: "bg-gradient-to-br from-green-400 via-green-500 to-green-700" },
+                { key: "average", label: "Average", icon: <FaTachometerAlt />, gradient: "bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600" },
+                { key: "hotseat", label: "Hot Seat", icon: <FaFire />, gradient: "bg-gradient-to-br from-red-400 via-red-500 to-red-800" },
+                { key: "unproven", label: "Unproven", icon: <FaInfoCircle />, gradient: "bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600" }
               ].map((filter) => (
                 <button
                   key={filter.key}
                   onClick={() => setStatusFilter(filter.key)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 shadow-lg border ${
                     statusFilter === filter.key
-                      ? "gradient-bg text-white shadow-lg"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      ? `${filter.gradient} text-white shadow-lg border-white/20 transform hover:-translate-y-0.5`
+                      : "bg-white text-gray-600 hover:bg-gray-50 border-gray-200"
                   }`}
                 >
                   {filter.icon}
@@ -480,7 +480,7 @@ const CoachOverview = () => {
         )}
 
         {/* Coach Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
           {filteredCoaches.map((coach) => {
             const isSelected = selectedCoaches.some(c => 
               `${c.firstName}-${c.lastName}` === `${coach.firstName}-${coach.lastName}`
@@ -489,60 +489,60 @@ const CoachOverview = () => {
             return (
               <div
                 key={`${coach.firstName}-${coach.lastName}`}
-                className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 ${
+                className={`bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-2 ${
                   isSelected ? "ring-2 ring-red-500 border-red-500" : ""
                 }`}
               >
                 {/* Card Header */}
-                <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 relative">
-                  <div className="absolute top-3 right-3 z-10">
+                <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 relative">
+                  <div className="absolute top-4 right-4 z-10">
                     <div className={getStatusBadge(coach.status)}>
                       {coach.status.icon}
                       {coach.status.text}
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-3 mb-4 pr-24">
+                  <div className="flex items-start gap-4 mb-6 pr-32">
                     {/* Team Logo */}
-                    <div className="w-12 h-12 flex-shrink-0">
+                    <div className="w-16 h-16 flex-shrink-0">
                       <img 
                         src={getTeamLogo(coach.school)} 
                         alt={coach.school}
-                        className="w-full h-full object-contain rounded-lg shadow-sm"
+                        className="w-full h-full object-contain rounded-lg shadow-md"
                       />
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold text-gray-900 mb-1 truncate">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 truncate">
                         {coach.firstName} {coach.lastName}
                       </h3>
-                      <p className="text-gray-600 font-medium text-sm truncate">{coach.school}</p>
-                      <p className="text-xs text-gray-500 truncate">{coach.conference}</p>
+                      <p className="text-gray-600 font-medium text-base truncate">{coach.school}</p>
+                      <p className="text-sm text-gray-500 truncate">{coach.conference}</p>
                     </div>
                   </div>
 
                   {/* Key Stats */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
-                      <div className="text-xl font-bold gradient-text">
+                      <div className="text-2xl font-bold gradient-text">
                         {coach.winPct.toFixed(1)}%
                       </div>
-                      <div className="text-xs text-gray-500">Win Rate</div>
+                      <div className="text-sm text-gray-500">Win Rate</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-bold gradient-text">
+                      <div className="text-2xl font-bold gradient-text">
                         {coach.wins}-{coach.losses}
                       </div>
-                      <div className="text-xs text-gray-500">Record</div>
+                      <div className="text-sm text-gray-500">Record</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Card Body */}
-                <div className="p-4">
-                  <div className="space-y-3">
+                <div className="p-6">
+                  <div className="space-y-4">
                     {/* Performance Metrics */}
-                    <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-2 gap-4 text-base">
                       <div className="flex justify-between">
                         <span className="text-gray-600">SRS:</span>
                         <span className="font-semibold">{coach.avgSrs.toFixed(1)}</span>
@@ -562,11 +562,11 @@ const CoachOverview = () => {
                     </div>
 
                     {/* Trend Indicator */}
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                      <span className="text-sm text-gray-600">Trend:</span>
-                      <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <span className="text-base text-gray-600">Trend:</span>
+                      <div className="flex items-center gap-2">
                         {getTrendIcon(coach.trend)}
-                        <span className={`text-sm font-medium ${
+                        <span className={`text-base font-medium ${
                           coach.trend > 1 ? "text-emerald-600" :
                           coach.trend < -1 ? "text-red-600" : "text-gray-600"
                         }`}>
@@ -579,7 +579,7 @@ const CoachOverview = () => {
                     {/* Action Button */}
                     <button
                       onClick={() => toggleCoachSelection(coach)}
-                      className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
+                      className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 text-base ${
                         isSelected
                           ? "gradient-bg text-white hover:opacity-90"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
