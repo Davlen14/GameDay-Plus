@@ -25,11 +25,13 @@ const TeamMetrics = ({ onNavigate }) => {
   const [apiTests, setApiTests] = useState({
     teams: { status: 'pending', data: null, error: null },
     records: { status: 'pending', data: null, error: null },
+    teamGames: { status: 'pending', data: null, error: null },
     spRatings: { status: 'pending', data: null, error: null },
     eloRatings: { status: 'pending', data: null, error: null },
     fpiRatings: { status: 'pending', data: null, error: null },
     recruiting: { status: 'pending', data: null, error: null },
     rankings: { status: 'pending', data: null, error: null },
+    apPollPostseason: { status: 'pending', data: null, error: null },
     betting: { status: 'pending', data: null, error: null }
   });
   const [allTestsPassed, setAllTestsPassed] = useState(false);
@@ -147,11 +149,13 @@ const TeamMetrics = ({ onNavigate }) => {
     const testResults = await Promise.allSettled([
       testEndpoint('teams', () => teamService.getFBSTeams(true)),
       testEndpoint('records', () => teamService.getTeamRecords('Alabama', selectedYear)),
+      testEndpoint('teamGames', () => teamService.getTeamGames('Alabama', selectedYear)),
       testEndpoint('spRatings', () => teamService.getSPRatings(selectedYear, 'Alabama')),
       testEndpoint('eloRatings', () => teamService.getEloRatings(selectedYear, null, 'Alabama')),
       testEndpoint('fpiRatings', () => teamService.getFPIRatings(selectedYear, 'Alabama')),
       testEndpoint('recruiting', () => teamService.getRecruitingRankings(selectedYear, 'Alabama')),
-      testEndpoint('rankings', () => rankingsService.getHistoricalRankings(selectedYear, 1)),
+      testEndpoint('rankings', () => teamService.getRankings(selectedYear, 1, 'Alabama')),
+      testEndpoint('apPollPostseason', () => teamService.getRankings(2024, 1, null, 'postseason')),
       testEndpoint('betting', () => bettingService.getBettingLines(null, selectedYear, 1, 'regular', 'Alabama'))
     ]);
 

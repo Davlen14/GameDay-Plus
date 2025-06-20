@@ -243,5 +243,108 @@ export const teamService = {
   // GET /coaches - Get coaches data
   getCoaches: async () => {
     return await fetchCollegeFootballData('/coaches');
+  },
+
+  // GET /games - Get team games for a specific team and year
+  getTeamGames: async (team, year = new Date().getFullYear()) => {
+    const params = { year, team };
+    return await fetchCollegeFootballData('/games', params);
+  },
+
+  // Calculate team records from games data
+  getTeamRecords: async (team, year = new Date().getFullYear()) => {
+    try {
+      // Get all games for the team
+      const games = await fetchCollegeFootballData('/games', { year, team });
+      
+      if (!games || games.length === 0) {
+        return [{
+          year,
+          team,
+          total: { wins: 0, losses: 0, ties: 0 },
+          conferenceGames: { wins: 0, losses: 0, ties: 0 },
+          homeGames: { wins: 0, losses: 0, ties: 0 },
+          awayGames: { wins: 0, losses: 0, ties: 0 }
+        }];
+      }
+
+      // Calculate records from games
+      let totalWins = 0, totalLosses = 0, totalTies = 0;
+      let confWins = 0, confLosses = 0, confTies = 0;
+      let homeWins = 0, homeLosses = 0, homeTies = 0;
+      let awayWins = 0, awayLosses = 0, awayTies = 0;
+
+      games.forEach(game => {
+        if (!game.completed) return; // Skip incomplete games
+
+        const isHomeTeam = game.home_team === team;
+        const teamPoints = isHomeTeam ? game.home_points : game.away_points;
+        const opponentPoints = isHomeTeam ? game.away_points : game.home_points;
+
+        // Determine win/loss/tie
+        let isWin = false, isLoss = false, isTie = false;
+        if (teamPoints > opponentPoints) {
+          isWin = true;
+          totalWins++;
+        } else if (teamPoints < opponentPoints) {
+          isLoss = true;
+          totalLosses++;
+        } else {
+          isTie = true;
+          totalTies++;
+        }
+
+        // Conference games
+        if (game.conference_game) {
+          if (isWin) confWins++;
+          else if (isLoss) confLosses++;
+          else confTies++;
+        }
+
+        // Home/Away games
+        if (isHomeTeam) {
+          if (isWin) homeWins++;
+          else if (isLoss) homeLosses++;
+          else homeTies++;
+        } else {
+          if (isWin) awayWins++;
+          else if (isLoss) awayLosses++;
+          else awayTies++;
+        }
+      });
+
+      return [{
+        year,
+        team,
+        total: { wins: totalWins, losses: totalLosses, ties: totalTies },
+        conferenceGames: { wins: confWins, losses: confLosses, ties: confTies },
+        homeGames: { wins: homeWins, losses: homeLosses, ties: homeTies },
+        awayGames: { wins: awayWins, losses: awayLosses, ties: awayTies },
+        gamesPlayed: games.filter(g => g.completed).length,
+        winPercentage: totalWins / (totalWins + totalLosses + totalTies) || 0
+      }];
+    } catch (error) {
+      console.error('Error fetching team records:', error);
+      // Return empty record as fallback
+      return [{
+        year,
+        team,
+        total: { wins: 0, losses: 0, ties: 0 },
+        conferenceGames: { wins: 0, losses: 0, ties: 0 },
+        homeGames: { wins: 0, losses: 0, ties: 0 },
+        awayGames: { wins: 0, losses: 0, ties: 0 },
+        gamesPlayed: 0,
+        winPercentage: 0
+      }];
+    }
+  },
+
+  // GET /rankings - Get team rankings (wrapper for rankingsService)
+  getRankings: async (year = new Date().getFullYear(), week = null, team = null, seasonType = 'regular') => {
+    const params = { year };
+    if (week) params.week = week;
+    if (team) params.team = team;
+    if (seasonType) params.seasonType = seasonType;
+    return await fetchCollegeFootballData('/rankings', params);
   }
 };
