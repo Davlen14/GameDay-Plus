@@ -254,26 +254,14 @@ const CoachOverview = () => {
       
       document.addEventListener('keydown', handleEscKey);
       
-      // Ensure modal is visible by scrolling to top of modal content
-      setTimeout(() => {
-        const modalElement = document.querySelector('[data-modal="comparison"]');
-        if (modalElement) {
-          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
-      
       return () => {
         document.removeEventListener('keydown', handleEscKey);
+        document.body.style.overflow = 'unset';
       };
     } else {
       // Restore background scrolling when modal is closed
       document.body.style.overflow = 'unset';
     }
-
-    // Cleanup function to restore scrolling if component unmounts
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
   }, [showComparison]);
 
   // Filter and sort coaches
@@ -641,7 +629,7 @@ const CoachOverview = () => {
         {/* Comparison Modal */}
         {showComparison && selectedCoaches.length >= 2 && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
             onClick={(e) => {
               // Close modal when clicking the backdrop
               if (e.target === e.currentTarget) {
@@ -651,7 +639,7 @@ const CoachOverview = () => {
           >
             <div 
               data-modal="comparison"
-              className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto my-8 mx-auto"
+              className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
