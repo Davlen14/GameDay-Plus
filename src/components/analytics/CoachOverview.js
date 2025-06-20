@@ -242,6 +242,9 @@ const CoachOverview = () => {
   // Handle modal scroll behavior
   useEffect(() => {
     if (showComparison) {
+      // Scroll to top of page when modal opens
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
       // Prevent background scrolling when modal is open
       document.body.style.overflow = 'hidden';
       
@@ -629,7 +632,7 @@ const CoachOverview = () => {
         {/* Comparison Modal */}
         {showComparison && selectedCoaches.length >= 2 && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 pt-8 overflow-y-auto"
             onClick={(e) => {
               // Close modal when clicking the backdrop
               if (e.target === e.currentTarget) {
@@ -639,7 +642,7 @@ const CoachOverview = () => {
           >
             <div 
               data-modal="comparison"
-              className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+              className="bg-white rounded-xl max-w-6xl w-full max-h-[85vh] overflow-y-auto shadow-2xl mt-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
