@@ -34,10 +34,6 @@ const TeamMetrics = () => {
   const [selectedTeamsForComparison, setSelectedTeamsForComparison] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
   
-  // Analytics data
-  const [teamAnalytics, setTeamAnalytics] = useState({});
-  const [rankings, setRankings] = useState([]);
-  
   // Metric categories for filtering
   const metricCategories = {
     overall: 'Overall Performance',
