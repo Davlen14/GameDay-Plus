@@ -30,6 +30,7 @@ const TeamOutlook = React.lazy(() => import('./components/teams/TeamOutlook'));
 
 // Analytics Components
 const TeamMetrics = React.lazy(() => import('./components/analytics/TeamMetrics'));
+const TeamAdvancedAnalytics = React.lazy(() => import('./components/analytics/TeamAdvancedAnalytics'));
 const GamedayGPT = React.lazy(() => import('./components/analytics/GamedayGPT'));
 const PlayerMetrics = React.lazy(() => import('./components/analytics/PlayerMetrics'));
 const CoachOverview = React.lazy(() => import('./components/analytics/CoachOverview'));
@@ -160,6 +161,16 @@ function App() {
       );
     }
     
+    // Check for team advanced analytics routes (team-advanced-analytics-{team-slug})
+    if (currentPage.startsWith('team-advanced-analytics-')) {
+      const teamSlug = currentPage.replace('team-advanced-analytics-', '');
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <TeamAdvancedAnalytics teamSlug={teamSlug} onNavigate={setCurrentPage} />
+        </Suspense>
+      );
+    }
+    
     // Check for game detail routes (game-detail-{id})
     if (currentPage.startsWith('game-detail-')) {
       const gameId = currentPage.split('-')[2];
@@ -229,7 +240,7 @@ function App() {
       
       // Analytics routes
       case 'team-metrics':
-        return <TeamMetrics />;
+        return <TeamMetrics onNavigate={setCurrentPage} />;
       case 'player-metrics':
         return <PlayerMetrics />;
       case 'coach-overview':

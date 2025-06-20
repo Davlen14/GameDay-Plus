@@ -10,7 +10,7 @@ import { analyticsService } from '../../services/analyticsService';
 import { rankingsService } from '../../services/rankingsService';
 import { bettingService } from '../../services/bettingService';
 
-const TeamMetrics = () => {
+const TeamMetrics = ({ onNavigate }) => {
   // State management
   const [teams, setTeams] = useState([]);
   const [filteredTeams, setFilteredTeams] = useState([]);
@@ -90,6 +90,13 @@ const TeamMetrics = () => {
     
     setFilteredTeams(filtered);
   }, [teams, searchTerm, selectedConference, sortField, sortDirection]);
+
+  const handleAdvancedAnalytics = (team) => {
+    // Navigate to team-specific advanced analytics page
+    if (onNavigate) {
+      onNavigate(`team-advanced-analytics-${team.school.toLowerCase().replace(/\s+/g, '-')}`);
+    }
+  };
 
   const getNestedValue = (obj, path) => {
     return path.split('.').reduce((current, key) => current?.[key], obj) || 0;
@@ -395,29 +402,10 @@ const TeamMetrics = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen pt-32 px-6 md:px-12 flex items-center justify-center">
         <div className="max-w-md w-full">
-          {/* Modern Animated Loader */}
+          {/* Clean Modern Loader */}
           <div className="text-center">
-            {/* Animated Logo/Icon */}
-            <div className="relative mb-8">
-              <div className="w-24 h-24 mx-auto relative">
-                {/* Outer spinning ring */}
-                <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-                <div 
-                  className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-500 border-r-red-400 animate-spin"
-                  style={{
-                    background: `conic-gradient(from 0deg, #ef4444, #dc2626, #b91c1c, transparent)`
-                  }}
-                ></div>
-                
-                {/* Inner football icon */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <FaFootballBall className="text-3xl text-gray-600 animate-pulse" />
-                </div>
-              </div>
-            </div>
-
             {/* Loading Text */}
             <h2 className="text-2xl font-bold text-gray-800 mb-4">
               Loading Team Analytics
@@ -441,20 +429,6 @@ const TeamMetrics = () => {
             {/* Percentage */}
             <div className="text-lg font-semibold text-gray-700">
               {loadingProgress.toFixed(0)}%
-            </div>
-
-            {/* Animated dots */}
-            <div className="flex justify-center space-x-2 mt-6">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-600 animate-bounce"
-                  style={{
-                    animationDelay: `${i * 0.2}s`,
-                    animationDuration: '1s'
-                  }}
-                ></div>
-              ))}
             </div>
           </div>
         </div>
@@ -637,6 +611,7 @@ const TeamMetrics = () => {
                 getTeamLogo={getTeamLogo}
                 isSelected={selectedTeamsForComparison.find(t => t.school === team.school)}
                 onToggleComparison={() => toggleTeamComparison(team)}
+                onAdvancedAnalytics={handleAdvancedAnalytics}
               />
             ))
           )}
@@ -657,7 +632,7 @@ const TeamMetrics = () => {
 };
 
 // Team Metric Card Component
-const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSortIcon, getRatingColor, getTrendIcon, getTeamLogo, isSelected, onToggleComparison }) => {
+const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSortIcon, getRatingColor, getTrendIcon, getTeamLogo, isSelected, onToggleComparison, onAdvancedAnalytics }) => {
   const [expanded, setExpanded] = useState(false);
 
   if (viewMode === 'compact') {
@@ -777,13 +752,22 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
 
       {/* Advanced Metrics (Expandable) */}
       <div className="border-t pt-4">
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center justify-between w-full text-left font-semibold text-gray-700 hover:text-gray-900"
-        >
-          <span>Advanced Analytics</span>
-          <FaChartLine className={`transform transition-transform ${expanded ? 'rotate-180' : ''}`} />
-        </button>
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center text-left font-semibold text-gray-700 hover:text-gray-900"
+          >
+            <span>Advanced Analytics</span>
+            <FaChartLine className={`ml-2 transform transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          </button>
+          
+          <button
+            onClick={() => onAdvancedAnalytics(team)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
+          >
+            View Full Analysis
+          </button>
+        </div>
         
         {expanded && (
           <div className="mt-4 space-y-4">
