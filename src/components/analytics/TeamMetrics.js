@@ -821,6 +821,22 @@ const TeamMetrics = ({ onNavigate }) => {
     return team.logos?.[0] || `/photos/${team.school}.png`;
   };
 
+  // eslint-disable-next-line no-unused-vars
+  const getOpponentLogo = (opponentName) => {
+    const opponentTeam = teams.find(t => 
+      t.school === opponentName || 
+      t.school?.replace('&', 'and') === opponentName ||
+      t.alternateNames?.includes(opponentName)
+    );
+    
+    if (opponentTeam && opponentTeam.logos?.[0]) {
+      return opponentTeam.logos[0];
+    }
+    
+    // Fallback to local photo
+    return `/photos/${opponentName}.png`;
+  };
+
 
   if (loading) {
     return (
@@ -1402,21 +1418,7 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
                   </div>
                   <div className="flex items-center space-x-2">
                     <img 
-                      src={(() => {
-                        // Try to find the opponent in our teams data
-                        const opponentTeam = teams.find(t => 
-                          t.school === team.nextGame.opponent || 
-                          t.school?.replace('&', 'and') === team.nextGame.opponent ||
-                          t.alternateNames?.includes(team.nextGame.opponent)
-                        );
-                        
-                        if (opponentTeam && opponentTeam.logos?.[0]) {
-                          return opponentTeam.logos[0];
-                        }
-                        
-                        // Fallback to local photo
-                        return `/photos/${team.nextGame.opponent}.png`;
-                      })()}
+                      src={getOpponentLogo(team.nextGame.opponent)}
                       alt={team.nextGame.opponent}
                       className="w-6 h-6 object-contain"
                       onError={(e) => {
