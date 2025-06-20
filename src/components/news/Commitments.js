@@ -286,17 +286,18 @@ const Commitments = () => {
   // Filter commitments based on selected filters
   const filteredCommitments = useMemo(() => {
     return commitments.filter(commitment => {
-      const matchesConference = selectedConference === 'all' || commitment.conference === selectedConference;
-      const matchesPosition = selectedPosition === 'all' || commitment.position === selectedPosition;
-      const matchesRating = selectedRating === 'all' || commitment.rating.toString() === selectedRating;
-      const matchesSearch = searchTerm === '' || 
-        commitment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        commitment.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        commitment.highSchool.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPosition = filters.position === 'All' || commitment.position === filters.position;
+      const matchesStars = filters.stars === 0 || (commitment.stars || 0) >= filters.stars;
+      const matchesTeam = !filters.team || 
+        (commitment.committedTo && commitment.committedTo.toLowerCase().includes(filters.team.toLowerCase()));
+      const matchesCommitted = filters.committed === 'all' ||
+        (filters.committed === 'committed' && commitment.committedTo) ||
+        (filters.committed === 'uncommitted' && !commitment.committedTo);
+      const matchesState = filters.state === 'All' || commitment.stateProvince === filters.state;
       
-      return matchesConference && matchesPosition && matchesRating && matchesSearch;
+      return matchesPosition && matchesStars && matchesTeam && matchesCommitted && matchesState;
     });
-  }, [commitments, selectedConference, selectedPosition, selectedRating, searchTerm]);
+  }, [commitments, filters]);
 
   // Get unique values for filters
   const conferences = [...new Set(commitments.map(c => c.conference))];
@@ -471,12 +472,12 @@ const Commitments = () => {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
-                <MapBounds commitments={filteredCommitments} />
+                <MapControls />
                 {filteredCommitments.map((commitment) => (
                   <Marker
                     key={commitment.id}
                     position={commitment.coordinates}
-                    icon={customIcon}
+                    icon={createStarIcon(commitment.stars || commitment.rating || 4)}
                   >
                     <Popup>
                       <div className="p-2 min-w-48">
