@@ -160,47 +160,6 @@ const Commitments = () => {
     return stateCoords[state] || [39.8283, -98.5795]; // Default to center of US
   };
 
-  // Helper function to get team conference and image
-  const getTeamInfo = useCallback((teamName) => {
-    const team = teams.find(t => 
-      t.school?.toLowerCase() === teamName?.toLowerCase() ||
-      t.mascot?.toLowerCase() === teamName?.toLowerCase()
-    );
-    return {
-      conference: team?.conference || 'Independent',
-      image: team?.logos?.[0] || `/photos/${teamName?.replace(/\s+/g, '')}.jpg`
-    };
-  }, [teams]);
-
-  // Convert API recruit data to component format
-  const transformRecruitData = useCallback((recruits) => {
-    return recruits.map((recruit, index) => {
-      const teamInfo = getTeamInfo(recruit.recruitedBy || recruit.college);
-      const coordinates = recruit.stateProvince ? 
-        getStateCoordinates(recruit.stateProvince) : 
-        [39.8283, -98.5795]; // Default to center of US
-
-      return {
-        id: recruit.id || `recruit-${index}`,
-        name: `${recruit.name || 'Unknown Recruit'}`,
-        position: recruit.position || 'ATH',
-        rating: recruit.stars || recruit.rating || 3,
-        height: recruit.height || 'N/A',
-        weight: recruit.weight || 'N/A',
-        school: recruit.recruitedBy || recruit.college || 'Uncommitted',
-        conference: teamInfo.conference,
-        highSchool: recruit.school || 'Unknown High School',
-        city: recruit.city || 'Unknown',
-        state: recruit.stateProvince || 'Unknown',
-        coordinates: coordinates,
-        committed: recruit.recruitedBy ? true : false,
-        commitDate: recruit.committedTo || new Date().toISOString(),
-        recruitingRank: recruit.ranking || index + 1,
-        image: teamInfo.image
-      };
-    });
-  }, [getTeamInfo]);
-
   useEffect(() => {
     const fetchCommitments = async () => {
       try {
@@ -225,9 +184,47 @@ const Commitments = () => {
         setTeams(teamsData || []);
         setLoadingProgress(80);
         
-        // Step 5: Transform recruit data (90%)
-        const transformedRecruits = transformRecruitData(recruitsData || []);
+        // Step 5: Transform recruit data (90%) - move transform function here
         setLoadingProgress(90);
+        
+        // Helper function to get team conference and image
+        const getTeamInfo = (teamName) => {
+          const team = (teamsData || []).find(t => 
+            t.school?.toLowerCase() === teamName?.toLowerCase() ||
+            t.mascot?.toLowerCase() === teamName?.toLowerCase()
+          );
+          return {
+            conference: team?.conference || 'Independent',
+            image: team?.logos?.[0] || `/photos/${teamName?.replace(/\s+/g, '')}.jpg`
+          };
+        };
+
+        // Transform recruit data
+        const transformedRecruits = (recruitsData || []).map((recruit, index) => {
+          const teamInfo = getTeamInfo(recruit.recruitedBy || recruit.college);
+          const coordinates = recruit.stateProvince ? 
+            getStateCoordinates(recruit.stateProvince) : 
+            [39.8283, -98.5795]; // Default to center of US
+
+          return {
+            id: recruit.id || `recruit-${index}`,
+            name: `${recruit.name || 'Unknown Recruit'}`,
+            position: recruit.position || 'ATH',
+            rating: recruit.stars || recruit.rating || 3,
+            height: recruit.height || 'N/A',
+            weight: recruit.weight || 'N/A',
+            school: recruit.recruitedBy || recruit.college || 'Uncommitted',
+            conference: teamInfo.conference,
+            highSchool: recruit.school || 'Unknown High School',
+            city: recruit.city || 'Unknown',
+            state: recruit.stateProvince || 'Unknown',
+            coordinates: coordinates,
+            committed: recruit.recruitedBy ? true : false,
+            commitDate: recruit.committedTo || new Date().toISOString(),
+            recruitingRank: recruit.ranking || index + 1,
+            image: teamInfo.image
+          };
+        });
         
         // Step 6: Set final data (100%)
         setCommitments(transformedRecruits);
@@ -293,7 +290,7 @@ const Commitments = () => {
     };
 
     fetchCommitments();
-  }, [transformRecruitData]);
+  }, []); // Empty dependency array - only run once on mount
 
   // Filter commitments based on selected filters
   const filteredCommitments = useMemo(() => {
