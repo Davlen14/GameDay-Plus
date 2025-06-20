@@ -212,7 +212,7 @@ const TeamMetrics = ({ onNavigate }) => {
       
       // Phase 2: Get ALL data at once (like working test logic)
       const [allRankings, allEloRatings, allSpRatings, allFpiRatings, allRecords, week1Games] = await Promise.all([
-        teamService.getRankings(2024, 18).catch(() => null), // 2024 final regular season rankings (week 18)
+        teamService.getRankings(2024, 1, null, 'postseason').catch(() => null), // 2024 postseason week 1 AP poll (correct call)
         teamService.getEloRatings(2024, 18).catch(() => null), // All Elo ratings final week
         teamService.getSPRatings(2024).catch(() => null), // All SP+ ratings
         teamService.getFPIRatings(2024).catch(() => null), // All FPI ratings
@@ -359,29 +359,38 @@ const TeamMetrics = ({ onNavigate }) => {
     
     // Extract real rankings from API data (2024 postseason AP poll)
     let apRank = null, coachesRank = null, playoffRank = null;
-    if (rankingsData && rankingsData.polls) {
-      // Find AP Top 25 ranking from postseason poll
-      const apPoll = rankingsData.polls.find(poll => poll.poll === 'AP Top 25');
-      if (apPoll && apPoll.ranks) {
-        const teamRanking = apPoll.ranks.find(rank => rank.school === team.school);
-        if (teamRanking) {
-          apRank = teamRanking.rank;
-          console.log(`🏆 ${team.school} AP ranking:`, apRank);
+    if (rankingsData && rankingsData.length > 0) {
+      console.log(`🔍 Looking for rankings for ${team.school} in:`, rankingsData);
+      
+      // The API returns an array, get the first (and likely only) ranking data
+      const rankingWeek = rankingsData[0];
+      if (rankingWeek && rankingWeek.polls) {
+        // Find AP Top 25 ranking from postseason poll
+        const apPoll = rankingWeek.polls.find(poll => poll.poll === 'AP Top 25');
+        if (apPoll && apPoll.ranks) {
+          const teamRanking = apPoll.ranks.find(rank => 
+            rank.school === team.school || 
+            rank.school === team.school?.replace('&', 'and') ||
+            rank.school === team.school?.replace('and', '&')
+          );
+          if (teamRanking) {
+            apRank = teamRanking.rank;
+            console.log(`🏆 ${team.school} AP postseason ranking:`, apRank);
+          }
         }
-      }
-      
-      // Find Coaches Poll ranking
-      const coachesPoll = rankingsData.polls.find(poll => poll.poll === 'Coaches Poll');
-      if (coachesPoll && coachesPoll.ranks) {
-        const teamRanking = coachesPoll.ranks.find(rank => rank.school === team.school);
-        if (teamRanking) coachesRank = teamRanking.rank;
-      }
-      
-      // Find Playoff Committee ranking
-      const playoffPoll = rankingsData.polls.find(poll => poll.poll === 'Playoff Committee Rankings');
-      if (playoffPoll && playoffPoll.ranks) {
-        const teamRanking = playoffPoll.ranks.find(rank => rank.school === team.school);
-        if (teamRanking) playoffRank = teamRanking.rank;
+        
+        // Find Coaches Poll ranking
+        const coachesPoll = rankingWeek.polls.find(poll => poll.poll === 'Coaches Poll');
+        if (coachesPoll && coachesPoll.ranks) {
+          const teamRanking = coachesPoll.ranks.find(rank => 
+            rank.school === team.school || 
+            rank.school === team.school?.replace('&', 'and') ||
+            rank.school === team.school?.replace('and', '&')
+          );
+          if (teamRanking) coachesRank = teamRanking.rank;
+        }
+        
+        // Note: No playoff committee poll in postseason week 1, so skip that
       }
     }
     
