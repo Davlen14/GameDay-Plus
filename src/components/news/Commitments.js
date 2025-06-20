@@ -1,44 +1,77 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Icon } from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { rankingsService } from '../../services/rankingsService';
 import { teamService } from '../../services/teamService';
 
-// Fix for default markers in React-Leaflet
-import L from 'leaflet';
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-});
+// Conditionally import Leaflet components
+let MapContainer, TileLayer, Marker, Popup, useMap, Icon, L;
+let leafletAvailable = true;
 
-// Custom icon for markers
-const customIcon = new Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+try {
+  const leafletComponents = require('react-leaflet');
+  MapContainer = leafletComponents.MapContainer;
+  TileLayer = leafletComponents.TileLayer;
+  Marker = leafletComponents.Marker;
+  Popup = leafletComponents.Popup;
+  useMap = leafletComponents.useMap;
+  
+  const leaflet = require('leaflet');
+  Icon = leaflet.Icon;
+  L = leaflet;
+  
+  // Import CSS
+  require('leaflet/dist/leaflet.css');
+  
+  // Fix for default markers in React-Leaflet
+  if (L && L.Icon && L.Icon.Default) {
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+      iconUrl: require('leaflet/dist/images/marker-icon.png'),
+      shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+    });
+  }
+} catch (error) {
+  console.warn('Leaflet not available, map functionality will be disabled');
+  leafletAvailable = false;
+}
 
-// Component to auto-fit map to markers
-const MapBounds = ({ commitments }) => {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (commitments.length > 0) {
-      const group = new L.featureGroup(commitments.map(c => 
-        L.marker([c.coordinates[0], c.coordinates[1]])
-      ));
-      map.fitBounds(group.getBounds().pad(0.1));
-    }
-  }, [commitments, map]);
-  
-  return null;
-};
+// Custom icon for markers (only if Leaflet is available)
+let customIcon;
+if (leafletAvailable && Icon) {
+  customIcon = new Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+}
+
+// Component to auto-fit map to markers (only if Leaflet is available)
+let MapBounds;
+if (leafletAvailable && useMap) {
+  MapBounds = ({ commitments }) => {
+    const map = useMap();
+    
+    useEffect(() => {
+      if (commitments.length > 0 && map && L) {
+        try {
+          const group = new L.featureGroup(commitments.map(c => 
+            L.marker([c.coordinates[0], c.coordinates[1]])
+          ));
+          map.fitBounds(group.getBounds().pad(0.1));
+        } catch (error) {
+          console.warn('Error fitting map bounds:', error);
+        }
+      }
+    }, [commitments, map]);
+    
+    return null;
+  };
+} else {
+  MapBounds = () => null;
+}
 
 const Commitments = () => {
   const [commitments, setCommitments] = useState([]);
@@ -89,7 +122,7 @@ const Commitments = () => {
   };
 
   // Convert API recruit data to component format
-  const transformRecruitData = (recruits) => {
+  const transformRecruitData = useCallback((recruits) => {
     return recruits.map((recruit, index) => {
       const teamInfo = getTeamInfo(recruit.recruitedBy || recruit.college);
       const coordinates = recruit.stateProvince ? 
@@ -115,7 +148,7 @@ const Commitments = () => {
         image: teamInfo.image
       };
     });
-  };
+  }, [teams]);
 
   useEffect(() => {
     const fetchCommitments = async () => {
@@ -192,7 +225,7 @@ const Commitments = () => {
     };
 
     fetchCommitments();
-  }, []);
+  }, [transformRecruitData]);
 
   // Filter commitments based on selected filters
   const filteredCommitments = useMemo(() => {
@@ -372,40 +405,50 @@ const Commitments = () => {
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/20">
           <h2 className="text-2xl font-bold text-white mb-4">📍 Commitment Map</h2>
           <div className="h-96 rounded-lg overflow-hidden">
-            <MapContainer
-              center={[39.8283, -98.5795]} // Center of USA
-              zoom={4}
-              style={{ height: '100%', width: '100%' }}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-              <MapBounds commitments={filteredCommitments} />
-              {filteredCommitments.map((commitment) => (
-                <Marker
-                  key={commitment.id}
-                  position={commitment.coordinates}
-                  icon={customIcon}
-                >
-                  <Popup>
-                    <div className="p-2 min-w-48">
-                      <div className="font-bold text-lg text-red-800">{commitment.name}</div>
-                      <div className="text-sm text-gray-600 mb-2">
-                        {commitment.position} • {getStarRating(commitment.rating)}
+            {leafletAvailable && MapContainer ? (
+              <MapContainer
+                center={[39.8283, -98.5795]} // Center of USA
+                zoom={4}
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                <MapBounds commitments={filteredCommitments} />
+                {filteredCommitments.map((commitment) => (
+                  <Marker
+                    key={commitment.id}
+                    position={commitment.coordinates}
+                    icon={customIcon}
+                  >
+                    <Popup>
+                      <div className="p-2 min-w-48">
+                        <div className="font-bold text-lg text-red-800">{commitment.name}</div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          {commitment.position} • {getStarRating(commitment.rating)}
+                        </div>
+                        <div className="text-sm">
+                          <div><strong>School:</strong> {commitment.school}</div>
+                          <div><strong>High School:</strong> {commitment.highSchool}</div>
+                          <div><strong>Size:</strong> {commitment.height}, {commitment.weight}</div>
+                          <div><strong>Committed:</strong> {formatCommitDate(commitment.commitDate)}</div>
+                          <div><strong>Rank:</strong> #{commitment.recruitingRank}</div>
+                        </div>
                       </div>
-                      <div className="text-sm">
-                        <div><strong>School:</strong> {commitment.school}</div>
-                        <div><strong>High School:</strong> {commitment.highSchool}</div>
-                        <div><strong>Size:</strong> {commitment.height}, {commitment.weight}</div>
-                        <div><strong>Committed:</strong> {formatCommitDate(commitment.commitDate)}</div>
-                        <div><strong>Rank:</strong> #{commitment.recruitingRank}</div>
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            ) : (
+              <div className="bg-white/5 rounded-lg h-full flex items-center justify-center">
+                <div className="text-center text-white">
+                  <div className="text-4xl mb-4">🗺️</div>
+                  <div className="text-lg mb-2">Interactive Map Coming Soon</div>
+                  <div className="text-red-200 text-sm">Map functionality requires additional setup</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
