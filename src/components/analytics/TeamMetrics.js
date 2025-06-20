@@ -187,9 +187,7 @@ const TeamMetrics = ({ onNavigate }) => {
     console.log(`🎯 API Tests Complete: ${passedTests}/${testResults.length} passed`);
     
     return allPassed;
-  };
-
-  const loadTeamData = async () => {
+  };  const loadTeamData = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -209,40 +207,54 @@ const TeamMetrics = ({ onNavigate }) => {
       setConferences(uniqueConferences.sort());
       
       setLoadingProgress(30);
-      setLoadingText('Loading season records...');
+      setLoadingText('Loading global rankings and ratings...');
       
-      // Phase 2: Enhanced data with real API calls in batches
-      const batchSize = 8; // Optimized batch size
+      // Phase 2: Get ALL data at once (like working test logic)
+      const [allRankings, allEloRatings, allSpRatings, allFpiRatings] = await Promise.all([
+        teamService.getRankings(2024, 1, null, 'postseason').catch(() => null), // 2024 postseason week 1
+        teamService.getEloRatings(2024, 15).catch(() => null), // All Elo ratings week 15
+        teamService.getSPRatings(2024).catch(() => null), // All SP+ ratings
+        teamService.getFPIRatings(2024).catch(() => null) // All FPI ratings
+      ]);
+      
+      console.log('✅ Global data loaded:', { allRankings, allEloRatings, allSpRatings, allFpiRatings });
+      
+      setLoadingProgress(60);
+      setLoadingText('Processing individual team data...');
+      
+      // Phase 3: Process teams in smaller batches for individual data (records, games, recruiting)
+      const batchSize = 10; // Smaller batches for individual calls
       const enhancedTeams = [];
       
       for (let i = 0; i < allTeams.length; i += batchSize) {
         const batch = allTeams.slice(i, i + batchSize);
-        const progress = 30 + ((i / allTeams.length) * 50);
+        const progress = 60 + ((i / allTeams.length) * 30);
         setLoadingProgress(progress);
         setLoadingText(`Processing teams ${i + 1}-${Math.min(i + batchSize, allTeams.length)}...`);
         
         const batchPromises = batch.map(async (team) => {
           try {
-            // Core data calls (FIXED - using correct services)
-            const [records, spRating, games] = await Promise.all([
-              teamService.getTeamRecords(team.school, selectedYear).catch(() => null),
-              teamService.getSPRatings(selectedYear, team.school).catch(() => null),
-              teamService.getTeamGames(team.school, selectedYear).catch(() => null)
+            // Only get individual team data (records, games, recruiting)
+            const [records, games, recruiting] = await Promise.all([
+              teamService.getTeamRecords(team.school, 2024).catch(() => null),
+              teamService.getTeamGames(team.school, 2024).catch(() => null),
+              teamService.getRecruitingRankings(2024, team.school).catch(() => null)
             ]);
             
-      // Enhanced data (FIXED - using correct services with fallbacks)
-            const [eloRating, fpiRating, recruiting, rankingsData, bettingData] = await Promise.all([
-              teamService.getEloRatings(selectedYear, null, team.school).catch(() => null),
-              teamService.getFPIRatings(selectedYear, team.school).catch(() => null),
-              teamService.getRecruitingRankings(selectedYear, team.school).catch(() => null),
-              teamService.getRankings(selectedYear, 15).catch(() => null), // Get all rankings data
-              bettingService.getBettingLines(null, selectedYear, 1, 'regular', team.school).catch(() => null) // Week 1 lines as fallback
-            ]);
-            
-            return createEnhancedTeam(team, records, spRating, games, eloRating, fpiRating, recruiting, rankingsData, bettingData);
+            return createEnhancedTeam(
+              team, 
+              records, 
+              extractTeamData(allSpRatings, team.school), // Extract from global SP+ data
+              games, 
+              extractTeamData(allEloRatings, team.school), // Extract from global Elo data
+              extractTeamData(allFpiRatings, team.school), // Extract from global FPI data
+              recruiting, 
+              allRankings, // Pass full rankings to extract individual team ranking
+              null // betting data - skip for now
+            );
           } catch (error) {
-            console.log(`⚠️ Using fallback data for ${team.school}`);
-            return createEnhancedTeam(team); // Fallback to mock data
+            console.log(`⚠️ Error processing ${team.school}, using fallback data`);
+            return createEnhancedTeam(team, null, null, null, null, null, null, allRankings, null);
           }
         });
         
@@ -251,7 +263,7 @@ const TeamMetrics = ({ onNavigate }) => {
         
         // Small delay to prevent rate limiting
         if (i + batchSize < allTeams.length) {
-          await new Promise(resolve => setTimeout(resolve, 150));
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
       
@@ -285,15 +297,27 @@ const TeamMetrics = ({ onNavigate }) => {
     }
   };
 
+  // Helper function to extract individual team data from global arrays
+  const extractTeamData = (globalData, teamName) => {
+    if (!globalData || !Array.isArray(globalData)) return null;
+    return globalData.find(item => 
+      item.team === teamName || 
+      item.school === teamName ||
+      item.name === teamName
+    );
+  };
+
   const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null, rankingsData = null, bettingData = null) => {
     // Calculate wins/losses from games or use records
     let wins = 0, losses = 0, conferenceWins = 0, conferenceLosses = 0;
     
     if (games && games.length > 0) {
       games.forEach(game => {
+        if (!game.completed) return; // Skip incomplete games
+        
         const isHomeTeam = game.home_team === team.school || game.homeTeam === team.school;
-        const teamPoints = isHomeTeam ? (game.home_points || game.homeScore) : (game.away_points || game.awayScore);
-        const opponentPoints = isHomeTeam ? (game.away_points || game.awayScore) : (game.home_points || game.homeScore);
+        const teamPoints = isHomeTeam ? (game.home_points || game.homeScore || 0) : (game.away_points || game.awayScore || 0);
+        const opponentPoints = isHomeTeam ? (game.away_points || game.awayScore || 0) : (game.home_points || game.homeScore || 0);
         
         if (teamPoints > opponentPoints) wins++;
         else if (teamPoints < opponentPoints) losses++;
@@ -309,70 +333,71 @@ const TeamMetrics = ({ onNavigate }) => {
       losses = record.total?.losses || 0;
       conferenceWins = record.conferenceGames?.wins || 0;
       conferenceLosses = record.conferenceGames?.losses || 0;
-    } else {
-      // Fallback mock data
-      wins = Math.floor(Math.random() * 8) + 4;
-      losses = Math.floor(Math.random() * 6) + 1;
-      conferenceWins = Math.floor(wins * 0.7);
-      conferenceLosses = Math.floor(losses * 0.7);
     }
     
-    // Extract real rankings from API data
+    // Extract real rankings from API data (using working test logic structure)
     let apRank = null, coachesRank = null, playoffRank = null;
     if (rankingsData && rankingsData.polls) {
       // Find AP Top 25 ranking
       const apPoll = rankingsData.polls.find(poll => poll.poll === 'AP Top 25');
-      if (apPoll) {
+      if (apPoll && apPoll.ranks) {
         const teamRanking = apPoll.ranks.find(rank => rank.school === team.school);
         if (teamRanking) apRank = teamRanking.rank;
       }
       
       // Find Coaches Poll ranking
       const coachesPoll = rankingsData.polls.find(poll => poll.poll === 'Coaches Poll');
-      if (coachesPoll) {
+      if (coachesPoll && coachesPoll.ranks) {
         const teamRanking = coachesPoll.ranks.find(rank => rank.school === team.school);
         if (teamRanking) coachesRank = teamRanking.rank;
       }
       
       // Find Playoff Committee ranking
       const playoffPoll = rankingsData.polls.find(poll => poll.poll === 'Playoff Committee Rankings');
-      if (playoffPoll) {
+      if (playoffPoll && playoffPoll.ranks) {
         const teamRanking = playoffPoll.ranks.find(rank => rank.school === team.school);
         if (teamRanking) playoffRank = teamRanking.rank;
       }
     }
     
-    // SP+ Rating calculations
-    const spOverall = spRating?.rating || (Math.random() * 40 + 10);
-    const spOffense = spRating?.offense?.rating || (Math.random() * 30 + 15);
-    const spDefense = spRating?.defense?.rating || (Math.random() * 30 + 10);
+    // Use real API data or reasonable defaults (no random mock data)
+    const spOverall = spRating?.rating || 0;
+    const spOffense = spRating?.offense?.rating || 0;
+    const spDefense = spRating?.defense?.rating || 0;
+    const eloRatingValue = eloRating?.elo || 1500; // Standard Elo starting point
+    const fpiRatingValue = fpiRating?.fpi || 0;
     
-    // Overall rating composite
-    const winPercentage = wins / (wins + losses) || 0.5;
-    const overallRating = (spOverall * 0.5) + (winPercentage * 100 * 0.3) + (Math.random() * 20 + 40);
+    // Calculate win percentage
+    const totalGames = wins + losses;
+    const winPercentage = totalGames > 0 ? (wins / totalGames) : 0.5;
     
-    // Market confidence (betting implied)
-    const marketConfidence = Math.min(overallRating / 10, 10);
+    // Overall rating based on real data
+    let overallRating = 50; // Base rating
+    if (spOverall > 0) overallRating += spOverall * 0.8;
+    if (winPercentage > 0) overallRating += winPercentage * 30;
+    if (eloRatingValue > 1500) overallRating += (eloRatingValue - 1500) / 20;
     
-    // Determine trending direction
+    // Market confidence based on actual performance
+    const marketConfidence = Math.min(Math.max(overallRating / 10, 1), 10);
+    
+    // Determine trending based on recent games
     let trending = 'stable';
     if (games && games.length >= 4) {
-      const recentGames = games.slice(-4);
+      const recentGames = games.slice(-4).filter(g => g.completed);
       const recentWins = recentGames.filter(g => {
         const isHomeTeam = g.home_team === team.school || g.homeTeam === team.school;
-        const teamPoints = isHomeTeam ? (g.home_points || g.homeScore) : (g.away_points || g.awayScore);
-        const opponentPoints = isHomeTeam ? (g.away_points || g.awayScore) : (g.home_points || g.homeScore);
+        const teamPoints = isHomeTeam ? (g.home_points || g.homeScore || 0) : (g.away_points || g.awayScore || 0);
+        const opponentPoints = isHomeTeam ? (g.away_points || g.awayScore || 0) : (g.home_points || g.homeScore || 0);
         return teamPoints > opponentPoints;
       }).length;
+      
       if (recentWins >= 3) trending = 'up';
       else if (recentWins <= 1) trending = 'down';
-    } else {
-      trending = Math.random() > 0.6 ? 'up' : Math.random() > 0.6 ? 'down' : 'stable';
     }
     
-    // Offensive/Defensive efficiency
-    const offensiveEfficiency = Math.max(20, Math.min(100, spOffense + 50 + (Math.random() * 20 - 10)));
-    const defensiveEfficiency = Math.max(20, Math.min(100, 100 - spDefense + 40 + (Math.random() * 20 - 10)));
+    // Efficiency calculations based on real SP+ data
+    const offensiveEfficiency = spOffense > 0 ? Math.max(20, Math.min(100, spOffense + 50)) : 50;
+    const defensiveEfficiency = spDefense > 0 ? Math.max(20, Math.min(100, 100 - spDefense + 40)) : 50;
     
     // Strength and concern analysis
     const strengths = analyzeStrengths(spOffense, spDefense, offensiveEfficiency, defensiveEfficiency);
@@ -380,7 +405,7 @@ const TeamMetrics = ({ onNavigate }) => {
     
     return {
       ...team,
-      // Core Performance
+      // Core Performance (REAL DATA)
       wins,
       losses,
       conferenceWins,
@@ -388,14 +413,14 @@ const TeamMetrics = ({ onNavigate }) => {
       winPercentage: winPercentage * 100,
       overallRating,
       
-      // Rating Systems
+      // Rating Systems (REAL DATA)
       spRating: {
         overall: spOverall,
         offense: spOffense,
         defense: spDefense
       },
-      eloRating: eloRating?.elo || (Math.random() * 800 + 1200),
-      fpiRating: fpiRating?.fpi || (Math.random() * 30 + 5),
+      eloRating: eloRatingValue,
+      fpiRating: fpiRatingValue,
       
       // Efficiency Metrics
       offensiveEfficiency,
@@ -403,13 +428,13 @@ const TeamMetrics = ({ onNavigate }) => {
       marketConfidence,
       trending,
       
-      // Recruiting & Talent
+      // Recruiting & Talent (REAL DATA)
       recruiting: {
-        rank: recruiting?.rank || Math.floor(Math.random() * 130) + 1,
-        points: recruiting?.points || Math.random() * 300 + 50
+        rank: recruiting?.rank || null,
+        points: recruiting?.points || null
       },
       
-      // Real Rankings data from API
+      // Real Rankings data from API (REAL DATA)
       rankings: {
         ap: apRank,
         coaches: coachesRank,
@@ -417,7 +442,7 @@ const TeamMetrics = ({ onNavigate }) => {
       },
       apRank, // For backwards compatibility
       
-      // Betting market insights (from bettingService)
+      // Betting market insights
       bettingInsights: generateBettingInsights(bettingData, marketConfidence),
       
       // Analysis
