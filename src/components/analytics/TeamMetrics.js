@@ -722,61 +722,98 @@ const TeamMetrics = ({ onNavigate }) => {
                 {Object.entries({
                   teams: { name: 'FBS Teams', endpoint: 'GET /teams' },
                   records: { name: 'Team Records', endpoint: 'GET /records' },
+                  teamGames: { name: 'Team Games', endpoint: 'GET /games' },
                   spRatings: { name: 'SP+ Ratings', endpoint: 'GET /ratings/sp' },
                   eloRatings: { name: 'Elo Ratings', endpoint: 'GET /ratings/elo' },
                   fpiRatings: { name: 'FPI Ratings', endpoint: 'GET /ratings/fpi' },
                   recruiting: { name: 'Recruiting Rankings', endpoint: 'GET /recruiting/teams' },
                   rankings: { name: 'Poll Rankings', endpoint: 'GET /rankings' },
+                  apPollPostseason: { name: 'AP Poll Postseason', endpoint: 'GET /rankings (postseason)' },
                   betting: { name: 'Betting Lines', endpoint: 'GET /lines' }
                 }).map(([key, config]) => {
                   const test = apiTests[key];
                   return (
-                    <div key={key} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 truncate">{config.name}</h3>
-                        <p className="text-xs text-gray-500">{config.endpoint}</p>
-                        {test.error && (
-                          <p className="text-xs text-red-600 mt-1 truncate">Error: {test.error}</p>
-                        )}
-                        {test.data && (
-                          <p className="text-xs text-green-600 mt-1">
-                            ✅ {Array.isArray(test.data) ? `${test.data.length} records` : 'Data loaded'}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2 ml-2">
-                        <button
-                          onClick={() => testEndpoint(key, () => {
-                            switch(key) {
-                              case 'teams': return teamService.getFBSTeams(true);
-                              case 'records': return teamService.getTeamRecords('Alabama', 2024);
-                              case 'teamGames': return teamService.getTeamGames('Alabama', 2024);
-                              case 'spRatings': return teamService.getSPRatings(2024, 'Alabama');
-                              case 'eloRatings': return teamService.getEloRatings(2024, 15); // Week 15 
-                              case 'fpiRatings': return teamService.getFPIRatings(2024, 'Alabama');
-                              case 'recruiting': return teamService.getRecruitingRankings(2024, 'Alabama');
-                              case 'rankings': return teamService.getRankings(2024, 15); // Week 15 rankings
-                              case 'apPollPostseason': return teamService.getRankings(2023, 1, null, 'postseason'); // 2023 postseason
-                              case 'betting': return bettingService.getBettingLines(null, 2024, 1, 'regular', 'Alabama');
-                              default: return Promise.resolve([]);
-                            }
-                          })}
-                          disabled={test.status === 'testing'}
-                          className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                        >
-                          {test.status === 'testing' ? (
-                            <FaBolt className="animate-spin" />
-                          ) : (
-                            <FaEye />
+                    <div key={key} className="border rounded-lg bg-gray-50 overflow-hidden">
+                      <div className="flex items-center justify-between p-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 truncate">{config.name}</h3>
+                          <p className="text-xs text-gray-500">{config.endpoint}</p>
+                          {test.error && (
+                            <p className="text-xs text-red-600 mt-1 truncate">Error: {test.error}</p>
                           )}
-                        </button>
-                        <div className={`w-3 h-3 rounded-full transition-colors ${
-                          test.status === 'success' ? 'bg-green-500' :
-                          test.status === 'error' ? 'bg-red-500' :
-                          test.status === 'testing' ? 'bg-yellow-500 animate-pulse' :
-                          'bg-gray-300'
-                        }`} />
+                          {test.data && (
+                            <p className="text-xs text-green-600 mt-1">
+                              ✅ {Array.isArray(test.data) ? `${test.data.length} records` : 'Data loaded'}
+                            </p>
+                          )}
+                          {test.message && (
+                            <p className="text-xs text-blue-600 mt-1">{test.message}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2 ml-2">
+                          <button
+                            onClick={() => testEndpoint(key, () => {
+                              switch(key) {
+                                case 'teams': return teamService.getFBSTeams(true);
+                                case 'records': return teamService.getTeamRecords('Alabama', 2024);
+                                case 'teamGames': return teamService.getTeamGames('Alabama', 2024);
+                                case 'spRatings': return teamService.getSPRatings(2024, 'Alabama');
+                                case 'eloRatings': return teamService.getEloRatings(2024, 15); // Week 15 
+                                case 'fpiRatings': return teamService.getFPIRatings(2024, 'Alabama');
+                                case 'recruiting': return teamService.getRecruitingRankings(2024, 'Alabama');
+                                case 'rankings': return teamService.getRankings(2024, 15); // Week 15 rankings
+                                case 'apPollPostseason': return teamService.getRankings(2023, 1, null, 'postseason'); // 2023 postseason
+                                case 'betting': return bettingService.getBettingLines(null, 2024, 1, 'regular', 'Alabama');
+                                default: return Promise.resolve([]);
+                              }
+                            })}
+                            disabled={test.status === 'testing'}
+                            className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                          >
+                            {test.status === 'testing' ? (
+                              <FaBolt className="animate-spin" />
+                            ) : (
+                              <FaEye />
+                            )}
+                          </button>
+                          <div className={`w-3 h-3 rounded-full transition-colors ${
+                            test.status === 'success' ? 'bg-green-500' :
+                            test.status === 'warning' ? 'bg-yellow-500' :
+                            test.status === 'error' ? 'bg-red-500' :
+                            test.status === 'testing' ? 'bg-blue-500 animate-pulse' :
+                            'bg-gray-300'
+                          }`} />
+                        </div>
                       </div>
+                      
+                      {/* Data Preview Section */}
+                      {test.data && (
+                        <div className="border-t bg-white">
+                          <div className="p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-gray-700">Data Preview:</span>
+                              <button
+                                onClick={() => {
+                                  const dataStr = JSON.stringify(test.data, null, 2);
+                                  navigator.clipboard.writeText(dataStr);
+                                  alert('Data copied to clipboard!');
+                                }}
+                                className="text-xs text-blue-600 hover:text-blue-800"
+                              >
+                                Copy JSON
+                              </button>
+                            </div>
+                            <div className="bg-gray-50 p-2 rounded text-xs font-mono max-h-32 overflow-y-auto border">
+                              <pre className="whitespace-pre-wrap text-gray-800">
+                                {Array.isArray(test.data) 
+                                  ? JSON.stringify(test.data.slice(0, 2), null, 2) + (test.data.length > 2 ? '\n... +' + (test.data.length - 2) + ' more records' : '')
+                                  : JSON.stringify(test.data, null, 2)
+                                }
+                              </pre>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
