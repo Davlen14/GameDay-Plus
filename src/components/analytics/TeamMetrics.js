@@ -4,7 +4,7 @@ import {
   FaTrophy, FaFootballBall, FaFire, FaShieldAlt, FaBullseye, FaBolt,
   FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle, FaExchangeAlt,
   FaEye, FaChartBar, FaUsers, FaMapMarkerAlt, FaStar, FaCalendarAlt,
-  FaGraduationCap, FaTarget
+  FaGraduationCap
 } from 'react-icons/fa';
 import { teamService } from '../../services/teamService';
 import { analyticsService } from '../../services/analyticsService';

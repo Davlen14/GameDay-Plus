@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   FaChartLine, FaArrowLeft, FaTrophy, FaFootballBall, FaShieldAlt, 
   FaBolt, FaUsers, FaStar, FaCalendarAlt, FaMapMarkerAlt, FaFire,
-  FaInfoCircle, FaChartBar, FaTarget, FaGraduationCap, FaBullseye,
+  FaInfoCircle, FaChartBar, FaGraduationCap, FaBullseye,
   FaArrowUp, FaArrowDown, FaMinus, FaPercent, FaClock,
   FaExchangeAlt, FaRocket, FaEye, FaGamepad, FaFlag
 } from 'react-icons/fa';
@@ -388,7 +388,7 @@ const TeamAdvancedAnalytics = ({ teamSlug, onNavigate }) => {
               { id: 'defense', label: 'Defense', icon: <FaShieldAlt /> },
               { id: 'advanced', label: 'Advanced', icon: <FaRocket /> },
               { id: 'recruiting', label: 'Recruiting', icon: <FaGraduationCap /> },
-              { id: 'betting', label: 'Betting', icon: <FaTarget /> }
+              { id: 'betting', label: 'Betting', icon: <FaBullseye /> }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -806,7 +806,7 @@ const TeamAdvancedAnalytics = ({ teamSlug, onNavigate }) => {
             {/* Betting Analysis */}
             <div className="bg-white rounded-xl shadow-lg p-8">
               <h2 className="text-2xl font-bold mb-6 flex items-center">
-                <FaTarget className="mr-3 text-green-600" />
+                <FaBullseye className="mr-3 text-green-600" />
                 Betting Market Analysis
               </h2>
               
