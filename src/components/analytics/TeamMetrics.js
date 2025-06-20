@@ -7,6 +7,7 @@ import {
   FaGraduationCap
 } from 'react-icons/fa';
 import { teamService } from '../../services/teamService';
+import { gameService } from '../../services/gameService';
 import { analyticsService } from '../../services/analyticsService';
 import { rankingsService } from '../../services/rankingsService';
 import { bettingService } from '../../services/bettingService';
@@ -169,14 +170,14 @@ const TeamMetrics = ({ onNavigate }) => {
     
     const testResults = await Promise.allSettled([
       testEndpoint('teams', () => teamService.getFBSTeams(true)),
-      testEndpoint('records', () => teamService.getTeamRecords('Alabama', 2024)),
+      testEndpoint('records', () => gameService.getRecords(2024, 'Alabama')), // Use correct records API
       testEndpoint('teamGames', () => teamService.getTeamGames('Alabama', 2024)),
       testEndpoint('spRatings', () => teamService.getSPRatings(2024, 'Alabama')),
-      testEndpoint('eloRatings', () => teamService.getEloRatings(2024, 15)), // Week 15 is likely to have data
+      testEndpoint('eloRatings', () => teamService.getEloRatings(2024, 18)), // Final week of season
       testEndpoint('fpiRatings', () => teamService.getFPIRatings(2024, 'Alabama')),
       testEndpoint('recruiting', () => teamService.getRecruitingRankings(2024, 'Alabama')),
-      testEndpoint('rankings', () => teamService.getRankings(2024, 15)), // Week 15 for end of season rankings
-      testEndpoint('apPollPostseason', () => teamService.getRankings(2023, 1, null, 'postseason')), // 2023 postseason more likely to exist
+      testEndpoint('rankings', () => teamService.getRankings(2024, 18)), // Final regular season rankings
+      testEndpoint('apPollPostseason', () => teamService.getRankings(2024, 1, null, 'postseason')), // Try postseason if available
       testEndpoint('betting', () => bettingService.getBettingLines(null, 2024, 1, 'regular', 'Alabama'))
     ]);
 
@@ -210,14 +211,15 @@ const TeamMetrics = ({ onNavigate }) => {
       setLoadingText('Loading global rankings and ratings...');
       
       // Phase 2: Get ALL data at once (like working test logic)
-      const [allRankings, allEloRatings, allSpRatings, allFpiRatings] = await Promise.all([
-        teamService.getRankings(2024, 1, null, 'postseason').catch(() => null), // 2024 postseason week 1 AP poll
-        teamService.getEloRatings(2024, 15).catch(() => null), // All Elo ratings week 15
+      const [allRankings, allEloRatings, allSpRatings, allFpiRatings, allRecords] = await Promise.all([
+        teamService.getRankings(2024, 18).catch(() => null), // 2024 final regular season rankings (week 18)
+        teamService.getEloRatings(2024, 18).catch(() => null), // All Elo ratings final week
         teamService.getSPRatings(2024).catch(() => null), // All SP+ ratings
-        teamService.getFPIRatings(2024).catch(() => null) // All FPI ratings
+        teamService.getFPIRatings(2024).catch(() => null), // All FPI ratings
+        gameService.getRecords(2024).catch(() => null) // ALL team records at once
       ]);
       
-      console.log('✅ Global data loaded:', { allRankings, allEloRatings, allSpRatings, allFpiRatings });
+      console.log('✅ Global data loaded:', { allRankings, allEloRatings, allSpRatings, allFpiRatings, allRecords });
       
       setLoadingProgress(60);
       setLoadingText('Processing individual team data...');
@@ -234,16 +236,15 @@ const TeamMetrics = ({ onNavigate }) => {
         
         const batchPromises = batch.map(async (team) => {
           try {
-            // Only get individual team data (records, games, recruiting)
-            const [records, games, recruiting] = await Promise.all([
-              teamService.getTeamRecords(team.school, 2024).catch(() => null),
+            // Only get individual team data that can't be batched (games, recruiting)
+            const [games, recruiting] = await Promise.all([
               teamService.getTeamGames(team.school, 2024).catch(() => null),
               teamService.getRecruitingRankings(2024, team.school).catch(() => null)
             ]);
             
             return createEnhancedTeam(
               team, 
-              records, 
+              allRecords, // Pass ALL records, function will find the right one
               extractTeamData(allSpRatings, team.school), // Extract from global SP+ data
               games, 
               extractTeamData(allEloRatings, team.school), // Extract from global Elo data
@@ -254,7 +255,7 @@ const TeamMetrics = ({ onNavigate }) => {
             );
           } catch (error) {
             console.log(`⚠️ Error processing ${team.school}, using fallback data`);
-            return createEnhancedTeam(team, null, null, null, null, null, null, allRankings, null);
+            return createEnhancedTeam(team, allRecords, null, null, null, null, null, allRankings, null);
           }
         });
         
@@ -308,18 +309,30 @@ const TeamMetrics = ({ onNavigate }) => {
   };
 
   const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null, rankingsData = null, bettingData = null) => {
-    // Calculate wins/losses from records data (your API structure)
+    // Calculate wins/losses from records data (actual API structure)
     let wins = 0, losses = 0, conferenceWins = 0, conferenceLosses = 0;
     
     if (records && records.length > 0) {
-      // Use the actual record structure from your API
-      const record = records[0];
-      wins = record.total?.wins || 0;
-      losses = record.total?.losses || 0;
-      conferenceWins = record.conferenceGames?.wins || 0;
-      conferenceLosses = record.conferenceGames?.losses || 0;
+      // Find the record for this specific team from the records array
+      const teamRecord = records.find(record => 
+        record.team === team.school || 
+        record.school === team.school ||
+        record.teamId === team.id
+      );
       
-      console.log(`📊 ${team.school} records:`, { wins, losses, conferenceWins, conferenceLosses });
+      if (teamRecord) {
+        wins = teamRecord.total?.wins || 0;
+        losses = teamRecord.total?.losses || 0;
+        conferenceWins = teamRecord.conferenceGames?.wins || 0;
+        conferenceLosses = teamRecord.conferenceGames?.losses || 0;
+        
+        console.log(`📊 ${team.school} records found:`, { 
+          wins, losses, conferenceWins, conferenceLosses,
+          teamRecord: teamRecord 
+        });
+      } else {
+        console.log(`⚠️ ${team.school} no record found in:`, records);
+      }
     } else if (games && games.length > 0) {
       // Fallback to game calculation if records not available
       games.forEach(game => {
@@ -337,6 +350,9 @@ const TeamMetrics = ({ onNavigate }) => {
           else if (teamPoints < opponentPoints) conferenceLosses++;
         }
       });
+      console.log(`📊 ${team.school} records from games:`, { wins, losses, conferenceWins, conferenceLosses });
+    } else {
+      console.log(`❌ ${team.school} no records or games data available`);
     }
     
     // Extract real rankings from API data (2024 postseason AP poll)
@@ -494,7 +510,8 @@ const TeamMetrics = ({ onNavigate }) => {
   };
 
   const generateNextGame = (team) => {
-    const opponents = ['Alabama', 'Georgia', 'Ohio State', 'Michigan', 'Texas', 'Oklahoma', 'LSU', 'Florida'];
+    // Since 2024 season is over, show 2025 season games (Week 1 of 2025)
+    const opponents = ['Alabama', 'Georgia', 'Ohio State', 'Michigan', 'Texas', 'Oklahoma', 'LSU', 'Florida', 'Notre Dame', 'USC'];
     const opponent = opponents[Math.floor(Math.random() * opponents.length)];
     const spread = (Math.random() * 20 - 10).toFixed(1);
     const isHome = Math.random() > 0.5;
@@ -503,7 +520,9 @@ const TeamMetrics = ({ onNavigate }) => {
       opponent,
       spread: parseFloat(spread),
       isHome,
-      week: Math.floor(Math.random() * 4) + 9 // Weeks 9-12
+      week: 1, // Week 1 of 2025 season
+      season: 2025,
+      date: 'August 30, 2025' // Typical season start date
     };
   };
 
@@ -1262,9 +1281,12 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-semibold text-blue-800">Next Game</div>
+                <div className="font-semibold text-blue-800">2025 Season Opener</div>
                 <div className="text-blue-700">
                   {team.nextGame.isHome ? 'vs' : '@'} {team.nextGame.opponent}
+                </div>
+                <div className="text-xs text-blue-600 mt-1">
+                  Week {team.nextGame.week} • {team.nextGame.date}
                 </div>
                 {team.bettingInsights && (
                   <div className="text-xs text-blue-600 mt-1">
