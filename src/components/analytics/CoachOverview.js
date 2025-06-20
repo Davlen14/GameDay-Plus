@@ -328,17 +328,17 @@ const CoachOverview = () => {
   };
 
   const getStatusBadge = (status) => {
-    const baseClasses = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold shadow-lg transition-all duration-300";
+    const baseClasses = "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold shadow-md transition-all duration-300";
     
     switch (status.className) {
       case "status-premiere":
-        return `${baseClasses} bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-emerald-200`;
+        return `${baseClasses} bg-gradient-to-r from-emerald-500 to-emerald-600 text-white`;
       case "status-hotseat":
-        return `${baseClasses} bg-gradient-to-r from-red-500 to-red-600 text-white shadow-red-200`;
+        return `${baseClasses} bg-gradient-to-r from-red-500 to-red-600 text-white`;
       case "status-average":
-        return `${baseClasses} bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-blue-200`;
+        return `${baseClasses} bg-gradient-to-r from-blue-500 to-blue-600 text-white`;
       case "status-unproven":
-        return `${baseClasses} bg-gradient-to-r from-slate-400 to-slate-500 text-white shadow-slate-200`;
+        return `${baseClasses} bg-gradient-to-r from-slate-400 to-slate-500 text-white`;
       default:
         return `${baseClasses} bg-gray-500 text-white`;
     }
@@ -352,8 +352,8 @@ const CoachOverview = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen pt-32 px-4 md:px-6 bg-gray-50">
+        <div className="w-full max-w-[97%] mx-auto">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-red-600 mx-auto mb-4"></div>
@@ -366,8 +366,8 @@ const CoachOverview = () => {
   }
 
   return (
-    <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen pt-32 px-4 md:px-6 bg-gray-50">
+      <div className="w-full max-w-[97%] mx-auto">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-4 gradient-text">
@@ -381,7 +381,7 @@ const CoachOverview = () => {
 
         {/* Controls Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -395,7 +395,7 @@ const CoachOverview = () => {
             </div>
 
             {/* Status Filter */}
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-3 flex-wrap">
               {[
                 { key: "all", label: "All", icon: <FaUsers /> },
                 { key: "premiere", label: "Premiere", icon: <FaTrophy /> },
@@ -406,9 +406,9 @@ const CoachOverview = () => {
                 <button
                   key={filter.key}
                   onClick={() => setStatusFilter(filter.key)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
                     statusFilter === filter.key
-                      ? "bg-red-600 text-white shadow-lg"
+                      ? "gradient-bg text-white shadow-lg"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
@@ -470,7 +470,7 @@ const CoachOverview = () => {
               {selectedCoaches.length >= 2 && (
                 <button
                   onClick={() => setShowComparison(true)}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
+                  className="gradient-bg text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity duration-200 font-medium"
                 >
                   Compare Coaches
                 </button>
@@ -480,7 +480,7 @@ const CoachOverview = () => {
         )}
 
         {/* Coach Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 mb-12">
           {filteredCoaches.map((coach) => {
             const isSelected = selectedCoaches.some(c => 
               `${c.firstName}-${c.lastName}` === `${coach.firstName}-${coach.lastName}`
@@ -494,17 +494,17 @@ const CoachOverview = () => {
                 }`}
               >
                 {/* Card Header */}
-                <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 relative">
-                  <div className="absolute top-4 right-4">
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 relative">
+                  <div className="absolute top-3 right-3 z-10">
                     <div className={getStatusBadge(coach.status)}>
                       {coach.status.icon}
                       {coach.status.text}
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-4 mb-4">
+                  <div className="flex items-start gap-3 mb-4 pr-24">
                     {/* Team Logo */}
-                    <div className="w-16 h-16 flex-shrink-0">
+                    <div className="w-12 h-12 flex-shrink-0">
                       <img 
                         src={getTeamLogo(coach.school)} 
                         alt={coach.school}
@@ -512,25 +512,25 @@ const CoachOverview = () => {
                       />
                     </div>
                     
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1 truncate">
                         {coach.firstName} {coach.lastName}
                       </h3>
-                      <p className="text-gray-600 font-medium">{coach.school}</p>
-                      <p className="text-sm text-gray-500">{coach.conference}</p>
+                      <p className="text-gray-600 font-medium text-sm truncate">{coach.school}</p>
+                      <p className="text-xs text-gray-500 truncate">{coach.conference}</p>
                     </div>
                   </div>
 
                   {/* Key Stats */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="text-center">
-                      <div className="text-2xl font-bold gradient-text">
+                      <div className="text-xl font-bold gradient-text">
                         {coach.winPct.toFixed(1)}%
                       </div>
                       <div className="text-xs text-gray-500">Win Rate</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold gradient-text">
+                      <div className="text-xl font-bold gradient-text">
                         {coach.wins}-{coach.losses}
                       </div>
                       <div className="text-xs text-gray-500">Record</div>
@@ -539,10 +539,10 @@ const CoachOverview = () => {
                 </div>
 
                 {/* Card Body */}
-                <div className="p-6">
-                  <div className="space-y-4">
+                <div className="p-4">
+                  <div className="space-y-3">
                     {/* Performance Metrics */}
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">SRS:</span>
                         <span className="font-semibold">{coach.avgSrs.toFixed(1)}</span>
@@ -581,7 +581,7 @@ const CoachOverview = () => {
                       onClick={() => toggleCoachSelection(coach)}
                       className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
                         isSelected
-                          ? "bg-red-600 text-white hover:bg-red-700"
+                          ? "gradient-bg text-white hover:opacity-90"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
