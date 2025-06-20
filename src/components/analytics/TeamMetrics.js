@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   FaChartLine, FaFilter, FaSort, FaSortUp, FaSortDown, FaSearch, 
   FaTrophy, FaFootballBall, FaFire, FaShieldAlt, FaBullseye, FaBolt,
@@ -821,8 +821,7 @@ const TeamMetrics = ({ onNavigate }) => {
     return team.logos?.[0] || `/photos/${team.school}.png`;
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const getOpponentLogo = (opponentName) => {
+  const getOpponentLogo = useCallback((opponentName) => {
     const opponentTeam = teams.find(t => 
       t.school === opponentName || 
       t.school?.replace('&', 'and') === opponentName ||
@@ -835,7 +834,7 @@ const TeamMetrics = ({ onNavigate }) => {
     
     // Fallback to local photo
     return `/photos/${opponentName}.png`;
-  };
+  }, [teams]);
 
 
   if (loading) {
