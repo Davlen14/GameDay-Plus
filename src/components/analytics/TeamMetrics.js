@@ -20,6 +20,20 @@ const TeamMetrics = ({ onNavigate }) => {
   const [loadingText, setLoadingText] = useState('Initializing...');
   const [error, setError] = useState(null);
   
+  // API Testing State
+  const [showTester, setShowTester] = useState(true);
+  const [apiTests, setApiTests] = useState({
+    teams: { status: 'pending', data: null, error: null },
+    records: { status: 'pending', data: null, error: null },
+    spRatings: { status: 'pending', data: null, error: null },
+    eloRatings: { status: 'pending', data: null, error: null },
+    fpiRatings: { status: 'pending', data: null, error: null },
+    recruiting: { status: 'pending', data: null, error: null },
+    rankings: { status: 'pending', data: null, error: null },
+    betting: { status: 'pending', data: null, error: null }
+  });
+  const [allTestsPassed, setAllTestsPassed] = useState(false);
+  
   // Filter states
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedConference, setSelectedConference] = useState('');
@@ -48,10 +62,12 @@ const TeamMetrics = ({ onNavigate }) => {
     trends: 'Performance Trends'
   };
 
-  // Load initial data
+  // Load initial data - Only load when not showing tester
   useEffect(() => {
-    loadTeamData();
-  }, [selectedYear]);
+    if (!showTester) {
+      loadTeamData();
+    }
+  }, [selectedYear, showTester]);
 
   // Filter teams based on search and filters
   useEffect(() => {
@@ -103,6 +119,59 @@ const TeamMetrics = ({ onNavigate }) => {
     return path.split('.').reduce((current, key) => current?.[key], obj) || 0;
   };
 
+  // API Testing Functions
+  const testEndpoint = async (testName, testFunction) => {
+    setApiTests(prev => ({
+      ...prev,
+      [testName]: { ...prev[testName], status: 'testing' }
+    }));
+
+    try {
+      const result = await testFunction();
+      setApiTests(prev => ({
+        ...prev,
+        [testName]: { status: 'success', data: result, error: null }
+      }));
+      return true;
+    } catch (error) {
+      console.error(`${testName} test failed:`, error);
+      setApiTests(prev => ({
+        ...prev,
+        [testName]: { status: 'error', data: null, error: error.message }
+      }));
+      return false;
+    }
+  };
+
+  const runAllTests = async () => {
+    console.log('🧪 Starting API endpoint tests...');
+    
+    const testResults = await Promise.allSettled([
+      testEndpoint('teams', () => teamService.getFBSTeams(true)),
+      testEndpoint('records', () => teamService.getTeamRecords('Alabama', selectedYear)),
+      testEndpoint('spRatings', () => teamService.getSPRatings(selectedYear, 'Alabama')),
+      testEndpoint('eloRatings', () => teamService.getEloRatings(selectedYear, null, 'Alabama')),
+      testEndpoint('fpiRatings', () => teamService.getFPIRatings(selectedYear, 'Alabama')),
+      testEndpoint('recruiting', () => teamService.getRecruitingRankings(selectedYear, 'Alabama')),
+      testEndpoint('rankings', () => rankingsService.getHistoricalRankings(selectedYear, 1)),
+      testEndpoint('betting', () => bettingService.getBettingLines(null, selectedYear, 1, 'regular', 'Alabama'))
+    ]);
+
+    const passedTests = testResults.filter(result => result.status === 'fulfilled').length;
+    const allPassed = passedTests === testResults.length;
+    
+    setAllTestsPassed(allPassed);
+    console.log(`🎯 API Tests Complete: ${passedTests}/${testResults.length} passed`);
+    
+    return allPassed;
+  };
+
+  const proceedToMetrics = () => {
+    setShowTester(false);
+    setLoading(true);
+    loadTeamData();
+  };
+
   const loadTeamData = async () => {
     try {
       setLoading(true);
@@ -137,20 +206,20 @@ const TeamMetrics = ({ onNavigate }) => {
         
         const batchPromises = batch.map(async (team) => {
           try {
-            // Core data calls
+            // Core data calls (FIXED - using correct services)
             const [records, spRating, games] = await Promise.all([
               teamService.getTeamRecords(team.school, selectedYear).catch(() => null),
-              analyticsService.getSPRatings(selectedYear, team.school).catch(() => null),
+              teamService.getSPRatings(selectedYear, team.school).catch(() => null),
               teamService.getTeamGames(team.school, selectedYear).catch(() => null)
             ]);
             
-            // Enhanced data (with fallbacks)
+            // Enhanced data (FIXED - using correct services with fallbacks)
             const [eloRating, fpiRating, recruiting, rankings, bettingData] = await Promise.all([
-              analyticsService.getEloRatings(selectedYear, team.school).catch(() => null),
-              analyticsService.getFPIRatings(selectedYear, team.school).catch(() => null),
-              analyticsService.getRecruitingData(team.school, selectedYear).catch(() => null),
-              rankingsService.getRankings(selectedYear, 1).catch(() => null), // Week 1 rankings as fallback
-              bettingService.getLines(selectedYear, 1, team.school).catch(() => null) // Week 1 lines as fallback
+              teamService.getEloRatings(selectedYear, null, team.school).catch(() => null),
+              teamService.getFPIRatings(selectedYear, team.school).catch(() => null),
+              teamService.getRecruitingRankings(selectedYear, team.school).catch(() => null),
+              rankingsService.getHistoricalRankings(selectedYear, 1).catch(() => null), // Week 1 rankings as fallback
+              bettingService.getBettingLines(null, selectedYear, 1, 'regular', team.school).catch(() => null) // Week 1 lines as fallback
             ]);
             
             return createEnhancedTeam(team, records, spRating, games, eloRating, fpiRating, recruiting, rankings, bettingData);
@@ -582,13 +651,135 @@ const TeamMetrics = ({ onNavigate }) => {
           <div className="text-center">
             <FaExchangeAlt className="text-6xl text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Data</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button 
+            <p className="text-gray-600 mb-4">{error}</p>            <button
               onClick={loadTeamData}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold"
             >
               Retry
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // API Endpoint Tester UI
+  if (showTester) {
+    return (
+      <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-4 gradient-text">API Endpoint Tester</h1>
+            <p className="text-lg text-gray-600">
+              Test all API endpoints before loading team metrics to ensure real data availability
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {Object.entries({
+                teams: { name: 'FBS Teams', endpoint: 'GET /teams' },
+                records: { name: 'Team Records', endpoint: 'GET /records' },
+                spRatings: { name: 'SP+ Ratings', endpoint: 'GET /ratings/sp' },
+                eloRatings: { name: 'Elo Ratings', endpoint: 'GET /ratings/elo' },
+                fpiRatings: { name: 'FPI Ratings', endpoint: 'GET /ratings/fpi' },
+                recruiting: { name: 'Recruiting Rankings', endpoint: 'GET /recruiting/teams' },
+                rankings: { name: 'Poll Rankings', endpoint: 'GET /rankings' },
+                betting: { name: 'Betting Lines', endpoint: 'GET /lines' }
+              }).map(([key, config]) => {
+                const test = apiTests[key];
+                return (
+                  <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{config.name}</h3>
+                      <p className="text-sm text-gray-500">{config.endpoint}</p>
+                      {test.error && (
+                        <p className="text-xs text-red-600 mt-1">Error: {test.error}</p>
+                      )}
+                      {test.data && (
+                        <p className="text-xs text-green-600 mt-1">
+                          ✅ {Array.isArray(test.data) ? `${test.data.length} records` : 'Data loaded'}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => testEndpoint(key, () => {
+                          switch(key) {
+                            case 'teams': return teamService.getFBSTeams(true);
+                            case 'records': return teamService.getTeamRecords('Alabama', selectedYear);
+                            case 'spRatings': return teamService.getSPRatings(selectedYear, 'Alabama');
+                            case 'eloRatings': return teamService.getEloRatings(selectedYear, null, 'Alabama');
+                            case 'fpiRatings': return teamService.getFPIRatings(selectedYear, 'Alabama');
+                            case 'recruiting': return teamService.getRecruitingRankings(selectedYear, 'Alabama');
+                            case 'rankings': return rankingsService.getHistoricalRankings(selectedYear, 1);
+                            case 'betting': return bettingService.getBettingLines(null, selectedYear, 1, 'regular', 'Alabama');
+                            default: return Promise.resolve([]);
+                          }
+                        })}
+                        disabled={test.status === 'testing'}
+                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {test.status === 'testing' ? (
+                          <FaBolt className="animate-spin" />
+                        ) : (
+                          <FaEye />
+                        )}
+                      </button>
+                      <div className={`w-3 h-3 rounded-full ${
+                        test.status === 'success' ? 'bg-green-500' :
+                        test.status === 'error' ? 'bg-red-500' :
+                        test.status === 'testing' ? 'bg-yellow-500 animate-pulse' :
+                        'bg-gray-300'
+                      }`} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={runAllTests}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center space-x-2"
+              >
+                <FaBolt />
+                <span>Test All Endpoints</span>
+              </button>
+              
+              <button
+                onClick={proceedToMetrics}
+                disabled={!allTestsPassed}
+                className={`px-6 py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 ${
+                  allTestsPassed 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <FaChartLine />
+                <span>Load Team Metrics</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowTester(false);
+                  setLoading(true);
+                  loadTeamData();
+                }}
+                className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold flex items-center justify-center space-x-2"
+              >
+                <FaInfoCircle />
+                <span>Skip Tests (Use Mock Data)</span>
+              </button>
+            </div>
+
+            {allTestsPassed && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                <p className="text-green-800 font-semibold">
+                  🎉 All API endpoints are working! Ready to load real team metrics.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
