@@ -117,6 +117,7 @@ if (leafletAvailable && useMap) {
 const Commitments = () => {
   const [commitments, setCommitments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState(null);
   const [selectedConference, setSelectedConference] = useState('all');
   const [selectedPosition, setSelectedPosition] = useState('all');
@@ -204,19 +205,33 @@ const Commitments = () => {
     const fetchCommitments = async () => {
       try {
         setLoading(true);
+        setLoadingProgress(0);
         setError(null);
 
-        // Fetch teams data for conference mapping and images
-        const [teamsData, recruitsData] = await Promise.all([
-          teamService.getAllTeams().catch(() => []),
-          rankingsService.getPlayerRecruitingRankings(2025).catch(() => [])
-        ]);
+        // Step 1: Start loading (10%)
+        setLoadingProgress(10);
 
+        // Step 2: Fetch teams data (40%)
+        setLoadingProgress(25);
+        const teamsData = await teamService.getAllTeams().catch(() => []);
+        setLoadingProgress(40);
+
+        // Step 3: Fetch recruiting data (70%)
+        setLoadingProgress(55);
+        const recruitsData = await rankingsService.getPlayerRecruitingRankings(2025).catch(() => []);
+        setLoadingProgress(70);
+
+        // Step 4: Process teams data (80%)
         setTeams(teamsData || []);
+        setLoadingProgress(80);
         
-        // Transform and set recruit data
+        // Step 5: Transform recruit data (90%)
         const transformedRecruits = transformRecruitData(recruitsData || []);
+        setLoadingProgress(90);
+        
+        // Step 6: Set final data (100%)
         setCommitments(transformedRecruits);
+        setLoadingProgress(100);
 
         // If no real data, provide fallback
         if (!transformedRecruits.length) {
@@ -270,7 +285,10 @@ const Commitments = () => {
         ];
         setCommitments(fallbackCommitments);
       } finally {
-        setLoading(false);
+        // Small delay to show 100% completion
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
       }
     };
 
@@ -314,8 +332,19 @@ const Commitments = () => {
       <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-700 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center text-white">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-xl">Loading commitments data...</p>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-6"></div>
+            <p className="text-xl mb-6">Loading commitments data...</p>
+            
+            {/* Progress Bar */}
+            <div className="max-w-md mx-auto">
+              <div className="bg-white/20 rounded-full h-3 mb-2">
+                <div 
+                  className="bg-gradient-to-r from-white to-red-200 h-3 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${loadingProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-red-200 text-sm">{loadingProgress}% Complete</p>
+            </div>
           </div>
         </div>
       </div>
