@@ -211,15 +211,16 @@ const TeamMetrics = ({ onNavigate }) => {
       setLoadingText('Loading global rankings and ratings...');
       
       // Phase 2: Get ALL data at once (like working test logic)
-      const [allRankings, allEloRatings, allSpRatings, allFpiRatings, allRecords] = await Promise.all([
+      const [allRankings, allEloRatings, allSpRatings, allFpiRatings, allRecords, week1Games] = await Promise.all([
         teamService.getRankings(2024, 18).catch(() => null), // 2024 final regular season rankings (week 18)
         teamService.getEloRatings(2024, 18).catch(() => null), // All Elo ratings final week
         teamService.getSPRatings(2024).catch(() => null), // All SP+ ratings
         teamService.getFPIRatings(2024).catch(() => null), // All FPI ratings
-        gameService.getRecords(2024).catch(() => null) // ALL team records at once
+        gameService.getRecords(2024).catch(() => null), // ALL team records at once
+        gameService.getGames(2025, 1, 'regular').catch(() => null) // 2025 Week 1 games
       ]);
       
-      console.log('✅ Global data loaded:', { allRankings, allEloRatings, allSpRatings, allFpiRatings, allRecords });
+      console.log('✅ Global data loaded:', { allRankings, allEloRatings, allSpRatings, allFpiRatings, allRecords, week1Games });
       
       setLoadingProgress(60);
       setLoadingText('Processing individual team data...');
@@ -251,11 +252,12 @@ const TeamMetrics = ({ onNavigate }) => {
               extractTeamData(allFpiRatings, team.school), // Extract from global FPI data
               recruiting, 
               allRankings, // Pass full rankings to extract individual team ranking
-              null // betting data - skip for now
+              null, // betting data - skip for now
+              week1Games // Pass 2025 Week 1 games for real next game data
             );
           } catch (error) {
             console.log(`⚠️ Error processing ${team.school}, using fallback data`);
-            return createEnhancedTeam(team, allRecords, null, null, null, null, null, allRankings, null);
+            return createEnhancedTeam(team, allRecords, null, null, null, null, null, allRankings, null, week1Games);
           }
         });
         
@@ -308,7 +310,7 @@ const TeamMetrics = ({ onNavigate }) => {
     );
   };
 
-  const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null, rankingsData = null, bettingData = null) => {
+  const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null, rankingsData = null, bettingData = null, week1Games = null) => {
     // Calculate wins/losses from records data (actual API structure)
     let wins = 0, losses = 0, conferenceWins = 0, conferenceLosses = 0;
     
@@ -474,8 +476,8 @@ const TeamMetrics = ({ onNavigate }) => {
       primaryStrength: strengths.primary,
       keyConcern: concerns.primary,
       
-      // Next Game (mock for now)
-      nextGame: generateNextGame(team),
+      // Next Game (real 2025 Week 1 data)
+      nextGame: generateNextGame(team, week1Games),
       
       // Enhanced metrics for detail view
       games: games || [],
@@ -509,8 +511,48 @@ const TeamMetrics = ({ onNavigate }) => {
     return { primary: topConcern.name };
   };
 
-  const generateNextGame = (team) => {
-    // Since 2024 season is over, show 2025 season games (Week 1 regular season)
+  const generateNextGame = (team, week1Games) => {
+    // Try to find the team's actual 2025 Week 1 game
+    if (week1Games && week1Games.length > 0) {
+      const teamGame = week1Games.find(game => 
+        game.homeTeam === team.school || 
+        game.awayTeam === team.school ||
+        game.homeTeam === team.school?.replace('&', 'and') ||
+        game.awayTeam === team.school?.replace('&', 'and')
+      );
+      
+      if (teamGame) {
+        const isHome = teamGame.homeTeam === team.school || teamGame.homeTeam === team.school?.replace('&', 'and');
+        const opponent = isHome ? teamGame.awayTeam : teamGame.homeTeam;
+        const gameDate = new Date(teamGame.startDate);
+        
+        // Get opponent colors (simplified mapping for major teams)
+        const opponentColors = getTeamColors(opponent);
+        
+        console.log(`🏈 Found real game for ${team.school}: ${isHome ? 'vs' : '@'} ${opponent} on ${gameDate.toLocaleDateString()}`);
+        
+        return {
+          opponent,
+          opponentColors,
+          spread: 0, // Real spread would need betting API
+          isHome,
+          week: 1,
+          season: 2025,
+          seasonType: 'regular',
+          date: gameDate.toLocaleDateString('en-US', { 
+            month: 'long', 
+            day: 'numeric', 
+            year: 'numeric' 
+          }),
+          gameId: teamGame.id,
+          venue: teamGame.venue,
+          isReal: true
+        };
+      }
+    }
+    
+    // Fallback to mock game if no real game found
+    console.log(`⚠️ No real game found for ${team.school}, using mock data`);
     const opponents = [
       { name: 'Alabama', colors: { primary: '#9E1B32', secondary: '#FFFFFF' } },
       { name: 'Georgia', colors: { primary: '#BA0C2F', secondary: '#000000' } },
@@ -532,11 +574,52 @@ const TeamMetrics = ({ onNavigate }) => {
       opponentColors: opponent.colors,
       spread: parseFloat(spread),
       isHome,
-      week: 1, // Week 1 regular season
+      week: 1,
       season: 2025,
       seasonType: 'regular',
-      date: 'August 30, 2025' // Typical season start date
+      date: 'August 30, 2025',
+      isReal: false
     };
+  };
+
+  // Helper function to get team colors
+  const getTeamColors = (teamName) => {
+    const teamColorMap = {
+      'Alabama': { primary: '#9E1B32', secondary: '#FFFFFF' },
+      'Georgia': { primary: '#BA0C2F', secondary: '#000000' },
+      'Ohio State': { primary: '#BB0000', secondary: '#FFFFFF' },
+      'Michigan': { primary: '#00274C', secondary: '#FFCB05' },
+      'Texas': { primary: '#BF5700', secondary: '#FFFFFF' },
+      'Oklahoma': { primary: '#841617', secondary: '#FDF9F3' },
+      'LSU': { primary: '#461D7C', secondary: '#FDD023' },
+      'Florida': { primary: '#0021A5', secondary: '#FA4616' },
+      'Notre Dame': { primary: '#0C2340', secondary: '#C99700' },
+      'USC': { primary: '#990000', secondary: '#FFCC00' },
+      'Florida State': { primary: '#782F40', secondary: '#CEB888' },
+      'Clemson': { primary: '#F66733', secondary: '#522D80' },
+      'Miami': { primary: '#F47321', secondary: '#005030' },
+      'TCU': { primary: '#4D1979', secondary: '#A3A3A3' },
+      'North Carolina': { primary: '#13294B', secondary: '#4B9CD3' },
+      'Penn State': { primary: '#041E42', secondary: '#FFFFFF' },
+      'Wisconsin': { primary: '#C5050C', secondary: '#FFFFFF' },
+      'Iowa': { primary: '#FFCD00', secondary: '#000000' },
+      'Nebraska': { primary: '#D00000', secondary: '#FFFFFF' },
+      'Stanford': { primary: '#8C1515', secondary: '#FFFFFF' },
+      'California': { primary: '#003262', secondary: '#FDB515' },
+      'Washington': { primary: '#4B2E83', secondary: '#B7A57A' },
+      'Oregon': { primary: '#154733', secondary: '#FEE123' },
+      'Arizona': { primary: '#0C234B', secondary: '#AB0520' },
+      'Arizona State': { primary: '#8C1D40', secondary: '#FFC627' },
+      'Utah': { primary: '#CC0000', secondary: '#FFFFFF' },
+      'Colorado': { primary: '#CFB87C', secondary: '#000000' },
+      'Baylor': { primary: '#003015', secondary: '#FFB81C' },
+      'Kansas': { primary: '#0051BA', secondary: '#E8000D' },
+      'Kansas State': { primary: '#512888', secondary: '#FFFFFF' },
+      'Texas Tech': { primary: '#CC0000', secondary: '#000000' },
+      'West Virginia': { primary: '#002855', secondary: '#EAAA00' }
+    };
+    
+    return teamColorMap[teamName] || { primary: '#1F2937', secondary: '#FFFFFF' }; // Default gray
   };
 
   const generateSeasonStats = (wins, losses, spOffense, spDefense) => {
@@ -1305,7 +1388,7 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
                     className="font-semibold text-lg"
                     style={{ color: team.nextGame.opponentColors?.primary }}
                   >
-                    2025 Week 1 Regular Season
+                    2025 Week 1 Regular Season{team.nextGame.isReal ? '' : ' (Preview)'}
                   </div>
                   <div className="flex items-center space-x-2">
                     <img 
