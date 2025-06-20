@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FaChartLine, FaFilter, FaSort, FaSortUp, FaSortDown, FaSearch, 
-  FaTrophy, FaFootballBall, FaFire, FaShieldAlt, FaTarget, FaBolt,
+  FaTrophy, FaFootballBall, FaFire, FaShieldAlt, FaBullseye, FaBolt,
   FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle, FaExchangeAlt,
   FaEye, FaChartBar, FaUsers, FaMapMarkerAlt, FaStar, FaCalendarAlt
 } from 'react-icons/fa';
@@ -670,7 +670,7 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
           color={getRatingColor(team.defensiveEfficiency || 0)}
         />
         <MetricCard
-          icon={<FaTarget />}
+          icon={<FaBullseye />}
           label="Win Rate"
           value={`${(team.winPercentage || 0).toFixed(1)}%`}
           color={getRatingColor(team.winPercentage || 0)}
