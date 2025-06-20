@@ -15,6 +15,8 @@ const TeamMetrics = () => {
   const [teams, setTeams] = useState([]);
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingText, setLoadingText] = useState('Initializing...');
   const [error, setError] = useState(null);
   
   // Filter states
@@ -97,8 +99,16 @@ const TeamMetrics = () => {
     try {
       setLoading(true);
       setError(null);
+      setLoadingProgress(0);
+      setLoadingText('Initializing analytics engine...');
       
       console.log('🔄 Loading comprehensive team analytics...');
+      
+      // Simulate progress for better UX
+      setTimeout(() => {
+        setLoadingProgress(10);
+        setLoadingText('Connecting to data sources...');
+      }, 200);
       
       // Load base team data and conferences
       const [allTeams, conferenceData] = await Promise.all([
@@ -106,11 +116,17 @@ const TeamMetrics = () => {
         teamService.getConferences()
       ]);
       
+      setLoadingProgress(25);
+      setLoadingText('Loading team rosters and conferences...');
+      
       console.log(`✅ Loaded ${allTeams.length} teams and ${conferenceData.length} conferences`);
       
       // Get unique conferences from teams
       const uniqueConferences = [...new Set(allTeams.map(team => team.conference))].filter(Boolean);
       setConferences(uniqueConferences.sort());
+      
+      setLoadingProgress(35);
+      setLoadingText('Gathering advanced analytics...');
       
       // Load comprehensive analytics for each team (in batches to avoid API limits)
       const enhancedTeams = [];
@@ -118,6 +134,12 @@ const TeamMetrics = () => {
       
       for (let i = 0; i < allTeams.length; i += batchSize) {
         const batch = allTeams.slice(i, i + batchSize);
+        
+        // Update progress
+        const progressPercent = 35 + ((i / allTeams.length) * 50);
+        setLoadingProgress(progressPercent);
+        setLoadingText(`Processing team analytics... ${i + batch.length}/${allTeams.length} teams`);
+        
         const batchPromises = batch.map(async (team) => {
           try {
             // Get comprehensive team analytics including betting data
@@ -191,11 +213,17 @@ const TeamMetrics = () => {
         }
       }
       
+      setLoadingProgress(85);
+      setLoadingText('Loading rankings and polls...');
+      
       // Load rankings data
       const [apPoll, coachesPoll] = await Promise.all([
         rankingsService.getAPPoll(selectedYear).catch(() => []),
         rankingsService.getCoachesPoll(selectedYear).catch(() => [])
       ]);
+      
+      setLoadingProgress(95);
+      setLoadingText('Finalizing analytics...');
       
       // Merge ranking data
       const latestAPPoll = apPoll[apPoll.length - 1];
@@ -217,13 +245,20 @@ const TeamMetrics = () => {
         }
       });
       
+      setLoadingProgress(100);
+      setLoadingText('Complete!');
+      
       setTeams(enhancedTeams);
       console.log('🎉 Team analytics loading complete!');
+      
+      // Small delay to show 100% completion
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
       
     } catch (error) {
       console.error('Error loading team data:', error);
       setError('Failed to load team analytics. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
@@ -360,12 +395,67 @@ const TeamMetrics = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full">
+          {/* Modern Animated Loader */}
           <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Loading Team Analytics</h2>
-            <p className="text-gray-600">Gathering comprehensive performance data...</p>
+            {/* Animated Logo/Icon */}
+            <div className="relative mb-8">
+              <div className="w-24 h-24 mx-auto relative">
+                {/* Outer spinning ring */}
+                <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+                <div 
+                  className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-500 border-r-red-400 animate-spin"
+                  style={{
+                    background: `conic-gradient(from 0deg, #ef4444, #dc2626, #b91c1c, transparent)`
+                  }}
+                ></div>
+                
+                {/* Inner football icon */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <FaFootballBall className="text-3xl text-gray-600 animate-pulse" />
+                </div>
+              </div>
+            </div>
+
+            {/* Loading Text */}
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Loading Team Analytics
+            </h2>
+            <p className="text-gray-600 mb-8 animate-pulse">
+              {loadingText}
+            </p>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
+              <div 
+                className="h-full rounded-full transition-all duration-500 ease-out"
+                style={{
+                  width: `${loadingProgress}%`,
+                  background: 'linear-gradient(90deg, #ef4444, #dc2626, #b91c1c)',
+                  boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
+                }}
+              ></div>
+            </div>
+
+            {/* Percentage */}
+            <div className="text-lg font-semibold text-gray-700">
+              {loadingProgress.toFixed(0)}%
+            </div>
+
+            {/* Animated dots */}
+            <div className="flex justify-center space-x-2 mt-6">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-600 animate-bounce"
+                  style={{
+                    animationDelay: `${i * 0.2}s`,
+                    animationDuration: '1s'
+                  }}
+                ></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -375,7 +465,7 @@ const TeamMetrics = () => {
   if (error) {
     return (
       <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-[97%] mx-auto">
           <div className="text-center">
             <FaExchangeAlt className="text-6xl text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Data</h2>
@@ -394,11 +484,11 @@ const TeamMetrics = () => {
 
   return (
     <div className="min-h-screen pt-32 px-6 md:px-12 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-[97%] mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold mb-4 gradient-text">Team Performance Analytics</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-4xl mx-auto">
             Comprehensive team analysis featuring advanced metrics, efficiency ratings, and predictive analytics
           </p>
         </div>
