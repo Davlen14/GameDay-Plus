@@ -326,21 +326,21 @@ const Commitments = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-700 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center text-white">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-6"></div>
+          <div className="text-center text-gray-800">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-600 mx-auto mb-6"></div>
             <p className="text-xl mb-6">Loading commitments data...</p>
             
             {/* Progress Bar */}
             <div className="max-w-md mx-auto">
-              <div className="bg-white/20 rounded-full h-3 mb-2">
+              <div className="bg-gray-200 rounded-full h-3 mb-2">
                 <div 
-                  className="bg-gradient-to-r from-white to-red-200 h-3 rounded-full transition-all duration-300 ease-out"
+                  className="bg-gradient-to-r from-red-500 to-red-600 h-3 rounded-full transition-all duration-300 ease-out"
                   style={{ width: `${loadingProgress}%` }}
                 ></div>
               </div>
-              <p className="text-red-200 text-sm">{loadingProgress}% Complete</p>
+              <p className="text-gray-600 text-sm">{loadingProgress}% Complete</p>
             </div>
           </div>
         </div>
@@ -350,13 +350,13 @@ const Commitments = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-700 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center text-white">
-            <p className="text-xl text-red-200 mb-4">⚠️ {error}</p>
+          <div className="text-center text-gray-800">
+            <p className="text-xl text-red-600 mb-4">⚠️ {error}</p>
             <button 
               onClick={() => window.location.reload()}
-              className="bg-white text-red-800 px-6 py-2 rounded-lg hover:bg-red-50 transition-colors"
+              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
             >
               Retry
             </button>
@@ -367,97 +367,97 @@ const Commitments = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-700 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-white to-red-200 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold text-gray-800 mb-4">
             🏈 Player Commitments
           </h1>
-          <p className="text-xl text-red-200">
+          <p className="text-xl text-gray-600">
             Track the latest commitments from top recruits across the nation
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg">
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">{commitments.length}</div>
-              <div className="text-red-200">Total Commits</div>
+              <div className="text-3xl font-bold text-gray-800">{commitments.length}</div>
+              <div className="text-gray-600">Total Commits</div>
             </div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg">
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">
+              <div className="text-3xl font-bold text-gray-800">
                 {commitments.filter(c => c.rating === 5).length}
               </div>
-              <div className="text-red-200">5-Star Recruits</div>
+              <div className="text-gray-600">5-Star Recruits</div>
             </div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg">
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">{conferences.length}</div>
-              <div className="text-red-200">Conferences</div>
+              <div className="text-3xl font-bold text-gray-800">{conferences.length}</div>
+              <div className="text-gray-600">Conferences</div>
             </div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg">
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">{positions.length}</div>
-              <div className="text-red-200">Positions</div>
+              <div className="text-3xl font-bold text-gray-800">{positions.length}</div>
+              <div className="text-gray-600">Positions</div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/20">
+        <div className="bg-white rounded-xl p-6 mb-8 border border-gray-200 shadow-lg">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
-              <label className="block text-red-200 text-sm font-medium mb-2">Search</label>
+              <label className="block text-gray-700 text-sm font-medium mb-2">Search</label>
               <input
                 type="text"
                 placeholder="Search players, schools..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-red-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
             <div>
-              <label className="block text-red-200 text-sm font-medium mb-2">Conference</label>
+              <label className="block text-gray-700 text-sm font-medium mb-2">Conference</label>
               <select
                 value={selectedConference}
                 onChange={(e) => setSelectedConference(e.target.value)}
-                className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <option value="all">All Conferences</option>
                 {conferences.map(conf => (
-                  <option key={conf} value={conf} className="text-black">{conf}</option>
+                  <option key={conf} value={conf}>{conf}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-red-200 text-sm font-medium mb-2">Position</label>
+              <label className="block text-gray-700 text-sm font-medium mb-2">Position</label>
               <select
                 value={selectedPosition}
                 onChange={(e) => setSelectedPosition(e.target.value)}
-                className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <option value="all">All Positions</option>
                 {positions.map(pos => (
-                  <option key={pos} value={pos} className="text-black">{pos}</option>
+                  <option key={pos} value={pos}>{pos}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-red-200 text-sm font-medium mb-2">Rating</label>
+              <label className="block text-gray-700 text-sm font-medium mb-2">Rating</label>
               <select
                 value={selectedRating}
                 onChange={(e) => setSelectedRating(e.target.value)}
-                className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <option value="all">All Ratings</option>
                 {ratings.sort((a, b) => b - a).map(rating => (
-                  <option key={rating} value={rating} className="text-black">{rating} Star</option>
+                  <option key={rating} value={rating}>{rating} Star</option>
                 ))}
               </select>
             </div>
@@ -469,7 +469,7 @@ const Commitments = () => {
                   setSelectedRating('all');
                   setSearchTerm('');
                 }}
-                className="w-full bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors border border-white/30"
+                className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 Clear Filters
               </button>
@@ -478,8 +478,8 @@ const Commitments = () => {
         </div>
 
         {/* Map */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/20">
-          <h2 className="text-2xl font-bold text-white mb-4">📍 Commitment Map</h2>
+        <div className="bg-white rounded-xl p-6 mb-8 border border-gray-200 shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">📍 Commitment Map</h2>
           <div className="h-96 rounded-lg overflow-hidden">
             {leafletAvailable && MapContainer ? (
               <MapContainer
@@ -517,11 +517,11 @@ const Commitments = () => {
                 ))}
               </MapContainer>
             ) : (
-              <div className="bg-white/5 rounded-lg h-full flex items-center justify-center">
-                <div className="text-center text-white">
+              <div className="bg-gray-100 rounded-lg h-full flex items-center justify-center">
+                <div className="text-center text-gray-800">
                   <div className="text-4xl mb-4">🗺️</div>
                   <div className="text-lg mb-2">Interactive Map Coming Soon</div>
-                  <div className="text-red-200 text-sm">Map functionality requires additional setup</div>
+                  <div className="text-gray-600 text-sm">Map functionality requires additional setup</div>
                 </div>
               </div>
             )}
@@ -530,7 +530,7 @@ const Commitments = () => {
 
         {/* Results Summary */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
             Showing {filteredCommitments.length} of {commitments.length} commitments
           </h2>
         </div>
@@ -540,15 +540,15 @@ const Commitments = () => {
           {filteredCommitments.map((commitment) => (
             <div
               key={commitment.id}
-              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
+              className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-white mb-1">{commitment.name}</h3>
-                  <div className="text-red-200 text-sm">
+                  <h3 className="text-xl font-bold text-gray-800 mb-1">{commitment.name}</h3>
+                  <div className="text-gray-600 text-sm">
                     {commitment.position} • {commitment.height}, {commitment.weight}
                   </div>
-                  <div className="text-yellow-300 text-lg mt-1">
+                  <div className="text-yellow-500 text-lg mt-1">
                     {getStarRating(commitment.rating)}
                   </div>
                 </div>
@@ -561,31 +561,31 @@ const Commitments = () => {
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-red-200">School:</span>
-                  <span className="text-white font-medium">{commitment.school}</span>
+                  <span className="text-gray-600">School:</span>
+                  <span className="text-gray-800 font-medium">{commitment.school}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-red-200">Conference:</span>
-                  <span className="text-white">{commitment.conference}</span>
+                  <span className="text-gray-600">Conference:</span>
+                  <span className="text-gray-800">{commitment.conference}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-red-200">High School:</span>
-                  <span className="text-white">{commitment.highSchool}</span>
+                  <span className="text-gray-600">High School:</span>
+                  <span className="text-gray-800">{commitment.highSchool}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-red-200">Location:</span>
-                  <span className="text-white">{commitment.city}, {commitment.state}</span>
+                  <span className="text-gray-600">Location:</span>
+                  <span className="text-gray-800">{commitment.city}, {commitment.state}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-red-200">Committed:</span>
-                  <span className="text-white">{formatCommitDate(commitment.commitDate)}</span>
+                  <span className="text-gray-600">Committed:</span>
+                  <span className="text-gray-800">{formatCommitDate(commitment.commitDate)}</span>
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-white/20">
+              <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-green-300 text-sm font-medium">✓ Committed</span>
-                  <button className="text-white hover:text-red-200 transition-colors text-sm">
+                  <span className="text-green-600 text-sm font-medium">✓ Committed</span>
+                  <button className="text-red-600 hover:text-red-700 transition-colors text-sm">
                     View Profile →
                   </button>
                 </div>
@@ -596,8 +596,8 @@ const Commitments = () => {
 
         {filteredCommitments.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-white text-xl mb-2">No commitments found</div>
-            <div className="text-red-200">Try adjusting your filters to see more results</div>
+            <div className="text-gray-800 text-xl mb-2">No commitments found</div>
+            <div className="text-gray-600">Try adjusting your filters to see more results</div>
           </div>
         )}
       </div>
