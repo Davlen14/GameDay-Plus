@@ -1205,6 +1205,7 @@ const TeamMetrics = ({ onNavigate }) => {
                 getRatingColor={getRatingColor}
                 getTrendIcon={getTrendIcon}
                 getTeamLogo={getTeamLogo}
+                getOpponentLogo={getOpponentLogo}
                 isSelected={selectedTeamsForComparison.find(t => t.school === team.school)}
                 onToggleComparison={() => toggleTeamComparison(team)}
                 onAdvancedAnalytics={handleAdvancedAnalytics}
@@ -1228,7 +1229,7 @@ const TeamMetrics = ({ onNavigate }) => {
 };
 
 // Team Metric Card Component
-const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSortIcon, getRatingColor, getTrendIcon, getTeamLogo, isSelected, onToggleComparison, onAdvancedAnalytics }) => {
+const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSortIcon, getRatingColor, getTrendIcon, getTeamLogo, getOpponentLogo, isSelected, onToggleComparison, onAdvancedAnalytics }) => {
   if (viewMode === 'compact') {
     return (
       <div className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
