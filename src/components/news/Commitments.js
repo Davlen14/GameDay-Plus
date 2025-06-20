@@ -201,7 +201,7 @@ const Commitments = () => {
 
         // Transform recruit data
         const transformedRecruits = (recruitsData || []).map((recruit, index) => {
-          const teamInfo = getTeamInfo(recruit.recruitedBy || recruit.college);
+          const teamInfo = getTeamInfo(recruit.committedTo);
           const coordinates = recruit.stateProvince ? 
             getStateCoordinates(recruit.stateProvince) : 
             [39.8283, -98.5795]; // Default to center of US
@@ -210,19 +210,20 @@ const Commitments = () => {
             id: recruit.id || `recruit-${index}`,
             name: `${recruit.name || 'Unknown Recruit'}`,
             position: recruit.position || 'ATH',
-            rating: recruit.stars || recruit.rating || 3,
-            height: recruit.height || 'N/A',
-            weight: recruit.weight || 'N/A',
-            school: recruit.recruitedBy || recruit.college || 'Uncommitted',
+            rating: recruit.stars || Math.round(recruit.rating * 5) || 3,
+            height: recruit.height ? `${Math.floor(recruit.height / 12)}'${recruit.height % 12}"` : 'N/A',
+            weight: recruit.weight ? `${recruit.weight} lbs` : 'N/A',
+            school: recruit.committedTo || 'Uncommitted',
             conference: teamInfo.conference,
             highSchool: recruit.school || 'Unknown High School',
             city: recruit.city || 'Unknown',
             state: recruit.stateProvince || 'Unknown',
             coordinates: coordinates,
-            committed: recruit.recruitedBy ? true : false,
-            commitDate: recruit.committedTo || new Date().toISOString(),
+            committed: recruit.committedTo ? true : false,
+            commitDate: new Date().toISOString(),
             recruitingRank: recruit.ranking || index + 1,
-            image: teamInfo.image
+            image: teamInfo.image,
+            teamLogo: teamInfo.image
           };
         });
         
@@ -531,8 +532,11 @@ const Commitments = () => {
         {/* Results Summary */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Showing {filteredCommitments.length} of {commitments.length} commitments
+            Showing {filteredCommitments.length} of {commitments.length} recruits
           </h2>
+          <p className="text-gray-600">
+            {filteredCommitments.filter(c => c.committed).length} committed • {filteredCommitments.filter(c => !c.committed).length} uncommitted
+          </p>
         </div>
 
         {/* Commitments Grid */}
@@ -560,9 +564,23 @@ const Commitments = () => {
               </div>
 
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">School:</span>
-                  <span className="text-gray-800 font-medium">{commitment.school}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Committed To:</span>
+                  <div className="flex items-center space-x-2">
+                    {commitment.school !== 'Uncommitted' && commitment.teamLogo && (
+                      <img 
+                        src={commitment.teamLogo} 
+                        alt={`${commitment.school} logo`}
+                        className="w-5 h-5 object-contain"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <span className={`font-medium ${commitment.school === 'Uncommitted' ? 'text-gray-500' : 'text-gray-800'}`}>
+                      {commitment.school}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Conference:</span>
@@ -584,7 +602,11 @@ const Commitments = () => {
 
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-green-600 text-sm font-medium">✓ Committed</span>
+                  {commitment.committed ? (
+                    <span className="text-green-600 text-sm font-medium">✓ Committed</span>
+                  ) : (
+                    <span className="text-orange-600 text-sm font-medium">○ Uncommitted</span>
+                  )}
                   <button className="text-red-600 hover:text-red-700 transition-colors text-sm">
                     View Profile →
                   </button>
