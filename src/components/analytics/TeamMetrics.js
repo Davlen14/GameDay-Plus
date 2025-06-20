@@ -128,9 +128,30 @@ const TeamMetrics = ({ onNavigate }) => {
 
     try {
       const result = await testFunction();
+      console.log(`✅ ${testName} test result:`, result);
+      
+      // Handle different result types
+      let status = 'success';
+      let message = null;
+      
+      if (Array.isArray(result)) {
+        if (result.length === 0) {
+          status = 'warning';
+          message = `API responded successfully but returned 0 records. This may be normal for ${testName}.`;
+        }
+      } else if (!result) {
+        status = 'warning';
+        message = `API responded but returned null/undefined. This may be normal for ${testName}.`;
+      }
+      
       setApiTests(prev => ({
         ...prev,
-        [testName]: { status: 'success', data: result, error: null }
+        [testName]: { 
+          status, 
+          data: result, 
+          error: null,
+          message: message || `Successfully fetched ${Array.isArray(result) ? result.length : 1} record(s)`
+        }
       }));
       return true;
     } catch (error) {
@@ -148,15 +169,15 @@ const TeamMetrics = ({ onNavigate }) => {
     
     const testResults = await Promise.allSettled([
       testEndpoint('teams', () => teamService.getFBSTeams(true)),
-      testEndpoint('records', () => teamService.getTeamRecords('Alabama', selectedYear)),
-      testEndpoint('teamGames', () => teamService.getTeamGames('Alabama', selectedYear)),
-      testEndpoint('spRatings', () => teamService.getSPRatings(selectedYear, 'Alabama')),
-      testEndpoint('eloRatings', () => teamService.getEloRatings(selectedYear, null, 'Alabama')),
-      testEndpoint('fpiRatings', () => teamService.getFPIRatings(selectedYear, 'Alabama')),
-      testEndpoint('recruiting', () => teamService.getRecruitingRankings(selectedYear, 'Alabama')),
-      testEndpoint('rankings', () => teamService.getRankings(selectedYear, 1, 'Alabama')),
-      testEndpoint('apPollPostseason', () => teamService.getRankings(2024, 1, null, 'postseason')),
-      testEndpoint('betting', () => bettingService.getBettingLines(null, selectedYear, 1, 'regular', 'Alabama'))
+      testEndpoint('records', () => teamService.getTeamRecords('Alabama', 2024)),
+      testEndpoint('teamGames', () => teamService.getTeamGames('Alabama', 2024)),
+      testEndpoint('spRatings', () => teamService.getSPRatings(2024, 'Alabama')),
+      testEndpoint('eloRatings', () => teamService.getEloRatings(2024, 15)), // Week 15 is likely to have data
+      testEndpoint('fpiRatings', () => teamService.getFPIRatings(2024, 'Alabama')),
+      testEndpoint('recruiting', () => teamService.getRecruitingRankings(2024, 'Alabama')),
+      testEndpoint('rankings', () => teamService.getRankings(2024, 15)), // Week 15 for end of season rankings
+      testEndpoint('apPollPostseason', () => teamService.getRankings(2023, 1, null, 'postseason')), // 2023 postseason more likely to exist
+      testEndpoint('betting', () => bettingService.getBettingLines(null, 2024, 1, 'regular', 'Alabama'))
     ]);
 
     const passedTests = testResults.filter(result => result.status === 'fulfilled').length;
@@ -728,13 +749,15 @@ const TeamMetrics = ({ onNavigate }) => {
                           onClick={() => testEndpoint(key, () => {
                             switch(key) {
                               case 'teams': return teamService.getFBSTeams(true);
-                              case 'records': return teamService.getTeamRecords('Alabama', selectedYear);
-                              case 'spRatings': return teamService.getSPRatings(selectedYear, 'Alabama');
-                              case 'eloRatings': return teamService.getEloRatings(selectedYear, null, 'Alabama');
-                              case 'fpiRatings': return teamService.getFPIRatings(selectedYear, 'Alabama');
-                              case 'recruiting': return teamService.getRecruitingRankings(selectedYear, 'Alabama');
-                              case 'rankings': return rankingsService.getHistoricalRankings(selectedYear, 1);
-                              case 'betting': return bettingService.getBettingLines(null, selectedYear, 1, 'regular', 'Alabama');
+                              case 'records': return teamService.getTeamRecords('Alabama', 2024);
+                              case 'teamGames': return teamService.getTeamGames('Alabama', 2024);
+                              case 'spRatings': return teamService.getSPRatings(2024, 'Alabama');
+                              case 'eloRatings': return teamService.getEloRatings(2024, 15); // Week 15 
+                              case 'fpiRatings': return teamService.getFPIRatings(2024, 'Alabama');
+                              case 'recruiting': return teamService.getRecruitingRankings(2024, 'Alabama');
+                              case 'rankings': return teamService.getRankings(2024, 15); // Week 15 rankings
+                              case 'apPollPostseason': return teamService.getRankings(2023, 1, null, 'postseason'); // 2023 postseason
+                              case 'betting': return bettingService.getBettingLines(null, 2024, 1, 'regular', 'Alabama');
                               default: return Promise.resolve([]);
                             }
                           })}
