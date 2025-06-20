@@ -208,8 +208,8 @@ const Commitments = () => {
 
         // Fetch teams data for conference mapping and images
         const [teamsData, recruitsData] = await Promise.all([
-          teamService.getTeams().catch(() => []),
-          rankingsService.getPlayerRecruitingRankings(2024).catch(() => [])
+          teamService.getAllTeams().catch(() => []),
+          rankingsService.getPlayerRecruitingRankings(2025).catch(() => [])
         ]);
 
         setTeams(teamsData || []);
