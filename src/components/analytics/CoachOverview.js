@@ -4,6 +4,8 @@ import {
   FaTrophy, FaExclamationTriangle, FaTachometerAlt, FaStar, FaSearch,
   FaChartLine, FaUsers, FaFire, FaCheckCircle
 } from "react-icons/fa";
+import { teamService } from "../../services/teamService";
+import newsService from "../../services/newsService";
 
 // Helper to aggregate season data for a coach
 const aggregateCoachData = (seasons) => {
@@ -117,88 +119,9 @@ const getCoachStatus = (coach, metrics) => {
   }
 };
 
-// Mock data for demonstration
-const mockCoachData = [
-  {
-    firstName: "Kirby",
-    lastName: "Smart",
-    school: "Georgia",
-    conference: "SEC",
-    hireDate: "2015-12-06",
-    seasons: [
-      { year: 2024, games: 15, wins: 13, losses: 2, srs: 18.5, spOverall: 22.1, spOffense: 18.7, spDefense: 5.2 },
-      { year: 2023, games: 14, wins: 13, losses: 1, srs: 20.2, spOverall: 24.3, spOffense: 20.1, spDefense: 4.8 },
-      { year: 2022, games: 15, wins: 15, losses: 0, srs: 22.8, spOverall: 26.5, spOffense: 22.3, spDefense: 3.9 },
-      { year: 2021, games: 15, wins: 14, losses: 1, srs: 19.7, spOverall: 23.1, spOffense: 19.8, spDefense: 5.1 }
-    ]
-  },
-  {
-    firstName: "Nick",
-    lastName: "Saban",
-    school: "Alabama", 
-    conference: "SEC",
-    hireDate: "2007-01-03",
-    seasons: [
-      { year: 2024, games: 14, wins: 10, losses: 4, srs: 12.3, spOverall: 15.7, spOffense: 14.2, spDefense: 8.1 },
-      { year: 2023, games: 15, wins: 12, losses: 3, srs: 16.8, spOverall: 19.4, spOffense: 17.1, spDefense: 6.3 },
-      { year: 2022, games: 13, wins: 11, losses: 2, srs: 18.2, spOverall: 21.6, spOffense: 19.3, spDefense: 5.7 },
-      { year: 2021, games: 15, wins: 13, losses: 2, srs: 20.1, spOverall: 23.8, spOffense: 21.4, spDefense: 4.9 }
-    ]
-  },
-  {
-    firstName: "Ryan",
-    lastName: "Day",
-    school: "Ohio State",
-    conference: "Big Ten", 
-    hireDate: "2019-01-02",
-    seasons: [
-      { year: 2024, games: 13, wins: 11, losses: 2, srs: 17.4, spOverall: 20.8, spOffense: 24.1, spDefense: 7.2 },
-      { year: 2023, games: 14, wins: 11, losses: 3, srs: 15.9, spOverall: 18.6, spOffense: 22.3, spDefense: 8.9 },
-      { year: 2022, games: 13, wins: 11, losses: 2, srs: 19.2, spOverall: 22.7, spOffense: 26.4, spDefense: 6.1 },
-      { year: 2021, games: 13, wins: 11, losses: 2, srs: 18.6, spOverall: 21.9, spOffense: 25.2, spDefense: 6.8 }
-    ]
-  },
-  {
-    firstName: "Dabo",
-    lastName: "Swinney", 
-    school: "Clemson",
-    conference: "ACC",
-    hireDate: "2008-10-13",
-    seasons: [
-      { year: 2024, games: 13, wins: 9, losses: 4, srs: 8.7, spOverall: 11.2, spOffense: 9.8, spDefense: 12.1 },
-      { year: 2023, games: 14, wins: 9, losses: 5, srs: 6.3, spOverall: 8.9, spOffense: 7.2, spDefense: 14.3 },
-      { year: 2022, games: 14, wins: 11, losses: 3, srs: 14.1, spOverall: 17.6, spOffense: 15.3, spDefense: 9.2 },
-      { year: 2021, games: 13, wins: 10, losses: 3, srs: 12.8, spOverall: 16.1, spOffense: 13.9, spDefense: 10.7 }
-    ]
-  },
-  {
-    firstName: "Lincoln",
-    lastName: "Riley",
-    school: "USC",
-    conference: "Pac-12",
-    hireDate: "2021-11-28", 
-    seasons: [
-      { year: 2024, games: 13, wins: 8, losses: 5, srs: 5.2, spOverall: 7.8, spOffense: 12.4, spDefense: 16.7 },
-      { year: 2023, games: 14, wins: 8, losses: 6, srs: 3.1, spOverall: 5.6, spOffense: 10.9, spDefense: 18.2 },
-      { year: 2022, games: 14, wins: 11, losses: 3, srs: 11.7, spOverall: 14.3, spOffense: 18.1, spDefense: 13.4 }
-    ]
-  },
-  {
-    firstName: "Marcus",
-    lastName: "Freeman",
-    school: "Notre Dame",
-    conference: "Independent",
-    hireDate: "2021-12-06",
-    seasons: [
-      { year: 2024, games: 14, wins: 12, losses: 2, srs: 16.8, spOverall: 19.7, spOffense: 17.2, spDefense: 7.8 },
-      { year: 2023, games: 13, wins: 10, losses: 3, srs: 13.4, spOverall: 16.1, spOffense: 14.7, spDefense: 9.3 },
-      { year: 2022, games: 13, wins: 9, losses: 4, srs: 9.6, spOverall: 12.1, spOffense: 11.3, spDefense: 11.8 }
-    ]
-  }
-];
-
 const CoachOverview = () => {
   const [coaches, setCoaches] = useState([]);
+  const [teams, setTeams] = useState([]);
   const [filteredCoaches, setFilteredCoaches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -208,62 +131,112 @@ const CoachOverview = () => {
   const [selectedCoaches, setSelectedCoaches] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
 
+  // Helper: Get team logo based on school name
+  const getTeamLogo = (school) => {
+    const team = teams.find(
+      (t) => t.school && t.school.toLowerCase() === school?.toLowerCase()
+    );
+    return team?.logos?.[0] || "/photos/default_team.png";
+  };
+
   useEffect(() => {
-    // Simulate loading and process mock data
-    const processCoaches = () => {
-      const processedCoaches = mockCoachData.map((coach) => {
-        const agg = aggregateCoachData(coach.seasons);
-        const winPct = agg.games > 0 ? ((agg.wins / agg.games) * 100) : 0;
-        const avgSrs = agg.count > 0 ? (agg.srs / agg.count) : 0;
-        const avgSpOverall = agg.count > 0 ? (agg.spOverall / agg.count) : 0;
-        const avgSpOffense = agg.count > 0 ? (agg.spOffense / agg.count) : 0;
-        const avgSpDefense = agg.count > 0 ? (agg.spDefense / agg.count) : 0;
+    const fetchAllData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch teams and coaches data in parallel
+        const [teamsData, coachesData] = await Promise.all([
+          teamService.getAllTeams(),
+          teamService.getCoaches()
+        ]);
 
-        // Calculate trend
-        let trend = 0;
-        const sortedSeasons = [...coach.seasons].sort((a, b) => b.year - a.year);
-        if (sortedSeasons.length >= 3) {
-          const recentSrsTrend = ((sortedSeasons[0].srs || 0) - (sortedSeasons[2].srs || 0)) / 3;
-          const recentSpTrend = ((sortedSeasons[0].spOverall || 0) - (sortedSeasons[2].spOverall || 0)) / 3;
-          trend = (recentSrsTrend + recentSpTrend) / 2;
-        }
+        setTeams(teamsData);
 
-        const programInfo = getProgramTierAndStrength(coach.school);
-        const composite = (avgSrs + avgSpOverall + winPct * 0.5) / 3;
-        const expectations = programInfo.value * 5;
+        // Filter to only active coaches (with recent seasons)
+        const activeCoaches = coachesData.filter((coach) =>
+          coach.seasons && coach.seasons.some((season) => season.year >= 2022)
+        );
 
-        const metrics = {
-          winPct,
-          composite,
-          trend,
-          games: agg.games,
-          programStrength: programInfo.value,
-          expectations
-        };
+        // Process coach data
+        const processedCoaches = activeCoaches.map((coach) => {
+          const agg = aggregateCoachData(coach.seasons);
+          const winPct = agg.games > 0 ? ((agg.wins / agg.games) * 100) : 0;
+          const avgSrs = agg.count > 0 ? (agg.srs / agg.count) : 0;
+          const avgSpOverall = agg.count > 0 ? (agg.spOverall / agg.count) : 0;
+          const avgSpOffense = agg.count > 0 ? (agg.spOffense / agg.count) : 0;
+          const avgSpDefense = agg.count > 0 ? (agg.spDefense / agg.count) : 0;
 
-        return {
-          ...coach,
-          winPct,
-          avgSrs,
-          avgSpOverall,
-          avgSpOffense,
-          avgSpDefense,
-          composite,
-          trend,
-          programTier: programInfo.tier,
-          status: getCoachStatus(coach, metrics),
-          games: agg.games,
-          wins: agg.wins,
-          losses: agg.losses
-        };
-      });
+          // Calculate trend over last 3 seasons
+          let trend = 0;
+          const sortedSeasons = [...coach.seasons].sort((a, b) => b.year - a.year);
+          if (sortedSeasons.length >= 3) {
+            const recentSrsTrend = ((sortedSeasons[0].srs || 0) - (sortedSeasons[2].srs || 0)) / 3;
+            const recentSpTrend = ((sortedSeasons[0].spOverall || 0) - (sortedSeasons[2].spOverall || 0)) / 3;
+            const recentWinPctTrend = (
+              ((sortedSeasons[0].wins || 0) / Math.max(1, (sortedSeasons[0].games || 1))) -
+              ((sortedSeasons[2].wins || 0) / Math.max(1, (sortedSeasons[2].games || 1)))
+            ) * 100 / 3;
+            trend = (recentSrsTrend + recentSpTrend + recentWinPctTrend) / 3;
+          }
 
-      setCoaches(processedCoaches);
-      setFilteredCoaches(processedCoaches);
-      setLoading(false);
+          // Get current team (most recent season)
+          const currentTeam = sortedSeasons.length > 0 ? sortedSeasons[0].school : "";
+          
+          // Get team data for conference info
+          const teamData = teamsData.find(
+            (t) => t.school && t.school.toLowerCase() === currentTeam.toLowerCase()
+          );
+          const conference = teamData ? teamData.conference : "";
+
+          const programInfo = getProgramTierAndStrength(currentTeam);
+          
+          // Calculate composite score
+          const normalizedSrs = avgSrs === 0 ? 0 : Math.min(100, Math.max(0, avgSrs * 2));
+          const normalizedSpOverall = avgSpOverall === 0 ? 0 : Math.min(100, Math.max(0, avgSpOverall * 2));
+          const composite = (normalizedSrs + normalizedSpOverall + winPct) / 3;
+          const expectations = programInfo.value * 5;
+
+          const metrics = {
+            winPct,
+            composite,
+            trend,
+            games: agg.games,
+            programStrength: programInfo.value,
+            expectations
+          };
+
+          return {
+            ...coach,
+            school: currentTeam,
+            conference,
+            winPct,
+            avgSrs,
+            avgSpOverall,
+            avgSpOffense,
+            avgSpDefense,
+            composite,
+            trend,
+            programTier: programInfo.tier,
+            status: getCoachStatus(coach, metrics),
+            games: agg.games,
+            wins: agg.wins,
+            losses: agg.losses
+          };
+        });
+
+        setCoaches(processedCoaches);
+        setFilteredCoaches(processedCoaches);
+      } catch (error) {
+        console.error("Error fetching coach data:", error);
+        // Fall back to mock data if API fails
+        setCoaches([]);
+        setFilteredCoaches([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setTimeout(processCoaches, 1000); // Simulate API delay
+    fetchAllData();
   }, []);
 
   // Filter and sort coaches
@@ -529,12 +502,23 @@ const CoachOverview = () => {
                     </div>
                   </div>
                   
-                  <div className="mb-4">
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">
-                      {coach.firstName} {coach.lastName}
-                    </h3>
-                    <p className="text-gray-600 font-medium">{coach.school}</p>
-                    <p className="text-sm text-gray-500">{coach.conference}</p>
+                  <div className="flex items-start gap-4 mb-4">
+                    {/* Team Logo */}
+                    <div className="w-16 h-16 flex-shrink-0">
+                      <img 
+                        src={getTeamLogo(coach.school)} 
+                        alt={coach.school}
+                        className="w-full h-full object-contain rounded-lg shadow-sm"
+                      />
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900 mb-1">
+                        {coach.firstName} {coach.lastName}
+                      </h3>
+                      <p className="text-gray-600 font-medium">{coach.school}</p>
+                      <p className="text-sm text-gray-500">{coach.conference}</p>
+                    </div>
                   </div>
 
                   {/* Key Stats */}
@@ -639,8 +623,17 @@ const CoachOverview = () => {
                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Metric</th>
                         {selectedCoaches.map((coach) => (
                           <th key={`${coach.firstName}-${coach.lastName}`} className="text-center py-3 px-4 font-semibold text-gray-700">
-                            {coach.firstName} {coach.lastName}
-                            <div className="text-sm text-gray-500 font-normal">{coach.school}</div>
+                            <div className="flex flex-col items-center gap-2">
+                              <img 
+                                src={getTeamLogo(coach.school)} 
+                                alt={coach.school}
+                                className="w-8 h-8 object-contain"
+                              />
+                              <div>
+                                {coach.firstName} {coach.lastName}
+                                <div className="text-sm text-gray-500 font-normal">{coach.school}</div>
+                              </div>
+                            </div>
                           </th>
                         ))}
                       </tr>

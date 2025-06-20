@@ -238,5 +238,10 @@ export const teamService = {
     const params = { year };
     if (team) params.team = team;
     return await fetchCollegeFootballData('/ppa/teams', params);
+  },
+
+  // GET /coaches - Get coaches data
+  getCoaches: async () => {
+    return await fetchCollegeFootballData('/coaches');
   }
 };
