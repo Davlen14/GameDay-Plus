@@ -211,7 +211,7 @@ const TeamMetrics = ({ onNavigate }) => {
       
       // Phase 2: Get ALL data at once (like working test logic)
       const [allRankings, allEloRatings, allSpRatings, allFpiRatings] = await Promise.all([
-        teamService.getRankings(2024, 1, null, 'postseason').catch(() => null), // 2024 postseason week 1
+        teamService.getRankings(2024, 1, null, 'postseason').catch(() => null), // 2024 postseason week 1 AP poll
         teamService.getEloRatings(2024, 15).catch(() => null), // All Elo ratings week 15
         teamService.getSPRatings(2024).catch(() => null), // All SP+ ratings
         teamService.getFPIRatings(2024).catch(() => null) // All FPI ratings
@@ -308,10 +308,20 @@ const TeamMetrics = ({ onNavigate }) => {
   };
 
   const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null, rankingsData = null, bettingData = null) => {
-    // Calculate wins/losses from games or use records
+    // Calculate wins/losses from records data (your API structure)
     let wins = 0, losses = 0, conferenceWins = 0, conferenceLosses = 0;
     
-    if (games && games.length > 0) {
+    if (records && records.length > 0) {
+      // Use the actual record structure from your API
+      const record = records[0];
+      wins = record.total?.wins || 0;
+      losses = record.total?.losses || 0;
+      conferenceWins = record.conferenceGames?.wins || 0;
+      conferenceLosses = record.conferenceGames?.losses || 0;
+      
+      console.log(`📊 ${team.school} records:`, { wins, losses, conferenceWins, conferenceLosses });
+    } else if (games && games.length > 0) {
+      // Fallback to game calculation if records not available
       games.forEach(game => {
         if (!game.completed) return; // Skip incomplete games
         
@@ -327,22 +337,19 @@ const TeamMetrics = ({ onNavigate }) => {
           else if (teamPoints < opponentPoints) conferenceLosses++;
         }
       });
-    } else if (records && records.length > 0) {
-      const record = records[0];
-      wins = record.total?.wins || 0;
-      losses = record.total?.losses || 0;
-      conferenceWins = record.conferenceGames?.wins || 0;
-      conferenceLosses = record.conferenceGames?.losses || 0;
     }
     
-    // Extract real rankings from API data (using working test logic structure)
+    // Extract real rankings from API data (2024 postseason AP poll)
     let apRank = null, coachesRank = null, playoffRank = null;
     if (rankingsData && rankingsData.polls) {
-      // Find AP Top 25 ranking
+      // Find AP Top 25 ranking from postseason poll
       const apPoll = rankingsData.polls.find(poll => poll.poll === 'AP Top 25');
       if (apPoll && apPoll.ranks) {
         const teamRanking = apPoll.ranks.find(rank => rank.school === team.school);
-        if (teamRanking) apRank = teamRanking.rank;
+        if (teamRanking) {
+          apRank = teamRanking.rank;
+          console.log(`🏆 ${team.school} AP ranking:`, apRank);
+        }
       }
       
       // Find Coaches Poll ranking
@@ -367,9 +374,11 @@ const TeamMetrics = ({ onNavigate }) => {
     const eloRatingValue = eloRating?.elo || 1500; // Standard Elo starting point
     const fpiRatingValue = fpiRating?.fpi || 0;
     
-    // Calculate win percentage
+    // Calculate REAL win percentage
     const totalGames = wins + losses;
-    const winPercentage = totalGames > 0 ? (wins / totalGames) : 0.5;
+    const winPercentage = totalGames > 0 ? (wins / totalGames) : 0;
+    
+    console.log(`📈 ${team.school} win %:`, { wins, losses, totalGames, winPercentage: winPercentage * 100 });
     
     // Overall rating based on real data
     let overallRating = 50; // Base rating
@@ -410,7 +419,7 @@ const TeamMetrics = ({ onNavigate }) => {
       losses,
       conferenceWins,
       conferenceLosses,
-      winPercentage: winPercentage * 100,
+      winPercentage: winPercentage * 100, // Convert to percentage
       overallRating,
       
       // Rating Systems (REAL DATA)
