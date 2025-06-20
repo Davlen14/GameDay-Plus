@@ -510,18 +510,31 @@ const TeamMetrics = ({ onNavigate }) => {
   };
 
   const generateNextGame = (team) => {
-    // Since 2024 season is over, show 2025 season games (Week 1 of 2025)
-    const opponents = ['Alabama', 'Georgia', 'Ohio State', 'Michigan', 'Texas', 'Oklahoma', 'LSU', 'Florida', 'Notre Dame', 'USC'];
+    // Since 2024 season is over, show 2025 season games (Week 1 regular season)
+    const opponents = [
+      { name: 'Alabama', colors: { primary: '#9E1B32', secondary: '#FFFFFF' } },
+      { name: 'Georgia', colors: { primary: '#BA0C2F', secondary: '#000000' } },
+      { name: 'Ohio State', colors: { primary: '#BB0000', secondary: '#FFFFFF' } },
+      { name: 'Michigan', colors: { primary: '#00274C', secondary: '#FFCB05' } },
+      { name: 'Texas', colors: { primary: '#BF5700', secondary: '#FFFFFF' } },
+      { name: 'Oklahoma', colors: { primary: '#841617', secondary: '#FDF9F3' } },
+      { name: 'LSU', colors: { primary: '#461D7C', secondary: '#FDD023' } },
+      { name: 'Florida', colors: { primary: '#0021A5', secondary: '#FA4616' } },
+      { name: 'Notre Dame', colors: { primary: '#0C2340', secondary: '#C99700' } },
+      { name: 'USC', colors: { primary: '#990000', secondary: '#FFCC00' } }
+    ];
     const opponent = opponents[Math.floor(Math.random() * opponents.length)];
     const spread = (Math.random() * 20 - 10).toFixed(1);
     const isHome = Math.random() > 0.5;
     
     return {
-      opponent,
+      opponent: opponent.name,
+      opponentColors: opponent.colors,
       spread: parseFloat(spread),
       isHome,
-      week: 1, // Week 1 of 2025 season
+      week: 1, // Week 1 regular season
       season: 2025,
+      seasonType: 'regular',
       date: 'August 30, 2025' // Typical season start date
     };
   };
@@ -1278,29 +1291,69 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
 
         {/* Next Game Preview & Betting Insights */}
         {team.nextGame && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div 
+            className="border border-opacity-30 rounded-lg p-4 mb-4"
+            style={{ 
+              backgroundColor: `${team.nextGame.opponentColors?.primary}15`,
+              borderColor: `${team.nextGame.opponentColors?.primary}40`
+            }}
+          >
             <div className="flex items-center justify-between">
-              <div>
-                <div className="font-semibold text-blue-800">2025 Season Opener</div>
-                <div className="text-blue-700">
-                  {team.nextGame.isHome ? 'vs' : '@'} {team.nextGame.opponent}
-                </div>
-                <div className="text-xs text-blue-600 mt-1">
-                  Week {team.nextGame.week} • {team.nextGame.date}
-                </div>
-                {team.bettingInsights && (
-                  <div className="text-xs text-blue-600 mt-1">
-                    ATS: {team.bettingInsights.atsRecord} | Market: {team.bettingInsights.sharpAction}
+              <div className="flex items-center space-x-3">
+                <div>
+                  <div 
+                    className="font-semibold text-lg"
+                    style={{ color: team.nextGame.opponentColors?.primary }}
+                  >
+                    2025 Week 1 Regular Season
                   </div>
-                )}
+                  <div className="flex items-center space-x-2">
+                    <img 
+                      src={getTeamLogo({ school: team.nextGame.opponent })} 
+                      alt={team.nextGame.opponent}
+                      className="w-6 h-6 object-contain"
+                    />
+                    <span 
+                      className="font-medium"
+                      style={{ color: team.nextGame.opponentColors?.primary }}
+                    >
+                      {team.nextGame.isHome ? 'vs' : '@'} {team.nextGame.opponent}
+                    </span>
+                  </div>
+                  <div 
+                    className="text-sm mt-1"
+                    style={{ color: `${team.nextGame.opponentColors?.primary}80` }}
+                  >
+                    {team.nextGame.date}
+                  </div>
+                  {team.bettingInsights && (
+                    <div 
+                      className="text-xs mt-1"
+                      style={{ color: `${team.nextGame.opponentColors?.primary}70` }}
+                    >
+                      ATS: {team.bettingInsights.atsRecord} | Market: {team.bettingInsights.sharpAction}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-blue-800 font-bold">
+                <div 
+                  className="font-bold text-xl"
+                  style={{ color: team.nextGame.opponentColors?.primary }}
+                >
                   {team.nextGame.spread > 0 ? '+' : ''}{team.nextGame.spread}
                 </div>
-                <div className="text-xs text-blue-600">Spread</div>
+                <div 
+                  className="text-sm"
+                  style={{ color: `${team.nextGame.opponentColors?.primary}80` }}
+                >
+                  Spread
+                </div>
                 {team.bettingInsights?.avgTotal && (
-                  <div className="text-xs text-blue-500 mt-1">
+                  <div 
+                    className="text-sm mt-1"
+                    style={{ color: `${team.nextGame.opponentColors?.primary}70` }}
+                  >
                     O/U: {team.bettingInsights.avgTotal}
                   </div>
                 )}
