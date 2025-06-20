@@ -1,9 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  FaStar,
+  FaSearch,
+  FaInfoCircle,
+  FaMapMarkedAlt,
+  FaTrophy,
+  FaFootballBall,
+  FaSyncAlt,
+  FaChartBar
+} from "react-icons/fa";
 import { rankingsService } from '../../services/rankingsService';
 import { teamService } from '../../services/teamService';
 
 // Conditionally import Leaflet components
-let MapContainer, TileLayer, Marker, Popup, useMap, Icon, L;
+let MapContainer, TileLayer, Marker, Popup, useMap, Icon, L, MarkerClusterGroup;
 let leafletAvailable = true;
 
 try {
@@ -13,6 +23,15 @@ try {
   Marker = leafletComponents.Marker;
   Popup = leafletComponents.Popup;
   useMap = leafletComponents.useMap;
+  
+  // Try to import clustering (optional)
+  try {
+    const clusterComponents = require('react-leaflet-cluster');
+    MarkerClusterGroup = clusterComponents.default || clusterComponents;
+  } catch (clusterError) {
+    console.warn('Clustering not available, using standard markers');
+    MarkerClusterGroup = null;
+  }
   
   const leaflet = require('leaflet');
   Icon = leaflet.Icon;
@@ -35,42 +54,79 @@ try {
   leafletAvailable = false;
 }
 
-// Custom icon for markers (only if Leaflet is available)
-let customIcon;
-if (leafletAvailable && Icon) {
-  customIcon = new Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
-}
+/** US bounding box to restrict map view to the continental US. */
+const US_BOUNDS = [
+  [24.396308, -125.0], // Southwest
+  [49.384358, -66.93457] // Northeast
+];
 
-// Component to auto-fit map to markers (only if Leaflet is available)
-let MapBounds;
+/** Create a custom marker icon for a given star rating. */
+const createStarIcon = (starRating) => {
+  if (!leafletAvailable || !L) return null;
+  
+  const colors = {
+    3: "#4287f5", // Blue
+    4: "#f5a742", // Orange
+    5: "#f54242", // Red
+  };
+
+  return L.divIcon({
+    className: `star-marker star-${starRating}`,
+    html: `
+      <div style="position: relative; width: 40px; height: 40px;">
+        <div style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 30px;
+          height: 30px;
+          background-color: ${colors[starRating] || "#888"};
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 12px;
+          border: 2px solid white;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        ">
+          ${starRating}★
+        </div>
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+  });
+};
+
+/** A small component to set up the map's bounds and constraints. */
+let MapControls;
 if (leafletAvailable && useMap) {
-  MapBounds = ({ commitments }) => {
+  MapControls = () => {
     const map = useMap();
-    
+
     useEffect(() => {
-      if (commitments.length > 0 && map && L) {
-        try {
-          const group = new L.featureGroup(commitments.map(c => 
-            L.marker([c.coordinates[0], c.coordinates[1]])
-          ));
-          map.fitBounds(group.getBounds().pad(0.1));
-        } catch (error) {
-          console.warn('Error fitting map bounds:', error);
-        }
-      }
-    }, [commitments, map]);
-    
+      if (!map) return;
+      
+      // Fit map to US bounds on load
+      map.fitBounds(US_BOUNDS);
+
+      // Prevent zooming too far out
+      map.setMinZoom(3);
+
+      // Restrict panning to US area (with some buffer)
+      map.setMaxBounds([
+        [15, -140], // Southwest buffer
+        [55, -50],  // Northeast buffer
+      ]);
+    }, [map]);
+
     return null;
   };
 } else {
-  MapBounds = () => null;
+  MapControls = () => null;
 }
 
 const Commitments = () => {
