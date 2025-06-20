@@ -253,11 +253,12 @@ const TeamMetrics = ({ onNavigate }) => {
               recruiting, 
               allRankings, // Pass full rankings to extract individual team ranking
               null, // betting data - skip for now
-              week1Games // Pass 2025 Week 1 games for real next game data
+              week1Games, // Pass 2025 Week 1 games for real next game data
+              allTeams // Pass all teams for opponent lookup
             );
           } catch (error) {
             console.log(`⚠️ Error processing ${team.school}, using fallback data`);
-            return createEnhancedTeam(team, allRecords, null, null, null, null, null, allRankings, null, week1Games);
+            return createEnhancedTeam(team, allRecords, null, null, null, null, null, allRankings, null, week1Games, allTeams);
           }
         });
         
@@ -310,7 +311,7 @@ const TeamMetrics = ({ onNavigate }) => {
     );
   };
 
-  const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null, rankingsData = null, bettingData = null, week1Games = null) => {
+  const createEnhancedTeam = (team, records = null, spRating = null, games = null, eloRating = null, fpiRating = null, recruiting = null, rankingsData = null, bettingData = null, week1Games = null, allTeams = null) => {
     // Calculate wins/losses from records data (actual API structure)
     let wins = 0, losses = 0, conferenceWins = 0, conferenceLosses = 0;
     
@@ -486,7 +487,7 @@ const TeamMetrics = ({ onNavigate }) => {
       keyConcern: concerns.primary,
       
       // Next Game (real 2025 Week 1 data)
-      nextGame: generateNextGame(team, week1Games),
+      nextGame: generateNextGame(team, week1Games, allTeams),
       
       // Enhanced metrics for detail view
       games: games || [],
@@ -520,7 +521,7 @@ const TeamMetrics = ({ onNavigate }) => {
     return { primary: topConcern.name };
   };
 
-  const generateNextGame = (team, week1Games) => {
+  const generateNextGame = (team, week1Games, allTeams) => {
     // Try to find the team's actual 2025 Week 1 game
     if (week1Games && week1Games.length > 0) {
       const teamGame = week1Games.find(game => 
@@ -532,17 +533,32 @@ const TeamMetrics = ({ onNavigate }) => {
       
       if (teamGame) {
         const isHome = teamGame.homeTeam === team.school || teamGame.homeTeam === team.school?.replace('&', 'and');
-        const opponent = isHome ? teamGame.awayTeam : teamGame.homeTeam;
+        const opponentName = isHome ? teamGame.awayTeam : teamGame.homeTeam;
         const gameDate = new Date(teamGame.startDate);
         
-        // Get opponent colors (simplified mapping for major teams)
-        const opponentColors = getTeamColors(opponent);
+        // Find the actual opponent team data from allTeams array (like GameDetailView)
+        const opponentTeam = allTeams.find(t => 
+          t.school === opponentName || 
+          t.school === opponentName?.replace('&', 'and') ||
+          t.school === opponentName?.replace('and', '&')
+        );
         
-        console.log(`🏈 Found real game for ${team.school}: ${isHome ? 'vs' : '@'} ${opponent} on ${gameDate.toLocaleDateString()}`);
+        // Get opponent colors and logo from actual team data (like GameDetailView)
+        const opponentColors = opponentTeam?.color ? {
+          primary: opponentTeam.color,
+          secondary: '#FFFFFF'
+        } : getTeamColors(opponentName);
+        
+        const opponentLogo = opponentTeam?.logos?.[0] || `/photos/${opponentName}.png`;
+        
+        console.log(`🏈 Found real game for ${team.school}: ${isHome ? 'vs' : '@'} ${opponentName} on ${gameDate.toLocaleDateString()}`);
+        console.log(`🎨 Opponent team data:`, { opponentTeam, opponentColors, opponentLogo });
         
         return {
-          opponent,
+          opponent: opponentName,
+          opponentTeam, // Include full team data
           opponentColors,
+          opponentLogo,
           spread: 0, // Real spread would need betting API
           isHome,
           week: 1,
@@ -578,9 +594,15 @@ const TeamMetrics = ({ onNavigate }) => {
     const spread = (Math.random() * 20 - 10).toFixed(1);
     const isHome = Math.random() > 0.5;
     
+    // Find mock opponent team data
+    const mockOpponentTeam = allTeams.find(t => t.school === opponent.name);
+    const mockOpponentLogo = mockOpponentTeam?.logos?.[0] || `/photos/${opponent.name}.png`;
+    
     return {
       opponent: opponent.name,
+      opponentTeam: mockOpponentTeam,
       opponentColors: opponent.colors,
+      opponentLogo: mockOpponentLogo,
       spread: parseFloat(spread),
       isHome,
       week: 1,
@@ -629,6 +651,15 @@ const TeamMetrics = ({ onNavigate }) => {
     };
     
     return teamColorMap[teamName] || { primary: '#1F2937', secondary: '#FFFFFF' }; // Default gray
+  };
+
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 59, g: 130, b: 246 };
   };
 
   const generateSeasonStats = (wins, losses, spOffense, spDefense) => {
@@ -818,7 +849,7 @@ const TeamMetrics = ({ onNavigate }) => {
   };
 
   const getTeamLogo = (team) => {
-    return team.logos?.[0] || `/photos/${team.school}.png`;
+    return team?.logos?.[0] || `/photos/${team.school || 'ncaaf'}.png`;
   };
 
   if (loading) {
@@ -1384,13 +1415,27 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
         {/* Next Game Preview & Betting Insights */}
         {team.nextGame && (
           <div 
-            className="border border-opacity-30 rounded-lg p-4 mb-4"
+            className="border border-opacity-30 rounded-lg p-4 mb-4 relative overflow-hidden"
             style={{ 
-              backgroundColor: `${team.nextGame.opponentColors?.primary}15`,
-              borderColor: `${team.nextGame.opponentColors?.primary}40`
+              backgroundColor: team.nextGame.opponentColors?.primary 
+                ? `rgba(${hexToRgb(team.nextGame.opponentColors.primary).r}, ${hexToRgb(team.nextGame.opponentColors.primary).g}, ${hexToRgb(team.nextGame.opponentColors.primary).b}, 0.1)`
+                : 'rgba(59, 130, 246, 0.1)',
+              borderColor: team.nextGame.opponentColors?.primary 
+                ? `rgba(${hexToRgb(team.nextGame.opponentColors.primary).r}, ${hexToRgb(team.nextGame.opponentColors.primary).g}, ${hexToRgb(team.nextGame.opponentColors.primary).b}, 0.3)`
+                : 'rgba(59, 130, 246, 0.3)'
             }}
           >
-            <div className="flex items-center justify-between">
+            {/* Subtle background gradient */}
+            <div 
+              className="absolute inset-0 opacity-5"
+              style={{
+                background: team.nextGame.opponentColors?.primary 
+                  ? `linear-gradient(135deg, rgba(${hexToRgb(team.nextGame.opponentColors.primary).r}, ${hexToRgb(team.nextGame.opponentColors.primary).g}, ${hexToRgb(team.nextGame.opponentColors.primary).b}, 0.2) 0%, transparent 50%)`
+                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, transparent 50%)'
+              }}
+            />
+            
+            <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center space-x-3">
                 <div>
                   <div 
@@ -1401,7 +1446,7 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
                   </div>
                   <div className="flex items-center space-x-2">
                     <img 
-                      src={getTeamLogo({ school: team.nextGame.opponent })} 
+                      src={team.nextGame.opponentLogo || `/photos/${team.nextGame.opponent}.png`} 
                       alt={team.nextGame.opponent}
                       className="w-6 h-6 object-contain"
                     />
