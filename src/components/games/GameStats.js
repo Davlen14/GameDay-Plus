@@ -22,14 +22,23 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
   const [showDebug, setShowDebug] = useState(true);
   const [testData, setTestData] = useState(null);
 
+  // Extract team names from team objects
+  const awayTeamName = useMemo(() => {
+    return awayTeam?.school || awayTeam?.name || game?.away_team || 'Away Team';
+  }, [awayTeam, game?.away_team]);
+
+  const homeTeamName = useMemo(() => {
+    return homeTeam?.school || homeTeam?.name || game?.home_team || 'Home Team';
+  }, [homeTeam, game?.home_team]);
+
   // Team colors with fallback
   const awayColor = useMemo(() => {
-    return getTeamColor ? getTeamColor(awayTeam) || '#3B82F6' : '#3B82F6';
-  }, [getTeamColor, awayTeam]);
+    return getTeamColor ? getTeamColor(awayTeamName) || '#3B82F6' : '#3B82F6';
+  }, [getTeamColor, awayTeamName]);
 
   const homeColor = useMemo(() => {
-    return getTeamColor ? getTeamColor(homeTeam) || '#EF4444' : '#EF4444';
-  }, [getTeamColor, homeTeam]);
+    return getTeamColor ? getTeamColor(homeTeamName) || '#EF4444' : '#EF4444';
+  }, [getTeamColor, homeTeamName]);
 
   // Fetch game statistics
   const fetchGameStats = useCallback(async () => {
@@ -69,7 +78,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
     const mockStats = {
       teamStats: [
         {
-          school: homeTeam || 'Home Team',
+          school: homeTeamName,
           totalYards: 445,
           netPassingYards: 285,
           rushingYards: 160,
@@ -79,7 +88,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
           points: 28
         },
         {
-          school: awayTeam || 'Away Team', 
+          school: awayTeamName, 
           totalYards: 392,
           netPassingYards: 247,
           rushingYards: 145,
@@ -91,13 +100,13 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
       ],
       playerStats: [
         {
-          team: homeTeam || 'Home Team',
+          team: homeTeamName,
           player: 'Test QB',
           category: 'passing',
           stat: 285
         },
         {
-          team: awayTeam || 'Away Team',
+          team: awayTeamName,
           player: 'Test QB2', 
           category: 'passing',
           stat: 247
@@ -190,7 +199,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
           
           <div className="space-y-3">
             <div className="text-sm">
-              <strong>Game Data:</strong> {game ? `ID: ${game.id}, ${awayTeam || 'Unknown Away'} @ ${homeTeam || 'Unknown Home'}` : 'No game data'}
+              <strong>Game Data:</strong> {game ? `ID: ${game.id}, ${awayTeamName} @ ${homeTeamName}` : 'No game data'}
             </div>
             
             <div className="flex gap-2 flex-wrap">
@@ -255,8 +264,8 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
             awayColor={awayColor}
             homeColor={homeColor}
             animateCards={animateCards}
-            awayTeam={awayTeam}
-            homeTeam={homeTeam}
+            awayTeam={awayTeamName}
+            homeTeam={homeTeamName}
           />
         )}
 

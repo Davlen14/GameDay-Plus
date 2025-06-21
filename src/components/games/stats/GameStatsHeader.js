@@ -13,20 +13,38 @@ const GameStatsHeader = ({
   };
 
   const getTeamName = (isHome) => {
-    return isHome ? (game?.home_team || 'Home Team') : (game?.away_team || 'Away Team');
+    if (isHome) {
+      return homeTeam?.school || homeTeam?.name || game?.home_team || 'Home Team';
+    } else {
+      return awayTeam?.school || awayTeam?.name || game?.away_team || 'Away Team';
+    }
   };
 
-  const getTeamLogo = (teamId, teamName) => {
-    // Debug: log what we're trying to load
-    console.log(`🖼️ Loading logo for team: ${teamName} (ID: ${teamId})`);
+  const getTeamLogo = (isHome) => {
+    const team = isHome ? homeTeam : awayTeam;
+    const teamName = getTeamName(isHome);
     
-    // If we have team ID, use it
+    // Debug: log what we're trying to load
+    console.log(`🖼️ Loading logo for ${isHome ? 'home' : 'away'} team:`, { team, teamName });
+    
+    // First try the team's logo property if it exists
+    if (team?.logo) {
+      return team.logo;
+    }
+    
+    // Try team ID from the team object
+    if (team?.id) {
+      return `/team_logos/${team.id}.png`;
+    }
+    
+    // Try game object IDs
+    const teamId = isHome ? game?.home_id : game?.away_id;
     if (teamId) {
       return `/team_logos/${teamId}.png`;
     }
     
     // Fallback to team name if available
-    if (teamName) {
+    if (teamName && teamName !== 'Home Team' && teamName !== 'Away Team') {
       return `/team_logos/${teamName.replace(/\s+/g, '_')}.png`;
     }
     
@@ -82,7 +100,7 @@ const GameStatsHeader = ({
           <div className="flex-1 text-center">
             <div className="mb-4 relative">
               <img
-                src={getTeamLogo(game?.away_id, getTeamName(false))}
+                src={getTeamLogo(false)}
                 alt={getTeamName(false)}
                 className="w-20 h-20 mx-auto object-contain"
                 onError={(e) => {
@@ -130,7 +148,7 @@ const GameStatsHeader = ({
           <div className="flex-1 text-center">
             <div className="mb-4 relative">
               <img
-                src={getTeamLogo(game?.home_id, getTeamName(true))}
+                src={getTeamLogo(true)}
                 alt={getTeamName(true)}
                 className="w-20 h-20 mx-auto object-contain"
                 onError={(e) => {
