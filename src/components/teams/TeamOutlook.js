@@ -11,11 +11,14 @@ const TeamOutlook = () => {
       try {
         setLoading(true);
         const teamsData = await teamService.getAllTeams();
-        // Filter teams that have logos and sort by school name
-        const teamsWithLogos = teamsData
-          .filter(team => team.logos && team.logos.length > 0)
+        // Filter for only FBS and FCS teams and sort by school name
+        const fbsAndFcsTeams = teamsData
+          .filter(team => {
+            const classification = team.classification?.toLowerCase();
+            return classification === 'fbs' || classification === 'fcs';
+          })
           .sort((a, b) => a.school.localeCompare(b.school));
-        setTeams(teamsWithLogos);
+        setTeams(fbsAndFcsTeams);
       } catch (err) {
         console.error('Error fetching teams:', err);
         setError('Failed to load teams');
@@ -28,16 +31,23 @@ const TeamOutlook = () => {
   }, []);
 
   const getLocalLogoPath = (team, isDark = false) => {
-    if (!team.id || !team.school) return null;
-    const variant = isDark ? 'dark' : 'light';
-    const teamName = team.school.replace(/[^a-zA-Z0-9]/g, '_');
-    return `/team logos/${teamName}_${team.id}_${variant}_${team.id}.png`;
+    if (!team.school) return null;
+    
+    // Clean team name for file path - replace spaces and special chars with underscores
+    const cleanTeamName = team.school
+      .replace(/\s+/g, '_')           // Replace spaces with underscores
+      .replace(/[^a-zA-Z0-9_]/g, '_') // Replace special chars with underscores
+      .replace(/_+/g, '_')            // Replace multiple underscores with single
+      .replace(/^_|_$/g, '');         // Remove leading/trailing underscores
+    
+    const suffix = isDark ? '_dark' : '';
+    return `/team_logos/${cleanTeamName}${suffix}.png`;
   };
 
   const handleImageError = (e, team) => {
-    // Try the alternate variant if primary fails
+    // Try the dark variant if primary fails
     const currentSrc = e.target.src;
-    if (currentSrc.includes('_light_')) {
+    if (!currentSrc.includes('_dark.png')) {
       e.target.src = getLocalLogoPath(team, true);
     } else {
       // Hide image if both variants fail
@@ -79,7 +89,7 @@ const TeamOutlook = () => {
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-6 gradient-text">2025 Team Outlook</h1>
           <p className="text-xl text-gray-600 mb-4">
-            Comprehensive view of all college football teams
+            FBS and FCS college football teams
           </p>
           <p className="text-lg text-gray-500">
             {teams.length} teams loaded
@@ -129,9 +139,9 @@ const TeamOutlook = () => {
           <div className="text-center py-12">
             <div className="bg-white rounded-xl p-12 shadow-lg">
               <i className="fas fa-search text-6xl icon-gradient mb-6"></i>
-              <h2 className="text-3xl font-bold mb-4 text-gray-800">No Teams Found</h2>
+              <h2 className="text-3xl font-bold mb-4 text-gray-800">No FBS/FCS Teams Found</h2>
               <p className="text-xl text-gray-600">
-                No teams with logos were found in the database.
+                No FBS or FCS teams were found in the database.
               </p>
             </div>
           </div>
