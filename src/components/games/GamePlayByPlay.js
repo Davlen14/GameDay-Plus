@@ -59,18 +59,6 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const homeData = getHomeTeamData();
   const awayData = getAwayTeamData();
 
-  // Safety check to prevent crashes
-  if (!homeData || !awayData) {
-    return (
-      <div className="w-full text-center py-16">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 max-w-md mx-auto">
-          <i className="fas fa-exclamation-triangle text-yellow-500 text-2xl mb-4"></i>
-          <p className="text-yellow-700">Loading team data...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Convert hex to RGB for CSS
   const hexToRgb = (hex) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -81,8 +69,8 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     } : { r: 204, g: 0, b: 28 };
   };
 
-  const homeRgb = hexToRgb(homeData.primaryColor);
-  const awayRgb = hexToRgb(awayData.primaryColor);
+  const homeRgb = hexToRgb(homeData?.primaryColor || '#cc001c');
+  const awayRgb = hexToRgb(awayData?.primaryColor || '#3b82f6');
   const homeColorRgb = `${homeRgb.r}, ${homeRgb.g}, ${homeRgb.b}`;
   const awayColorRgb = `${awayRgb.r}, ${awayRgb.g}, ${awayRgb.b}`;
 
