@@ -10,7 +10,7 @@ import LoadingSpinner from '../UI/LoadingSpinner';
 const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
   // State management
   const [gameStats, setGameStats] = useState(null);
-  const [loading, setLoading] = useState(false); // Start with false to show debug panel
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expandedSection, setExpandedSection] = useState(null);
   const [selectedPPASection, setSelectedPPASection] = useState('overall');
@@ -31,20 +31,124 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
     return homeTeam?.school || homeTeam?.name || game?.home_team || 'Home Team';
   }, [homeTeam, game?.home_team]);
 
-  // Team colors with fallback using team IDs (like GameDetailView)
-  const awayColor = useMemo(() => {
-    if (getTeamColor && game?.away_id) {
-      return getTeamColor(game.away_id);
+  // Create local team color function as fallback
+  const getTeamColorLocal = useCallback((teamId) => {
+    // First check if it's the away team
+    if (teamId === game?.away_id || teamId === game?.awayId) {
+      // Try multiple color fields
+      if (awayTeam?.color) return awayTeam.color;
+      if (awayTeam?.colors?.hex?.[0]) return `#${awayTeam.colors.hex[0]}`;
+      if (awayTeam?.alt_color) return awayTeam.alt_color;
+      return '#3B82F6'; // Blue fallback for away
     }
-    return '#3B82F6';
-  }, [getTeamColor, game?.away_id]);
+    
+    // Check if it's the home team
+    if (teamId === game?.home_id || teamId === game?.homeId) {
+      // Try multiple color fields
+      if (homeTeam?.color) return homeTeam.color;
+      if (homeTeam?.colors?.hex?.[0]) return `#${homeTeam.colors.hex[0]}`;
+      if (homeTeam?.alt_color) return homeTeam.alt_color;
+      return '#EF4444'; // Red fallback for home
+    }
+    
+    // Default fallback
+    return '#6B7280'; // Gray
+  }, [game, awayTeam, homeTeam]);
+
+  // Create local team logo function as fallback
+  const getTeamLogoLocal = useCallback((teamId) => {
+    // Check if it's the away team
+    if (teamId === game?.away_id || teamId === game?.awayId) {
+      if (awayTeam?.logos?.[0]) return awayTeam.logos[0];
+      if (awayTeam?.logo) return awayTeam.logo;
+    }
+    
+    // Check if it's the home team
+    if (teamId === game?.home_id || teamId === game?.homeId) {
+      if (homeTeam?.logos?.[0]) return homeTeam.logos[0];
+      if (homeTeam?.logo) return homeTeam.logo;
+    }
+    
+    // Default fallback
+    return '/photos/ncaaf.png';
+  }, [game, awayTeam, homeTeam]);
+
+  // Team colors with enhanced fallback logic
+  const awayColor = useMemo(() => {
+    // Try the passed function first
+    if (getTeamColor && (game?.away_id || game?.awayId)) {
+      const color = getTeamColor(game.away_id || game.awayId);
+      if (color && color !== '#3B82F6') { // Don't use if it's just the default
+        console.log('✅ Using getTeamColor for away:', color);
+        return color;
+      }
+    }
+    
+    // Use local function as fallback
+    const localColor = getTeamColorLocal(game?.away_id || game?.awayId);
+    console.log('✅ Using local color for away:', localColor);
+    return localColor;
+  }, [getTeamColor, getTeamColorLocal, game]);
 
   const homeColor = useMemo(() => {
-    if (getTeamColor && game?.home_id) {
-      return getTeamColor(game.home_id);
+    // Try the passed function first
+    if (getTeamColor && (game?.home_id || game?.homeId)) {
+      const color = getTeamColor(game.home_id || game.homeId);
+      if (color && color !== '#EF4444') { // Don't use if it's just the default
+        console.log('✅ Using getTeamColor for home:', color);
+        return color;
+      }
     }
-    return '#EF4444';
-  }, [getTeamColor, game?.home_id]);
+    
+    // Use local function as fallback
+    const localColor = getTeamColorLocal(game?.home_id || game?.homeId);
+    console.log('✅ Using local color for home:', localColor);
+    return localColor;
+  }, [getTeamColor, getTeamColorLocal, game]);
+
+  // Enhanced getTeamLogo that falls back to local function
+  const getTeamLogoEnhanced = useCallback((teamId) => {
+    // Try passed function first
+    if (getTeamLogo) {
+      const logo = getTeamLogo(teamId);
+      if (logo && logo !== '/photos/ncaaf.png') {
+        return logo;
+      }
+    }
+    
+    // Use local function as fallback
+    return getTeamLogoLocal(teamId);
+  }, [getTeamLogo, getTeamLogoLocal]);
+
+  // Enhanced getTeamColor that falls back to local function
+  const getTeamColorEnhanced = useCallback((teamId) => {
+    // Try passed function first
+    if (getTeamColor) {
+      const color = getTeamColor(teamId);
+      if (color && color !== '#3B82F6' && color !== '#EF4444') {
+        return color;
+      }
+    }
+    
+    // Use local function as fallback
+    return getTeamColorLocal(teamId);
+  }, [getTeamColor, getTeamColorLocal]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🎨 GameStats Color Debug:', {
+      hasGetTeamColor: !!getTeamColor,
+      hasGetTeamLogo: !!getTeamLogo,
+      gameAwayId: game?.away_id || game?.awayId,
+      gameHomeId: game?.home_id || game?.homeId,
+      awayTeamColor: awayTeam?.color,
+      homeTeamColor: homeTeam?.color,
+      calculatedAwayColor: awayColor,
+      calculatedHomeColor: homeColor,
+      awayTeamObject: awayTeam,
+      homeTeamObject: homeTeam
+    });
+  }, [getTeamColor, getTeamLogo, game, awayTeam, homeTeam, awayColor, homeColor]);
 
   // Fetch game statistics
   const fetchGameStats = useCallback(async () => {
@@ -208,6 +312,16 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
               <strong>Game Data:</strong> {game ? `ID: ${game.id}, ${awayTeamName} @ ${homeTeamName}` : 'No game data'}
             </div>
             
+            <div className="text-sm">
+              <strong>Colors:</strong> Away: {awayColor}, Home: {homeColor}
+            </div>
+            
+            <div className="text-sm">
+              <strong>Functions Available:</strong> 
+              getTeamColor: {getTeamColor ? '✅' : '❌'}, 
+              getTeamLogo: {getTeamLogo ? '✅' : '❌'}
+            </div>
+            
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={fetchGameStats}
@@ -258,7 +372,8 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
         awayColor={awayColor}
         homeColor={homeColor}
         animateCards={animateCards}
-        getTeamLogo={getTeamLogo}
+        getTeamLogo={getTeamLogoEnhanced}
+        getTeamColor={getTeamColorEnhanced}
       />
 
       {/* Statistics Content */}
@@ -270,10 +385,13 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             teamStats={gameStats.teamStats}
             awayColor={awayColor}
             homeColor={homeColor}
-            getTeamLogo={getTeamLogo}
+            getTeamLogo={getTeamLogoEnhanced}
+            getTeamColor={getTeamColorEnhanced}
             animateCards={animateCards}
             awayTeam={awayTeamName}
             homeTeam={homeTeamName}
+            awayTeamObj={awayTeam}
+            homeTeamObj={homeTeam}
           />
         )}
 
@@ -286,8 +404,11 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             setExpandedSection={setExpandedSection}
             awayColor={awayColor}
             homeColor={homeColor}
-            getTeamLogo={getTeamLogo}
+            getTeamLogo={getTeamLogoEnhanced}
+            getTeamColor={getTeamColorEnhanced}
             animateCards={animateCards}
+            awayTeam={awayTeam}
+            homeTeam={homeTeam}
           />
         )}
 
@@ -300,7 +421,8 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             homeTeam={homeTeam}
             awayColor={awayColor}
             homeColor={homeColor}
-            getTeamLogo={getTeamLogo}
+            getTeamLogo={getTeamLogoEnhanced}
+            getTeamColor={getTeamColorEnhanced}
             animateCards={animateCards}
           />
         )}
@@ -315,8 +437,11 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             setSelectedPPASection={setSelectedPPASection}
             awayColor={awayColor}
             homeColor={homeColor}
-            getTeamLogo={getTeamLogo}
+            getTeamLogo={getTeamLogoEnhanced}
+            getTeamColor={getTeamColorEnhanced}
             animateCards={animateCards}
+            awayTeam={awayTeam}
+            homeTeam={homeTeam}
           />
         )}
       </div>
