@@ -28,12 +28,12 @@ const KeyTeamStats = ({
     console.log('🔍 Available team stats:', teamStats);
     
     // Look for teams by homeAway property first (most reliable)
-    const homeTeam = teamStats.find(stat => stat.homeAway === 'home');
-    const awayTeam = teamStats.find(stat => stat.homeAway === 'away');
+    const homeTeamStat = teamStats.find(stat => stat.homeAway === 'home');
+    const awayTeamStat = teamStats.find(stat => stat.homeAway === 'away');
     
     const teams = [];
-    if (awayTeam) teams.push(awayTeam);
-    if (homeTeam) teams.push(homeTeam);
+    if (awayTeamStat) teams.push(awayTeamStat);
+    if (homeTeamStat) teams.push(homeTeamStat);
     
     if (teams.length >= 2) {
       console.log('✅ Found teams by homeAway:', teams);
@@ -208,7 +208,7 @@ const KeyTeamStats = ({
     );
   }
 
-  const [awayTeam, homeTeam] = gameTeams;
+  const [awayTeamData, homeTeamData] = gameTeams;
 
   return (
     <div 
@@ -240,14 +240,14 @@ const KeyTeamStats = ({
             className="font-bold text-lg"
             style={{ color: awayColor }}
           >
-            {awayTeam.school}
+            {awayTeamData.school}
           </span>
           <span className="text-gray-400 font-medium">VS</span>
           <span 
             className="font-bold text-lg"
             style={{ color: homeColor }}
           >
-            {homeTeam.school}
+            {homeTeamData.school}
           </span>
         </div>
       </div>
@@ -258,8 +258,8 @@ const KeyTeamStats = ({
           {/* Total Yards */}
           <StatRow
             label="Total Yards"
-            awayValue={awayTeam.totalYards || 0}
-            homeValue={homeTeam.totalYards || 0}
+            awayValue={awayTeamData.totalYards || 0}
+            homeValue={homeTeamData.totalYards || 0}
             isHigherBetter={true}
             icon="chart-bar"
           />
@@ -267,8 +267,8 @@ const KeyTeamStats = ({
           {/* Yards per Play */}
           <StatRow
             label="Yards per Play"
-            awayValue={calculateYardsPerPlay(awayTeam)}
-            homeValue={calculateYardsPerPlay(homeTeam)}
+            awayValue={calculateYardsPerPlay(awayTeamData)}
+            homeValue={calculateYardsPerPlay(homeTeamData)}
             isHigherBetter={true}
             icon="tachometer-alt"
           />
@@ -276,8 +276,8 @@ const KeyTeamStats = ({
           {/* Third Down Efficiency */}
           <StatRow
             label="3rd Down Efficiency"
-            awayValue={parseThirdDownEfficiency(awayTeam.thirdDownEff).display}
-            homeValue={parseThirdDownEfficiency(homeTeam.thirdDownEff).display}
+            awayValue={parseThirdDownEfficiency(awayTeamData.thirdDownEff).display}
+            homeValue={parseThirdDownEfficiency(homeTeamData.thirdDownEff).display}
             isHigherBetter={true}
             icon="percentage"
           />
@@ -285,8 +285,8 @@ const KeyTeamStats = ({
           {/* Rushing Yards */}
           <StatRow
             label="Rushing Yards"
-            awayValue={awayTeam.rushingYards || 0}
-            homeValue={homeTeam.rushingYards || 0}
+            awayValue={awayTeamData.rushingYards || 0}
+            homeValue={homeTeamData.rushingYards || 0}
             isHigherBetter={true}
             icon="running"
           />
@@ -294,8 +294,8 @@ const KeyTeamStats = ({
           {/* Passing Yards */}
           <StatRow
             label="Passing Yards"
-            awayValue={awayTeam.netPassingYards || 0}
-            homeValue={homeTeam.netPassingYards || 0}
+            awayValue={awayTeamData.netPassingYards || 0}
+            homeValue={homeTeamData.netPassingYards || 0}
             isHigherBetter={true}
             icon="paper-plane"
           />
@@ -303,8 +303,8 @@ const KeyTeamStats = ({
           {/* Turnovers */}
           <StatRow
             label="Turnovers"
-            awayValue={awayTeam.turnovers || 0}
-            homeValue={homeTeam.turnovers || 0}
+            awayValue={awayTeamData.turnovers || 0}
+            homeValue={homeTeamData.turnovers || 0}
             isHigherBetter={false}
             icon="exclamation-triangle"
           />
@@ -312,8 +312,8 @@ const KeyTeamStats = ({
           {/* First Downs */}
           <StatRow
             label="First Downs"
-            awayValue={awayTeam.firstDowns || 0}
-            homeValue={homeTeam.firstDowns || 0}
+            awayValue={awayTeamData.firstDowns || 0}
+            homeValue={homeTeamData.firstDowns || 0}
             isHigherBetter={true}
             icon="flag-checkered"
           />
