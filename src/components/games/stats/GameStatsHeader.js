@@ -27,30 +27,19 @@ const GameStatsHeader = ({
 
   const getTeamLogoUrl = (isHome) => {
     const teamId = isHome ? game?.home_id : game?.away_id;
-    const teamName = getTeamName(isHome);
     
-    // Enhanced debug logging
-    console.log(`🖼️ [LOGO DEBUG] Loading logo for ${isHome ? 'home' : 'away'} team:`, { 
-      teamId, 
-      teamName,
-      gameData: game,
-      getTeamLogoFunction: !!getTeamLogo 
-    });
+    // Debug: log what we're trying to load
+    console.log(`🖼️ Loading logo for ${isHome ? 'home' : 'away'} team:`, { teamId });
     
     // Use the passed getTeamLogo function (preferred method from guide)
     if (getTeamLogo && teamId) {
       const logoUrl = getTeamLogo(teamId);
-      console.log(`✅ [LOGO DEBUG] Using getTeamLogo function for ${teamName} (ID: ${teamId}), got: ${logoUrl}`);
+      console.log(`✅ Using getTeamLogo function, got: ${logoUrl}`);
       return logoUrl;
-    } else {
-      console.log(`⚠️ [LOGO DEBUG] Missing getTeamLogo function or teamId for ${teamName}`, {
-        hasFunction: !!getTeamLogo,
-        teamId
-      });
     }
     
     // Fallback to default logo
-    console.log(`⚠️ [LOGO DEBUG] Using default fallback logo for ${teamName}`);
+    console.log(`⚠️ Using default fallback logo`);
     return '/photos/ncaaf.png';
   };
 
