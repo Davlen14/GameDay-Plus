@@ -15,9 +15,18 @@ export const gameStatsService = {
         gameStatsService.getPlayerGamePPA(gameId)
       ]);
 
+      // Transform the data to expected format
+      const transformedTeamStats = teamStats.status === 'fulfilled' 
+        ? gameStatsService.logic.transformTeamStats(teamStats.value) 
+        : [];
+        
+      const transformedPlayerStats = playerStats.status === 'fulfilled' 
+        ? gameStatsService.logic.transformPlayerStats(playerStats.value) 
+        : [];
+
       const result = {
-        teamStats: teamStats.status === 'fulfilled' ? teamStats.value : [],
-        playerStats: playerStats.status === 'fulfilled' ? playerStats.value : [],
+        teamStats: transformedTeamStats,
+        playerStats: transformedPlayerStats,
         gamePPA: gamePPA.status === 'fulfilled' ? gamePPA.value : null,
         playerPPA: playerPPA.status === 'fulfilled' ? playerPPA.value : [],
         errors: []
@@ -34,6 +43,7 @@ export const gameStatsService = {
         }
       });
 
+      console.log('✅ Final transformed stats:', result);
       return result;
     } catch (error) {
       console.error('Error fetching game stats:', error);
@@ -98,15 +108,108 @@ export const gameStatsService = {
 
   // Game Stats Logic Helper Functions (mirrors Swift GameStatsLogic)
   logic: {
+    // Transform API response to flatten team stats
+    transformTeamStats: (teamStats) => {
+      if (!teamStats || !Array.isArray(teamStats)) return [];
+      
+      const flattened = [];
+      
+      teamStats.forEach(gameData => {
+        if (gameData.teams && Array.isArray(gameData.teams)) {
+          gameData.teams.forEach(team => {
+            // Convert stats array to object for easier access
+            const statsObj = {};
+            if (team.stats && Array.isArray(team.stats)) {
+              team.stats.forEach(stat => {
+                statsObj[stat.category] = stat.stat;
+              });
+            }
+            
+            // Create flattened team stat object
+            const flatTeam = {
+              school: team.team,
+              teamId: team.teamId,
+              team: team.team,
+              conference: team.conference,
+              homeAway: team.homeAway,
+              points: team.points,
+              
+              // Extract common stats with fallbacks
+              totalYards: parseInt(statsObj.totalYards) || 0,
+              netPassingYards: parseInt(statsObj.netPassingYards) || 0,
+              rushingYards: parseInt(statsObj.rushingYards) || 0,
+              firstDowns: parseInt(statsObj.firstDowns) || 0,
+              thirdDownEff: statsObj.thirdDownEff || '0-0',
+              possessionTime: statsObj.possessionTime || '0:00',
+              turnovers: parseInt(statsObj.turnovers) || 0,
+              sacks: parseInt(statsObj.sacks) || 0,
+              tackles: parseInt(statsObj.tackles) || 0,
+              passesIntercepted: parseInt(statsObj.passesIntercepted) || 0,
+              tacklesForLoss: parseInt(statsObj.tacklesForLoss) || 0,
+              
+              // Keep raw stats for advanced access
+              rawStats: statsObj
+            };
+            
+            flattened.push(flatTeam);
+          });
+        }
+      });
+      
+      console.log('🔄 Transformed team stats:', flattened);
+      return flattened;
+    },
+
+    // Transform player stats to flattened format
+    transformPlayerStats: (playerStats) => {
+      if (!playerStats || !Array.isArray(playerStats)) return [];
+      
+      const flattened = [];
+      
+      playerStats.forEach(gameData => {
+        if (gameData.teams && Array.isArray(gameData.teams)) {
+          gameData.teams.forEach(team => {
+            if (team.categories && Array.isArray(team.categories)) {
+              team.categories.forEach(category => {
+                if (category.types && Array.isArray(category.types)) {
+                  category.types.forEach(type => {
+                    if (type.athletes && Array.isArray(type.athletes)) {
+                      type.athletes.forEach(athlete => {
+                        flattened.push({
+                          team: team.team,
+                          player: athlete.name,
+                          playerId: athlete.id,
+                          category: category.name,
+                          statType: type.name,
+                          stat: parseFloat(athlete.stat) || 0,
+                          statValue: athlete.stat,
+                          numericValue: parseFloat(athlete.stat) || 0
+                        });
+                      });
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+      
+      console.log('🔄 Transformed player stats:', flattened.length, 'records');
+      return flattened;
+    },
+
     // Get team stats for home or away team
     getTeamStats: (isHome, game, teamStats) => {
       if (!teamStats || !game) return null;
       
-      const teamId = isHome ? game.home_id : game.away_id;
       const teamName = isHome ? game.home_team : game.away_team;
+      const homeAway = isHome ? 'home' : 'away';
+      
+      console.log(`🔍 Looking for ${homeAway} team: ${teamName}`);
       
       return teamStats.find(stat => 
-        stat.school === teamName || stat.team_id === teamId
+        stat.team === teamName || stat.homeAway === homeAway
       );
     },
 

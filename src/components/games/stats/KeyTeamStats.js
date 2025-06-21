@@ -22,41 +22,43 @@ const KeyTeamStats = ({
   const getGameTeams = () => {
     if (!teamStats || !game) return [];
     
-    // Filter by exact game ID first
-    const gameSpecificStats = teamStats.filter(stat => 
-      stat.game_id === game.id
-    );
+    console.log('🔍 Looking for teams in game:', game.id);
+    console.log('🔍 Available team stats:', teamStats);
     
-    if (gameSpecificStats.length >= 2) {
-      // Sort by home/away to ensure consistent order
-      return gameSpecificStats.sort((a, b) => {
-        // Away team first, then home team
-        if (a.home_away === 'away' && b.home_away === 'home') return -1;
-        if (a.home_away === 'home' && b.home_away === 'away') return 1;
-        return 0;
-      }).slice(0, 2);
+    // Look for teams by homeAway property
+    const homeTeam = teamStats.find(stat => stat.homeAway === 'home');
+    const awayTeam = teamStats.find(stat => stat.homeAway === 'away');
+    
+    const teams = [];
+    if (awayTeam) teams.push(awayTeam);
+    if (homeTeam) teams.push(homeTeam);
+    
+    if (teams.length >= 2) {
+      console.log('✅ Found teams by homeAway:', teams);
+      return teams;
     }
 
     // Fallback to team name matching
     const awayTeamStats = teamStats.find(stat => 
-      stat.school === game.away_team
+      stat.school === game.away_team || stat.team === game.away_team
     );
     const homeTeamStats = teamStats.find(stat => 
-      stat.school === game.home_team
+      stat.school === game.home_team || stat.team === game.home_team
     );
 
-    if (awayTeamStats && homeTeamStats) {
-      return [awayTeamStats, homeTeamStats];
-    }
+    const fallbackTeams = [];
+    if (awayTeamStats) fallbackTeams.push(awayTeamStats);
+    if (homeTeamStats) fallbackTeams.push(homeTeamStats);
 
-    return [];
+    console.log('✅ Found teams by name matching:', fallbackTeams);
+    return fallbackTeams;
   };
 
   const gameTeams = getGameTeams();
 
   // Helper functions
   const calculateYardsPerPlay = (team) => {
-    const totalYards = team.total_yards || 0;
+    const totalYards = team.totalYards || 0;
     const estimatedPlays = Math.max(50, Math.min(100, totalYards / 6));
     return (totalYards / estimatedPlays).toFixed(1);
   };
@@ -239,8 +241,8 @@ const KeyTeamStats = ({
           {/* Total Yards */}
           <StatRow
             label="Total Yards"
-            awayValue={awayTeam.total_yards || 0}
-            homeValue={homeTeam.total_yards || 0}
+            awayValue={awayTeam.totalYards || 0}
+            homeValue={homeTeam.totalYards || 0}
             isHigherBetter={true}
             icon="chart-bar"
           />
@@ -257,8 +259,8 @@ const KeyTeamStats = ({
           {/* Third Down Efficiency */}
           <StatRow
             label="3rd Down Efficiency"
-            awayValue={parseThirdDownEfficiency(awayTeam.third_down_eff).display}
-            homeValue={parseThirdDownEfficiency(homeTeam.third_down_eff).display}
+            awayValue={parseThirdDownEfficiency(awayTeam.thirdDownEff).display}
+            homeValue={parseThirdDownEfficiency(homeTeam.thirdDownEff).display}
             isHigherBetter={true}
             icon="percentage"
           />
@@ -266,8 +268,8 @@ const KeyTeamStats = ({
           {/* Rushing Yards */}
           <StatRow
             label="Rushing Yards"
-            awayValue={awayTeam.rushing_yards || 0}
-            homeValue={homeTeam.rushing_yards || 0}
+            awayValue={awayTeam.rushingYards || 0}
+            homeValue={homeTeam.rushingYards || 0}
             isHigherBetter={true}
             icon="running"
           />
@@ -275,8 +277,8 @@ const KeyTeamStats = ({
           {/* Passing Yards */}
           <StatRow
             label="Passing Yards"
-            awayValue={awayTeam.net_passing_yards || 0}
-            homeValue={homeTeam.net_passing_yards || 0}
+            awayValue={awayTeam.netPassingYards || 0}
+            homeValue={homeTeam.netPassingYards || 0}
             isHigherBetter={true}
             icon="paper-plane"
           />
@@ -293,8 +295,8 @@ const KeyTeamStats = ({
           {/* First Downs */}
           <StatRow
             label="First Downs"
-            awayValue={awayTeam.first_downs || 0}
-            homeValue={homeTeam.first_downs || 0}
+            awayValue={awayTeam.firstDowns || 0}
+            homeValue={homeTeam.firstDowns || 0}
             isHigherBetter={true}
             icon="flag-checkered"
           />
