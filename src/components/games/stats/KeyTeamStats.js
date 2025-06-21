@@ -112,7 +112,9 @@ const KeyTeamStats = ({
     homeValue, 
     isHigherBetter, 
     icon,
-    unit = '' 
+    unit = '',
+    awayTeamColor = awayColor,
+    homeTeamColor = homeColor
   }) => {
     // Parse values for comparison
     const awayNum = parseFloat(String(awayValue).replace(/[^0-9.-]/g, '')) || 0;
@@ -143,7 +145,7 @@ const KeyTeamStats = ({
               <i 
                 className="fas fa-crown text-xs"
                 style={{ 
-                  color: awayHasAdvantage ? awayColor : homeColor 
+                  color: awayHasAdvantage ? awayTeamColor : homeTeamColor 
                 }}
               ></i>
             </div>
@@ -155,7 +157,7 @@ const KeyTeamStats = ({
           {/* Away team value */}
           <div 
             className="font-bold text-lg"
-            style={{ color: awayColor }}
+            style={{ color: awayTeamColor }}
           >
             {awayValue}{unit}
           </div>
@@ -168,7 +170,7 @@ const KeyTeamStats = ({
                 className="absolute left-0 top-0 h-full transition-all duration-1000 ease-out rounded-l-full"
                 style={{
                   width: animateValues ? `${awayWidth}%` : '0%',
-                  background: `linear-gradient(to right, ${awayColor}, ${awayColor}80)`
+                  background: `linear-gradient(to right, ${awayTeamColor}, ${awayTeamColor}80)`
                 }}
               />
               
@@ -177,7 +179,7 @@ const KeyTeamStats = ({
                 className="absolute right-0 top-0 h-full transition-all duration-1000 ease-out rounded-r-full"
                 style={{
                   width: animateValues ? `${homeWidth}%` : '0%',
-                  background: `linear-gradient(to left, ${homeColor}, ${homeColor}80)`
+                  background: `linear-gradient(to left, ${homeTeamColor}, ${homeTeamColor}80)`
                 }}
               />
 
@@ -191,7 +193,7 @@ const KeyTeamStats = ({
           {/* Home team value */}
           <div 
             className="font-bold text-lg"
-            style={{ color: homeColor }}
+            style={{ color: homeTeamColor }}
           >
             {homeValue}{unit}
           </div>
@@ -292,6 +294,8 @@ const KeyTeamStats = ({
             homeValue={homeTeamData.totalYards || 0}
             isHigherBetter={true}
             icon="chart-bar"
+            awayTeamColor={awayColor}
+            homeTeamColor={homeColor}
           />
 
           {/* Yards per Play */}
@@ -301,6 +305,8 @@ const KeyTeamStats = ({
             homeValue={calculateYardsPerPlay(homeTeamData)}
             isHigherBetter={true}
             icon="tachometer-alt"
+            awayTeamColor={awayColor}
+            homeTeamColor={homeColor}
           />
 
           {/* Third Down Efficiency */}
@@ -310,6 +316,8 @@ const KeyTeamStats = ({
             homeValue={parseThirdDownEfficiency(homeTeamData.thirdDownEff).display}
             isHigherBetter={true}
             icon="percentage"
+            awayTeamColor={awayColor}
+            homeTeamColor={homeColor}
           />
 
           {/* Rushing Yards */}
@@ -319,6 +327,8 @@ const KeyTeamStats = ({
             homeValue={homeTeamData.rushingYards || 0}
             isHigherBetter={true}
             icon="running"
+            awayTeamColor={awayColor}
+            homeTeamColor={homeColor}
           />
 
           {/* Passing Yards */}
@@ -328,6 +338,8 @@ const KeyTeamStats = ({
             homeValue={homeTeamData.netPassingYards || 0}
             isHigherBetter={true}
             icon="paper-plane"
+            awayTeamColor={awayColor}
+            homeTeamColor={homeColor}
           />
 
           {/* Turnovers */}
@@ -337,6 +349,8 @@ const KeyTeamStats = ({
             homeValue={homeTeamData.turnovers || 0}
             isHigherBetter={false}
             icon="exclamation-triangle"
+            awayTeamColor={awayColor}
+            homeTeamColor={homeColor}
           />
 
           {/* First Downs */}
@@ -346,6 +360,8 @@ const KeyTeamStats = ({
             homeValue={homeTeamData.firstDowns || 0}
             isHigherBetter={true}
             icon="flag-checkered"
+            awayTeamColor={awayColor}
+            homeTeamColor={homeColor}
           />
         </div>
       </div>

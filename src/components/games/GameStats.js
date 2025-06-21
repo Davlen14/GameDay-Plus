@@ -286,6 +286,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             setExpandedSection={setExpandedSection}
             awayColor={awayColor}
             homeColor={homeColor}
+            getTeamLogo={getTeamLogo}
             animateCards={animateCards}
           />
         )}
@@ -314,6 +315,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             setSelectedPPASection={setSelectedPPASection}
             awayColor={awayColor}
             homeColor={homeColor}
+            getTeamLogo={getTeamLogo}
             animateCards={animateCards}
           />
         )}

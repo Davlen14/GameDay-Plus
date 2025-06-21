@@ -10,7 +10,14 @@ const GameStatsHeader = ({
   getTeamLogo
 }) => {
   const getScore = (isHome) => {
-    return isHome ? (game?.home_points || 0) : (game?.away_points || 0);
+    if (!game) return 0;
+    
+    // Check multiple possible field names for scores
+    if (isHome) {
+      return game?.home_points ?? game?.homePoints ?? game?.home_score ?? 0;
+    } else {
+      return game?.away_points ?? game?.awayPoints ?? game?.away_score ?? 0;
+    }
   };
 
   const getTeamName = (isHome) => {
