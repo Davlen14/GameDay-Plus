@@ -59,6 +59,18 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const homeData = getHomeTeamData();
   const awayData = getAwayTeamData();
 
+  // Safety check to prevent crashes
+  if (!homeData || !awayData) {
+    return (
+      <div className="w-full text-center py-16">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 max-w-md mx-auto">
+          <i className="fas fa-exclamation-triangle text-yellow-500 text-2xl mb-4"></i>
+          <p className="text-yellow-700">Loading team data...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Convert hex to RGB for CSS
   const hexToRgb = (hex) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -149,6 +161,9 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         }));
       } else {
         // Create enhanced mock data that looks more realistic
+        const homeTeamName = homeData?.name || 'HOME';
+        const awayTeamName = awayData?.name || 'AWAY';
+        
         transformedData = Array.from({ length: 75 }, (_, i) => ({
           playNumber: i + 1,
           playId: `play_${i + 1}`,
@@ -160,7 +175,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           distance: Math.floor(Math.random() * 15) + 1,
           yardLine: Math.floor(Math.random() * 100),
           homeBall: i % 2 === 0,
-          playText: `Play ${i + 1}: ${i % 2 === 0 ? homeData.name : awayData.name} ${['rush', 'pass', 'punt', 'field goal'][i % 4]} for ${Math.floor(Math.random() * 25)} yards.`,
+          playText: `Play ${i + 1}: ${i % 2 === 0 ? homeTeamName : awayTeamName} ${['rush', 'pass', 'punt', 'field goal'][i % 4]} for ${Math.floor(Math.random() * 25)} yards.`,
           quarter: Math.floor(i / 18) + 1,
           clock: `${14 - Math.floor(i / 6)}:${String(60 - (i % 6) * 10).padStart(2, '0')}`,
           playType: ['rush', 'pass', 'punt', 'field goal'][i % 4],
@@ -178,7 +193,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [game?.id, game?.completed, game?.season, game?.week, game?.home_id, game?.home_points, game?.away_points, homeData.name, awayData.name]);
+  }, [game?.id, game?.completed, game?.season, game?.week, game?.home_id, game?.home_points, game?.away_points]);
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimateField(true), 300);
@@ -236,7 +251,28 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     <div className="w-[95vw] max-w-none mx-auto px-4 py-8" style={{
       fontFamily: 'Titillium Web, sans-serif'
     }}>
-      <style jsx>{`
+      {/* Protect against rendering errors */}
+      {error && (
+        <div className="text-center py-16">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 max-w-md mx-auto">
+            <i className="fas fa-exclamation-triangle text-red-500 text-2xl mb-4"></i>
+            <p className="text-red-700">{error}</p>
+            <button 
+              onClick={() => {
+                setError(null);
+                loadWinProbability();
+              }}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!error && (
+        <>
+          <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Titillium+Web:wght@200;300;400;600;700;900&display=swap');
 
         .football-field {
@@ -810,14 +846,15 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
       </div>
 
       {/* Modern Win Probability Chart */}
-      {!isLoading && winProbData.length > 0 && (
+      {!isLoading && winProbData && winProbData.length > 0 && (
         <div className="mb-8">
           <div className="bg-gradient-to-b from-white to-gray-50 rounded-2xl shadow-xl p-8 border border-gray-100">
             <h3 className="text-3xl font-bold mb-8 text-gray-800 text-center">Win Probability Analysis</h3>
             
             {/* Chart Container - Made Taller and More Modern */}
             <div className="relative h-96 mb-8 bg-gradient-to-b from-gray-50 to-white rounded-xl p-6 shadow-inner border border-gray-200">
-              <svg className="w-full h-full" viewBox="0 0 900 300">
+              {winProbData.length > 1 && (
+                <svg className="w-full h-full" viewBox="0 0 900 300">
                 {/* Background Grid */}
                 <defs>
                   <pattern id="grid" width="50" height="25" patternUnits="userSpaceOnUse">
@@ -937,7 +974,8 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
                     </g>
                   );
                 })}
-              </svg>
+                </svg>
+              )}
               
               {/* Enhanced Tooltip */}
               {hoveredPlay && (
@@ -1362,6 +1400,8 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
