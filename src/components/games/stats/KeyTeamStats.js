@@ -23,11 +23,37 @@ const KeyTeamStats = ({
 
   // Helper function to get team logo
   const getTeamLogoUrl = (isHome) => {
-    const teamId = isHome ? game?.home_id : game?.away_id;
+    // Check multiple possible ID field names
+    let teamId = null;
     
-    // Use the passed getTeamLogo function if available
+    if (isHome) {
+      teamId = game?.home_id || game?.homeId || game?.home_team_id;
+    } else {
+      teamId = game?.away_id || game?.awayId || game?.away_team_id;
+    }
+    
+    // Debug logging
+    console.log(`🏈 Logo lookup for ${isHome ? 'home' : 'away'}:`, {
+      teamId,
+      game_home_id: game?.home_id,
+      game_away_id: game?.away_id,
+      hasGetTeamLogo: !!getTeamLogo
+    });
+    
+    // Use the passed getTeamLogo function if available and we have an ID
     if (getTeamLogo && teamId) {
-      return getTeamLogo(teamId);
+      const logoUrl = getTeamLogo(teamId);
+      if (logoUrl && logoUrl !== '/photos/ncaaf.png') {
+        return logoUrl;
+      }
+    }
+    
+    // Fallback: Try to construct URL from team name
+    const teamData = isHome ? homeTeamData : awayTeamData;
+    if (teamData?.school) {
+      const teamNameUrl = `/team_logos/${teamData.school.replace(/\s+/g, '_')}.png`;
+      console.log(`🔄 Trying team name fallback: ${teamNameUrl}`);
+      return teamNameUrl;
     }
     
     // Default fallback
