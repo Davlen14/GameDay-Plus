@@ -10,6 +10,12 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const [selectedPlay, setSelectedPlay] = useState(null);
   const [hoveredPlay, setHoveredPlay] = useState(null);
   const [showSimulationModal, setShowSimulationModal] = useState(false);
+  
+  // Debugger and playback state
+  const [showDebugger, setShowDebugger] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentPlayIndex, setCurrentPlayIndex] = useState(0);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1000); // ms per play
 
   // Get team data with fallbacks to Whitmer
   const getHomeTeamData = () => {
@@ -106,8 +112,54 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     return () => clearTimeout(timer);
   }, [loadWinProbability]);
 
+  // Auto-play functionality for debugger
+  useEffect(() => {
+    let interval;
+    if (isPlaying && currentPlayIndex < winProbData.length - 1) {
+      interval = setInterval(() => {
+        setCurrentPlayIndex(prev => {
+          const nextIndex = prev + 1;
+          if (nextIndex < winProbData.length) {
+            setSelectedPlay(winProbData[nextIndex]);
+            return nextIndex;
+          } else {
+            setIsPlaying(false);
+            return prev;
+          }
+        });
+      }, playbackSpeed);
+    } else if (currentPlayIndex >= winProbData.length - 1) {
+      setIsPlaying(false);
+    }
+    
+    return () => clearInterval(interval);
+  }, [isPlaying, currentPlayIndex, winProbData, playbackSpeed]);
+
+  // Playback controls
+  const handlePlay = () => {
+    if (currentPlayIndex >= winProbData.length - 1) {
+      setCurrentPlayIndex(0);
+      setSelectedPlay(winProbData[0]);
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleReset = () => {
+    setIsPlaying(false);
+    setCurrentPlayIndex(0);
+    if (winProbData.length > 0) {
+      setSelectedPlay(winProbData[0]);
+    }
+  };
+
+  const handlePlaySelect = (index) => {
+    setCurrentPlayIndex(index);
+    setSelectedPlay(winProbData[index]);
+    setIsPlaying(false);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8" style={{
+    <div className="w-[95vw] max-w-none mx-auto px-4 py-8" style={{
       fontFamily: 'Titillium Web, sans-serif'
     }}>
       <style jsx>{`
@@ -548,7 +600,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           <button
             onClick={() => setShowSimulationModal(true)}
             disabled={isLoading || winProbData.length === 0}
-            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold rounded-xl shadow-lg hover:from-red-700 hover:to-red-900 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <i className="fas fa-play mr-3"></i>
             View Game Simulation
@@ -556,99 +608,289 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         </div>
       </div>
 
+      {/* Debugger Panel */}
+      <div className="mb-8">
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl shadow-xl p-6 text-white">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold">Game Debugger & Playback</h3>
+            <button
+              onClick={() => setShowDebugger(!showDebugger)}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              {showDebugger ? 'Hide' : 'Show'} Controls
+            </button>
+          </div>
+          
+          {showDebugger && (
+            <div className="space-y-6">
+              {/* Playback Controls */}
+              <div className="flex items-center justify-center space-x-4">
+                <button
+                  onClick={handleReset}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors"
+                  disabled={winProbData.length === 0}
+                >
+                  <i className="fas fa-step-backward mr-2"></i>
+                  Reset
+                </button>
+                
+                <button
+                  onClick={handlePlay}
+                  className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-bold"
+                  disabled={winProbData.length === 0}
+                >
+                  <i className={`fas fa-${isPlaying ? 'pause' : 'play'} mr-2`}></i>
+                  {isPlaying ? 'Pause' : 'Play'}
+                </button>
+                
+                <button
+                  onClick={() => handlePlaySelect(winProbData.length - 1)}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors"
+                  disabled={winProbData.length === 0}
+                >
+                  <i className="fas fa-step-forward mr-2"></i>
+                  End
+                </button>
+              </div>
+
+              {/* Speed Control */}
+              <div className="flex items-center justify-center space-x-4">
+                <span className="text-sm">Speed:</span>
+                <button
+                  onClick={() => setPlaybackSpeed(2000)}
+                  className={`px-3 py-1 rounded ${playbackSpeed === 2000 ? 'bg-red-600' : 'bg-gray-600'} transition-colors`}
+                >
+                  0.5x
+                </button>
+                <button
+                  onClick={() => setPlaybackSpeed(1000)}
+                  className={`px-3 py-1 rounded ${playbackSpeed === 1000 ? 'bg-red-600' : 'bg-gray-600'} transition-colors`}
+                >
+                  1x
+                </button>
+                <button
+                  onClick={() => setPlaybackSpeed(500)}
+                  className={`px-3 py-1 rounded ${playbackSpeed === 500 ? 'bg-red-600' : 'bg-gray-600'} transition-colors`}
+                >
+                  2x
+                </button>
+              </div>
+
+              {/* Progress Bar */}
+              {winProbData.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Play {currentPlayIndex + 1} of {winProbData.length}</span>
+                    <span>{Math.round((currentPlayIndex / (winProbData.length - 1)) * 100)}%</span>
+                  </div>
+                  <div 
+                    className="w-full bg-gray-700 rounded-full h-3 cursor-pointer"
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const x = e.clientX - rect.left;
+                      const percentage = x / rect.width;
+                      const newIndex = Math.floor(percentage * winProbData.length);
+                      handlePlaySelect(Math.min(newIndex, winProbData.length - 1));
+                    }}
+                  >
+                    <div 
+                      className="bg-gradient-to-r from-red-500 to-red-700 h-3 rounded-full transition-all duration-200"
+                      style={{ width: `${((currentPlayIndex) / (winProbData.length - 1)) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Play Info */}
+              {selectedPlay && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold">Current Play #{selectedPlay.playNumber}</span>
+                    <div className="flex items-center space-x-2">
+                      <img 
+                        src={selectedPlay.homeBall ? homeData.logo : awayData.logo}
+                        alt="possession"
+                        className="w-6 h-6"
+                      />
+                      <span className="text-sm">{selectedPlay.homeBall ? homeData.name : awayData.name} Ball</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-300">{selectedPlay.playText}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Win Probability Chart */}
       {!isLoading && winProbData.length > 0 && (
         <div className="mb-8">
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <h3 className="text-2xl font-bold mb-6 text-gray-800">Win Probability</h3>
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <h3 className="text-3xl font-bold mb-8 text-gray-800 text-center">Win Probability Analysis</h3>
             
-            {/* Chart Container */}
-            <div className="relative h-64 mb-6">
-              <svg className="w-full h-full" viewBox="0 0 800 200">
-                {/* Grid Lines */}
+            {/* Chart Container - Made Taller */}
+            <div className="relative h-96 mb-8 bg-gradient-to-b from-gray-50 to-white rounded-xl p-6 shadow-inner">
+              <svg className="w-full h-full" viewBox="0 0 900 300">
+                {/* Background Grid */}
+                <defs>
+                  <pattern id="grid" width="50" height="25" patternUnits="userSpaceOnUse">
+                    <path d="M 50 0 L 0 0 0 25" fill="none" stroke="#f3f4f6" strokeWidth="1"/>
+                  </pattern>
+                  <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style={{stopColor: homeData.primaryColor, stopOpacity: 0.3}} />
+                    <stop offset="100%" style={{stopColor: homeData.primaryColor, stopOpacity: 0.1}} />
+                  </linearGradient>
+                </defs>
+                
+                <rect width="100%" height="100%" fill="url(#grid)" />
+                
+                {/* Horizontal Grid Lines */}
                 {[0, 25, 50, 75, 100].map(y => (
-                  <line
-                    key={y}
-                    x1="50"
-                    y1={200 - (y * 2)}
-                    x2="750"
-                    y2={200 - (y * 2)}
-                    stroke="#e5e7eb"
-                    strokeWidth="1"
-                  />
+                  <g key={y}>
+                    <line
+                      x1="60"
+                      y1={280 - (y * 2.8)}
+                      x2="840"
+                      y2={280 - (y * 2.8)}
+                      stroke={y === 50 ? "#374151" : "#e5e7eb"}
+                      strokeWidth={y === 50 ? "2" : "1"}
+                      strokeDasharray={y === 50 ? "0" : "5,5"}
+                    />
+                    <text
+                      x="50"
+                      y={285 - (y * 2.8)}
+                      textAnchor="end"
+                      className="text-sm font-medium fill-gray-600"
+                    >
+                      {y}%
+                    </text>
+                  </g>
                 ))}
                 
-                {/* Win Probability Line */}
+                {/* Area under curve */}
+                <path
+                  d={`M 60,280 ${winProbData.map((play, index) => 
+                    `L ${60 + (index * (780 / (winProbData.length - 1)))},${280 - (play.homeWinProbability * 280)}`
+                  ).join(' ')} L ${60 + (780)},280 Z`}
+                  fill="url(#chartGradient)"
+                  opacity="0.4"
+                />
+                
+                {/* Main Win Probability Line */}
                 <polyline
                   fill="none"
                   stroke={homeData.primaryColor}
-                  strokeWidth="3"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   points={winProbData.map((play, index) => 
-                    `${50 + (index * (700 / (winProbData.length - 1)))},${200 - (play.homeWinProbability * 200)}`
+                    `${60 + (index * (780 / (winProbData.length - 1)))},${280 - (play.homeWinProbability * 280)}`
                   ).join(' ')}
+                  filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
                 />
                 
                 {/* Data Points */}
                 {winProbData.map((play, index) => (
                   <circle
                     key={play.playId}
-                    cx={50 + (index * (700 / (winProbData.length - 1)))}
-                    cy={200 - (play.homeWinProbability * 200)}
-                    r={play.playId === selectedPlay?.playId ? "6" : "3"}
-                    fill={homeData.primaryColor}
-                    className="cursor-pointer hover:r-5 transition-all"
+                    cx={60 + (index * (780 / (winProbData.length - 1)))}
+                    cy={280 - (play.homeWinProbability * 280)}
+                    r={play.playId === selectedPlay?.playId ? "8" : index === currentPlayIndex ? "10" : "4"}
+                    fill={index === currentPlayIndex ? "#ef4444" : homeData.primaryColor}
+                    stroke="white"
+                    strokeWidth="2"
+                    className="cursor-pointer transition-all duration-200 hover:r-6"
                     onClick={() => setSelectedPlay(play)}
                     onMouseEnter={() => setHoveredPlay(play)}
                     onMouseLeave={() => setHoveredPlay(null)}
+                    filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
                   />
                 ))}
                 
-                {/* Y-axis labels */}
-                {[0, 25, 50, 75, 100].map(y => (
-                  <text
-                    key={y}
-                    x="40"
-                    y={205 - (y * 2)}
-                    textAnchor="end"
-                    className="text-xs fill-gray-500"
-                  >
-                    {y}%
-                  </text>
-                ))}
+                {/* Current play indicator line */}
+                {winProbData[currentPlayIndex] && (
+                  <line
+                    x1={60 + (currentPlayIndex * (780 / (winProbData.length - 1)))}
+                    y1="20"
+                    x2={60 + (currentPlayIndex * (780 / (winProbData.length - 1)))}
+                    y2="280"
+                    stroke="#ef4444"
+                    strokeWidth="3"
+                    strokeDasharray="5,5"
+                    opacity="0.8"
+                  />
+                )}
+                
+                {/* X-axis Quarter Markers */}
+                {[1, 2, 3, 4].map(quarter => {
+                  const quarterPosition = 60 + ((quarter * winProbData.length / 4) * (780 / (winProbData.length - 1)));
+                  return (
+                    <g key={quarter}>
+                      <line
+                        x1={quarterPosition}
+                        y1="280"
+                        x2={quarterPosition}
+                        y2="295"
+                        stroke="#6b7280"
+                        strokeWidth="2"
+                      />
+                      <text
+                        x={quarterPosition}
+                        y="310"
+                        textAnchor="middle"
+                        className="text-sm font-medium fill-gray-600"
+                      >
+                        Q{quarter}
+                      </text>
+                    </g>
+                  );
+                })}
               </svg>
               
-              {/* Tooltip */}
+              {/* Enhanced Tooltip */}
               {hoveredPlay && (
-                <div className="absolute bg-gray-900 text-white p-3 rounded-lg shadow-lg z-10 pointer-events-none"
+                <div className="absolute bg-gray-900 text-white p-4 rounded-xl shadow-2xl z-20 pointer-events-none border border-gray-700"
                      style={{
                        left: `${(winProbData.indexOf(hoveredPlay) / (winProbData.length - 1)) * 100}%`,
                        top: `${100 - (hoveredPlay.homeWinProbability * 100)}%`,
-                       transform: 'translate(-50%, -100%)'
+                       transform: 'translate(-50%, -100%) translateY(-10px)'
                      }}>
-                  <div className="text-sm">
-                    <div>Play #{hoveredPlay.playNumber}</div>
-                    <div>{homeData.name}: {Math.round(hoveredPlay.homeWinProbability * 100)}%</div>
-                    <div>{awayData.name}: {Math.round((1 - hoveredPlay.homeWinProbability) * 100)}%</div>
-                    <div>Score: {hoveredPlay.homeScore} - {hoveredPlay.awayScore}</div>
+                  <div className="text-sm space-y-1">
+                    <div className="font-bold border-b border-gray-600 pb-1">Play #{hoveredPlay.playNumber}</div>
+                    <div className="flex items-center space-x-2">
+                      <img src={homeData.logo} alt={homeData.name} className="w-4 h-4" />
+                      <span>{homeData.name}: {Math.round(hoveredPlay.homeWinProbability * 100)}%</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <img src={awayData.logo} alt={awayData.name} className="w-4 h-4" />
+                      <span>{awayData.name}: {Math.round((1 - hoveredPlay.homeWinProbability) * 100)}%</span>
+                    </div>
+                    <div className="text-xs text-gray-300 pt-1 border-t border-gray-600">
+                      Score: {hoveredPlay.homeScore} - {hoveredPlay.awayScore}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
             
-            {/* Chart Legend */}
-            <div className="flex justify-center space-x-8 text-sm">
-              <div className="flex items-center">
-                <div className="w-4 h-1 mr-2" style={{ backgroundColor: homeData.primaryColor }}></div>
-                <span>{homeData.name} Win %</span>
+            {/* Enhanced Chart Legend with Team Logos */}
+            <div className="flex justify-center items-center space-x-12 text-lg">
+              <div className="flex items-center space-x-3 bg-gray-50 px-6 py-3 rounded-xl shadow-sm">
+                <img src={homeData.logo} alt={homeData.name} className="w-8 h-8" />
+                <div className="w-6 h-2 rounded-full" style={{ backgroundColor: homeData.primaryColor }}></div>
+                <span className="font-semibold text-gray-700">{homeData.name} Win %</span>
               </div>
-              <div className="flex items-center">
-                <div className="w-4 h-1 mr-2" style={{ backgroundColor: awayData.primaryColor }}></div>
-                <span>{awayData.name} Win %</span>
+              <div className="flex items-center space-x-3 bg-gray-50 px-6 py-3 rounded-xl shadow-sm">
+                <img src={awayData.logo} alt={awayData.name} className="w-8 h-8" />
+                <div className="w-6 h-2 rounded-full" style={{ backgroundColor: awayData.primaryColor }}></div>
+                <span className="font-semibold text-gray-700">{awayData.name} Win %</span>
               </div>
             </div>
             
-            <p className="text-center text-gray-500 text-sm mt-4">
-              Click on chart points to see play details
+            <p className="text-center text-gray-500 text-lg mt-6 font-medium">
+              <i className="fas fa-mouse-pointer mr-2"></i>
+              Click on chart points to see detailed play information
             </p>
           </div>
         </div>
@@ -786,63 +1028,245 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
       {/* Game Simulation Modal */}
       {showSimulationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-[95vw] h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-t-2xl">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800">Game Simulation</h2>
+                <h2 className="text-3xl font-bold">🏈 Live Game Simulation</h2>
                 <button
                   onClick={() => setShowSimulationModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  className="text-gray-300 hover:text-white text-2xl transition-colors"
                 >
                   <i className="fas fa-times"></i>
                 </button>
               </div>
             </div>
             
-            <div className="p-6">
-              <div className="text-center mb-8">
-                <div className="flex items-center justify-center space-x-8 mb-6">
+            <div className="p-6 h-full space-y-6">
+              {/* Game Score Header */}
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-12 mb-6">
                   <div className="text-center">
-                    <img src={awayData.logo} alt={awayData.name} className="w-16 h-16 mx-auto mb-2" />
-                    <div className="font-bold">{awayData.name}</div>
-                    <div className="text-2xl font-black" style={{ color: awayData.primaryColor }}>
-                      {winProbData[winProbData.length - 1]?.awayScore || 0}
+                    <img src={awayData.logo} alt={awayData.name} className="w-20 h-20 mx-auto mb-3" />
+                    <div className="font-bold text-xl">{awayData.name}</div>
+                    <div className="text-4xl font-black" style={{ color: awayData.primaryColor }}>
+                      {selectedPlay?.awayScore || 0}
                     </div>
                   </div>
-                  <div className="text-4xl font-bold text-gray-400">VS</div>
+                  <div className="text-6xl font-bold text-gray-400">VS</div>
                   <div className="text-center">
-                    <img src={homeData.logo} alt={homeData.name} className="w-16 h-16 mx-auto mb-2" />
-                    <div className="font-bold">{homeData.name}</div>
-                    <div className="text-2xl font-black" style={{ color: homeData.primaryColor }}>
-                      {winProbData[winProbData.length - 1]?.homeScore || 0}
+                    <img src={homeData.logo} alt={homeData.name} className="w-20 h-20 mx-auto mb-3" />
+                    <div className="font-bold text-xl">{homeData.name}</div>
+                    <div className="text-4xl font-black" style={{ color: homeData.primaryColor }}>
+                      {selectedPlay?.homeScore || 0}
                     </div>
                   </div>
                 </div>
               </div>
-              
-              {/* Play-by-Play List */}
-              <div className="max-h-96 overflow-y-auto space-y-2">
-                {winProbData.slice(-10).reverse().map((play) => (
-                  <div
-                    key={play.playId}
-                    className={`p-4 rounded-xl cursor-pointer transition-all ${
-                      selectedPlay?.playId === play.playId 
-                        ? 'bg-blue-50 border-2 border-blue-200' 
-                        : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                    onClick={() => setSelectedPlay(play)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold">Play #{play.playNumber}</span>
-                      <span className="text-sm text-gray-500">Q{play.quarter} {play.clock}</span>
+
+              {/* Football Field for Simulation */}
+              <div className="bg-gradient-to-b from-green-800 to-green-900 rounded-2xl p-6 shadow-inner">
+                <div className="relative h-32 bg-gradient-to-r from-green-600 to-green-700 rounded-xl overflow-hidden border-4 border-white shadow-lg">
+                  {/* Field Markings */}
+                  <div className="absolute inset-0 flex">
+                    {/* Away Endzone */}
+                    <div 
+                      className="w-[15%] flex items-center justify-center text-white font-bold text-sm"
+                      style={{ backgroundColor: `${awayData.primaryColor}aa` }}
+                    >
+                      <span className="transform -rotate-90">{awayData.name}</span>
                     </div>
-                    <p className="text-sm text-gray-700">{play.playText}</p>
-                    <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                      <span>{play.down} & {play.distance}</span>
-                      <span>{Math.round(play.homeWinProbability * 100)}% - {Math.round((1 - play.homeWinProbability) * 100)}%</span>
+                    
+                    {/* Main Field */}
+                    <div className="flex-1 relative">
+                      {/* Yard Lines */}
+                      {[20, 40, 60, 80].map(yard => (
+                        <div 
+                          key={yard}
+                          className="absolute top-0 bottom-0 w-0.5 bg-white opacity-60"
+                          style={{ left: `${yard}%` }}
+                        />
+                      ))}
+                      
+                      {/* 50 Yard Line */}
+                      <div className="absolute top-0 bottom-0 w-1 bg-white left-1/2 transform -translate-x-0.5" />
+                      
+                      {/* Ball Position Indicator */}
+                      {selectedPlay && (
+                        <div 
+                          className="absolute top-1/2 transform -translate-y-1/2 transition-all duration-500"
+                          style={{ 
+                            left: `${selectedPlay.yardLine}%`,
+                            transform: 'translateY(-50%)'
+                          }}
+                        >
+                          <div className="flex flex-col items-center">
+                            <img 
+                              src={selectedPlay.homeBall ? homeData.logo : awayData.logo}
+                              alt="ball possession"
+                              className="w-8 h-8 rounded-full bg-white p-1 shadow-lg animate-bounce"
+                            />
+                            <div className="text-white text-xs font-bold mt-1 bg-black bg-opacity-50 px-2 py-1 rounded">
+                              🏈
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Home Endzone */}
+                    <div 
+                      className="w-[15%] flex items-center justify-center text-white font-bold text-sm"
+                      style={{ backgroundColor: `${homeData.primaryColor}aa` }}
+                    >
+                      <span className="transform rotate-90">{homeData.name}</span>
                     </div>
                   </div>
-                ))}
+                </div>
+                
+                {/* Field Info */}
+                {selectedPlay && (
+                  <div className="mt-4 bg-white rounded-lg p-4 text-center">
+                    <div className="flex items-center justify-center space-x-6 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <img 
+                          src={selectedPlay.homeBall ? homeData.logo : awayData.logo}
+                          alt="possession"
+                          className="w-6 h-6"
+                        />
+                        <span className="font-semibold">
+                          {selectedPlay.homeBall ? homeData.name : awayData.name} Ball
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-semibold">{selectedPlay.down} & {selectedPlay.distance}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold">Q{selectedPlay.quarter} {selectedPlay.clock}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Simulation Controls */}
+              <div className="bg-gray-100 rounded-xl p-6">
+                <div className="flex items-center justify-center space-x-6 mb-4">
+                  <button
+                    onClick={handleReset}
+                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-semibold"
+                    disabled={winProbData.length === 0}
+                  >
+                    <i className="fas fa-step-backward mr-2"></i>
+                    Reset
+                  </button>
+                  
+                  <button
+                    onClick={handlePlay}
+                    className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white rounded-lg transition-all font-bold text-lg shadow-lg"
+                    disabled={winProbData.length === 0}
+                  >
+                    <i className={`fas fa-${isPlaying ? 'pause' : 'play'} mr-3`}></i>
+                    {isPlaying ? 'Pause Simulation' : 'Start Simulation'}
+                  </button>
+                  
+                  <button
+                    onClick={() => handlePlaySelect(winProbData.length - 1)}
+                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-semibold"
+                    disabled={winProbData.length === 0}
+                  >
+                    <i className="fas fa-step-forward mr-2"></i>
+                    Final
+                  </button>
+                </div>
+
+                {/* Progress Bar */}
+                {winProbData.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm font-medium">
+                      <span>Play {currentPlayIndex + 1} of {winProbData.length}</span>
+                      <span>{Math.round((currentPlayIndex / (winProbData.length - 1)) * 100)}% Complete</span>
+                    </div>
+                    <div 
+                      className="w-full bg-gray-300 rounded-full h-4 cursor-pointer shadow-inner"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const percentage = x / rect.width;
+                        const newIndex = Math.floor(percentage * winProbData.length);
+                        handlePlaySelect(Math.min(newIndex, winProbData.length - 1));
+                      }}
+                    >
+                      <div 
+                        className="bg-gradient-to-r from-red-500 to-red-700 h-4 rounded-full transition-all duration-300 shadow-sm"
+                        style={{ width: `${((currentPlayIndex) / (winProbData.length - 1)) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Current Play Details */}
+              {selectedPlay && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+                  <h4 className="text-xl font-bold mb-3 text-gray-800">
+                    Play #{selectedPlay.playNumber} Details
+                  </h4>
+                  <p className="text-gray-700 text-lg mb-4">{selectedPlay.playText}</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center bg-white rounded-lg p-3 shadow-sm">
+                      <div className="text-sm text-gray-500">Down & Distance</div>
+                      <div className="font-bold text-lg">{selectedPlay.down} & {selectedPlay.distance}</div>
+                    </div>
+                    <div className="text-center bg-white rounded-lg p-3 shadow-sm">
+                      <div className="text-sm text-gray-500">Score</div>
+                      <div className="font-bold text-lg">{selectedPlay.homeScore} - {selectedPlay.awayScore}</div>
+                    </div>
+                    <div className="text-center bg-white rounded-lg p-3 shadow-sm">
+                      <div className="text-sm text-gray-500">Quarter</div>
+                      <div className="font-bold text-lg">Q{selectedPlay.quarter}</div>
+                    </div>
+                    <div className="text-center bg-white rounded-lg p-3 shadow-sm">
+                      <div className="text-sm text-gray-500">Time</div>
+                      <div className="font-bold text-lg">{selectedPlay.clock}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Plays List */}
+              <div className="bg-white rounded-xl shadow-lg">
+                <div className="p-4 border-b border-gray-200">
+                  <h4 className="text-lg font-bold text-gray-800">Recent Plays</h4>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {winProbData.slice(-8).reverse().map((play, index) => (
+                    <div
+                      key={play.playId}
+                      className={`p-4 border-b border-gray-100 cursor-pointer transition-all hover:bg-gray-50 ${
+                        selectedPlay?.playId === play.playId ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                      }`}
+                      onClick={() => setSelectedPlay(play)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-semibold">Play #{play.playNumber}</span>
+                          <img 
+                            src={play.homeBall ? homeData.logo : awayData.logo}
+                            alt="possession"
+                            className="w-5 h-5"
+                          />
+                        </div>
+                        <span className="text-sm text-gray-500">Q{play.quarter} {play.clock}</span>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-2">{play.playText}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>{play.down} & {play.distance}</span>
+                        <span>Win%: {Math.round(play.homeWinProbability * 100)}% - {Math.round((1 - play.homeWinProbability) * 100)}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
