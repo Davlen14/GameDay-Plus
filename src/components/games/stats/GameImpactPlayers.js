@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import gameStatsService from '../../../services/gameStatsService';
 
 const GameImpactPlayers = ({ 
   game, 
@@ -9,6 +8,7 @@ const GameImpactPlayers = ({
   awayColor, 
   homeColor, 
   getTeamLogo,
+  getTeamColor,
   animateCards 
 }) => {
   const [showOffense, setShowOffense] = useState(true);
@@ -18,42 +18,110 @@ const GameImpactPlayers = ({
   const offenseCategories = ['passing', 'rushing', 'receiving'];
   const defenseCategories = ['defensive'];
 
+  // Custom gradient like Swift
+  const statsGradient = 'linear-gradient(135deg, #CC0011, #A0000D, #730009, #A0000D, #CC0011)';
+
   useEffect(() => {
     if (animateCards) {
       setAnimateHype(true);
     }
   }, [animateCards]);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🏈 GameImpactPlayers Debug:', {
+      playerGameStats: playerGameStats?.slice(0, 3),
+      game,
+      awayTeam: awayTeam?.school,
+      homeTeam: homeTeam?.school
+    });
+  }, [playerGameStats, game, awayTeam, homeTeam]);
+
   // Helper functions
   const getTeamLogoUrl = (isHome) => {
-    const teamId = isHome ? game?.home_id : game?.away_id;
-    const team = isHome ? homeTeam : awayTeam;
+    const teamId = isHome ? (game?.home_id || game?.homeId) : (game?.away_id || game?.awayId);
     
-    // Use the passed getTeamLogo function if available (preferred)
     if (getTeamLogo && teamId) {
       return getTeamLogo(teamId);
     }
     
-    // Fallback: try the team's logo property if it exists
+    const team = isHome ? homeTeam : awayTeam;
     if (team?.logos?.[0]) {
       return team.logos[0];
     }
     
-    // Default fallback
     return '/photos/ncaaf.png';
   };
 
-  const getImpactStars = (isHome, category) => {
-    const teamName = isHome ? game.home_team : game.away_team;
-    
-    const teamPlayers = playerGameStats.filter(player => 
-      player.team === teamName && player.category === category
+  // Get yards value for a player
+  const getYardsValue = (player, category) => {
+    // Find the yards stat for this player
+    const yardsStats = playerGameStats.filter(stat => 
+      stat.player_id === player.player_id &&
+      stat.category === category &&
+      stat.stat_type === 'YDS'
     );
+    
+    return yardsStats[0]?.stat || '0';
+  };
+
+  // Get numeric yards value
+  const getNumericYardsValue = (player, category) => {
+    const yardsValue = getYardsValue(player, category);
+    return parseFloat(yardsValue) || 0;
+  };
+
+  // Get additional stats for a player
+  const getAdditionalStats = (player, category) => {
+    const additionalStats = playerGameStats.filter(stat => 
+      stat.player_id === player.player_id &&
+      stat.category === category &&
+      stat.stat_type !== 'YDS' &&
+      ['TD', 'CAR', 'REC', 'C/ATT', 'SACKS', 'TFL', 'PD'].includes(stat.stat_type)
+    );
+    
+    return additionalStats.sort((a, b) => {
+      if (a.stat_type === 'TD') return -1;
+      if (b.stat_type === 'TD') return 1;
+      return 0;
+    });
+  };
+
+  // Fixed function to match API data structure
+  const getImpactStars = (isHome, category) => {
+    // Get team name from game object
+    const teamName = isHome ? 
+      (homeTeam?.school || game?.home_team) : 
+      (awayTeam?.school || game?.away_team);
+    
+    console.log(`🔍 Looking for ${isHome ? 'home' : 'away'} ${category} players for ${teamName}`);
+    
+    // Filter by team name and category
+    const teamPlayers = playerGameStats.filter(player => {
+      // Check multiple possible team field names
+      const playerTeam = player.team || player.school;
+      const matchesTeam = playerTeam === teamName;
+      const matchesCategory = player.category === category;
+      
+      return matchesTeam && matchesCategory;
+    });
+
+    console.log(`✅ Found ${teamPlayers.length} ${category} players for ${teamName}`);
 
     if (teamPlayers.length === 0) return null;
 
-    // Sort by numeric value descending
-    return teamPlayers.sort((a, b) => (b.stat || 0) - (a.stat || 0));
+    // Group by player and get max stat
+    const playerMap = new Map();
+    teamPlayers.forEach(stat => {
+      const key = stat.player || stat.name;
+      if (!playerMap.has(key) || (stat.stat > playerMap.get(key).stat)) {
+        playerMap.set(key, stat);
+      }
+    });
+
+    // Convert to array and sort by stat value
+    const uniquePlayers = Array.from(playerMap.values());
+    return uniquePlayers.sort((a, b) => (b.stat || 0) - (a.stat || 0));
   };
 
   const formatPlayerName = (name) => {
@@ -74,18 +142,18 @@ const GameImpactPlayers = ({
       case 'defensive':
         return 'TCKL';
       default:
-        return 'STAT';
+        return '';
     }
   };
 
   const getCategoryIcon = (category) => {
     switch (category) {
       case 'passing':
-        return 'football';
+        return 'football-ball';
       case 'rushing':
         return 'running';
       case 'receiving':
-        return 'hands-catching';
+        return 'hands';
       case 'defensive':
         return 'shield-alt';
       default:
@@ -97,194 +165,352 @@ const GameImpactPlayers = ({
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
-  const PlayerStarCard = ({ player, teamColor, teamLogo, alignment = 'left' }) => {
+  const getPositionForCategory = (category) => {
+    switch (category) {
+      case 'passing':
+        return 'QUARTERBACK';
+      case 'rushing':
+        return 'RUNNING BACK';
+      case 'receiving':
+        return 'RECEIVER';
+      case 'defensive':
+        return 'DEFENDER';
+      default:
+        return 'PLAYER';
+    }
+  };
+
+  const isExceptionalStat = (stat, category) => {
+    const value = parseFloat(stat) || 0;
+    switch (category) {
+      case 'passing':
+        return value > 250;
+      case 'rushing':
+        return value > 100;
+      case 'receiving':
+        return value > 100;
+      case 'defensive':
+        return value > 8;
+      default:
+        return false;
+    }
+  };
+
+  // Player Star Card Component
+  const PlayerStarCard = ({ player, teamColor, teamId, alignment, category }) => {
     if (!player) {
       return (
-        <div className="text-center py-8 px-4">
-          <i className="fas fa-user-slash text-2xl text-gray-300 mb-2"></i>
-          <p className="text-sm text-gray-500">No player data</p>
+        <div className="flex flex-col items-center justify-center py-8 px-4">
+          <img
+            src={getTeamLogoUrl(teamId === game?.home_id || teamId === game?.homeId)}
+            alt="Team Logo"
+            className="w-7 h-7 object-contain opacity-50 mb-2"
+            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+          />
+          <p className="text-xs text-gray-500 text-center">
+            No {formatCategory(category).toLowerCase()} star
+          </p>
         </div>
       );
     }
 
-    const isExceptional = (stat, category) => {
-      const value = stat || 0;
-      switch (category) {
-        case 'passing': return value > 250;
-        case 'rushing': return value > 100;
-        case 'receiving': return value > 100;
-        case 'defensive': return value > 8;
-        default: return false;
-      }
-    };
-
-    const exceptional = isExceptional(player.stat, player.category);
+    const exceptional = isExceptionalStat(player.stat, category);
+    const alignClass = alignment === 'trailing' ? 'items-end text-right' : 'items-start text-left';
 
     return (
-      <div 
-        className={`
-          bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300 relative
-          ${exceptional ? 'ring-2 ring-yellow-400 bg-gradient-to-br from-yellow-50 to-white' : ''}
-        `}
-      >
-        {/* Team Logo in Background */}
-        <div className="absolute top-4 right-4 opacity-10">
-          <img
-            src={teamLogo}
-            alt="Team Logo"
-            className="w-12 h-12 object-contain"
-            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-          />
+      <div className={`flex flex-col ${alignClass} px-4 py-3 flex-1`}>
+        {/* Team Logo */}
+        <div className={`flex ${alignment === 'trailing' ? 'justify-end' : 'justify-start'} w-full mb-2`}>
+          <div 
+            className="w-9 h-9 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: `${teamColor}15` }}
+          >
+            <img
+              src={getTeamLogoUrl(teamId === game?.home_id || teamId === game?.homeId)}
+              alt="Team Logo"
+              className="w-7 h-7 object-contain"
+              onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+            />
+          </div>
         </div>
 
-        <div className={`text-${alignment} relative z-10`}>
-          {/* Player Name */}
-          <h4 className="font-bold text-lg text-gray-900 mb-1">
-            {formatPlayerName(player.name)}
+        {/* Player Name */}
+        <div className={`flex flex-col ${alignClass} mb-2`}>
+          <h4 
+            className="font-bold text-sm leading-tight mb-1"
+            style={{ fontFamily: 'Orbitron, sans-serif' }}
+          >
+            {formatPlayerName(player.player || player.name)}
           </h4>
-          
-          {/* Position */}
-          <div className="mb-3">
-            <span 
-              className="inline-block px-2 py-1 text-xs font-medium rounded"
-              style={{ 
-                backgroundColor: `${teamColor}20`,
-                color: teamColor 
-              }}
+          <span 
+            className="text-[10px] font-bold opacity-80"
+            style={{ color: teamColor, fontFamily: 'Orbitron, sans-serif' }}
+          >
+            {getPositionForCategory(category)}
+          </span>
+        </div>
+
+        {/* Main Stat */}
+        <div className={`flex items-baseline space-x-1 mb-2 ${alignment === 'trailing' ? 'justify-end' : 'justify-start'}`}>
+          <span 
+            className="text-2xl font-black"
+            style={{ color: teamColor, fontFamily: 'Orbitron, sans-serif' }}
+          >
+            {player.stat || 0}
+          </span>
+          <span 
+            className="text-[10px] font-bold text-gray-500"
+            style={{ fontFamily: 'Orbitron, sans-serif' }}
+          >
+            {getStatUnit(category)}
+          </span>
+        </div>
+
+        {/* Additional Stats Pills */}
+        <div className={`flex ${alignment === 'trailing' ? 'justify-end' : 'justify-start'} flex-wrap gap-1 mb-2`}>
+          {getAdditionalStats(player, category).slice(0, 2).map((stat, idx) => (
+            <div 
+              key={idx}
+              className={`flex items-center space-x-1 px-2 py-0.5 rounded-full ${
+                stat.stat_type === 'TD' && parseFloat(stat.stat) > 0 
+                  ? 'bg-yellow-100' 
+                  : 'bg-gray-100'
+              }`}
             >
-              {player.position || 'N/A'}
-            </span>
-          </div>
-
-          {/* Main Stat */}
-          <div className="flex items-baseline space-x-1 mb-2">
-            <span 
-              className="text-3xl font-bold"
-              style={{ color: teamColor }}
-            >
-              {player.stat || 0}
-            </span>
-            <span className="text-sm text-gray-500 font-medium">
-              {getStatUnit(player.category)}
-            </span>
-          </div>
-
-          {/* Additional Stats */}
-          <div className="flex flex-wrap gap-1">
-            {/* Find related stats for this player */}
-            {playerGameStats
-              .filter(stat => 
-                stat.name === player.name && 
-                stat.team === player.team &&
-                stat.category === player.category &&
-                stat.stat_type !== player.stat_type
-              )
-              .slice(0, 3)
-              .map((additionalStat, index) => (
-                <div 
-                  key={index}
-                  className="bg-gray-100 px-2 py-1 rounded text-xs"
-                >
-                  <span className="font-medium">{additionalStat.stat || 0}</span>
-                  <span className="text-gray-600 ml-1">
-                    {additionalStat.stat_type?.toUpperCase() || 'STAT'}
-                  </span>
-                </div>
-              ))
-            }
-          </div>
-
-          {/* Exceptional indicator */}
-          {exceptional && (
-            <div className="mt-2 flex items-center text-yellow-600">
-              <i className="fas fa-star text-xs mr-1"></i>
-              <span className="text-xs font-medium">Elite Performance</span>
+              <span 
+                className={`text-[10px] font-bold ${
+                  stat.stat_type === 'TD' && parseFloat(stat.stat) > 0 
+                    ? 'text-yellow-700' 
+                    : 'text-gray-900'
+                }`}
+                style={{ fontFamily: 'Orbitron, sans-serif' }}
+              >
+                {stat.stat}
+              </span>
+              <span 
+                className={`text-[8px] font-medium ${
+                  stat.stat_type === 'TD' && parseFloat(stat.stat) > 0 
+                    ? 'text-yellow-600' 
+                    : 'text-gray-600'
+                }`}
+                style={{ fontFamily: 'Orbitron, sans-serif' }}
+              >
+                {stat.stat_type}
+              </span>
             </div>
-          )}
+          ))}
+        </div>
+
+        {/* Top Performer Badge */}
+        {exceptional && (
+          <div className={`flex ${alignment === 'trailing' ? 'justify-end' : 'justify-start'}`}>
+            <div className="flex items-center space-x-1 px-2 py-0.5 rounded-full border border-yellow-400 bg-yellow-50">
+              <i className="fas fa-star text-[8px] text-yellow-500"></i>
+              <span 
+                className="text-[8px] font-bold text-yellow-600"
+                style={{ fontFamily: 'Orbitron, sans-serif' }}
+              >
+                TOP PERFORMER
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Modern Comparison Chart
+  const ModernStatComparisonChart = ({ homePlayer, awayPlayer, homeColor, awayColor, category, containerWidth }) => {
+    const awayValue = parseFloat(awayPlayer?.stat || 0);
+    const homeValue = parseFloat(homePlayer?.stat || 0);
+    const total = Math.max(0.1, homeValue + awayValue);
+    const awayPct = awayValue / total;
+    const homePct = homeValue / total;
+
+    return (
+      <div className="w-full mt-4 px-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+          <p 
+            className="text-[11px] font-bold text-gray-500 text-center mb-3"
+            style={{ fontFamily: 'Orbitron, sans-serif' }}
+          >
+            {formatCategory(category).toUpperCase()} COMPARISON
+          </p>
+
+          {/* Values with logos */}
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center space-x-2">
+              <img
+                src={getTeamLogoUrl(false)}
+                alt="Away Team"
+                className="w-5 h-5 object-contain"
+                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+              />
+              {awayValue > homeValue && (
+                <i className="fas fa-check-circle text-xs text-green-500"></i>
+              )}
+              <span 
+                className="text-base font-bold"
+                style={{ color: awayColor, fontFamily: 'Orbitron, sans-serif' }}
+              >
+                {Math.round(awayValue)}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <span 
+                className="text-base font-bold"
+                style={{ color: homeColor, fontFamily: 'Orbitron, sans-serif' }}
+              >
+                {Math.round(homeValue)}
+              </span>
+              {homeValue > awayValue && (
+                <i className="fas fa-check-circle text-xs text-green-500"></i>
+              )}
+              <img
+                src={getTeamLogoUrl(true)}
+                alt="Home Team"
+                className="w-5 h-5 object-contain"
+                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+              />
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="relative h-6 bg-gray-100 rounded-xl overflow-hidden shadow-inner">
+            <div className="absolute inset-0 flex">
+              {/* Away section */}
+              <div
+                className="h-full transition-all duration-1000 ease-out relative overflow-hidden"
+                style={{
+                  width: `${awayPct * 100}%`,
+                  background: `linear-gradient(90deg, ${awayColor}, ${awayColor}CC)`
+                }}
+              >
+                <div 
+                  className="absolute inset-0 opacity-30"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)'
+                  }}
+                />
+              </div>
+
+              {/* Center divider */}
+              <div className="w-0.5 h-full bg-white shadow-sm relative z-10" />
+
+              {/* Home section */}
+              <div
+                className="h-full transition-all duration-1000 ease-out relative overflow-hidden"
+                style={{
+                  width: `${homePct * 100}%`,
+                  background: `linear-gradient(90deg, ${homeColor}CC, ${homeColor})`
+                }}
+              >
+                <div 
+                  className="absolute inset-0 opacity-30"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Values inside bar */}
+            <div className="absolute inset-0 flex justify-between items-center px-2">
+              <span 
+                className="text-[10px] font-bold text-white drop-shadow-md"
+                style={{ fontFamily: 'Orbitron, sans-serif' }}
+              >
+                {Math.round(awayValue)}
+              </span>
+              <span 
+                className="text-[10px] font-bold text-white drop-shadow-md"
+                style={{ fontFamily: 'Orbitron, sans-serif' }}
+              >
+                {Math.round(homeValue)}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     );
   };
 
+  // Category Section Component
   const CategorySection = ({ category }) => {
     const homeStars = getImpactStars(true, category);
     const awayStars = getImpactStars(false, category);
     
-    // Show section even if one team has no data
-    const hasData = (homeStars && homeStars.length > 0) || (awayStars && awayStars.length > 0);
-    
-    if (!hasData) return null;
+    if (!homeStars && !awayStars) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 bg-gray-50 rounded-2xl">
+          <i className={`fas fa-${getCategoryIcon(category)} text-2xl text-gray-300 mb-3`}></i>
+          <p className="text-sm text-gray-500">
+            No {formatCategory(category).toLowerCase()} stars available
+          </p>
+        </div>
+      );
+    }
 
     return (
-      <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+      <div className="space-y-4">
         {/* Category Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            <div 
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{
-                background: `linear-gradient(135deg, ${awayColor}20, ${homeColor}20)`
-              }}
-            >
-              <i className={`fas fa-${getCategoryIcon(category)} text-gray-700`}></i>
-            </div>
-            <h4 className="text-lg font-bold text-gray-900">
-              {formatCategory(category)}
-            </h4>
-          </div>
+        <div className="flex items-center space-x-2 px-2">
+          <i 
+            className={`fas fa-${getCategoryIcon(category)} text-base font-bold`}
+            style={{ color: '#CC0011' }}
+          ></i>
+          <h4 
+            className="text-base font-bold text-gray-900"
+            style={{ fontFamily: 'Orbitron, sans-serif' }}
+          >
+            {formatCategory(category)}
+          </h4>
         </div>
 
-        {/* Team Matchup */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Away Team */}
-          <div>
-            <div className="flex items-center mb-4">
-              <img
-                src={getTeamLogoUrl(false)}
-                alt={`${game.away_team} logo`}
-                className="w-6 h-6 object-contain mr-3"
-                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-              />
-              <div 
-                className="w-4 h-4 rounded-full mr-2"
-                style={{ backgroundColor: awayColor }}
-              ></div>
-              <span className="font-semibold text-gray-900">
-                {awayTeam?.school || game.away_team}
-              </span>
-            </div>
+        {/* Team Matchup Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="flex items-stretch">
+            {/* Away Player */}
             <PlayerStarCard 
               player={awayStars?.[0]} 
               teamColor={awayColor}
-              teamLogo={getTeamLogoUrl(false)}
-              alignment="left"
+              teamId={game?.away_id || game?.awayId}
+              alignment="leading"
+              category={category}
             />
-          </div>
 
-          {/* Home Team */}
-          <div>
-            <div className="flex items-center mb-4">
-              <img
-                src={getTeamLogoUrl(true)}
-                alt={`${game.home_team} logo`}
-                className="w-6 h-6 object-contain mr-3"
-                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-              />
+            {/* VS Divider */}
+            <div className="flex flex-col items-center justify-center px-3 py-8">
               <div 
-                className="w-4 h-4 rounded-full mr-2"
-                style={{ backgroundColor: homeColor }}
-              ></div>
-              <span className="font-semibold text-gray-900">
-                {homeTeam?.school || game.home_team}
-              </span>
+                className="w-9 h-9 rounded-full flex items-center justify-center shadow-md"
+                style={{ background: statsGradient }}
+              >
+                <i className="fas fa-football-ball text-white text-sm"></i>
+              </div>
             </div>
+
+            {/* Home Player */}
             <PlayerStarCard 
               player={homeStars?.[0]} 
               teamColor={homeColor}
-              teamLogo={getTeamLogoUrl(true)}
-              alignment="left"
+              teamId={game?.home_id || game?.homeId}
+              alignment="trailing"
+              category={category}
             />
           </div>
+
+          {/* Comparison Chart */}
+          {homeStars?.[0] && awayStars?.[0] && (
+            <ModernStatComparisonChart
+              homePlayer={homeStars[0]}
+              awayPlayer={awayStars[0]}
+              homeColor={homeColor}
+              awayColor={awayColor}
+              category={category}
+              containerWidth="100%"
+            />
+          )}
         </div>
       </div>
     );
@@ -294,17 +520,18 @@ const GameImpactPlayers = ({
     return (
       <div 
         className={`
-          bg-white rounded-2xl shadow-lg border border-gray-100 p-8
+          bg-gray-50 rounded-3xl shadow-lg p-8
           transition-all duration-700 ease-out delay-300
           ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
         `}
+        style={{ fontFamily: 'Orbitron, sans-serif' }}
       >
         <div className="text-center">
           <i className="fas fa-user-friends text-4xl text-gray-300 mb-4"></i>
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">
+          <h3 className="text-lg font-bold text-gray-600 mb-2">
             Impact Players Unavailable
           </h3>
-          <p className="text-gray-500">
+          <p className="text-gray-500 text-sm">
             Player performance data not found for this game.
           </p>
         </div>
@@ -317,89 +544,73 @@ const GameImpactPlayers = ({
   return (
     <div 
       className={`
-        bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden
+        bg-gray-50 rounded-3xl shadow-lg overflow-hidden
         transition-all duration-700 ease-out delay-300
         ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
       `}
+      style={{ fontFamily: 'Orbitron, sans-serif' }}
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            {/* Team Logos in Header */}
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <img
-                  src={getTeamLogoUrl(false)}
-                  alt={`${game.away_team} logo`}
-                  className="w-10 h-10 object-contain rounded-lg shadow-sm"
-                  onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                />
-              </div>
-              <span className="text-gray-400 font-bold">VS</span>
-              <div className="relative">
-                <img
-                  src={getTeamLogoUrl(true)}
-                  alt={`${game.home_team} logo`}
-                  className="w-10 h-10 object-contain rounded-lg shadow-sm"
-                  onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                />
-              </div>
-            </div>
-            
-            {/* Animated Icon */}
-            <div 
-              className="w-12 h-12 rounded-xl shadow-lg flex items-center justify-center transform transition-transform duration-300 ml-4"
+      <div className="px-6 py-5">
+        <div className="flex items-center space-x-4">
+          {/* Animated Icon */}
+          <div 
+            className="w-11 h-11 rounded-2xl shadow-md flex items-center justify-center relative overflow-hidden"
+            style={{ background: statsGradient }}
+          >
+            <i 
+              className="fas fa-football-ball text-white text-xl relative z-10"
               style={{
-                background: `linear-gradient(135deg, ${awayColor}, ${homeColor})`,
-                transform: animateHype ? 'rotate(10deg)' : 'rotate(-10deg)'
+                transform: `rotate(${animateHype ? '10deg' : '-10deg'})`,
+                transition: 'transform 1.5s ease-in-out'
               }}
-            >
-              <i className="fas fa-football-ball text-white text-lg"></i>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900">Impact Players</h3>
-              <p className="text-sm text-gray-600">Game Changers</p>
-            </div>
+            ></i>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Impact Players</h3>
+            <p className="text-[11px] font-medium text-gray-600">Game Changers</p>
           </div>
         </div>
       </div>
 
       {/* Offense/Defense Toggle */}
-      <div className="px-6 py-4 bg-gray-50 border-b">
+      <div className="px-6 pb-4">
         <div className="flex space-x-3">
           <button
             onClick={() => setShowOffense(true)}
             className={`
-              px-4 py-2 rounded-lg font-medium transition-all duration-200
+              flex items-center space-x-2 px-5 py-3 rounded-xl font-bold text-xs transition-all duration-200
               ${showOffense 
-                ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-white shadow-md' 
+                : 'text-gray-600 bg-gray-200'
               }
             `}
+            style={showOffense ? { background: statsGradient } : {}}
           >
-            <i className="fas fa-play mr-2"></i>
-            Offense
+            <i className="fas fa-football-ball text-sm"></i>
+            <span>OFFENSE</span>
           </button>
           <button
             onClick={() => setShowOffense(false)}
             className={`
-              px-4 py-2 rounded-lg font-medium transition-all duration-200
+              flex items-center space-x-2 px-5 py-3 rounded-xl font-bold text-xs transition-all duration-200
               ${!showOffense 
-                ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-white shadow-md' 
+                : 'text-gray-600 bg-gray-200'
               }
             `}
+            style={!showOffense ? { background: statsGradient } : {}}
           >
-            <i className="fas fa-shield-alt mr-2"></i>
-            Defense
+            <i className="fas fa-shield-alt text-sm"></i>
+            <span>DEFENSE</span>
           </button>
         </div>
       </div>
 
       {/* Categories Content */}
-      <div className="p-6">
-        <div className="space-y-6">
+      <div className="px-4 pb-6">
+        <div className="space-y-5">
           {categories.map(category => (
             <CategorySection key={category} category={category} />
           ))}
