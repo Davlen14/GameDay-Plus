@@ -890,6 +890,8 @@ const GameDetailView = ({ gameId }) => {
               game={currentGame}
               awayTeam={awayTeam}
               homeTeam={homeTeam}
+              getTeamColor={getTeamColor}
+              getTeamLogo={getTeamLogo}
             />
           )}
           {selectedTab === 'playByPlay' && (

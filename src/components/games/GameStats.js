@@ -7,7 +7,7 @@ import GameImpactPlayers from './stats/GameImpactPlayers';
 import GameStatsPPA from './stats/GameStatsPPA';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
-const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
+const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
   // State management
   const [gameStats, setGameStats] = useState(null);
   const [loading, setLoading] = useState(false); // Start with false to show debug panel
@@ -31,14 +31,20 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
     return homeTeam?.school || homeTeam?.name || game?.home_team || 'Home Team';
   }, [homeTeam, game?.home_team]);
 
-  // Team colors with fallback
+  // Team colors with fallback using team IDs (like GameDetailView)
   const awayColor = useMemo(() => {
-    return getTeamColor ? getTeamColor(awayTeamName) || '#3B82F6' : '#3B82F6';
-  }, [getTeamColor, awayTeamName]);
+    if (getTeamColor && game?.away_id) {
+      return getTeamColor(game.away_id);
+    }
+    return '#3B82F6';
+  }, [getTeamColor, game?.away_id]);
 
   const homeColor = useMemo(() => {
-    return getTeamColor ? getTeamColor(homeTeamName) || '#EF4444' : '#EF4444';
-  }, [getTeamColor, homeTeamName]);
+    if (getTeamColor && game?.home_id) {
+      return getTeamColor(game.home_id);
+    }
+    return '#EF4444';
+  }, [getTeamColor, game?.home_id]);
 
   // Fetch game statistics
   const fetchGameStats = useCallback(async () => {
@@ -252,6 +258,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
         awayColor={awayColor}
         homeColor={homeColor}
         animateCards={animateCards}
+        getTeamLogo={getTeamLogo}
       />
 
       {/* Statistics Content */}

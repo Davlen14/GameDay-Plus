@@ -6,7 +6,8 @@ const GameStatsHeader = ({
   homeTeam, 
   awayColor, 
   homeColor, 
-  animateCards 
+  animateCards,
+  getTeamLogo
 }) => {
   const getScore = (isHome) => {
     return isHome ? (game?.home_points || 0) : (game?.away_points || 0);
@@ -20,36 +21,43 @@ const GameStatsHeader = ({
     }
   };
 
-  const getTeamLogo = (isHome) => {
+  const getTeamLogoUrl = (isHome) => {
+    const teamId = isHome ? game?.home_id : game?.away_id;
     const team = isHome ? homeTeam : awayTeam;
     const teamName = getTeamName(isHome);
     
     // Debug: log what we're trying to load
-    console.log(`🖼️ Loading logo for ${isHome ? 'home' : 'away'} team:`, { team, teamName });
+    console.log(`🖼️ Loading logo for ${isHome ? 'home' : 'away'} team:`, { teamId, team, teamName });
     
-    // First try the team's logo property if it exists
+    // Use the passed getTeamLogo function if available (preferred)
+    if (getTeamLogo && teamId) {
+      const logoUrl = getTeamLogo(teamId);
+      console.log(`✅ Using getTeamLogo function, got: ${logoUrl}`);
+      return logoUrl;
+    }
+    
+    // Fallback: try the team's logo property if it exists
+    if (team?.logos?.[0]) {
+      console.log(`✅ Using team.logos[0]: ${team.logos[0]}`);
+      return team.logos[0];
+    }
+    
+    // Fallback: try team logo property
     if (team?.logo) {
+      console.log(`✅ Using team.logo: ${team.logo}`);
       return team.logo;
-    }
-    
-    // Try team ID from the team object
-    if (team?.id) {
-      return `/team_logos/${team.id}.png`;
-    }
-    
-    // Try game object IDs
-    const teamId = isHome ? game?.home_id : game?.away_id;
-    if (teamId) {
-      return `/team_logos/${teamId}.png`;
     }
     
     // Fallback to team name if available
     if (teamName && teamName !== 'Home Team' && teamName !== 'Away Team') {
-      return `/team_logos/${teamName.replace(/\s+/g, '_')}.png`;
+      const nameUrl = `/team_logos/${teamName.replace(/\s+/g, '_')}.png`;
+      console.log(`✅ Using team name fallback: ${nameUrl}`);
+      return nameUrl;
     }
     
     // Default fallback
-    return '/team_logos/default.png';
+    console.log(`⚠️ Using default fallback logo`);
+    return '/photos/ncaaf.png';
   };
 
   const gameStatus = () => {
