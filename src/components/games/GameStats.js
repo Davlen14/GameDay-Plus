@@ -270,6 +270,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             teamStats={gameStats.teamStats}
             awayColor={awayColor}
             homeColor={homeColor}
+            getTeamLogo={getTeamLogo}
             animateCards={animateCards}
             awayTeam={awayTeamName}
             homeTeam={homeTeamName}
@@ -294,8 +295,11 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
           <GameImpactPlayers
             game={game}
             playerGameStats={gameStats.playerStats}
+            awayTeam={awayTeam}
+            homeTeam={homeTeam}
             awayColor={awayColor}
             homeColor={homeColor}
+            getTeamLogo={getTeamLogo}
             animateCards={animateCards}
           />
         )}

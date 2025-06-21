@@ -4,8 +4,11 @@ import gameStatsService from '../../../services/gameStatsService';
 const GameImpactPlayers = ({ 
   game, 
   playerGameStats, 
+  awayTeam,
+  homeTeam,
   awayColor, 
   homeColor, 
+  getTeamLogo,
   animateCards 
 }) => {
   const [showOffense, setShowOffense] = useState(true);
@@ -22,6 +25,24 @@ const GameImpactPlayers = ({
   }, [animateCards]);
 
   // Helper functions
+  const getTeamLogoUrl = (isHome) => {
+    const teamId = isHome ? game?.home_id : game?.away_id;
+    const team = isHome ? homeTeam : awayTeam;
+    
+    // Use the passed getTeamLogo function if available (preferred)
+    if (getTeamLogo && teamId) {
+      return getTeamLogo(teamId);
+    }
+    
+    // Fallback: try the team's logo property if it exists
+    if (team?.logos?.[0]) {
+      return team.logos[0];
+    }
+    
+    // Default fallback
+    return '/photos/ncaaf.png';
+  };
+
   const getImpactStars = (isHome, category) => {
     const teamName = isHome ? game.home_team : game.away_team;
     
@@ -76,7 +97,7 @@ const GameImpactPlayers = ({
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
-  const PlayerStarCard = ({ player, teamColor, alignment = 'left' }) => {
+  const PlayerStarCard = ({ player, teamColor, teamLogo, alignment = 'left' }) => {
     if (!player) {
       return (
         <div className="text-center py-8 px-4">
@@ -102,11 +123,21 @@ const GameImpactPlayers = ({
     return (
       <div 
         className={`
-          bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300
+          bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300 relative
           ${exceptional ? 'ring-2 ring-yellow-400 bg-gradient-to-br from-yellow-50 to-white' : ''}
         `}
       >
-        <div className={`text-${alignment}`}>
+        {/* Team Logo in Background */}
+        <div className="absolute top-4 right-4 opacity-10">
+          <img
+            src={teamLogo}
+            alt="Team Logo"
+            className="w-12 h-12 object-contain"
+            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+          />
+        </div>
+
+        <div className={`text-${alignment} relative z-10`}>
           {/* Player Name */}
           <h4 className="font-bold text-lg text-gray-900 mb-1">
             {formatPlayerName(player.name)}
@@ -208,17 +239,24 @@ const GameImpactPlayers = ({
           {/* Away Team */}
           <div>
             <div className="flex items-center mb-4">
+              <img
+                src={getTeamLogoUrl(false)}
+                alt={`${game.away_team} logo`}
+                className="w-6 h-6 object-contain mr-3"
+                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+              />
               <div 
                 className="w-4 h-4 rounded-full mr-2"
                 style={{ backgroundColor: awayColor }}
               ></div>
               <span className="font-semibold text-gray-900">
-                {game.away_team}
+                {awayTeam?.school || game.away_team}
               </span>
             </div>
             <PlayerStarCard 
               player={awayStars?.[0]} 
               teamColor={awayColor}
+              teamLogo={getTeamLogoUrl(false)}
               alignment="left"
             />
           </div>
@@ -226,17 +264,24 @@ const GameImpactPlayers = ({
           {/* Home Team */}
           <div>
             <div className="flex items-center mb-4">
+              <img
+                src={getTeamLogoUrl(true)}
+                alt={`${game.home_team} logo`}
+                className="w-6 h-6 object-contain mr-3"
+                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+              />
               <div 
                 className="w-4 h-4 rounded-full mr-2"
                 style={{ backgroundColor: homeColor }}
               ></div>
               <span className="font-semibold text-gray-900">
-                {game.home_team}
+                {homeTeam?.school || game.home_team}
               </span>
             </div>
             <PlayerStarCard 
               player={homeStars?.[0]} 
               teamColor={homeColor}
+              teamLogo={getTeamLogoUrl(true)}
               alignment="left"
             />
           </div>
@@ -281,9 +326,30 @@ const GameImpactPlayers = ({
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
+            {/* Team Logos in Header */}
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <img
+                  src={getTeamLogoUrl(false)}
+                  alt={`${game.away_team} logo`}
+                  className="w-10 h-10 object-contain rounded-lg shadow-sm"
+                  onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                />
+              </div>
+              <span className="text-gray-400 font-bold">VS</span>
+              <div className="relative">
+                <img
+                  src={getTeamLogoUrl(true)}
+                  alt={`${game.home_team} logo`}
+                  className="w-10 h-10 object-contain rounded-lg shadow-sm"
+                  onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                />
+              </div>
+            </div>
+            
             {/* Animated Icon */}
             <div 
-              className="w-12 h-12 rounded-xl shadow-lg flex items-center justify-center transform transition-transform duration-300"
+              className="w-12 h-12 rounded-xl shadow-lg flex items-center justify-center transform transition-transform duration-300 ml-4"
               style={{
                 background: `linear-gradient(135deg, ${awayColor}, ${homeColor})`,
                 transform: animateHype ? 'rotate(10deg)' : 'rotate(-10deg)'

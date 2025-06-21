@@ -108,7 +108,7 @@ const GameStatsHeader = ({
           <div className="flex-1 text-center">
             <div className="mb-4 relative">
               <img
-                src={getTeamLogo(false)}
+                src={getTeamLogoUrl(false)}
                 alt={getTeamName(false)}
                 className="w-20 h-20 mx-auto object-contain"
                 onError={(e) => {
@@ -156,7 +156,7 @@ const GameStatsHeader = ({
           <div className="flex-1 text-center">
             <div className="mb-4 relative">
               <img
-                src={getTeamLogo(true)}
+                src={getTeamLogoUrl(true)}
                 alt={getTeamName(true)}
                 className="w-20 h-20 mx-auto object-contain"
                 onError={(e) => {

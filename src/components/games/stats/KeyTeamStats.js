@@ -6,6 +6,7 @@ const KeyTeamStats = ({
   teamStats, 
   awayColor, 
   homeColor, 
+  getTeamLogo,
   animateCards,
   awayTeam,
   homeTeam
@@ -19,6 +20,19 @@ const KeyTeamStats = ({
       setShimmer(true);
     }
   }, [animateCards]);
+
+  // Helper function to get team logo
+  const getTeamLogoUrl = (isHome) => {
+    const teamId = isHome ? game?.home_id : game?.away_id;
+    
+    // Use the passed getTeamLogo function if available
+    if (getTeamLogo && teamId) {
+      return getTeamLogo(teamId);
+    }
+    
+    // Default fallback
+    return '/photos/ncaaf.png';
+  };
 
   // Get team statistics for this specific game
   const getGameTeams = () => {
@@ -236,19 +250,35 @@ const KeyTeamStats = ({
       {/* Team Names Header */}
       <div className="px-6 py-4 bg-gray-50 border-b">
         <div className="flex items-center justify-between">
-          <span 
-            className="font-bold text-lg"
-            style={{ color: awayColor }}
-          >
-            {awayTeamData.school}
-          </span>
+          <div className="flex items-center space-x-3">
+            <img
+              src={getTeamLogoUrl(false)}
+              alt={`${awayTeamData.school} logo`}
+              className="w-8 h-8 object-contain"
+              onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+            />
+            <span 
+              className="font-bold text-lg"
+              style={{ color: awayColor }}
+            >
+              {awayTeamData.school}
+            </span>
+          </div>
           <span className="text-gray-400 font-medium">VS</span>
-          <span 
-            className="font-bold text-lg"
-            style={{ color: homeColor }}
-          >
-            {homeTeamData.school}
-          </span>
+          <div className="flex items-center space-x-3">
+            <span 
+              className="font-bold text-lg"
+              style={{ color: homeColor }}
+            >
+              {homeTeamData.school}
+            </span>
+            <img
+              src={getTeamLogoUrl(true)}
+              alt={`${homeTeamData.school} logo`}
+              className="w-8 h-8 object-contain"
+              onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+            />
+          </div>
         </div>
       </div>
 
