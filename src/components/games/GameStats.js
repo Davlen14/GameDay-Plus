@@ -26,12 +26,36 @@ const GameStats = ({ game }) => {
 
   // Helper function to find team by ID (from TEAM-LOGOS-AND-COLORS-GUIDE)
   const getTeam = useCallback((teamId) => {
-    return teams.find(team => team.id === teamId) || {};
+    if (!teamId || !teams.length) return {};
+    
+    // Try to find team by ID, handling both string and number types
+    let team = teams.find(team => team.id === teamId);
+    if (!team && typeof teamId === 'string') {
+      // Try converting to number
+      team = teams.find(team => team.id === parseInt(teamId));
+    }
+    if (!team && typeof teamId === 'number') {
+      // Try converting to string
+      team = teams.find(team => team.id === teamId.toString());
+    }
+    
+    console.log(`🔍 [GET TEAM DEBUG] Looking for team ID: ${teamId} (type: ${typeof teamId})`, {
+      found: !!team,
+      teamName: team?.school,
+      totalTeams: teams.length
+    });
+    
+    return team || {};
   }, [teams]);
 
   // Get team logo with fallback strategy (from TEAM-LOGOS-AND-COLORS-GUIDE)
   const getTeamLogo = useCallback((teamId) => {
     const team = getTeam(teamId);
+    console.log(`🎯 [LOGO FUNCTION] getTeamLogo called with teamId: ${teamId}`, {
+      team,
+      teamLogo: team?.logos?.[0],
+      fallback: '/photos/ncaaf.png'
+    });
     return team?.logos?.[0] || '/photos/ncaaf.png';
   }, [getTeam]);
 
@@ -60,11 +84,16 @@ const GameStats = ({ game }) => {
     const loadTeams = async () => {
       try {
         setDebugInfo('🔄 Loading teams data...');
+        console.log('📥 [TEAMS DEBUG] Starting to load FBS teams...');
         const teamsData = await teamService.getFBSTeams(true);
+        console.log('✅ [TEAMS DEBUG] Teams loaded successfully:', {
+          count: teamsData.length,
+          firstFewTeams: teamsData.slice(0, 3).map(t => ({ id: t.id, school: t.school, logos: t.logos?.length }))
+        });
         setTeams(teamsData);
         setDebugInfo(`✅ Teams loaded: ${teamsData.length} teams`);
       } catch (error) {
-        console.error('Failed to load teams:', error);
+        console.error('❌ [TEAMS DEBUG] Failed to load teams:', error);
         setDebugInfo(`❌ Failed to load teams: ${error.message}`);
       }
     };
@@ -73,11 +102,23 @@ const GameStats = ({ game }) => {
 
   // Get away and home teams from current game (from TEAM-LOGOS-AND-COLORS-GUIDE)
   const awayTeam = useMemo(() => {
-    return game ? getTeam(game.away_id || game.awayId) : {};
+    const team = game ? getTeam(game.away_id || game.awayId) : {};
+    console.log('🏃 [AWAY TEAM DEBUG]:', {
+      gameAwayId: game?.away_id || game?.awayId,
+      foundTeam: team,
+      teamName: team?.school
+    });
+    return team;
   }, [game, getTeam]);
 
   const homeTeam = useMemo(() => {
-    return game ? getTeam(game.home_id || game.homeId) : {};
+    const team = game ? getTeam(game.home_id || game.homeId) : {};
+    console.log('🏠 [HOME TEAM DEBUG]:', {
+      gameHomeId: game?.home_id || game?.homeId,
+      foundTeam: team,
+      teamName: team?.school
+    });
+    return team;
   }, [game, getTeam]);
 
   // Extract team names from team objects
@@ -297,6 +338,25 @@ const GameStats = ({ game }) => {
               >
                 🗑️ Clear Data
               </button>
+              
+              <button
+                onClick={() => {
+                  console.log('🧪 [LOGO TEST] Testing logo retrieval...');
+                  console.log('Teams loaded:', teams.length);
+                  console.log('Game data:', game);
+                  if (game?.away_id) {
+                    const awayLogo = getTeamLogo(game.away_id);
+                    console.log(`Away team logo (ID: ${game.away_id}):`, awayLogo);
+                  }
+                  if (game?.home_id) {
+                    const homeLogo = getTeamLogo(game.home_id);
+                    console.log(`Home team logo (ID: ${game.home_id}):`, homeLogo);
+                  }
+                }}
+                className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+              >
+                🔍 Test Logos
+              </button>
             </div>
             
             <div className="text-sm">
@@ -322,13 +382,14 @@ const GameStats = ({ game }) => {
       <GameStatsHeader 
         game={game}
         awayTeam={awayTeam}
-        homeTeam={homeTeam}            awayColor={awayColor}
-            homeColor={homeColor}
-            awayColorRgb={awayColorRgb}
-            homeColorRgb={homeColorRgb}
-            animateCards={animateCards}
-            getTeamLogo={getTeamLogo}
-            getTeamColor={getTeamColor}
+        homeTeam={homeTeam}
+        awayColor={awayColor}
+        homeColor={homeColor}
+        awayColorRgb={awayColorRgb}
+        homeColorRgb={homeColorRgb}
+        animateCards={animateCards}
+        getTeamLogo={getTeamLogo}
+        getTeamColor={getTeamColor}
       />
 
       {/* Statistics Content */}
