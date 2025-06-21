@@ -7,9 +7,7 @@ const GameStatsPPA = ({
   selectedPPASection, 
   setSelectedPPASection, 
   awayColor, 
-  homeColor,
-  awayColorRgb,
-  homeColorRgb,
+  homeColor, 
   animateCards 
 }) => {
   const [showingHome, setShowingHome] = useState(true);

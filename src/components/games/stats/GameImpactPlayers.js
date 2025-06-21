@@ -5,9 +5,7 @@ const GameImpactPlayers = ({
   game, 
   playerGameStats, 
   awayColor, 
-  homeColor,
-  awayColorRgb,
-  homeColorRgb,
+  homeColor, 
   animateCards 
 }) => {
   const [showOffense, setShowOffense] = useState(true);

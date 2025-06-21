@@ -5,9 +5,7 @@ const KeyTeamStats = ({
   game, 
   teamStats, 
   awayColor, 
-  homeColor,
-  awayColorRgb,
-  homeColorRgb,
+  homeColor, 
   animateCards,
   awayTeam,
   homeTeam
