@@ -238,6 +238,17 @@ export const gameService = {
     return await fetchCollegeFootballData('/ppa/games', params);
   },
 
+  // GET /ppa/players/games - Get player game PPA data
+  getPlayerGamePPA: async (year = new Date().getFullYear(), week = null, team = null, position = null, playerId = null, gameId = null, excludeGarbageTime = true) => {
+    const params = { year, excludeGarbageTime };
+    if (week) params.week = week;
+    if (team) params.team = team;
+    if (position) params.position = position;
+    if (playerId) params.playerId = playerId;
+    if (gameId) params.gameId = gameId;
+    return await fetchCollegeFootballData('/ppa/players/games', params);
+  },
+
   // GET /metrics/wp - Get win probability data
   getWinProbability: async (gameId) => {
     return await fetchCollegeFootballData('/metrics/wp', { gameId });

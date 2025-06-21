@@ -2,6 +2,7 @@
 export { teamService } from './teamService';
 export { playerService } from './playerService';
 export { gameService } from './gameService';
+export { default as gameStatsService } from './gameStatsService';
 export { bettingService } from './bettingService';
 export { graphqlBettingService } from './graphqlBettingService';
 export { newsService } from './newsService';
