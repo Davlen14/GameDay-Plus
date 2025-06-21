@@ -10,12 +10,17 @@ import LoadingSpinner from '../UI/LoadingSpinner';
 const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
   // State management
   const [gameStats, setGameStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false to show debug panel
   const [error, setError] = useState(null);
   const [expandedSection, setExpandedSection] = useState(null);
   const [selectedPPASection, setSelectedPPASection] = useState('overall');
   const [animateCards, setAnimateCards] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  
+  // Debug state
+  const [debugInfo, setDebugInfo] = useState('');
+  const [showDebug, setShowDebug] = useState(true);
+  const [testData, setTestData] = useState(null);
 
   // Team colors with fallback
   const awayColor = useMemo(() => {
@@ -28,11 +33,15 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
 
   // Fetch game statistics
   const fetchGameStats = useCallback(async () => {
-    if (!game?.id) return;
+    if (!game?.id) {
+      setDebugInfo('❌ No game ID provided');
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
+      setDebugInfo(`🔄 Fetching stats for game ID: ${game.id}`);
       
       const stats = await gameStatsService.getGameStats(game.id, {
         useCache: retryCount === 0,
@@ -40,6 +49,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
       });
       
       setGameStats(stats);
+      setDebugInfo(`✅ Stats loaded: ${JSON.stringify(stats, null, 2)}`);
       
       // Trigger card animations after data loads
       setTimeout(() => setAnimateCards(true), 100);
@@ -47,10 +57,60 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
     } catch (err) {
       console.error('Failed to fetch game stats:', err);
       setError(err.message || 'Failed to load game statistics');
+      setDebugInfo(`❌ Error: ${err.message || 'Failed to load game statistics'}`);
     } finally {
       setLoading(false);
     }
   }, [game?.id, retryCount]);
+
+  // Test function with mock data
+  const testWithMockData = () => {
+    setDebugInfo('🧪 Loading mock data...');
+    const mockStats = {
+      teamStats: [
+        {
+          school: game?.home_team || 'Home Team',
+          totalYards: 445,
+          netPassingYards: 285,
+          rushingYards: 160,
+          firstDowns: 24,
+          thirdDownEff: '8-15',
+          possessionTime: '32:15',
+          points: 28
+        },
+        {
+          school: game?.away_team || 'Away Team', 
+          totalYards: 392,
+          netPassingYards: 247,
+          rushingYards: 145,
+          firstDowns: 21,
+          thirdDownEff: '6-14',
+          possessionTime: '27:45',
+          points: 21
+        }
+      ],
+      playerStats: [
+        {
+          team: game?.home_team || 'Home Team',
+          player: 'Test QB',
+          category: 'passing',
+          stat: 285
+        },
+        {
+          team: game?.away_team || 'Away Team',
+          player: 'Test QB2', 
+          category: 'passing',
+          stat: 247
+        }
+      ],
+      gamePPA: null,
+      playerPPA: []
+    };
+    setGameStats(mockStats);
+    setTestData(mockStats);
+    setAnimateCards(true);
+    setDebugInfo(`✅ Mock data loaded: ${JSON.stringify(mockStats, null, 2)}`);
+  };
 
   // Effect to fetch data
   useEffect(() => {
@@ -115,6 +175,66 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor }) => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
+      {/* Debug Panel */}
+      {showDebug && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-yellow-800">🔧 Debug Panel</h3>
+            <button
+              onClick={() => setShowDebug(false)}
+              className="text-yellow-600 hover:text-yellow-800"
+            >
+              ✖
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="text-sm">
+              <strong>Game Data:</strong> {game ? `ID: ${game.id}, ${game.away_team} @ ${game.home_team}` : 'No game data'}
+            </div>
+            
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={fetchGameStats}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                🔄 Fetch Real Data
+              </button>
+              
+              <button
+                onClick={testWithMockData}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              >
+                🧪 Load Mock Data
+              </button>
+              
+              <button
+                onClick={() => setGameStats(null)}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                🗑️ Clear Data
+              </button>
+            </div>
+            
+            <div className="text-sm">
+              <strong>Stats Loaded:</strong> {gameStats ? '✅ Yes' : '❌ No'}
+            </div>
+            
+            {gameStats && (
+              <div className="text-sm">
+                <strong>Team Stats:</strong> {gameStats.teamStats?.length || 0} teams, 
+                <strong> Player Stats:</strong> {gameStats.playerStats?.length || 0} players
+              </div>
+            )}
+            
+            <div className="bg-gray-100 p-2 rounded text-xs max-h-32 overflow-y-auto">
+              <strong>Debug Info:</strong><br />
+              <pre>{debugInfo}</pre>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Game Header */}
       <GameStatsHeader 
         game={game}

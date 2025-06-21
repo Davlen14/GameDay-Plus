@@ -9,23 +9,45 @@ const GameStatsHeader = ({
   animateCards 
 }) => {
   const getScore = (isHome) => {
-    return isHome ? (game.home_points || 0) : (game.away_points || 0);
+    return isHome ? (game?.home_points || 0) : (game?.away_points || 0);
   };
 
   const getTeamName = (isHome) => {
-    return isHome ? (game.home_team || 'Home') : (game.away_team || 'Away');
+    return isHome ? (game?.home_team || 'Home Team') : (game?.away_team || 'Away Team');
   };
 
-  const getTeamLogo = (teamId) => {
-    // Use team_logos directory structure
-    return `/team_logos/${teamId}.png`;
+  const getTeamLogo = (teamId, teamName) => {
+    // Debug: log what we're trying to load
+    console.log(`🖼️ Loading logo for team: ${teamName} (ID: ${teamId})`);
+    
+    // If we have team ID, use it
+    if (teamId) {
+      return `/team_logos/${teamId}.png`;
+    }
+    
+    // Fallback to team name if available
+    if (teamName) {
+      return `/team_logos/${teamName.replace(/\s+/g, '_')}.png`;
+    }
+    
+    // Default fallback
+    return '/team_logos/default.png';
   };
 
   const gameStatus = () => {
-    if (game.completed) return 'FINAL';
-    if (game.start_time_tbd) return 'TBD';
+    if (game?.completed) return 'FINAL';
+    if (game?.start_time_tbd) return 'TBD';
     return 'SCHEDULED';
   };
+
+  // Debug info
+  console.log('🎮 GameStatsHeader render:', {
+    game: game ? `${game.away_team} @ ${game.home_team}` : 'No game',
+    awayTeam,
+    homeTeam,
+    awayColor,
+    homeColor
+  });
 
   return (
     <div 
@@ -58,15 +80,23 @@ const GameStatsHeader = ({
         <div className="flex items-center justify-between">
           {/* Away Team */}
           <div className="flex-1 text-center">
-            <div className="mb-4">
+            <div className="mb-4 relative">
               <img
-                src={getTeamLogo(game.away_id)}
+                src={getTeamLogo(game?.away_id, getTeamName(false))}
                 alt={getTeamName(false)}
                 className="w-20 h-20 mx-auto object-contain"
                 onError={(e) => {
+                  console.log(`❌ Logo failed for away team: ${getTeamName(false)}, trying fallback`);
                   e.target.src = '/photos/ncaaf.png';
                 }}
+                onLoad={() => {
+                  console.log(`✅ Logo loaded for away team: ${getTeamName(false)}`);
+                }}
               />
+              {/* Debug info overlay */}
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-xs bg-black/50 text-white px-1 rounded">
+                ID: {game?.away_id || 'N/A'}
+              </div>
             </div>
             <h3 
               className="text-2xl font-bold mb-2"
@@ -78,7 +108,7 @@ const GameStatsHeader = ({
               {getScore(false)}
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              {game.away_conference || 'FBS'}
+              {game?.away_conference || 'FBS'}
             </p>
           </div>
 
@@ -86,10 +116,10 @@ const GameStatsHeader = ({
           <div className="px-8 text-center">
             <div className="text-3xl font-bold text-gray-400 mb-2">VS</div>
             <div className="text-sm text-gray-500">
-              {game.neutral_site ? 'Neutral Site' : 
-               game.conference_game ? 'Conference' : 'Non-Conference'}
+              {game?.neutral_site ? 'Neutral Site' : 
+               game?.conference_game ? 'Conference' : 'Non-Conference'}
             </div>
-            {game.venue && (
+            {game?.venue && (
               <div className="text-xs text-gray-400 mt-1">
                 {game.venue}
               </div>
@@ -98,15 +128,23 @@ const GameStatsHeader = ({
 
           {/* Home Team */}
           <div className="flex-1 text-center">
-            <div className="mb-4">
+            <div className="mb-4 relative">
               <img
-                src={getTeamLogo(game.home_id)}
+                src={getTeamLogo(game?.home_id, getTeamName(true))}
                 alt={getTeamName(true)}
                 className="w-20 h-20 mx-auto object-contain"
                 onError={(e) => {
+                  console.log(`❌ Logo failed for home team: ${getTeamName(true)}, trying fallback`);
                   e.target.src = '/photos/ncaaf.png';
                 }}
+                onLoad={() => {
+                  console.log(`✅ Logo loaded for home team: ${getTeamName(true)}`);
+                }}
               />
+              {/* Debug info overlay */}
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-xs bg-black/50 text-white px-1 rounded">
+                ID: {game?.home_id || 'N/A'}
+              </div>
             </div>
             <h3 
               className="text-2xl font-bold mb-2"
@@ -118,7 +156,7 @@ const GameStatsHeader = ({
               {getScore(true)}
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              {game.home_conference || 'FBS'}
+              {game?.home_conference || 'FBS'}
             </p>
           </div>
         </div>
