@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import gameStatsService from '../../services/gameStatsService';
+import { teamService } from '../../services/teamService';
 import GameStatsHeader from './stats/GameStatsHeader';
 import GameSummarySection from './stats/GameSummarySection';
 import KeyTeamStats from './stats/KeyTeamStats';
@@ -7,8 +8,9 @@ import GameImpactPlayers from './stats/GameImpactPlayers';
 import GameStatsPPA from './stats/GameStatsPPA';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
-const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
+const GameStats = ({ game }) => {
   // State management
+  const [teams, setTeams] = useState([]);
   const [gameStats, setGameStats] = useState(null);
   const [loading, setLoading] = useState(false); // Start with false to show debug panel
   const [error, setError] = useState(null);
@@ -22,6 +24,62 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
   const [showDebug, setShowDebug] = useState(true);
   const [testData, setTestData] = useState(null);
 
+  // Helper function to find team by ID (from TEAM-LOGOS-AND-COLORS-GUIDE)
+  const getTeam = useCallback((teamId) => {
+    return teams.find(team => team.id === teamId) || {};
+  }, [teams]);
+
+  // Get team logo with fallback strategy (from TEAM-LOGOS-AND-COLORS-GUIDE)
+  const getTeamLogo = useCallback((teamId) => {
+    const team = getTeam(teamId);
+    return team?.logos?.[0] || '/photos/ncaaf.png';
+  }, [getTeam]);
+
+  // Get team color with fallback strategy (from TEAM-LOGOS-AND-COLORS-GUIDE)
+  const getTeamColor = useCallback((teamId) => {
+    const team = getTeam(teamId);
+    if (team.color) {
+      return team.color;
+    }
+    // Fallback colors: Blue for away, Red for home
+    return teamId === (game?.away_id || game?.awayId) ? '#3B82F6' : '#EF4444';
+  }, [getTeam, game?.away_id, game?.awayId]);
+
+  // Convert hex to RGB for CSS rgba usage (from TEAM-LOGOS-AND-COLORS-GUIDE)
+  const hexToRgb = useCallback((hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 59, g: 130, b: 246 };
+  }, []);
+
+  // Load teams data on component mount (from TEAM-LOGOS-AND-COLORS-GUIDE)
+  useEffect(() => {
+    const loadTeams = async () => {
+      try {
+        setDebugInfo('🔄 Loading teams data...');
+        const teamsData = await teamService.getFBSTeams(true);
+        setTeams(teamsData);
+        setDebugInfo(`✅ Teams loaded: ${teamsData.length} teams`);
+      } catch (error) {
+        console.error('Failed to load teams:', error);
+        setDebugInfo(`❌ Failed to load teams: ${error.message}`);
+      }
+    };
+    loadTeams();
+  }, []);
+
+  // Get away and home teams from current game (from TEAM-LOGOS-AND-COLORS-GUIDE)
+  const awayTeam = useMemo(() => {
+    return game ? getTeam(game.away_id || game.awayId) : {};
+  }, [game, getTeam]);
+
+  const homeTeam = useMemo(() => {
+    return game ? getTeam(game.home_id || game.homeId) : {};
+  }, [game, getTeam]);
+
   // Extract team names from team objects
   const awayTeamName = useMemo(() => {
     return awayTeam?.school || awayTeam?.name || game?.away_team || 'Away Team';
@@ -33,18 +91,18 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
 
   // Team colors with fallback using team IDs (like GameDetailView)
   const awayColor = useMemo(() => {
-    if (getTeamColor && game?.away_id) {
-      return getTeamColor(game.away_id);
-    }
-    return '#3B82F6';
-  }, [getTeamColor, game?.away_id]);
+    return getTeamColor(game?.away_id || game?.awayId);
+  }, [getTeamColor, game?.away_id, game?.awayId]);
 
   const homeColor = useMemo(() => {
-    if (getTeamColor && game?.home_id) {
-      return getTeamColor(game.home_id);
-    }
-    return '#EF4444';
-  }, [getTeamColor, game?.home_id]);
+    return getTeamColor(game?.home_id || game?.homeId);
+  }, [getTeamColor, game?.home_id, game?.homeId]);
+
+  // RGB values for CSS effects (from TEAM-LOGOS-AND-COLORS-GUIDE)
+  const awayRgb = useMemo(() => hexToRgb(awayColor), [hexToRgb, awayColor]);
+  const homeRgb = useMemo(() => hexToRgb(homeColor), [hexToRgb, homeColor]);
+  const awayColorRgb = useMemo(() => `${awayRgb.r}, ${awayRgb.g}, ${awayRgb.b}`, [awayRgb]);
+  const homeColorRgb = useMemo(() => `${homeRgb.r}, ${homeRgb.g}, ${homeRgb.b}`, [homeRgb]);
 
   // Fetch game statistics
   const fetchGameStats = useCallback(async () => {
@@ -84,7 +142,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
     const mockStats = {
       teamStats: [
         {
-          school: homeTeamName,
+          school: homeTeam?.school || game?.home_team || 'Home Team',
           totalYards: 445,
           netPassingYards: 285,
           rushingYards: 160,
@@ -94,7 +152,7 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
           points: 28
         },
         {
-          school: awayTeamName, 
+          school: awayTeam?.school || game?.away_team || 'Away Team', 
           totalYards: 392,
           netPassingYards: 247,
           rushingYards: 145,
@@ -106,13 +164,13 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
       ],
       playerStats: [
         {
-          team: homeTeamName,
+          team: homeTeam?.school || game?.home_team || 'Home Team',
           player: 'Test QB',
           category: 'passing',
           stat: 285
         },
         {
-          team: awayTeamName,
+          team: awayTeam?.school || game?.away_team || 'Away Team',
           player: 'Test QB2', 
           category: 'passing',
           stat: 247
@@ -205,7 +263,17 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
           
           <div className="space-y-3">
             <div className="text-sm">
-              <strong>Game Data:</strong> {game ? `ID: ${game.id}, ${awayTeamName} @ ${homeTeamName}` : 'No game data'}
+              <strong>Game Data:</strong> {game ? `ID: ${game.id}, ${awayTeam?.school || game?.away_team} @ ${homeTeam?.school || game?.home_team}` : 'No game data'}
+            </div>
+            
+            <div className="text-sm">
+              <strong>Teams Loaded:</strong> {teams.length} teams, 
+              <strong> Away Team:</strong> {awayTeam?.school || 'Not found'} (ID: {game?.away_id}),
+              <strong> Home Team:</strong> {homeTeam?.school || 'Not found'} (ID: {game?.home_id})
+            </div>
+            
+            <div className="text-sm">
+              <strong>Colors:</strong> Away: {awayColor}, Home: {homeColor}
             </div>
             
             <div className="flex gap-2 flex-wrap">
@@ -254,11 +322,13 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
       <GameStatsHeader 
         game={game}
         awayTeam={awayTeam}
-        homeTeam={homeTeam}
-        awayColor={awayColor}
-        homeColor={homeColor}
-        animateCards={animateCards}
-        getTeamLogo={getTeamLogo}
+        homeTeam={homeTeam}            awayColor={awayColor}
+            homeColor={homeColor}
+            awayColorRgb={awayColorRgb}
+            homeColorRgb={homeColorRgb}
+            animateCards={animateCards}
+            getTeamLogo={getTeamLogo}
+            getTeamColor={getTeamColor}
       />
 
       {/* Statistics Content */}
@@ -270,9 +340,11 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             teamStats={gameStats.teamStats}
             awayColor={awayColor}
             homeColor={homeColor}
+            awayColorRgb={awayColorRgb}
+            homeColorRgb={homeColorRgb}
             animateCards={animateCards}
-            awayTeam={awayTeamName}
-            homeTeam={homeTeamName}
+            awayTeam={awayTeam?.school || game?.away_team || 'Away Team'}
+            homeTeam={homeTeam?.school || game?.home_team || 'Home Team'}
           />
         )}
 
@@ -285,6 +357,8 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             setExpandedSection={setExpandedSection}
             awayColor={awayColor}
             homeColor={homeColor}
+            awayColorRgb={awayColorRgb}
+            homeColorRgb={homeColorRgb}
             animateCards={animateCards}
           />
         )}
@@ -296,6 +370,8 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             playerGameStats={gameStats.playerStats}
             awayColor={awayColor}
             homeColor={homeColor}
+            awayColorRgb={awayColorRgb}
+            homeColorRgb={homeColorRgb}
             animateCards={animateCards}
           />
         )}
@@ -310,6 +386,8 @@ const GameStats = ({ game, awayTeam, homeTeam, getTeamColor, getTeamLogo }) => {
             setSelectedPPASection={setSelectedPPASection}
             awayColor={awayColor}
             homeColor={homeColor}
+            awayColorRgb={awayColorRgb}
+            homeColorRgb={homeColorRgb}
             animateCards={animateCards}
           />
         )}

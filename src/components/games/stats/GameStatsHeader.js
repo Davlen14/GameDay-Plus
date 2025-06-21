@@ -1,13 +1,17 @@
 import React from 'react';
+import LazyImage from '../../UI/LazyImage';
 
 const GameStatsHeader = ({ 
   game, 
   awayTeam, 
   homeTeam, 
   awayColor, 
-  homeColor, 
+  homeColor,
+  awayColorRgb,
+  homeColorRgb,
   animateCards,
-  getTeamLogo
+  getTeamLogo,
+  getTeamColor
 }) => {
   const getScore = (isHome) => {
     return isHome ? (game?.home_points || 0) : (game?.away_points || 0);
@@ -23,39 +27,18 @@ const GameStatsHeader = ({
 
   const getTeamLogoUrl = (isHome) => {
     const teamId = isHome ? game?.home_id : game?.away_id;
-    const team = isHome ? homeTeam : awayTeam;
-    const teamName = getTeamName(isHome);
     
     // Debug: log what we're trying to load
-    console.log(`🖼️ Loading logo for ${isHome ? 'home' : 'away'} team:`, { teamId, team, teamName });
+    console.log(`🖼️ Loading logo for ${isHome ? 'home' : 'away'} team:`, { teamId });
     
-    // Use the passed getTeamLogo function if available (preferred)
+    // Use the passed getTeamLogo function (preferred method from guide)
     if (getTeamLogo && teamId) {
       const logoUrl = getTeamLogo(teamId);
       console.log(`✅ Using getTeamLogo function, got: ${logoUrl}`);
       return logoUrl;
     }
     
-    // Fallback: try the team's logo property if it exists
-    if (team?.logos?.[0]) {
-      console.log(`✅ Using team.logos[0]: ${team.logos[0]}`);
-      return team.logos[0];
-    }
-    
-    // Fallback: try team logo property
-    if (team?.logo) {
-      console.log(`✅ Using team.logo: ${team.logo}`);
-      return team.logo;
-    }
-    
-    // Fallback to team name if available
-    if (teamName && teamName !== 'Home Team' && teamName !== 'Away Team') {
-      const nameUrl = `/team_logos/${teamName.replace(/\s+/g, '_')}.png`;
-      console.log(`✅ Using team name fallback: ${nameUrl}`);
-      return nameUrl;
-    }
-    
-    // Default fallback
+    // Fallback to default logo
     console.log(`⚠️ Using default fallback logo`);
     return '/photos/ncaaf.png';
   };
@@ -82,6 +65,17 @@ const GameStatsHeader = ({
         transition-all duration-700 ease-out
         ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
       `}
+      style={{
+        background: awayColorRgb && homeColorRgb ? 
+          `linear-gradient(to right, 
+            rgba(${awayColorRgb}, 0.05) 0%, 
+            rgba(${awayColorRgb}, 0.03) 20%, 
+            rgba(255,255,255,1) 35%, 
+            rgba(255,255,255,1) 65%, 
+            rgba(${homeColorRgb}, 0.03) 80%, 
+            rgba(${homeColorRgb}, 0.05) 100%)` 
+          : undefined
+      }}
     >
       {/* Game Status Banner */}
       <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-3">
@@ -106,14 +100,46 @@ const GameStatsHeader = ({
         <div className="flex items-center justify-between">
           {/* Away Team */}
           <div className="flex-1 text-center">
-            <div className="mb-4 relative">
-              <img
-                src={getTeamLogo(false)}
+            <div className="mb-4 relative group">
+              {/* 3D Shadow Effect (from TEAM-LOGOS-AND-COLORS-GUIDE) */}
+              {awayColorRgb && (
+                <div 
+                  className="absolute inset-0 w-20 h-20 mx-auto"
+                  style={{
+                    background: `radial-gradient(circle, rgba(${awayColorRgb}, 0.4) 0%, transparent 70%)`,
+                    filter: 'blur(25px)',
+                    transform: 'translateY(8px) scale(1.1)',
+                  }}
+                />
+              )}
+              
+              {/* Glowing Ring Animation (from TEAM-LOGOS-AND-COLORS-GUIDE) */}
+              {awayColorRgb && (
+                <div 
+                  className="absolute inset-0 w-20 h-20 mx-auto rounded-full opacity-40 group-hover:opacity-60 transition-opacity duration-500"
+                  style={{
+                    background: `conic-gradient(from 0deg, 
+                      rgba(${awayColorRgb}, 0.8) 0deg,
+                      transparent 60deg,
+                      rgba(${awayColorRgb}, 0.4) 120deg,
+                      transparent 180deg,
+                      rgba(${awayColorRgb}, 0.6) 240deg,
+                      transparent 300deg,
+                      rgba(${awayColorRgb}, 0.8) 360deg)`,
+                    filter: 'blur(8px)',
+                    animation: 'spin 20s linear infinite',
+                    transform: 'scale(1.3)',
+                  }}
+                />
+              )}
+              
+              <LazyImage
+                src={getTeamLogoUrl(false)}
                 alt={getTeamName(false)}
-                className="w-20 h-20 mx-auto object-contain"
+                className="w-20 h-20 mx-auto object-contain relative z-10 transition-transform duration-300 hover:scale-105"
+                placeholder="/photos/ncaaf.png"
                 onError={(e) => {
-                  console.log(`❌ Logo failed for away team: ${getTeamName(false)}, trying fallback`);
-                  e.target.src = '/photos/ncaaf.png';
+                  console.log(`❌ Logo failed for away team: ${getTeamName(false)}, using fallback`);
                 }}
                 onLoad={() => {
                   console.log(`✅ Logo loaded for away team: ${getTeamName(false)}`);
@@ -126,11 +152,19 @@ const GameStatsHeader = ({
             </div>
             <h3 
               className="text-2xl font-bold mb-2"
-              style={{ color: awayColor }}
+              style={{ 
+                color: awayColor,
+                textShadow: awayColorRgb ? `0 2px 4px rgba(${awayColorRgb}, 0.3)` : undefined
+              }}
             >
               {getTeamName(false)}
             </h3>
-            <div className="text-4xl font-bold text-gray-900">
+            <div 
+              className="text-4xl font-bold text-gray-900"
+              style={{ 
+                textShadow: awayColorRgb ? `0 4px 12px rgba(${awayColorRgb}, 0.4), 0 6px 16px rgba(0,0,0,0.2)` : undefined
+              }}
+            >
               {getScore(false)}
             </div>
             <p className="text-sm text-gray-500 mt-1">
@@ -154,14 +188,46 @@ const GameStatsHeader = ({
 
           {/* Home Team */}
           <div className="flex-1 text-center">
-            <div className="mb-4 relative">
-              <img
-                src={getTeamLogo(true)}
+            <div className="mb-4 relative group">
+              {/* 3D Shadow Effect (from TEAM-LOGOS-AND-COLORS-GUIDE) */}
+              {homeColorRgb && (
+                <div 
+                  className="absolute inset-0 w-20 h-20 mx-auto"
+                  style={{
+                    background: `radial-gradient(circle, rgba(${homeColorRgb}, 0.4) 0%, transparent 70%)`,
+                    filter: 'blur(25px)',
+                    transform: 'translateY(8px) scale(1.1)',
+                  }}
+                />
+              )}
+              
+              {/* Glowing Ring Animation (from TEAM-LOGOS-AND-COLORS-GUIDE) */}
+              {homeColorRgb && (
+                <div 
+                  className="absolute inset-0 w-20 h-20 mx-auto rounded-full opacity-40 group-hover:opacity-60 transition-opacity duration-500"
+                  style={{
+                    background: `conic-gradient(from 0deg, 
+                      rgba(${homeColorRgb}, 0.8) 0deg,
+                      transparent 60deg,
+                      rgba(${homeColorRgb}, 0.4) 120deg,
+                      transparent 180deg,
+                      rgba(${homeColorRgb}, 0.6) 240deg,
+                      transparent 300deg,
+                      rgba(${homeColorRgb}, 0.8) 360deg)`,
+                    filter: 'blur(8px)',
+                    animation: 'spin 20s linear infinite',
+                    transform: 'scale(1.3)',
+                  }}
+                />
+              )}
+              
+              <LazyImage
+                src={getTeamLogoUrl(true)}
                 alt={getTeamName(true)}
-                className="w-20 h-20 mx-auto object-contain"
+                className="w-20 h-20 mx-auto object-contain relative z-10 transition-transform duration-300 hover:scale-105"
+                placeholder="/photos/ncaaf.png"
                 onError={(e) => {
-                  console.log(`❌ Logo failed for home team: ${getTeamName(true)}, trying fallback`);
-                  e.target.src = '/photos/ncaaf.png';
+                  console.log(`❌ Logo failed for home team: ${getTeamName(true)}, using fallback`);
                 }}
                 onLoad={() => {
                   console.log(`✅ Logo loaded for home team: ${getTeamName(true)}`);
@@ -174,11 +240,19 @@ const GameStatsHeader = ({
             </div>
             <h3 
               className="text-2xl font-bold mb-2"
-              style={{ color: homeColor }}
+              style={{ 
+                color: homeColor,
+                textShadow: homeColorRgb ? `0 2px 4px rgba(${homeColorRgb}, 0.3)` : undefined
+              }}
             >
               {getTeamName(true)}
             </h3>
-            <div className="text-4xl font-bold text-gray-900">
+            <div 
+              className="text-4xl font-bold text-gray-900"
+              style={{ 
+                textShadow: homeColorRgb ? `0 4px 12px rgba(${homeColorRgb}, 0.4), 0 6px 16px rgba(0,0,0,0.2)` : undefined
+              }}
+            >
               {getScore(true)}
             </div>
             <p className="text-sm text-gray-500 mt-1">

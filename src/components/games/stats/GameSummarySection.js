@@ -7,7 +7,9 @@ const GameSummarySection = ({
   expandedSection, 
   setExpandedSection, 
   awayColor, 
-  homeColor, 
+  homeColor,
+  awayColorRgb,
+  homeColorRgb,
   animateCards 
 }) => {
   
