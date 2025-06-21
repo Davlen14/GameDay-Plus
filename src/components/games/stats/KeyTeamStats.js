@@ -6,7 +6,9 @@ const KeyTeamStats = ({
   teamStats, 
   awayColor, 
   homeColor, 
-  animateCards 
+  animateCards,
+  awayTeam,
+  homeTeam
 }) => {
   const [animateValues, setAnimateValues] = useState(false);
   const [shimmer, setShimmer] = useState(false);
@@ -20,12 +22,12 @@ const KeyTeamStats = ({
 
   // Get team statistics for this specific game
   const getGameTeams = () => {
-    if (!teamStats || !game) return [];
+    if (!teamStats) return [];
     
-    console.log('🔍 Looking for teams in game:', game.id);
+    console.log('🔍 Looking for teams in game:', game?.id);
     console.log('🔍 Available team stats:', teamStats);
     
-    // Look for teams by homeAway property
+    // Look for teams by homeAway property first (most reliable)
     const homeTeam = teamStats.find(stat => stat.homeAway === 'home');
     const awayTeam = teamStats.find(stat => stat.homeAway === 'away');
     
@@ -38,20 +40,35 @@ const KeyTeamStats = ({
       return teams;
     }
 
-    // Fallback to team name matching
-    const awayTeamStats = teamStats.find(stat => 
-      stat.school === game.away_team || stat.team === game.away_team
-    );
-    const homeTeamStats = teamStats.find(stat => 
-      stat.school === game.home_team || stat.team === game.home_team
-    );
+    // Fallback to team name matching using props or game object
+    const awayTeamName = awayTeam || game?.away_team;
+    const homeTeamName = homeTeam || game?.home_team;
+    
+    if (awayTeamName && homeTeamName) {
+      const awayTeamStats = teamStats.find(stat => 
+        stat.school === awayTeamName || stat.team === awayTeamName
+      );
+      const homeTeamStats = teamStats.find(stat => 
+        stat.school === homeTeamName || stat.team === homeTeamName
+      );
 
-    const fallbackTeams = [];
-    if (awayTeamStats) fallbackTeams.push(awayTeamStats);
-    if (homeTeamStats) fallbackTeams.push(homeTeamStats);
+      const fallbackTeams = [];
+      if (awayTeamStats) fallbackTeams.push(awayTeamStats);
+      if (homeTeamStats) fallbackTeams.push(homeTeamStats);
 
-    console.log('✅ Found teams by name matching:', fallbackTeams);
-    return fallbackTeams;
+      if (fallbackTeams.length >= 2) {
+        console.log('✅ Found teams by name matching:', fallbackTeams);
+        return fallbackTeams;
+      }
+    }
+
+    // Final fallback: just use first two teams if we have them
+    if (teamStats.length >= 2) {
+      console.log('✅ Using first two teams as fallback:', teamStats.slice(0, 2));
+      return teamStats.slice(0, 2);
+    }
+
+    return [];
   };
 
   const gameTeams = getGameTeams();
