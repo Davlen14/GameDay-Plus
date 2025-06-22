@@ -298,84 +298,209 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const WinProbabilityChart = () => {
     if (winProbData.length === 0) return null;
 
+    const maxX = Math.max(100, winProbData.length);
+    const chartWidth = 100 - 40; // Available width percentage after Y-axis labels
+
     return (
       <div className="bg-gray-50 rounded-xl p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Win Probability</h3>
         
         {/* Chart Container */}
-        <div className="relative h-48 bg-white rounded-lg p-4 mb-4">
-          <svg className="w-full h-full">
-            {/* Grid lines */}
+        <div className="relative h-56 bg-white rounded-lg p-4 mb-4 overflow-hidden">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {/* Background Grid - Horizontal lines */}
             {[0, 25, 50, 75, 100].map(y => (
-              <g key={y}>
+              <g key={`h-${y}`}>
                 <line
-                  x1="40"
-                  y1={`${100 - y}%`}
-                  x2="100%"
-                  y2={`${100 - y}%`}
+                  x1="12"
+                  y1={100 - y}
+                  x2="95"
+                  y2={100 - y}
                   stroke="#e5e7eb"
-                  strokeWidth="1"
+                  strokeWidth="0.2"
+                  vectorEffect="non-scaling-stroke"
                 />
-                <text
-                  x="35"
-                  y={`${100 - y}%`}
-                  dominantBaseline="middle"
-                  textAnchor="end"
-                  className="text-xs fill-gray-500"
-                >
-                  {y}%
-                </text>
               </g>
             ))}
+
+            {/* Background Grid - Vertical lines */}
+            {Array.from({ length: 11 }, (_, i) => i * 10).map(playNum => (
+              <line
+                key={`v-${playNum}`}
+                x1={12 + (chartWidth * playNum) / maxX}
+                y1="5"
+                x2={12 + (chartWidth * playNum) / maxX}
+                y2="95"
+                stroke="#f3f4f6"
+                strokeWidth="0.1"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
             
-            {/* Win probability line */}
+            {/* Home team win probability line */}
             <path
               d={winProbData.map((play, index) => {
-                const x = 40 + ((100 - 40) * index) / (winProbData.length - 1);
-                const y = 100 - (play.homeWinProbability * 100);
+                const x = 12 + (chartWidth * play.playNumber) / maxX;
+                const y = 100 - (play.homeWinProbability * 95);
                 return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
               }).join(' ')}
               fill="none"
               stroke={homeData.primaryColor}
-              strokeWidth="2"
+              strokeWidth="0.5"
+              vectorEffect="non-scaling-stroke"
+            />
+
+            {/* Away team win probability line */}
+            <path
+              d={winProbData.map((play, index) => {
+                const x = 12 + (chartWidth * play.playNumber) / maxX;
+                const y = 100 - ((1 - play.homeWinProbability) * 95);
+                return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+              }).join(' ')}
+              fill="none"
+              stroke={awayData.primaryColor}
+              strokeWidth="0.3"
+              strokeDasharray="1,0.5"
+              vectorEffect="non-scaling-stroke"
             />
             
-            {/* Hover points */}
-            {winProbData.map((play, index) => (
-              <circle
-                key={play.playId}
-                cx={40 + ((100 - 40) * index) / (winProbData.length - 1)}
-                cy={100 - (play.homeWinProbability * 100)}
-                r={selectedPlay?.playId === play.playId || hoveredPlay?.playId === play.playId ? "4" : "2"}
-                fill={homeData.primaryColor}
-                className="cursor-pointer"
-                onClick={() => setSelectedPlay(play)}
-                onMouseEnter={() => setHoveredPlay(play)}
-                onMouseLeave={() => setHoveredPlay(null)}
-              />
-            ))}
+            {/* Interactive points */}
+            {winProbData.map((play, index) => {
+              const x = 12 + (chartWidth * play.playNumber) / maxX;
+              const y = 100 - (play.homeWinProbability * 95);
+              const isActive = selectedPlay?.playId === play.playId || hoveredPlay?.playId === play.playId;
+              
+              return (
+                <circle
+                  key={play.playId}
+                  cx={x}
+                  cy={y}
+                  r={isActive ? "1" : "0.4"}
+                  fill={homeData.primaryColor}
+                  className="cursor-pointer transition-all duration-200"
+                  onClick={() => setSelectedPlay(play)}
+                  onMouseEnter={() => setHoveredPlay(play)}
+                  onMouseLeave={() => setHoveredPlay(null)}
+                  vectorEffect="non-scaling-stroke"
+                />
+              );
+            })}
+
+            {/* Score change indicators */}
+            {winProbData.map((play, index) => {
+              if (index === 0) return null;
+              const prevPlay = winProbData[index - 1];
+              const scoreChanged = play.homeScore !== prevPlay.homeScore || play.awayScore !== prevPlay.awayScore;
+              
+              if (!scoreChanged) return null;
+              
+              const x = 12 + (chartWidth * play.playNumber) / maxX;
+              
+              return (
+                <line
+                  key={`score-${play.playId}`}
+                  x1={x}
+                  y1="5"
+                  x2={x}
+                  y2="95"
+                  stroke="#fbbf24"
+                  strokeWidth="0.3"
+                  strokeDasharray="2,1"
+                  vectorEffect="non-scaling-stroke"
+                />
+              );
+            })}
           </svg>
+
+          {/* Y-axis labels */}
+          <div className="absolute left-1 top-0 h-full flex flex-col justify-between py-4 text-xs text-gray-500">
+            {[100, 75, 50, 25, 0].map(y => (
+              <span key={y} className="leading-none">{y}%</span>
+            ))}
+          </div>
+
+          {/* X-axis labels */}
+          <div className="absolute bottom-1 left-12 right-5 flex justify-between text-xs text-gray-500">
+            {Array.from({ length: Math.min(6, Math.ceil(winProbData.length / 10)) }, (_, i) => {
+              const playNum = i * Math.ceil(winProbData.length / 5);
+              return (
+                <span key={i} className="leading-none">
+                  {Math.min(playNum, winProbData.length)}
+                </span>
+              );
+            })}
+          </div>
+
+          {/* Hover tooltip */}
+          {hoveredPlay && (
+            <div className="absolute pointer-events-none bg-white border rounded-lg shadow-lg p-3 z-10 transform -translate-x-1/2 -translate-y-full"
+                 style={{ 
+                   left: `${12 + (chartWidth * hoveredPlay.playNumber) / maxX}%`,
+                   top: `${100 - (hoveredPlay.homeWinProbability * 95)}%`
+                 }}>
+              <div className="text-xs space-y-1">
+                <div className="flex items-center justify-between space-x-3">
+                  <span className="font-medium">Play #{hoveredPlay.playNumber}</span>
+                  <div className="flex items-center space-x-1">
+                    <div 
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor }}
+                    ></div>
+                    <span style={{ color: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor }}>
+                      {hoveredPlay.homeBall ? homeData.name : awayData.name}
+                    </span>
+                  </div>
+                </div>
+                <hr className="my-1" />
+                <div className="flex justify-between space-x-3">
+                  <span>Win%:</span>
+                  <span className="font-medium">
+                    {Math.round(hoveredPlay.homeWinProbability * 100)}% - {Math.round((1 - hoveredPlay.homeWinProbability) * 100)}%
+                  </span>
+                </div>
+                <div className="flex justify-between space-x-3">
+                  <span>Score:</span>
+                  <span className="font-medium">{hoveredPlay.homeScore} - {hoveredPlay.awayScore}</span>
+                </div>
+                <div className="flex justify-between space-x-3">
+                  <span>Down:</span>
+                  <span className="font-medium">{ordinalString(hoveredPlay.down)} & {hoveredPlay.distance}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Chart Legend */}
-        <div className="flex items-center space-x-6 mb-2">
-          <div className="flex items-center space-x-2">
-            <div 
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: homeData.primaryColor }}
-            ></div>
-            <span className="text-sm text-gray-600">{homeData.name}</span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <div 
+                className="w-3 h-0.5"
+                style={{ backgroundColor: homeData.primaryColor }}
+              ></div>
+              <span className="text-sm text-gray-600">{homeData.name}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div 
+                className="w-3 h-0.5 border-dashed border-t-2"
+                style={{ borderColor: awayData.primaryColor }}
+              ></div>
+              <span className="text-sm text-gray-600">{awayData.name}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-0.5 border-dashed border-t-2 border-yellow-400"></div>
+              <span className="text-sm text-gray-600">Score Change</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <div 
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: awayData.primaryColor }}
-            ></div>
-            <span className="text-sm text-gray-600">{awayData.name}</span>
+          
+          {/* Play Count */}
+          <div className="text-sm text-gray-600">
+            Total Plays: <span className="font-semibold text-gray-900">{winProbData.length}</span>
           </div>
         </div>
 
-        <p className="text-xs text-gray-500">Click on chart to see play details</p>
+        <p className="text-xs text-gray-500">Hover or click on chart to see play details</p>
       </div>
     );
   };
@@ -460,6 +585,166 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     );
   };
 
+  // Game Statistics Component
+  const GameStatistics = () => {
+    if (winProbData.length === 0) return null;
+
+    // Calculate statistics from the data
+    const homeStats = {
+      totalPlays: winProbData.filter(play => play.homeBall).length,
+      drives: drives ? drives.filter(drive => drive.isHomeOffense).length : 0,
+      avgWinProb: winProbData.filter(play => play.homeBall).reduce((sum, play) => sum + play.homeWinProbability, 0) / winProbData.filter(play => play.homeBall).length || 0
+    };
+
+    const awayStats = {
+      totalPlays: winProbData.filter(play => !play.homeBall).length,
+      drives: drives ? drives.filter(drive => !drive.isHomeOffense).length : 0,
+      avgWinProb: winProbData.filter(play => !play.homeBall).reduce((sum, play) => sum + (1 - play.homeWinProbability), 0) / winProbData.filter(play => !play.homeBall).length || 0
+    };
+
+    const totalScoreChanges = winProbData.filter((play, index) => {
+      if (index === 0) return false;
+      const prevPlay = winProbData[index - 1];
+      return play.homeScore !== prevPlay.homeScore || play.awayScore !== prevPlay.awayScore;
+    }).length;
+
+    return (
+      <div className="bg-gray-50 rounded-xl p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Game Statistics</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Home Team Stats */}
+          <div className="bg-white rounded-lg p-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <img
+                src={homeData.logo}
+                alt={`${homeData.name} logo`}
+                className="w-8 h-8 object-contain"
+                onError={(e) => { e.target.src = '/photos/Whitmer.png'; }}
+              />
+              <h4 className="font-semibold text-gray-900">{homeData.name}</h4>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Plays</span>
+                <span className="font-semibold text-gray-900">{homeStats.totalPlays}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Drives</span>
+                <span className="font-semibold text-gray-900">{homeStats.drives}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Avg Win %</span>
+                <span className="font-semibold text-gray-900">{Math.round(homeStats.avgWinProb * 100)}%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Final Score</span>
+                <span className="font-semibold text-gray-900">{game.homePoints || 0}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Game Overview */}
+          <div className="bg-white rounded-lg p-4">
+            <h4 className="font-semibold text-gray-900 mb-4">Game Overview</h4>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Plays</span>
+                <span className="font-semibold text-gray-900">{winProbData.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Drives</span>
+                <span className="font-semibold text-gray-900">{drives ? drives.length : 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Score Changes</span>
+                <span className="font-semibold text-gray-900">{totalScoreChanges}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Game Status</span>
+                <span className={`font-semibold ${game.completed ? 'text-gray-900' : 'text-red-600'}`}>
+                  {game.completed ? 'Final' : 'Live'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Away Team Stats */}
+          <div className="bg-white rounded-lg p-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <img
+                src={awayData.logo}
+                alt={`${awayData.name} logo`}
+                className="w-8 h-8 object-contain"
+                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+              />
+              <h4 className="font-semibold text-gray-900">{awayData.name}</h4>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Plays</span>
+                <span className="font-semibold text-gray-900">{awayStats.totalPlays}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Drives</span>
+                <span className="font-semibold text-gray-900">{awayStats.drives}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Avg Win %</span>
+                <span className="font-semibold text-gray-900">{Math.round(awayStats.avgWinProb * 100)}%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Final Score</span>
+                <span className="font-semibold text-gray-900">{game.awayPoints || 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Play Distribution Chart */}
+        <div className="mt-6 bg-white rounded-lg p-4">
+          <h5 className="font-medium text-gray-900 mb-3">Play Distribution</h5>
+          <div className="flex items-center space-x-4">
+            <div className="flex-1">
+              <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <span>{homeData.name}</span>
+                <span>{homeStats.totalPlays} plays</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className="h-3 rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${(homeStats.totalPlays / winProbData.length) * 100}%`,
+                    backgroundColor: homeData.primaryColor
+                  }}
+                ></div>
+              </div>
+            </div>
+            <div className="text-xs text-gray-500">vs</div>
+            <div className="flex-1">
+              <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <span>{awayData.name}</span>
+                <span>{awayStats.totalPlays} plays</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className="h-3 rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${(awayStats.totalPlays / winProbData.length) * 100}%`,
+                    backgroundColor: awayData.primaryColor
+                  }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full">
       <div className="max-w-6xl mx-auto p-4 space-y-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
@@ -492,6 +777,9 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
 
         {/* Win Probability Chart */}
         {!loading && winProbData.length > 0 && <WinProbabilityChart />}
+
+        {/* Game Statistics */}
+        {!loading && winProbData.length > 0 && <GameStatistics />}
 
         {/* Selected Play Details */}
         {selectedPlay && <PlayDetails play={selectedPlay} />}
