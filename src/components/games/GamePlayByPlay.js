@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { playService } from '../services/playService';
-import { driveService } from '../services/driveService';
+import { playService } from '../../services/playService';
+import { driveService } from '../../services/driveService';
 
 const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const [animateField, setAnimateField] = useState(false);
