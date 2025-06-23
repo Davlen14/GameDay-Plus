@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { playService } from '../../services/playService';
 import { driveService } from '../../services/driveService';
-import FootballField from './FootballField';
 
 const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const [winProbData, setWinProbData] = useState([]);
@@ -345,8 +344,10 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     const chartWidth = 100 - 40; // Available width percentage after Y-axis labels
 
     return (
-      <div className="bg-gray-50 rounded-xl p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Win Probability</h3>
+      <div className="bg-gray-50 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Win Probability</h3>
+        </div>
         
         {/* Chart Container */}
         <div className="relative h-64 bg-white rounded-lg p-4 mb-4 overflow-hidden border border-gray-200">
@@ -451,7 +452,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
               vectorEffect="non-scaling-stroke"
             />
             
-            {/* Interactive points with team logos */}
+            {/* Interactive points */}
             {winProbData.map((play, index) => {
               const x = 12 + (chartWidth * play.playNumber) / maxX;
               const y = 100 - (play.homeWinProbability * 95);
@@ -571,7 +572,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         </div>
 
         {/* Chart Legend */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
               <div className="flex items-center space-x-1">
@@ -605,7 +606,8 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           </div>
         </div>
 
-        <p className="text-xs text-gray-500">Hover points for details • Click to view on field • Yellow points indicate scoring plays</p>
+        {/* Instructions - matching SwiftUI style */}
+        <p className="text-xs text-gray-500">Tap or hover on chart to see play details</p>
       </div>
     );
   };
@@ -845,11 +847,11 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     if (!play) return null;
 
     return (
-      <div className="bg-gray-50 rounded-xl p-6 mb-6">
+      <div className="bg-gray-50 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Play #{play.playNumber}</h3>
           <span 
-            className="px-3 py-1 text-xs font-medium rounded-full"
+            className="px-3 py-1 text-sm font-medium rounded-full"
             style={{ 
               color: play.homeBall ? homeData.primaryColor : awayData.primaryColor,
               backgroundColor: play.homeBall ? `${homeData.primaryColor}20` : `${awayData.primaryColor}20`
@@ -859,59 +861,65 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           </span>
         </div>
 
-        <p className="text-gray-800 mb-4 leading-relaxed">{play.playText}</p>
+        <p className="text-gray-800 mb-6 leading-relaxed">{play.playText}</p>
 
-        {/* Play Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        {/* Play Stats Grid */}
+        <div className="grid grid-cols-3 gap-6 mb-6">
           <div>
-            <p className="text-xs text-gray-500 mb-1">Down & Distance</p>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm text-gray-500 mb-2">Down & Distance</p>
+            <p className="text-base font-medium text-gray-900">
               {ordinalString(play.down)} & {play.distance}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Field Position</p>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm text-gray-500 mb-2">Field Position</p>
+            <p className="text-base font-medium text-gray-900">
               {formatYardLine(play.yardLine, play.homeBall)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Score</p>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm text-gray-500 mb-2">Score</p>
+            <p className="text-base font-medium text-gray-900">
               {play.homeScore} - {play.awayScore}
             </p>
           </div>
         </div>
 
         {/* Win Probability Bars */}
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <span className="text-xs text-gray-600 w-12">{homeData.name}</span>
-            <div className="flex-1 bg-gray-200 rounded-full h-2">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 w-20">
+              <img src={homeData.logo} alt={homeData.name} className="w-5 h-5 object-contain" />
+              <span className="text-sm font-medium">{homeData.name}</span>
+            </div>
+            <div className="flex-1 bg-gray-200 rounded-full h-3">
               <div 
-                className="h-2 rounded-full transition-all duration-300"
+                className="h-3 rounded-full transition-all duration-300"
                 style={{ 
                   width: `${play.homeWinProbability * 100}%`,
                   backgroundColor: homeData.primaryColor
                 }}
               ></div>
             </div>
-            <span className="text-xs font-medium text-gray-900 w-10 text-right">
+            <span className="text-sm font-bold text-gray-900 w-12 text-right">
               {Math.round(play.homeWinProbability * 100)}%
             </span>
           </div>
-          <div className="flex items-center space-x-3">
-            <span className="text-xs text-gray-600 w-12">{awayData.name}</span>
-            <div className="flex-1 bg-gray-200 rounded-full h-2">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 w-20">
+              <img src={awayData.logo} alt={awayData.name} className="w-5 h-5 object-contain" />
+              <span className="text-sm font-medium">{awayData.name}</span>
+            </div>
+            <div className="flex-1 bg-gray-200 rounded-full h-3">
               <div 
-                className="h-2 rounded-full transition-all duration-300"
+                className="h-3 rounded-full transition-all duration-300"
                 style={{ 
                   width: `${(1 - play.homeWinProbability) * 100}%`,
                   backgroundColor: awayData.primaryColor
                 }}
               ></div>
             </div>
-            <span className="text-xs font-medium text-gray-900 w-10 text-right">
+            <span className="text-sm font-bold text-gray-900 w-12 text-right">
               {Math.round((1 - play.homeWinProbability) * 100)}%
             </span>
           </div>
@@ -920,225 +928,38 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     );
   };
 
-  // Game Statistics Component
-  const GameStatistics = () => {
-    if (winProbData.length === 0) return null;
-
-    // Calculate statistics from the data
-    const homeStats = {
-      totalPlays: winProbData.filter(play => play.homeBall).length,
-      drives: drives ? drives.filter(drive => drive.isHomeOffense).length : 0,
-      avgWinProb: winProbData.filter(play => play.homeBall).reduce((sum, play) => sum + play.homeWinProbability, 0) / winProbData.filter(play => play.homeBall).length || 0
-    };
-
-    const awayStats = {
-      totalPlays: winProbData.filter(play => !play.homeBall).length,
-      drives: drives ? drives.filter(drive => !drive.isHomeOffense).length : 0,
-      avgWinProb: winProbData.filter(play => !play.homeBall).reduce((sum, play) => sum + (1 - play.homeWinProbability), 0) / winProbData.filter(play => !play.homeBall).length || 0
-    };
-
-    const totalScoreChanges = winProbData.filter((play, index) => {
-      if (index === 0) return false;
-      const prevPlay = winProbData[index - 1];
-      return play.homeScore !== prevPlay.homeScore || play.awayScore !== prevPlay.awayScore;
-    }).length;
-
-    return (
-      <div className="bg-gray-50 rounded-xl p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Game Statistics</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Home Team Stats */}
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center space-x-3 mb-4">
-              <img
-                src={homeData.logo}
-                alt={`${homeData.name} logo`}
-                className="w-8 h-8 object-contain"
-                onError={(e) => { e.target.src = '/photos/Whitmer.png'; }}
-              />
-              <h4 className="font-semibold text-gray-900">{homeData.name}</h4>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Plays</span>
-                <span className="font-semibold text-gray-900">{homeStats.totalPlays}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Drives</span>
-                <span className="font-semibold text-gray-900">{homeStats.drives}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Avg Win %</span>
-                <span className="font-semibold text-gray-900">{Math.round(homeStats.avgWinProb * 100)}%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Final Score</span>
-                <span className="font-semibold text-gray-900">{game.homePoints || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Game Overview */}
-          <div className="bg-white rounded-lg p-4">
-            <h4 className="font-semibold text-gray-900 mb-4">Game Overview</h4>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Plays</span>
-                <span className="font-semibold text-gray-900">{winProbData.length}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Drives</span>
-                <span className="font-semibold text-gray-900">{drives ? drives.length : 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Score Changes</span>
-                <span className="font-semibold text-gray-900">{totalScoreChanges}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Game Status</span>
-                <span className={`font-semibold ${game.completed ? 'text-gray-900' : 'text-red-600'}`}>
-                  {game.completed ? 'Final' : 'Live'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Away Team Stats */}
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center space-x-3 mb-4">
-              <img
-                src={awayData.logo}
-                alt={`${awayData.name} logo`}
-                className="w-8 h-8 object-contain"
-                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-              />
-              <h4 className="font-semibold text-gray-900">{awayData.name}</h4>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Plays</span>
-                <span className="font-semibold text-gray-900">{awayStats.totalPlays}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Drives</span>
-                <span className="font-semibold text-gray-900">{awayStats.drives}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Avg Win %</span>
-                <span className="font-semibold text-gray-900">{Math.round(awayStats.avgWinProb * 100)}%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Final Score</span>
-                <span className="font-semibold text-gray-900">{game.awayPoints || 0}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Play Distribution Chart */}
-        <div className="mt-6 bg-white rounded-lg p-4">
-          <h5 className="font-medium text-gray-900 mb-3">Play Distribution</h5>
-          <div className="flex items-center space-x-4">
-            <div className="flex-1">
-              <div className="flex justify-between text-xs text-gray-600 mb-1">
-                <span>{homeData.name}</span>
-                <span>{homeStats.totalPlays} plays</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div 
-                  className="h-3 rounded-full transition-all duration-500"
-                  style={{ 
-                    width: `${(homeStats.totalPlays / winProbData.length) * 100}%`,
-                    backgroundColor: homeData.primaryColor
-                  }}
-                ></div>
-              </div>
-            </div>
-            <div className="text-xs text-gray-500">vs</div>
-            <div className="flex-1">
-              <div className="flex justify-between text-xs text-gray-600 mb-1">
-                <span>{awayData.name}</span>
-                <span>{awayStats.totalPlays} plays</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div 
-                  className="h-3 rounded-full transition-all duration-500"
-                  style={{ 
-                    width: `${(awayStats.totalPlays / winProbData.length) * 100}%`,
-                    backgroundColor: awayData.primaryColor
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="w-full">
-      <div className="max-w-6xl mx-auto p-4 space-y-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+    <div className="w-full max-w-6xl mx-auto p-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+      <div className="space-y-6">
         {/* Header with team scores */}
         <GameHeader />
 
-        {/* Football Field */}
-        <div className="space-y-3">
-          <FootballField homeTeam={homeTeam} awayTeam={awayTeam} />
-          
-          {/* Live game indicator */}
-          <LiveBallIndicator />
-          
-          {/* Game Simulation Button */}
-          <button
-            onClick={() => {
-              if (winProbData.length > 0) {
-                setSimulationPlay(selectedPlay || winProbData[winProbData.length - 1]);
-                setShowSimulationModal(true);
-              }
-            }}
-            disabled={loading || winProbData.length === 0}
-            className={`w-full flex items-center justify-center space-x-2 py-3 px-6 rounded-xl font-semibold text-white transition-all ${
-              loading || winProbData.length === 0
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-red-600 via-red-700 to-red-600 hover:from-red-700 hover:via-red-800 hover:to-red-700 shadow-lg hover:shadow-xl'
-            }`}
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-            </svg>
-            <span>
-              {(!drives || drives.length === 0) ? 'Try Interactive Field Simulator' : 'View Game Simulation'}
-            </span>
-          </button>
-        </div>
+        {/* Live Ball Indicator (only for live games) */}
+        {!game.completed && <LiveBallIndicator />}
+
+        {/* Game Simulation Button */}
+        <button
+          onClick={() => {
+            if (winProbData.length > 0) {
+              setSimulationPlay(selectedPlay || winProbData[winProbData.length - 1]);
+              setShowSimulationModal(true);
+            }
+          }}
+          disabled={loading || winProbData.length === 0}
+          className={`w-full flex items-center justify-center space-x-2 py-3 px-6 rounded-xl font-semibold text-white transition-all ${
+            loading || winProbData.length === 0
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-red-600 via-red-700 to-red-600 hover:from-red-700 hover:via-red-800 hover:to-red-700 shadow-lg hover:shadow-xl'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+          </svg>
+          <span>View Game Simulation</span>
+        </button>
 
         {/* Win Probability Chart */}
-        {!loading && winProbData.length > 0 && (
-          <div>
-            {/* Demo Notice if using mock data */}
-            {(!drives || drives.length === 0) && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">!</span>
-                  </div>
-                  <span className="text-sm text-blue-800 font-medium">
-                    Demo Mode: Showing interactive chart with simulated game data
-                  </span>
-                </div>
-              </div>
-            )}
-            <WinProbabilityChart />
-          </div>
-        )}
-
-        {/* Game Statistics */}
-        {!loading && winProbData.length > 0 && <GameStatistics />}
+        {!loading && winProbData.length > 0 && <WinProbabilityChart />}
 
         {/* Selected Play Details */}
         {selectedPlay && <PlayDetails play={selectedPlay} />}
@@ -1164,75 +985,6 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Debug Section */}
-      <div className="p-8 bg-gray-100 mt-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4">Play-by-Play Debug</h2>
-          
-          {/* Game Info */}
-          <div className="mb-4 p-4 bg-white rounded shadow">
-            <h3 className="font-bold mb-2">Game Information:</h3>
-            <pre className="text-sm overflow-auto bg-gray-50 p-2 rounded">
-              {JSON.stringify(game, null, 2)}
-            </pre>
-          </div>
-
-          {/* Load Button */}
-          <div className="mb-4">
-            <button
-              onClick={loadPlayByPlayData}
-              disabled={loading}
-              className={`px-6 py-3 rounded font-bold text-white transition-colors ${
-                loading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
-              }`}
-            >
-              {loading ? 'Loading...' : 'Load Play-by-Play Data'}
-            </button>
-          </div>
-
-          {/* Win Prob Data Display */}
-          {winProbData.length > 0 && (
-            <div className="mb-4 p-4 bg-white rounded shadow">
-              <h3 className="font-bold mb-2">Win Probability Data ({winProbData.length} plays):</h3>
-              <pre className="text-sm overflow-auto bg-gray-50 p-2 rounded max-h-96">
-                {JSON.stringify(winProbData.slice(0, 5), null, 2)}
-                {winProbData.length > 5 && "\n... and more"}
-              </pre>
-            </div>
-          )}
-
-          {/* Error Display */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              <h3 className="font-bold mb-2">Error:</h3>
-              <pre className="whitespace-pre-wrap">{error}</pre>
-            </div>
-          )}
-
-          {/* Plays Display */}
-          {plays && (
-            <div className="mb-4 p-4 bg-white rounded shadow">
-              <h3 className="font-bold mb-2">Plays Data ({plays.length || 0} plays):</h3>
-              <pre className="text-sm overflow-auto bg-gray-50 p-2 rounded max-h-96">
-                {JSON.stringify(plays, null, 2)}
-              </pre>
-            </div>
-          )}
-
-          {/* Drives Display */}
-          {drives && (
-            <div className="mb-4 p-4 bg-white rounded shadow">
-              <h3 className="font-bold mb-2">Drives Data ({drives.length || 0} drives):</h3>
-              <pre className="text-sm overflow-auto bg-gray-50 p-2 rounded max-h-96">
-                {JSON.stringify(drives, null, 2)}
-              </pre>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Field Simulator Modal */}
