@@ -12,6 +12,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const [selectedPlay, setSelectedPlay] = useState(null);
   const [hoveredPlay, setHoveredPlay] = useState(null);
   const [showSimulationModal, setShowSimulationModal] = useState(false);
+  const [simulationPlay, setSimulationPlay] = useState(null);
 
   // Get team data with fallbacks to Whitmer
   const getHomeTeamData = () => {
@@ -306,7 +307,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Win Probability</h3>
         
         {/* Chart Container */}
-        <div className="relative h-56 bg-white rounded-lg p-4 mb-4 overflow-hidden">
+        <div className="relative h-64 bg-white rounded-lg p-4 mb-4 overflow-hidden border border-gray-200">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             {/* Background Grid - Horizontal lines */}
             {[0, 25, 50, 75, 100].map(y => (
@@ -320,6 +321,16 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
                   strokeWidth="0.2"
                   vectorEffect="non-scaling-stroke"
                 />
+                <text
+                  x="8"
+                  y={100 - y + 1}
+                  fontSize="2"
+                  fill="#6b7280"
+                  textAnchor="end"
+                  dominantBaseline="middle"
+                >
+                  {y}%
+                </text>
               </g>
             ))}
 
@@ -337,6 +348,40 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
               />
             ))}
             
+            {/* Home team win probability area fill */}
+            <path
+              d={`M 12 100 ${winProbData.map((play, index) => {
+                const x = 12 + (chartWidth * play.playNumber) / maxX;
+                const y = 100 - (play.homeWinProbability * 95);
+                return `L ${x} ${y}`;
+              }).join(' ')} L ${12 + (chartWidth * winProbData.length) / maxX} 100 Z`}
+              fill={`url(#homeGradient)`}
+              opacity="0.3"
+            />
+
+            {/* Away team win probability area fill */}
+            <path
+              d={`M 12 0 ${winProbData.map((play, index) => {
+                const x = 12 + (chartWidth * play.playNumber) / maxX;
+                const y = 100 - ((1 - play.homeWinProbability) * 95);
+                return `L ${x} ${y}`;
+              }).join(' ')} L ${12 + (chartWidth * winProbData.length) / maxX} 0 Z`}
+              fill={`url(#awayGradient)`}
+              opacity="0.2"
+            />
+
+            {/* Gradients */}
+            <defs>
+              <linearGradient id="homeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor={homeData.primaryColor} stopOpacity="0.6"/>
+                <stop offset="100%" stopColor={homeData.primaryColor} stopOpacity="0.1"/>
+              </linearGradient>
+              <linearGradient id="awayGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor={awayData.primaryColor} stopOpacity="0.6"/>
+                <stop offset="100%" stopColor={awayData.primaryColor} stopOpacity="0.1"/>
+              </linearGradient>
+            </defs>
+            
             {/* Home team win probability line */}
             <path
               d={winProbData.map((play, index) => {
@@ -346,7 +391,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
               }).join(' ')}
               fill="none"
               stroke={homeData.primaryColor}
-              strokeWidth="0.5"
+              strokeWidth="0.8"
               vectorEffect="non-scaling-stroke"
             />
 
@@ -359,113 +404,125 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
               }).join(' ')}
               fill="none"
               stroke={awayData.primaryColor}
-              strokeWidth="0.3"
+              strokeWidth="0.6"
               strokeDasharray="1,0.5"
               vectorEffect="non-scaling-stroke"
             />
             
-            {/* Interactive points */}
+            {/* Interactive points with team logos */}
             {winProbData.map((play, index) => {
               const x = 12 + (chartWidth * play.playNumber) / maxX;
               const y = 100 - (play.homeWinProbability * 95);
               const isActive = selectedPlay?.playId === play.playId || hoveredPlay?.playId === play.playId;
+              const isScoreChange = index > 0 && (play.homeScore !== winProbData[index - 1].homeScore || play.awayScore !== winProbData[index - 1].awayScore);
               
               return (
-                <circle
-                  key={play.playId}
-                  cx={x}
-                  cy={y}
-                  r={isActive ? "1" : "0.4"}
-                  fill={homeData.primaryColor}
-                  className="cursor-pointer transition-all duration-200"
-                  onClick={() => setSelectedPlay(play)}
-                  onMouseEnter={() => setHoveredPlay(play)}
-                  onMouseLeave={() => setHoveredPlay(null)}
-                  vectorEffect="non-scaling-stroke"
-                />
-              );
-            })}
-
-            {/* Score change indicators */}
-            {winProbData.map((play, index) => {
-              if (index === 0) return null;
-              const prevPlay = winProbData[index - 1];
-              const scoreChanged = play.homeScore !== prevPlay.homeScore || play.awayScore !== prevPlay.awayScore;
-              
-              if (!scoreChanged) return null;
-              
-              const x = 12 + (chartWidth * play.playNumber) / maxX;
-              
-              return (
-                <line
-                  key={`score-${play.playId}`}
-                  x1={x}
-                  y1="5"
-                  x2={x}
-                  y2="95"
-                  stroke="#fbbf24"
-                  strokeWidth="0.3"
-                  strokeDasharray="2,1"
-                  vectorEffect="non-scaling-stroke"
-                />
+                <g key={play.playId}>
+                  {/* Play point */}
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isActive ? "1.2" : isScoreChange ? "0.8" : "0.4"}
+                    fill={isActive ? "#fbbf24" : (play.homeBall ? homeData.primaryColor : awayData.primaryColor)}
+                    stroke={isActive ? "#f59e0b" : "rgba(255,255,255,0.8)"}
+                    strokeWidth={isActive ? "0.3" : "0.1"}
+                    className="cursor-pointer transition-all duration-200"
+                    onClick={() => {
+                      setSelectedPlay(play);
+                      setSimulationPlay(play);
+                    }}
+                    onMouseEnter={() => setHoveredPlay(play)}
+                    onMouseLeave={() => setHoveredPlay(null)}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  
+                  {/* Score change indicator */}
+                  {isScoreChange && (
+                    <g>
+                      <line
+                        x1={x}
+                        y1="8"
+                        x2={x}
+                        y2="92"
+                        stroke="#fbbf24"
+                        strokeWidth="0.3"
+                        strokeDasharray="1,0.5"
+                        vectorEffect="non-scaling-stroke"
+                        opacity="0.7"
+                      />
+                      <circle
+                        cx={x}
+                        cy="5"
+                        r="0.8"
+                        fill="#fbbf24"
+                        stroke="#f59e0b"
+                        strokeWidth="0.2"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    </g>
+                  )}
+                </g>
               );
             })}
           </svg>
 
-          {/* Y-axis labels */}
-          <div className="absolute left-1 top-0 h-full flex flex-col justify-between py-4 text-xs text-gray-500">
-            {[100, 75, 50, 25, 0].map(y => (
-              <span key={y} className="leading-none">{y}%</span>
-            ))}
-          </div>
-
-          {/* X-axis labels */}
-          <div className="absolute bottom-1 left-12 right-5 flex justify-between text-xs text-gray-500">
-            {Array.from({ length: Math.min(6, Math.ceil(winProbData.length / 10)) }, (_, i) => {
-              const playNum = i * Math.ceil(winProbData.length / 5);
-              return (
-                <span key={i} className="leading-none">
-                  {Math.min(playNum, winProbData.length)}
-                </span>
-              );
-            })}
-          </div>
-
           {/* Hover tooltip */}
           {hoveredPlay && (
-            <div className="absolute pointer-events-none bg-white border rounded-lg shadow-lg p-3 z-10 transform -translate-x-1/2 -translate-y-full"
+            <div className="absolute pointer-events-none bg-white border-2 rounded-lg shadow-xl p-4 z-20 transform -translate-x-1/2 -translate-y-full transition-all duration-200"
                  style={{ 
                    left: `${12 + (chartWidth * hoveredPlay.playNumber) / maxX}%`,
-                   top: `${100 - (hoveredPlay.homeWinProbability * 95)}%`
+                   top: `${100 - (hoveredPlay.homeWinProbability * 95)}%`,
+                   borderColor: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor
                  }}>
-              <div className="text-xs space-y-1">
-                <div className="flex items-center justify-between space-x-3">
-                  <span className="font-medium">Play #{hoveredPlay.playNumber}</span>
-                  <div className="flex items-center space-x-1">
+              <div className="text-sm space-y-2">
+                <div className="flex items-center justify-between space-x-4">
+                  <span className="font-semibold text-gray-900">Play #{hoveredPlay.playNumber}</span>
+                  <div className="flex items-center space-x-2">
                     <div 
-                      className="w-2 h-2 rounded-full"
+                      className="w-3 h-3 rounded-full border-2 border-white shadow-sm"
                       style={{ backgroundColor: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor }}
                     ></div>
-                    <span style={{ color: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor }}>
+                    <span 
+                      className="font-medium text-sm"
+                      style={{ color: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor }}
+                    >
                       {hoveredPlay.homeBall ? homeData.name : awayData.name}
                     </span>
                   </div>
                 </div>
-                <hr className="my-1" />
-                <div className="flex justify-between space-x-3">
-                  <span>Win%:</span>
-                  <span className="font-medium">
-                    {Math.round(hoveredPlay.homeWinProbability * 100)}% - {Math.round((1 - hoveredPlay.homeWinProbability) * 100)}%
-                  </span>
+                <hr className="border-gray-200" />
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Win%:</span>
+                    <span className="font-medium">{Math.round(hoveredPlay.homeWinProbability * 100)}%-{Math.round((1 - hoveredPlay.homeWinProbability) * 100)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Score:</span>
+                    <span className="font-medium">{hoveredPlay.homeScore}-{hoveredPlay.awayScore}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Down:</span>
+                    <span className="font-medium">{ordinalString(hoveredPlay.down)} & {hoveredPlay.distance}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Period:</span>
+                    <span className="font-medium">Q{hoveredPlay.period} {hoveredPlay.clock}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between space-x-3">
-                  <span>Score:</span>
-                  <span className="font-medium">{hoveredPlay.homeScore} - {hoveredPlay.awayScore}</span>
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-700 leading-relaxed">{hoveredPlay.playText.substring(0, 100)}...</p>
                 </div>
-                <div className="flex justify-between space-x-3">
-                  <span>Down:</span>
-                  <span className="font-medium">{ordinalString(hoveredPlay.down)} & {hoveredPlay.distance}</span>
-                </div>
+                <button
+                  onClick={() => {
+                    setSelectedPlay(hoveredPlay);
+                    setSimulationPlay(hoveredPlay);
+                    setShowSimulationModal(true);
+                  }}
+                  className="w-full mt-2 px-3 py-1 text-xs font-medium text-white rounded transition-colors"
+                  style={{ backgroundColor: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor }}
+                >
+                  View on Field
+                </button>
               </div>
             </div>
           )}
@@ -475,21 +532,27 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
-              <div 
-                className="w-3 h-0.5"
-                style={{ backgroundColor: homeData.primaryColor }}
-              ></div>
+              <div className="flex items-center space-x-1">
+                <div 
+                  className="w-4 h-1 rounded"
+                  style={{ backgroundColor: homeData.primaryColor }}
+                ></div>
+                <img src={homeData.logo} alt={homeData.name} className="w-4 h-4 object-contain" />
+              </div>
               <span className="text-sm text-gray-600">{homeData.name}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div 
-                className="w-3 h-0.5 border-dashed border-t-2"
-                style={{ borderColor: awayData.primaryColor }}
-              ></div>
+              <div className="flex items-center space-x-1">
+                <div 
+                  className="w-4 h-1 border-dashed border-t-2 rounded"
+                  style={{ borderColor: awayData.primaryColor }}
+                ></div>
+                <img src={awayData.logo} alt={awayData.name} className="w-4 h-4 object-contain" />
+              </div>
               <span className="text-sm text-gray-600">{awayData.name}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-0.5 border-dashed border-t-2 border-yellow-400"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
               <span className="text-sm text-gray-600">Score Change</span>
             </div>
           </div>
@@ -500,7 +563,237 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           </div>
         </div>
 
-        <p className="text-xs text-gray-500">Hover or click on chart to see play details</p>
+        <p className="text-xs text-gray-500">Hover points for details • Click to view on field • Yellow points indicate scoring plays</p>
+      </div>
+    );
+  };
+
+  // Field Simulator Component
+  const FieldSimulator = ({ play, isOpen, onClose }) => {
+    if (!play || !isOpen) return null;
+
+    // Calculate field position (0-100, where 0 is away endzone, 100 is home endzone)
+    const fieldPosition = play.yardLine || 50;
+    const ballPositionPercent = fieldPosition / 100;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <h2 className="text-2xl font-bold text-gray-900">Field Simulation</h2>
+                <span 
+                  className="px-3 py-1 text-sm font-medium rounded-full"
+                  style={{ 
+                    color: play.homeBall ? homeData.primaryColor : awayData.primaryColor,
+                    backgroundColor: play.homeBall ? `${homeData.primaryColor}20` : `${awayData.primaryColor}20`
+                  }}
+                >
+                  Play #{play.playNumber}
+                </span>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Play Info */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Possession</p>
+                  <div className="flex items-center space-x-2">
+                    <img 
+                      src={play.homeBall ? homeData.logo : awayData.logo} 
+                      alt="Team logo" 
+                      className="w-6 h-6 object-contain"
+                    />
+                    <span 
+                      className="font-medium"
+                      style={{ color: play.homeBall ? homeData.primaryColor : awayData.primaryColor }}
+                    >
+                      {play.homeBall ? homeData.name : awayData.name}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Down & Distance</p>
+                  <p className="font-medium text-gray-900">{ordinalString(play.down)} & {play.distance}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Field Position</p>
+                  <p className="font-medium text-gray-900">{formatYardLine(play.yardLine, play.homeBall)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Score</p>
+                  <p className="font-medium text-gray-900">{play.homeScore} - {play.awayScore}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Play Description</p>
+                <p className="text-sm text-gray-800 leading-relaxed">{play.playText}</p>
+              </div>
+            </div>
+
+            {/* Interactive Field */}
+            <div className="relative bg-gradient-to-r from-green-800 via-green-700 to-green-800 rounded-lg p-6 mb-6" style={{ minHeight: '300px' }}>
+              {/* Field Background */}
+              <div className="absolute inset-6 bg-gradient-to-r from-green-600 to-green-500 rounded opacity-90"></div>
+              
+              {/* Yard Lines */}
+              <div className="absolute inset-6 flex justify-between items-center">
+                {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(yard => (
+                  <div key={yard} className="relative h-full">
+                    <div className={`w-0.5 h-full bg-white ${yard === 0 || yard === 100 ? 'bg-opacity-100' : yard === 50 ? 'bg-opacity-90' : 'bg-opacity-60'}`}></div>
+                    {(yard === 20 || yard === 30 || yard === 40 || yard === 50 || yard === 60 || yard === 70 || yard === 80) && (
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 text-white font-bold text-sm">
+                        {yard === 50 ? '50' : yard < 50 ? yard : 100 - yard}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* End Zones */}
+              <div className="absolute left-0 top-6 bottom-6 w-6 flex items-center justify-center rounded-l"
+                   style={{ backgroundColor: `${awayData.primaryColor}80` }}>
+                <img src={awayData.logo} alt={awayData.name} className="w-4 h-4 object-contain" />
+              </div>
+              <div className="absolute right-0 top-6 bottom-6 w-6 flex items-center justify-center rounded-r"
+                   style={{ backgroundColor: `${homeData.primaryColor}80` }}>
+                <img src={homeData.logo} alt={homeData.name} className="w-4 h-4 object-contain" />
+              </div>
+
+              {/* Ball Position Marker */}
+              <div 
+                className="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-10"
+                style={{ left: `${6 + (ballPositionPercent * 88)}%` }}
+              >
+                <div className="relative">
+                  {/* Ball */}
+                  <div className="w-4 h-6 bg-gradient-to-br from-amber-600 to-amber-800 rounded-full border-2 border-white shadow-lg"></div>
+                  
+                  {/* Team Logo Marker */}
+                  <div 
+                    className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center"
+                    style={{ backgroundColor: play.homeBall ? homeData.primaryColor : awayData.primaryColor }}
+                  >
+                    <img 
+                      src={play.homeBall ? homeData.logo : awayData.logo} 
+                      alt="Possession" 
+                      className="w-5 h-5 object-contain"
+                    />
+                  </div>
+                  
+                  {/* Yard Line Label */}
+                  <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-white text-xs font-bold bg-black bg-opacity-50 px-2 py-1 rounded">
+                    {formatYardLine(play.yardLine, play.homeBall)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Down Markers */}
+              <div className="absolute top-2 left-6 right-6 flex justify-between text-white text-xs font-medium">
+                <span>{awayData.name} Goal</span>
+                <span>50</span>
+                <span>{homeData.name} Goal</span>
+              </div>
+            </div>
+
+            {/* Win Probability Meter */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <h4 className="font-medium text-gray-900 mb-3">Win Probability at This Play</h4>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2 w-24">
+                    <img src={homeData.logo} alt={homeData.name} className="w-5 h-5 object-contain" />
+                    <span className="text-sm font-medium">{homeData.name}</span>
+                  </div>
+                  <div className="flex-1 bg-gray-200 rounded-full h-3">
+                    <div 
+                      className="h-3 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${play.homeWinProbability * 100}%`,
+                        backgroundColor: homeData.primaryColor
+                      }}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900 w-12 text-right">
+                    {Math.round(play.homeWinProbability * 100)}%
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2 w-24">
+                    <img src={awayData.logo} alt={awayData.name} className="w-5 h-5 object-contain" />
+                    <span className="text-sm font-medium">{awayData.name}</span>
+                  </div>
+                  <div className="flex-1 bg-gray-200 rounded-full h-3">
+                    <div 
+                      className="h-3 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${(1 - play.homeWinProbability) * 100}%`,
+                        backgroundColor: awayData.primaryColor
+                      }}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900 w-12 text-right">
+                    {Math.round((1 - play.homeWinProbability) * 100)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Play Navigation */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => {
+                  const currentIndex = winProbData.findIndex(p => p.playId === play.playId);
+                  if (currentIndex > 0) {
+                    const prevPlay = winProbData[currentIndex - 1];
+                    setSimulationPlay(prevPlay);
+                    setSelectedPlay(prevPlay);
+                  }
+                }}
+                disabled={winProbData.findIndex(p => p.playId === play.playId) === 0}
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Previous Play
+              </button>
+
+              <div className="text-sm text-gray-500">
+                Play {winProbData.findIndex(p => p.playId === play.playId) + 1} of {winProbData.length}
+              </div>
+
+              <button
+                onClick={() => {
+                  const currentIndex = winProbData.findIndex(p => p.playId === play.playId);
+                  if (currentIndex < winProbData.length - 1) {
+                    const nextPlay = winProbData[currentIndex + 1];
+                    setSimulationPlay(nextPlay);
+                    setSelectedPlay(nextPlay);
+                  }
+                }}
+                disabled={winProbData.findIndex(p => p.playId === play.playId) === winProbData.length - 1}
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next Play
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -760,7 +1053,12 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           
           {/* Game Simulation Button */}
           <button
-            onClick={() => setShowSimulationModal(true)}
+            onClick={() => {
+              if (winProbData.length > 0) {
+                setSimulationPlay(selectedPlay || winProbData[winProbData.length - 1]);
+                setShowSimulationModal(true);
+              }
+            }}
             disabled={loading || winProbData.length === 0}
             className={`w-full flex items-center justify-center space-x-2 py-3 px-6 rounded-xl font-semibold text-white transition-all ${
               loading || winProbData.length === 0
@@ -875,6 +1173,13 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           )}
         </div>
       </div>
+
+      {/* Field Simulator Modal */}
+      <FieldSimulator 
+        play={simulationPlay} 
+        isOpen={showSimulationModal} 
+        onClose={() => setShowSimulationModal(false)} 
+      />
     </div>
   );
 };
