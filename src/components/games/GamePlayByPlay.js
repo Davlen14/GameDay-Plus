@@ -54,7 +54,46 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
 
   // Convert drives data to win probability data
   const processWinProbabilityData = () => {
-    if (!drives || drives.length === 0) return [];
+    if (!drives || drives.length === 0) {
+      // Generate mock data for demonstration if no real data is available
+      const mockData = [];
+      for (let i = 1; i <= 50; i++) {
+        // Simulate a realistic game progression
+        const quarter = Math.ceil(i / 12.5);
+        let homeScore = 0;
+        let awayScore = 0;
+        
+        // Add scoring events at certain plays
+        if (i >= 8 && i < 15) homeScore = 7;
+        if (i >= 20 && i < 25) awayScore = 3;
+        if (i >= 25) homeScore = 7;
+        if (i >= 32 && i < 38) homeScore = 14;
+        if (i >= 38) awayScore = 3;
+        if (i >= 45) homeScore = 21;
+
+        // Calculate win probability based on score and time
+        const scoreDiff = homeScore - awayScore;
+        const timeRemaining = (50 - i) / 50;
+        let winProb = 0.5 + (scoreDiff * 0.08) + (timeRemaining * 0.1);
+        winProb = Math.max(0.05, Math.min(0.95, winProb));
+
+        mockData.push({
+          playId: `mock-${i}`,
+          playNumber: i,
+          homeWinProbability: winProb,
+          homeScore: homeScore,
+          awayScore: awayScore,
+          down: ((i - 1) % 4) + 1,
+          distance: Math.floor(Math.random() * 10) + 1,
+          yardLine: Math.floor(Math.random() * 100) + 1,
+          homeBall: i % 2 === 1,
+          playText: `Mock play ${i}: ${i % 3 === 0 ? 'Pass completion' : i % 3 === 1 ? 'Rush for gains' : 'Incomplete pass'} - ${Math.floor(Math.random() * 15)} yards`,
+          period: quarter,
+          clock: `${Math.floor(Math.random() * 15)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`
+        });
+      }
+      return mockData;
+    }
     
     let playNumber = 1;
     const winProbDataTemp = [];
@@ -112,16 +151,15 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     }
   };
 
-  // Update win prob data when drives change
+  // Update win prob data when drives change or when component mounts
   React.useEffect(() => {
-    if (drives) {
-      const winProbDataProcessed = processWinProbabilityData();
-      setWinProbData(winProbDataProcessed);
-      if (winProbDataProcessed.length > 0) {
-        setSelectedPlay(winProbDataProcessed[winProbDataProcessed.length - 1]);
-      }
+    // Always process data, even if drives is null (will generate mock data)
+    const winProbDataProcessed = processWinProbabilityData();
+    setWinProbData(winProbDataProcessed);
+    if (winProbDataProcessed.length > 0) {
+      setSelectedPlay(winProbDataProcessed[winProbDataProcessed.length - 1]);
     }
-  }, [drives]);
+  }, [drives, game]); // Also trigger when game changes
 
   // Debug function to load plays and drives
   const loadPlayByPlayData = async () => {
@@ -1069,12 +1107,31 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
             </svg>
-            <span>View Game Simulation</span>
+            <span>
+              {(!drives || drives.length === 0) ? 'Try Interactive Field Simulator' : 'View Game Simulation'}
+            </span>
           </button>
         </div>
 
         {/* Win Probability Chart */}
-        {!loading && winProbData.length > 0 && <WinProbabilityChart />}
+        {!loading && winProbData.length > 0 && (
+          <div>
+            {/* Demo Notice if using mock data */}
+            {(!drives || drives.length === 0) && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">!</span>
+                  </div>
+                  <span className="text-sm text-blue-800 font-medium">
+                    Demo Mode: Showing interactive chart with simulated game data
+                  </span>
+                </div>
+              </div>
+            )}
+            <WinProbabilityChart />
+          </div>
+        )}
 
         {/* Game Statistics */}
         {!loading && winProbData.length > 0 && <GameStatistics />}
