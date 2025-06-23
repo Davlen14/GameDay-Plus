@@ -54,81 +54,85 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
 
   // Convert drives data to win probability data
   const processWinProbabilityData = () => {
+    console.log('Processing win probability data:', { drives: drives?.length || 0, hasDrives: !!drives });
+    
     if (!drives || drives.length === 0) {
-      // Generate mock data for demonstration if no real data is available
-      const mockData = [];
-      for (let i = 1; i <= 50; i++) {
-        // Simulate a realistic game progression
-        const quarter = Math.ceil(i / 12.5);
-        let homeScore = 0;
-        let awayScore = 0;
-        
-        // Add scoring events at certain plays
-        if (i >= 8 && i < 15) homeScore = 7;
-        if (i >= 20 && i < 25) awayScore = 3;
-        if (i >= 25) homeScore = 7;
-        if (i >= 32 && i < 38) homeScore = 14;
-        if (i >= 38) awayScore = 3;
-        if (i >= 45) homeScore = 21;
-
-        // Calculate win probability based on score and time
-        const scoreDiff = homeScore - awayScore;
-        const timeRemaining = (50 - i) / 50;
-        let winProb = 0.5 + (scoreDiff * 0.08) + (timeRemaining * 0.1);
-        winProb = Math.max(0.05, Math.min(0.95, winProb));
-
-        mockData.push({
-          playId: `mock-${i}`,
-          playNumber: i,
-          homeWinProbability: winProb,
-          homeScore: homeScore,
-          awayScore: awayScore,
-          down: ((i - 1) % 4) + 1,
-          distance: Math.floor(Math.random() * 10) + 1,
-          yardLine: Math.floor(Math.random() * 100) + 1,
-          homeBall: i % 2 === 1,
-          playText: `Mock play ${i}: ${i % 3 === 0 ? 'Pass completion' : i % 3 === 1 ? 'Rush for gains' : 'Incomplete pass'} - ${Math.floor(Math.random() * 15)} yards`,
-          period: quarter,
-          clock: `${Math.floor(Math.random() * 15)}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`
-        });
-      }
-      return mockData;
+      console.log('No drives data available, returning empty array');
+      return [];
     }
     
     let playNumber = 1;
     const winProbDataTemp = [];
     
-    drives.forEach(drive => {
+    console.log('Processing', drives.length, 'drives');
+    
+    drives.forEach((drive, driveIndex) => {
+      console.log(`Processing drive ${driveIndex + 1}:`, { 
+        playsCount: drive.plays?.length || 0, 
+        hasPlays: !!drive.plays 
+      });
+      
       if (drive.plays && drive.plays.length > 0) {
-        drive.plays.forEach(play => {
-          // Calculate mock win probability based on score differential and field position
-          const scoreDiff = (play.homeScore || 0) - (play.awayScore || 0);
-          const fieldPosition = play.yardsToGoal || 50;
+        drive.plays.forEach((play, playIndex) => {
+          // Calculate realistic win probability based on game situation
+          const homeScore = play.homeScore || 0;
+          const awayScore = play.awayScore || 0;
+          const scoreDiff = homeScore - awayScore;
+          const period = play.period || 1;
+          const clock = play.clock || '15:00';
           
-          // Basic win probability calculation (this would normally come from API)
-          let baseWinProb = 0.5;
-          baseWinProb += (scoreDiff * 0.05); // Adjust for score
-          baseWinProb += ((50 - fieldPosition) * 0.002); // Adjust for field position
-          baseWinProb = Math.max(0.05, Math.min(0.95, baseWinProb));
+          // Parse clock to get time remaining in game (approximate)
+          const [minutes, seconds] = clock.split(':').map(Number);
+          const timeInPeriod = minutes * 60 + (seconds || 0);
+          const timeRemaining = (4 - period) * 15 * 60 + timeInPeriod;
+          const totalGameTime = 4 * 15 * 60; // 60 minutes
+          const gameProgress = 1 - (timeRemaining / totalGameTime);
+          
+          // More sophisticated win probability calculation
+          let winProb = 0.5; // Start at 50%
+          
+          // Score differential impact (stronger effect as game progresses)
+          const scoreImpact = scoreDiff * (0.02 + 0.08 * gameProgress);
+          winProb += scoreImpact;
+          
+          // Field position impact (if home team has ball in good position)
+          const fieldPosition = play.yardsToGoal || 50;
+          const homeBall = play.teamId === (homeTeam?.id || game.homeId);
+          if (homeBall && fieldPosition < 30) {
+            winProb += 0.05; // Boost for red zone
+          } else if (!homeBall && fieldPosition > 70) {
+            winProb -= 0.05; // Penalty for opponent in red zone
+          }
+          
+          // Down and distance impact
+          const down = play.down || 1;
+          const distance = play.distance || 10;
+          if (down === 4 && distance > 3) {
+            winProb += homeBall ? -0.02 : 0.02; // 4th and long is bad for offense
+          }
+          
+          // Ensure win probability stays in reasonable bounds
+          winProb = Math.max(0.05, Math.min(0.95, winProb));
           
           winProbDataTemp.push({
-            playId: play.id,
+            playId: play.id || `play-${playNumber}`,
             playNumber: playNumber++,
-            homeWinProbability: baseWinProb,
-            homeScore: play.homeScore || 0,
-            awayScore: play.awayScore || 0,
-            down: play.down || 1,
-            distance: play.distance || 10,
-            yardLine: play.yardsToGoal || 50,
-            homeBall: play.teamId === (homeTeam?.id || game.homeId),
-            playText: play.playText || 'Play description not available',
-            period: play.period || 1,
-            clock: play.clock || '15:00'
+            homeWinProbability: winProb,
+            homeScore: homeScore,
+            awayScore: awayScore,
+            down: down,
+            distance: distance,
+            yardLine: fieldPosition,
+            homeBall: homeBall,
+            playText: play.playText || play.text || 'Play description not available',
+            period: period,
+            clock: clock
           });
         });
       }
     });
     
+    console.log('Generated win probability data for', winProbDataTemp.length, 'plays');
     return winProbDataTemp;
   };
 
