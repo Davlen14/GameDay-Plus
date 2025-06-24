@@ -898,9 +898,17 @@ class MatchupPredictor {
     let baseScore = 24.8; // 2024 FBS average
     
     console.log(`🎯 [BASE SCORE] Starting calculation for ${team?.school || 'Unknown'}`);
+    console.log(`🎯 [BASE SCORE] Metrics available:`, {
+      avgPointsScored: metrics?.avgPointsScored,
+      spRating: metrics?.spRating,
+      winPercentage: metrics?.winPercentage,
+      totalGames: metrics?.totalGames,
+      pointDifferential: metrics?.pointDifferential,
+      offensiveEfficiency: metrics?.offensiveEfficiency
+    });
     
     // Priority 1: Use actual season statistics if available
-    if (metrics.avgPointsScored && metrics.avgPointsScored > 0) {
+    if (metrics?.avgPointsScored && metrics.avgPointsScored > 0) {
       baseScore = metrics.avgPointsScored;
       console.log(`✅ [BASE SCORE] Using actual PPG: ${baseScore.toFixed(1)}`);
       return Math.max(10, Math.min(55, baseScore));
@@ -964,9 +972,13 @@ class MatchupPredictor {
     
     // Ensure realistic bounds
     const finalScore = Math.max(12, Math.min(50, scoreEstimate));
-    console.log(`✅ [BASE SCORE] Final score for ${team?.school || 'Unknown'}: ${finalScore.toFixed(1)}`);
     
-    return finalScore;
+    // Final safety check for NaN
+    const safeScore = isNaN(finalScore) ? 24.8 : finalScore;
+    
+    console.log(`✅ [BASE SCORE] Final score for ${team?.school || 'Unknown'}: ${safeScore.toFixed(1)} (isNaN check: ${isNaN(finalScore)})`);
+    
+    return safeScore;
   }
 
   /**
@@ -1009,13 +1021,37 @@ class MatchupPredictor {
       neutralSite, week, season, weatherConditions, conferenceGame 
     });
     
-    let homeScore = basePrediction.score.home;
-    let awayScore = basePrediction.score.away;
+    predictionDebugger.log('BASE_PREDICTION_RAW', 'Raw base prediction result', 'info', {
+      basePrediction,
+      homeScore: basePrediction?.score?.home,
+      awayScore: basePrediction?.score?.away,
+      basePredictionType: typeof basePrediction,
+      hasScore: !!basePrediction?.score
+    });
+    
+    // Ensure we have valid scores from base prediction
+    let homeScore = basePrediction?.score?.home || 25;
+    let awayScore = basePrediction?.score?.away || 25;
+    
+    // Safety check to ensure scores are numbers
+    if (isNaN(homeScore) || homeScore === null || homeScore === undefined) {
+      console.warn('⚠️ Home score is invalid, using fallback:', homeScore);
+      homeScore = 25;
+    }
+    if (isNaN(awayScore) || awayScore === null || awayScore === undefined) {
+      console.warn('⚠️ Away score is invalid, using fallback:', awayScore);
+      awayScore = 25;
+    }
 
     predictionDebugger.log('BASE_PREDICTION', 'Base prediction calculated', 'success', {
       homeScore,
       awayScore,
-      spread: basePrediction.spread
+      spread: basePrediction?.spread || 0,
+      basePredictionValid: !!basePrediction,
+      homeScoreType: typeof homeScore,
+      awayScoreType: typeof awayScore,
+      homeScoreIsNaN: isNaN(homeScore),
+      awayScoreIsNaN: isNaN(awayScore)
     });
     
     // Enhanced adjustments using GraphQL data and analytics
@@ -1024,14 +1060,18 @@ class MatchupPredictor {
     if (homeMetrics.ppaOffense !== undefined && awayMetrics.ppaOffense !== undefined &&
         homeMetrics.ppaDefense !== undefined && awayMetrics.ppaDefense !== undefined) {
       
-      // Calculate net PPA advantage
-      const homeNetPPA = homeMetrics.ppaOffense - awayMetrics.ppaDefense;
-      const awayNetPPA = awayMetrics.ppaOffense - homeMetrics.ppaDefense;
+      // Calculate net PPA advantage with safety checks
+      const homeNetPPA = (homeMetrics.ppaOffense || 0) - (awayMetrics.ppaDefense || 0);
+      const awayNetPPA = (awayMetrics.ppaOffense || 0) - (homeMetrics.ppaDefense || 0);
       
       // PPA directly correlates to scoring - this is the key insight from Ohio State vs Oregon analysis
       const ppaScoreAdjustment = 0.85; // PPA has very high predictive value
-      homeScore += homeNetPPA * ppaScoreAdjustment;
-      awayScore += awayNetPPA * ppaScoreAdjustment;
+      const homeAdjustment = homeNetPPA * ppaScoreAdjustment;
+      const awayAdjustment = awayNetPPA * ppaScoreAdjustment;
+      
+      // Apply adjustments with safety checks
+      if (!isNaN(homeAdjustment)) homeScore += homeAdjustment;
+      if (!isNaN(awayAdjustment)) awayScore += awayAdjustment;
       
       predictionDebugger.log('PPA_ADJUSTMENT', 'Applied PPA (most predictive metric)', 'info', {
         homeNetPPA,
@@ -1040,17 +1080,20 @@ class MatchupPredictor {
         homeDefensePPA: homeMetrics.ppaDefense,
         awayOffensePPA: awayMetrics.ppaOffense,
         awayDefensePPA: awayMetrics.ppaDefense,
-        homeAdjustment: homeNetPPA * ppaScoreAdjustment,
-        awayAdjustment: awayNetPPA * ppaScoreAdjustment
+        homeAdjustment,
+        awayAdjustment
       });
     }
 
     // Drive Efficiency Impact - Critical for close games
     if (homeMetrics.driveEfficiency !== null && awayMetrics.driveEfficiency !== null) {
-      const driveEfficiencyDiff = homeMetrics.driveEfficiency - awayMetrics.driveEfficiency;
+      const driveEfficiencyDiff = (homeMetrics.driveEfficiency || 0) - (awayMetrics.driveEfficiency || 0);
       const driveAdjustment = driveEfficiencyDiff * 12; // Drive efficiency strongly correlates to scoring
-      homeScore += driveAdjustment;
-      awayScore -= driveAdjustment;
+      
+      if (!isNaN(driveAdjustment)) {
+        homeScore += driveAdjustment;
+        awayScore -= driveAdjustment;
+      }
       
       predictionDebugger.log('DRIVE_EFFICIENCY', 'Applied drive efficiency adjustment', 'info', {
         homeDriveEff: homeMetrics.driveEfficiency,
@@ -1062,10 +1105,13 @@ class MatchupPredictor {
 
     // Scoring Drive Rate - More granular than just drive efficiency
     if (homeMetrics.scoringDriveRate !== null && awayMetrics.scoringDriveRate !== null) {
-      const scoringRateDiff = homeMetrics.scoringDriveRate - awayMetrics.scoringDriveRate;
+      const scoringRateDiff = (homeMetrics.scoringDriveRate || 0) - (awayMetrics.scoringDriveRate || 0);
       const scoringAdjustment = scoringRateDiff * 8; // Direct impact on scoring potential
-      homeScore += scoringAdjustment;
-      awayScore -= scoringAdjustment;
+      
+      if (!isNaN(scoringAdjustment)) {
+        homeScore += scoringAdjustment;
+        awayScore -= scoringAdjustment;
+      }
       
       predictionDebugger.log('SCORING_DRIVES', 'Applied scoring drive rate adjustment', 'info', {
         homeScoringRate: homeMetrics.scoringDriveRate,
@@ -1077,10 +1123,13 @@ class MatchupPredictor {
 
     // Red Zone Conversion Rate - Critical for finishing drives
     if (homeMetrics.redZoneConversionRate !== null && awayMetrics.redZoneConversionRate !== null) {
-      const redZoneDiff = homeMetrics.redZoneConversionRate - awayMetrics.redZoneConversionRate;
+      const redZoneDiff = (homeMetrics.redZoneConversionRate || 0) - (awayMetrics.redZoneConversionRate || 0);
       const redZoneAdjustment = redZoneDiff * 6; // Red zone efficiency impact
-      homeScore += redZoneAdjustment;
-      awayScore -= redZoneAdjustment;
+      
+      if (!isNaN(redZoneAdjustment)) {
+        homeScore += redZoneAdjustment;
+        awayScore -= redZoneAdjustment;
+      }
       
       predictionDebugger.log('RED_ZONE', 'Applied red zone conversion adjustment', 'info', {
         homeRedZone: homeMetrics.redZoneConversionRate,
@@ -1092,10 +1141,13 @@ class MatchupPredictor {
     
     // ELO Rating adjustments (more accurate than SP+ alone)
     if (homeMetrics.eloRating && awayMetrics.eloRating) {
-      const eloDiff = homeMetrics.eloRating - awayMetrics.eloRating;
+      const eloDiff = (homeMetrics.eloRating || 1500) - (awayMetrics.eloRating || 1500);
       const eloAdjustment = eloDiff * 0.02; // ELO differential impact
-      homeScore += eloAdjustment;
-      awayScore -= eloAdjustment;
+      
+      if (!isNaN(eloAdjustment)) {
+        homeScore += eloAdjustment;
+        awayScore -= eloAdjustment;
+      }
       
       predictionDebugger.log('ELO_ADJUSTMENT', 'Applied ELO rating adjustment', 'info', {
         eloDiff,
@@ -1107,10 +1159,13 @@ class MatchupPredictor {
     
     // Talent composite adjustments
     if (homeMetrics.talentComposite && awayMetrics.talentComposite) {
-      const talentDiff = homeMetrics.talentComposite - awayMetrics.talentComposite;
+      const talentDiff = (homeMetrics.talentComposite || 0) - (awayMetrics.talentComposite || 0);
       const talentAdjustment = talentDiff * 0.15;
-      homeScore += talentAdjustment;
-      awayScore -= talentAdjustment;
+      
+      if (!isNaN(talentAdjustment)) {
+        homeScore += talentAdjustment;
+        awayScore -= talentAdjustment;
+      }
       
       predictionDebugger.log('TALENT_ADJUSTMENT', 'Applied talent composite adjustment', 'info', {
         talentDiff,
@@ -1122,13 +1177,17 @@ class MatchupPredictor {
     
     // Transfer portal impact
     if (homeMetrics.transferPortalImpact && awayMetrics.transferPortalImpact) {
-      const transferDiff = homeMetrics.transferPortalImpact - awayMetrics.transferPortalImpact;
-      homeScore += transferDiff * 0.8; // Transfer impact on scoring
-      awayScore -= transferDiff * 0.8;
+      const transferDiff = (homeMetrics.transferPortalImpact || 0) - (awayMetrics.transferPortalImpact || 0);
+      const transferAdjustment = transferDiff * 0.8; // Transfer impact on scoring
+      
+      if (!isNaN(transferAdjustment)) {
+        homeScore += transferAdjustment;
+        awayScore -= transferAdjustment;
+      }
       
       predictionDebugger.log('TRANSFER_ADJUSTMENT', 'Applied transfer portal impact', 'info', {
         transferDiff,
-        impactAdjustment: transferDiff * 0.8,
+        impactAdjustment: transferAdjustment,
         homeTransferImpact: homeMetrics.transferPortalImpact,
         awayTransferImpact: awayMetrics.transferPortalImpact
       });
@@ -1141,19 +1200,23 @@ class MatchupPredictor {
         homeMetrics, 
         awayMetrics
       );
-      homeScore += enhancedWeatherImpact.home;
-      awayScore += enhancedWeatherImpact.away;
+      
+      const homeWeatherAdj = enhancedWeatherImpact?.home || 0;
+      const awayWeatherAdj = enhancedWeatherImpact?.away || 0;
+      
+      if (!isNaN(homeWeatherAdj)) homeScore += homeWeatherAdj;
+      if (!isNaN(awayWeatherAdj)) awayScore += awayWeatherAdj;
       
       predictionDebugger.log('WEATHER_ADJUSTMENT', 'Applied enhanced weather impact', 'info', {
         weatherConditions: weatherConditions.detailedConditions,
-        homeAdjustment: enhancedWeatherImpact.home,
-        awayAdjustment: enhancedWeatherImpact.away
+        homeAdjustment: homeWeatherAdj,
+        awayAdjustment: awayWeatherAdj
       });
     }
     
     // Betting market efficiency (if our model disagrees with market)
     if (homeMetrics.impliedWinRate && awayMetrics.impliedWinRate) {
-      const marketHomeWinRate = homeMetrics.impliedWinRate;
+      const marketHomeWinRate = homeMetrics.impliedWinRate || 0.5;
       const modelHomeWinRate = this.calculateWinProbability(homeScore, awayScore, homeMetrics, awayMetrics);
       const marketDisagreement = Math.abs(modelHomeWinRate - marketHomeWinRate);
       
@@ -1162,9 +1225,9 @@ class MatchupPredictor {
         // Market inefficiency detected - trust our model more
         const adjustment = marketDisagreement * 0.5;
         if (modelHomeWinRate > marketHomeWinRate) {
-          homeScore += adjustment;
+          if (!isNaN(adjustment)) homeScore += adjustment;
         } else {
-          awayScore += adjustment;
+          if (!isNaN(adjustment)) awayScore += adjustment;
         }
         
         predictionDebugger.log('MARKET_EFFICIENCY', 'Detected market disagreement - applied adjustment', 'warning', {
@@ -1176,13 +1239,17 @@ class MatchupPredictor {
       }
     }
     
-    // Ensure reasonable bounds
-    homeScore = Math.max(7, Math.min(75, homeScore));
-    awayScore = Math.max(3, Math.min(70, awayScore));
+    // Ensure reasonable bounds and handle NaN
+    homeScore = isNaN(homeScore) ? 25 : Math.max(7, Math.min(75, homeScore));
+    awayScore = isNaN(awayScore) ? 25 : Math.max(3, Math.min(70, awayScore));
     
     // Round to realistic numbers
     homeScore = Math.round(homeScore * 10) / 10;
     awayScore = Math.round(awayScore * 10) / 10;
+    
+    // Final safety check
+    if (isNaN(homeScore)) homeScore = 25;
+    if (isNaN(awayScore)) awayScore = 25;
     
     // Calculate enhanced derived metrics
     const total = homeScore + awayScore;
@@ -1190,30 +1257,61 @@ class MatchupPredictor {
     const homeWinProb = this.calculateEnhancedWinProbability(homeScore, awayScore, homeMetrics, awayMetrics);
     const awayWinProb = 1 - homeWinProb;
     
+    // Safety check for win probabilities
+    const safeHomeWinProb = isNaN(homeWinProb) || homeWinProb === null || homeWinProb === undefined ? 0.5 : homeWinProb;
+    const safeAwayWinProb = isNaN(awayWinProb) || awayWinProb === null || awayWinProb === undefined ? 0.5 : awayWinProb;
+    
+    // Final data integrity check before any calculations
+    const finalHomeScore = isNaN(homeScore) || homeScore === null ? 25 : homeScore;
+    const finalAwayScore = isNaN(awayScore) || awayScore === null ? 25 : awayScore;
+    const finalTotal = finalHomeScore + finalAwayScore;
+    const finalSpread = finalHomeScore - finalAwayScore;
+    
+    predictionDebugger.log('SCORES_INTEGRITY_CHECK', 'Final scores integrity check', 'info', {
+      originalHomeScore: homeScore,
+      originalAwayScore: awayScore,
+      finalHomeScore,
+      finalAwayScore,
+      homeScoreValid: !isNaN(finalHomeScore) && finalHomeScore !== null,
+      awayScoreValid: !isNaN(finalAwayScore) && finalAwayScore !== null,
+      totalValid: !isNaN(finalTotal),
+      spreadValid: !isNaN(finalSpread)
+    });
+    
     // Enhanced moneyline calculation
-    const homeMoneyline = this.probabilityToMoneyline(homeWinProb);
-    const awayMoneyline = this.probabilityToMoneyline(awayWinProb);
+    const homeMoneyline = this.probabilityToMoneyline(safeHomeWinProb);
+    const awayMoneyline = this.probabilityToMoneyline(safeAwayWinProb);
 
     predictionDebugger.log('FINAL_PREDICTION', 'Enhanced prediction complete', 'success', {
-      finalHomeScore: homeScore,
-      finalAwayScore: awayScore,
-      spread,
-      total,
-      homeWinProb: (homeWinProb * 100).toFixed(1) + '%',
-      awayWinProb: (awayWinProb * 100).toFixed(1) + '%'
+      finalHomeScore: finalHomeScore,
+      finalAwayScore: finalAwayScore,
+      spread: finalSpread,
+      total: finalTotal,
+      homeWinProb: (safeHomeWinProb * 100).toFixed(1) + '%',
+      awayWinProb: (safeAwayWinProb * 100).toFixed(1) + '%'
+    });
+    
+    // Final debug check before return
+    predictionDebugger.log('FINAL_SCORES_CHECK', 'Final scores before return', 'info', {
+      homeScore: finalHomeScore,
+      awayScore: finalAwayScore,
+      total: finalTotal,
+      spread: finalSpread,
+      isHomeScoreValid: !isNaN(finalHomeScore) && finalHomeScore !== null && finalHomeScore !== undefined,
+      isAwayScoreValid: !isNaN(finalAwayScore) && finalAwayScore !== null && finalAwayScore !== undefined
     });
     
     return {
       score: {
-        home: homeScore,
-        away: awayScore,
-        total: Math.round(total * 10) / 10
+        home: finalHomeScore,
+        away: finalAwayScore,
+        total: Math.round(finalTotal * 10) / 10
       },
-      spread: Math.round(spread * 10) / 10,
-      total: Math.round(total * 10) / 10,
+      spread: Math.round(finalSpread * 10) / 10,
+      total: Math.round(finalTotal * 10) / 10,
       winProbability: {
-        home: Math.round(homeWinProb * 1000) / 10,
-        away: Math.round(awayWinProb * 1000) / 10
+        home: Math.round(safeHomeWinProb * 1000) / 10,
+        away: Math.round(safeAwayWinProb * 1000) / 10
       },
       moneyline: {
         home: homeMoneyline,
@@ -1293,13 +1391,22 @@ class MatchupPredictor {
    * Enhanced win probability calculation with more factors
    */
   calculateEnhancedWinProbability(homeScore, awayScore, homeMetrics, awayMetrics) {
+    // Ensure we have valid input scores
+    const safeHomeScore = isNaN(homeScore) || homeScore === null ? 25 : homeScore;
+    const safeAwayScore = isNaN(awayScore) || awayScore === null ? 25 : awayScore;
+    
     // Start with base probability
-    let prob = this.calculateWinProbability(homeScore, awayScore, homeMetrics, awayMetrics);
+    let prob = this.calculateWinProbability(safeHomeScore, safeAwayScore, homeMetrics, awayMetrics);
+    
+    // Ensure base probability is valid
+    if (isNaN(prob) || prob === null || prob === undefined) {
+      prob = 0.5; // Default to 50-50
+    }
     
     predictionDebugger.log('WIN_PROB_BASE', 'Base win probability calculated', 'info', {
       baseProb: (prob * 100).toFixed(1) + '%',
-      homeScore,
-      awayScore
+      homeScore: safeHomeScore,
+      awayScore: safeAwayScore
     });
     
     // PPA-based probability adjustment (most predictive)
@@ -1390,13 +1497,22 @@ class MatchupPredictor {
       }
     }
     
-    // Bound probability
-    const finalProb = Math.max(0.02, Math.min(0.98, prob));
+    // Bound probability and final safety check
+    let finalProb = Math.max(0.02, Math.min(0.98, prob));
+    
+    // Final NaN safety check
+    if (isNaN(finalProb) || finalProb === null || finalProb === undefined) {
+      finalProb = 0.5; // Default to 50-50 if anything goes wrong
+      predictionDebugger.log('WIN_PROB_FALLBACK', 'Used fallback probability due to invalid calculation', 'warning', {
+        originalProb: prob,
+        fallbackProb: finalProb
+      });
+    }
     
     predictionDebugger.log('WIN_PROB_FINAL', 'Final enhanced win probability', 'success', {
       finalProb: (finalProb * 100).toFixed(1) + '%',
-      homeScore,
-      awayScore
+      homeScore: safeHomeScore,
+      awayScore: safeAwayScore
     });
     
     return finalProb;
