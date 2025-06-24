@@ -3,6 +3,7 @@ import { gameService, teamService, rankingsService, bettingService } from '../..
 import graphqlService from '../../services/graphqlService';
 import matchupPredictor from '../../utils/MatchupPredictor';
 import { useScrollPerformance } from '../../hooks/usePerformance';
+import PredictionDebugControls from '../debug/PredictionDebugControls';
 
 const GamePredictor = () => {
   // Performance optimization hook
@@ -16,6 +17,7 @@ const GamePredictor = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [activeView, setActiveView] = useState('weekly'); // 'weekly', 'matchup', 'models'
+  const [showDebugControls, setShowDebugControls] = useState(false);
   
   // Data state
   const [games, setGames] = useState([]);
@@ -564,6 +566,12 @@ const GamePredictor = () => {
           <ModelDetailsView />
         )}
       </div>
+
+      {/* Prediction Debug Controls */}
+      <PredictionDebugControls 
+        isVisible={showDebugControls}
+        onToggle={() => setShowDebugControls(!showDebugControls)}
+      />
     </div>
   );
 };

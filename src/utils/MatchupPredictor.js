@@ -2,6 +2,7 @@
 
 import { gameService, teamService, rankingsService, bettingService, advancedDataService, analyticsService, driveService } from '../services';
 import graphqlService from '../services/graphqlService';
+import predictionDebugger from './PredictionDebugger';
 
 /**
  * Enhanced MatchupPredictor v2.0 - Advanced college football game prediction system
@@ -389,31 +390,85 @@ class MatchupPredictor {
       conferenceGame = false
     } = options;
 
+    // Start debugging session
+    const homeTeam = this.teams.get(homeTeamId);
+    const awayTeam = this.teams.get(awayTeamId);
+    
+    predictionDebugger.startDebugging(
+      homeTeam?.school || homeTeamId, 
+      awayTeam?.school || awayTeamId
+    );
+
     try {
-      const homeTeam = this.teams.get(homeTeamId);
-      const awayTeam = this.teams.get(awayTeamId);
+      predictionDebugger.log('TEAM LOOKUP', `Found teams: ${homeTeam?.school} vs ${awayTeam?.school}`, 'info', {
+        homeTeam: homeTeam ? { id: homeTeam.id, school: homeTeam.school } : 'NOT_FOUND',
+        awayTeam: awayTeam ? { id: awayTeam.id, school: awayTeam.school } : 'NOT_FOUND'
+      });
 
       if (!homeTeam || !awayTeam) {
+        predictionDebugger.error('TEAM LOOKUP', 'Team not found in database', new Error('Team not found'), { homeTeamId, awayTeamId });
         throw new Error('Team not found');
       }
 
+      predictionDebugger.log('DATA FETCH', 'Starting data collection for prediction', 'info', { options });
+
       // Get historical data for both teams using enhanced GraphQL queries
       const [homeHistory, awayHistory, headToHead, weatherData, comprehensiveData] = await Promise.all([
-        this.getEnhancedTeamHistory(homeTeamId),
-        this.getEnhancedTeamHistory(awayTeamId),
-        this.getEnhancedHeadToHeadHistory(homeTeamId, awayTeamId),
-        this.getWeatherData(homeTeam, options),
-        this.loadComprehensivePredictionData(homeTeam.school, awayTeam.school, season)
+        this.getEnhancedTeamHistory(homeTeamId).catch(error => {
+          predictionDebugger.trackDataFetch('homeHistory', 'GraphQL', false, null, error);
+          return this.getTeamHistory(homeTeamId); // fallback
+        }),
+        this.getEnhancedTeamHistory(awayTeamId).catch(error => {
+          predictionDebugger.trackDataFetch('awayHistory', 'GraphQL', false, null, error);
+          return this.getTeamHistory(awayTeamId); // fallback
+        }),
+        this.getEnhancedHeadToHeadHistory(homeTeamId, awayTeamId).catch(error => {
+          predictionDebugger.trackDataFetch('headToHead', 'GraphQL', false, null, error);
+          return this.getHeadToHeadHistory(homeTeamId, awayTeamId); // fallback
+        }),
+        this.getWeatherData(homeTeam, options).catch(error => {
+          predictionDebugger.trackDataFetch('weather', 'API', false, null, error);
+          return null; // fallback
+        }),
+        this.loadComprehensivePredictionData(homeTeam.school, awayTeam.school, season).catch(error => {
+          predictionDebugger.trackDataFetch('comprehensive', 'GraphQL', false, null, error);
+          return null; // fallback
+        })
       ]);
+
+      // Track successful data fetches
+      if (homeHistory) predictionDebugger.trackDataFetch('homeHistory', 'GraphQL', true, { gamesCount: homeHistory.length });
+      if (awayHistory) predictionDebugger.trackDataFetch('awayHistory', 'GraphQL', true, { gamesCount: awayHistory.length });
+      if (headToHead) predictionDebugger.trackDataFetch('headToHead', 'GraphQL', true, { totalGames: headToHead.totalGames });
+      if (weatherData) predictionDebugger.trackDataFetch('weather', 'API', true, { conditions: weatherData.conditions });
+      if (comprehensiveData) predictionDebugger.trackDataFetch('comprehensive', 'GraphQL', true, { dataPoints: Object.keys(comprehensiveData).length });
 
       // Store comprehensive data for use in calculations
       if (comprehensiveData) {
         this.comprehensiveDataCache.set(`${homeTeam.school}_${awayTeam.school}_${season}`, comprehensiveData);
+        predictionDebugger.log('CACHE', 'Stored comprehensive data in cache', 'success');
       }
+
+      predictionDebugger.log('METRICS', 'Calculating enhanced team metrics', 'info');
 
       // Calculate enhanced metrics with GraphQL data
       const homeMetrics = this.calculateEnhancedTeamMetrics(homeTeam, homeHistory, homeTeamId);
       const awayMetrics = this.calculateEnhancedTeamMetrics(awayTeam, awayHistory, awayTeamId);
+
+      predictionDebugger.log('METRICS', 'Team metrics calculated successfully', 'success', {
+        homeMetrics: {
+          spRating: homeMetrics.spRating,
+          avgPointsScored: homeMetrics.avgPointsScored,
+          avgPointsAllowed: homeMetrics.avgPointsAllowed
+        },
+        awayMetrics: {
+          spRating: awayMetrics.spRating,
+          avgPointsScored: awayMetrics.avgPointsScored,
+          avgPointsAllowed: awayMetrics.avgPointsAllowed
+        }
+      });
+
+      predictionDebugger.log('PREDICTION', 'Starting enhanced prediction calculation', 'info');
 
       // Calculate enhanced predictions with GraphQL data
       const prediction = this.calculateEnhancedPrediction({
@@ -429,6 +484,15 @@ class MatchupPredictor {
         conferenceGame
       });
 
+      predictionDebugger.log('PREDICTION', 'Enhanced prediction calculated', 'success', {
+        score: prediction.score,
+        spread: prediction.spread,
+        total: prediction.total,
+        winProbability: prediction.winProbability
+      });
+
+      predictionDebugger.log('ANALYSIS', 'Generating comprehensive analysis', 'info');
+
       // Generate comprehensive analysis
       const analysis = this.generateAnalysis({
         homeTeam,
@@ -440,6 +504,23 @@ class MatchupPredictor {
         options
       });
 
+      predictionDebugger.log('ANALYSIS', 'Analysis generation complete', 'success', {
+        keyFactorsCount: analysis.keyFactors?.length || 0,
+        bettingInsightsCount: analysis.bettingInsights?.length || 0
+      });
+
+      const confidence = this.calculateConfidence(prediction, homeMetrics, awayMetrics);
+
+      predictionDebugger.log('COMPLETE', `Prediction complete with ${(confidence * 100).toFixed(1)}% confidence`, 'success', {
+        totalElapsed: predictionDebugger.startTime ? Date.now() - predictionDebugger.startTime : 0
+      });
+
+      // Create debug panel if enabled
+      if (predictionDebugger.isEnabled && typeof window !== 'undefined') {
+        predictionDebugger.createDebugPanel();
+        predictionDebugger.updateDebugPanel();
+      }
+
       return {
         prediction,
         analysis,
@@ -448,11 +529,13 @@ class MatchupPredictor {
           away: { ...awayTeam, metrics: awayMetrics }
         },
         headToHead,
-        confidence: this.calculateConfidence(prediction, homeMetrics, awayMetrics),
-        lastUpdated: new Date().toISOString()
+        confidence,
+        lastUpdated: new Date().toISOString(),
+        debugReport: predictionDebugger.getDebugReport()
       };
 
     } catch (error) {
+      predictionDebugger.error('PREDICTION', 'Prediction failed', error, { homeTeamId, awayTeamId, options });
       console.error('Error generating matchup prediction:', error);
       throw error;
     }
@@ -463,12 +546,17 @@ class MatchupPredictor {
    */
   async calculateTeamMetrics(team, history) {
     console.log(`📊 [API DEBUG] Calculating metrics for team: ${team.school}`);
+    predictionDebugger.log('TEAM_METRICS', `Starting metrics calculation for ${team.school}`, 'info');
     
     // Get season statistics from REST API for accurate metrics
     let seasonStats = null;
     try {
       console.log(`📊 [API DEBUG] Loading season stats for ${team.school}...`);
+      predictionDebugger.log('API_CALL', `Fetching season stats for ${team.school}`, 'info');
+      
       const stats = await teamService.getTeamStats(2024, team.school);
+      predictionDebugger.trackApiCall('teamService', 'getTeamStats', { year: 2024, team: team.school }, stats);
+      
       if (stats && stats.length > 0) {
         // Convert array of {statName, statValue} to object
         seasonStats = {};
@@ -476,8 +564,10 @@ class MatchupPredictor {
           seasonStats[stat.statName] = stat.statValue;
         });
         console.log(`✅ [API DEBUG] Loaded ${stats.length} season stats for ${team.school}`);
+        predictionDebugger.log('DATA_SUCCESS', `Loaded ${stats.length} season stats`, 'success', { teamName: team.school, statsCount: stats.length });
       }
     } catch (error) {
+      predictionDebugger.trackApiCall('teamService', 'getTeamStats', { year: 2024, team: team.school }, null, error);
       console.warn(`⚠️ [API DEBUG] Could not load season stats for ${team.school}:`, error.message);
     }
 
@@ -528,15 +618,20 @@ class MatchupPredictor {
     
     // Try to get more accurate SP+ ratings for 2024
     try {
+      predictionDebugger.log('API_CALL', `Fetching current ratings for ${team.school}`, 'info');
       const currentRatings = await teamService.getTeamRatings(team.school, 2024);
+      predictionDebugger.trackApiCall('teamService', 'getTeamRatings', { team: team.school, year: 2024 }, currentRatings);
+      
       if (currentRatings && currentRatings.length > 0) {
         const spData = currentRatings.find(r => r.rating_type === 'sp+' || r.type === 'sp+');
         if (spData) {
           spRating = { rating: spData.rating || spData.value, ranking: spData.ranking || spData.rank };
           console.log(`📈 [METRICS] Updated SP+ for ${team.school}: ${spRating.rating.toFixed(1)}`);
+          predictionDebugger.log('DATA_UPDATE', `Updated SP+ rating: ${spRating.rating.toFixed(1)}`, 'success');
         }
       }
     } catch (error) {
+      predictionDebugger.trackApiCall('teamService', 'getTeamRatings', { team: team.school, year: 2024 }, null, error);
       console.warn(`⚠️ [METRICS] Could not load current ratings for ${team.school}:`, error.message);
     }
 
@@ -852,6 +947,14 @@ class MatchupPredictor {
    */
   calculateEnhancedPrediction({ homeTeam, awayTeam, homeMetrics, awayMetrics, headToHead, neutralSite, week, season, weatherConditions, conferenceGame }) {
     
+    predictionDebugger.log('ENHANCED_CALC', 'Starting enhanced prediction calculation', 'info', {
+      homeTeam: homeTeam.school,
+      awayTeam: awayTeam.school,
+      neutralSite,
+      week,
+      season
+    });
+
     // Start with base prediction
     const basePrediction = this.calculatePrediction({ 
       homeTeam, awayTeam, homeMetrics, awayMetrics, headToHead, 
@@ -860,6 +963,12 @@ class MatchupPredictor {
     
     let homeScore = basePrediction.score.home;
     let awayScore = basePrediction.score.away;
+
+    predictionDebugger.log('BASE_PREDICTION', 'Base prediction calculated', 'success', {
+      homeScore,
+      awayScore,
+      spread: basePrediction.spread
+    });
     
     // Enhanced adjustments using GraphQL data
     
@@ -869,6 +978,13 @@ class MatchupPredictor {
       const eloAdjustment = eloDiff * 0.02; // ELO differential impact
       homeScore += eloAdjustment;
       awayScore -= eloAdjustment;
+      
+      predictionDebugger.log('ELO_ADJUSTMENT', 'Applied ELO rating adjustment', 'info', {
+        eloDiff,
+        eloAdjustment,
+        homeElo: homeMetrics.eloRating,
+        awayElo: awayMetrics.eloRating
+      });
     }
     
     // Talent composite adjustments
@@ -877,6 +993,13 @@ class MatchupPredictor {
       const talentAdjustment = talentDiff * 0.15;
       homeScore += talentAdjustment;
       awayScore -= talentAdjustment;
+      
+      predictionDebugger.log('TALENT_ADJUSTMENT', 'Applied talent composite adjustment', 'info', {
+        talentDiff,
+        talentAdjustment,
+        homeTalent: homeMetrics.talentComposite,
+        awayTalent: awayMetrics.talentComposite
+      });
     }
     
     // Transfer portal impact
@@ -884,6 +1007,13 @@ class MatchupPredictor {
       const transferDiff = homeMetrics.transferPortalImpact - awayMetrics.transferPortalImpact;
       homeScore += transferDiff * 0.8; // Transfer impact on scoring
       awayScore -= transferDiff * 0.8;
+      
+      predictionDebugger.log('TRANSFER_ADJUSTMENT', 'Applied transfer portal impact', 'info', {
+        transferDiff,
+        impactAdjustment: transferDiff * 0.8,
+        homeTransferImpact: homeMetrics.transferPortalImpact,
+        awayTransferImpact: awayMetrics.transferPortalImpact
+      });
     }
     
     // Enhanced weather impact (more detailed from GraphQL)
@@ -895,6 +1025,12 @@ class MatchupPredictor {
       );
       homeScore += enhancedWeatherImpact.home;
       awayScore += enhancedWeatherImpact.away;
+      
+      predictionDebugger.log('WEATHER_ADJUSTMENT', 'Applied enhanced weather impact', 'info', {
+        weatherConditions: weatherConditions.detailedConditions,
+        homeAdjustment: enhancedWeatherImpact.home,
+        awayAdjustment: enhancedWeatherImpact.away
+      });
     }
     
     // Betting market efficiency (if our model disagrees with market)
@@ -912,6 +1048,13 @@ class MatchupPredictor {
         } else {
           awayScore += adjustment;
         }
+        
+        predictionDebugger.log('MARKET_EFFICIENCY', 'Detected market disagreement - applied adjustment', 'warning', {
+          marketHomeWinRate,
+          modelHomeWinRate,
+          marketDisagreement,
+          adjustment
+        });
       }
     }
     
@@ -932,6 +1075,15 @@ class MatchupPredictor {
     // Enhanced moneyline calculation
     const homeMoneyline = this.probabilityToMoneyline(homeWinProb);
     const awayMoneyline = this.probabilityToMoneyline(awayWinProb);
+
+    predictionDebugger.log('FINAL_PREDICTION', 'Enhanced prediction complete', 'success', {
+      finalHomeScore: homeScore,
+      finalAwayScore: awayScore,
+      spread,
+      total,
+      homeWinProb: (homeWinProb * 100).toFixed(1) + '%',
+      awayWinProb: (awayWinProb * 100).toFixed(1) + '%'
+    });
     
     return {
       score: {
@@ -2300,13 +2452,22 @@ class MatchupPredictor {
    */
   async getSummaryPrediction(homeTeamId, awayTeamId, options = {}) {
     try {
+      predictionDebugger.log('QUICK_PREDICTION', `Starting quick prediction: ${homeTeamId} vs ${awayTeamId}`, 'info', { options });
       console.log(`🎯 [PREDICTION DEBUG] Starting prediction for ${homeTeamId} vs ${awayTeamId}`);
+      
       const fullPrediction = await this.predictMatchup(homeTeamId, awayTeamId, options);
       
       console.log(`✅ [PREDICTION DEBUG] Successful prediction:`, {
         homeScore: fullPrediction.prediction.score.home,
         awayScore: fullPrediction.prediction.score.away,
         spread: fullPrediction.prediction.spread
+      });
+
+      predictionDebugger.log('QUICK_PREDICTION', 'Quick prediction completed successfully', 'success', {
+        homeScore: fullPrediction.prediction.score.home,
+        awayScore: fullPrediction.prediction.score.away,
+        spread: fullPrediction.prediction.spread,
+        confidence: fullPrediction.confidence
       });
       
       // Return simplified prediction format
@@ -2320,6 +2481,7 @@ class MatchupPredictor {
         summary: fullPrediction.analysis?.summary?.description || 'Prediction complete'
       };
     } catch (error) {
+      predictionDebugger.error('QUICK_PREDICTION', 'Quick prediction failed', error, { homeTeamId, awayTeamId, options });
       console.error(`❌ [PREDICTION DEBUG] Error generating prediction for ${homeTeamId} vs ${awayTeamId}:`, error);
       
       // Generate more dynamic fallback prediction instead of static scores
@@ -2339,6 +2501,7 @@ class MatchupPredictor {
       const homeWinProb = homeScore > awayScore ? 55 + Math.random() * 20 : 25 + Math.random() * 20;
       
       console.log(`🔄 [PREDICTION DEBUG] Using dynamic fallback: ${homeScore}-${awayScore}`);
+      predictionDebugger.log('FALLBACK', `Generated fallback prediction: ${homeScore}-${awayScore}`, 'warning');
       
       return {
         score: { home: homeScore, away: awayScore },
@@ -2777,6 +2940,48 @@ class MatchupPredictor {
     const marketFactorEdge = marketHomeWinRate - marketAwayWinRate;
     
     return Math.abs(modelFactorEdge - marketFactorEdge) * 0.3;
+  }
+
+  /**
+   * Get debug information for the last prediction
+   */
+  getDebugInfo() {
+    return predictionDebugger.getDebugReport();
+  }
+
+  /**
+   * Print debug report to console
+   */
+  printDebugReport() {
+    return predictionDebugger.printDebugReport();
+  }
+
+  /**
+   * Export debug report as JSON file
+   */
+  exportDebugReport() {
+    return predictionDebugger.exportReport();
+  }
+
+  /**
+   * Enable/disable debugging
+   */
+  enableDebug() {
+    predictionDebugger.enable();
+  }
+
+  disableDebug() {
+    predictionDebugger.disable();
+  }
+
+  /**
+   * Create debug panel in UI
+   */
+  showDebugPanel() {
+    if (typeof window !== 'undefined') {
+      predictionDebugger.createDebugPanel();
+      predictionDebugger.updateDebugPanel();
+    }
   }
 
   /**
