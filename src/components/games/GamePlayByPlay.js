@@ -570,7 +570,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Win Probability</h3>
         
         {/* Chart Container */}
-        <div className="relative h-64 bg-white rounded-lg p-4 mb-4 overflow-hidden border border-gray-200">
+        <div className="relative h-96 bg-white rounded-lg p-6 mb-4 overflow-hidden border border-gray-200">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             {/* Background Grid - Horizontal lines */}
             {[0, 25, 50, 75, 100].map(y => (
@@ -1098,7 +1098,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
                 onClick={() => setPlayFilter('all')}
                 className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
                   playFilter === 'all' 
-                    ? 'bg-blue-600 text-white' 
+                    ? 'bg-gradient-to-r from-red-600 via-red-700 to-red-600 text-white' 
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
@@ -1148,7 +1148,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             
             <button
               onClick={() => setShowAllPlays(!showAllPlays)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-red-600 via-red-700 to-red-600 text-white text-sm font-medium rounded-lg hover:from-red-700 hover:via-red-800 hover:to-red-700 transition-all"
             >
               <span>{showAllPlays ? 'Show Less' : 'Show All Plays'}</span>
               <svg 
@@ -1264,7 +1264,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
 
   return (
     <div className="w-full">
-      <div className="max-w-6xl mx-auto p-4 space-y-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+      <div className="max-w-7xl mx-auto p-4 space-y-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
         {/* Header with team scores */}
         <GameHeader />
 
@@ -1367,10 +1367,10 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           <button
             onClick={loadPlayByPlayData}
             disabled={loading}
-            className={`mt-4 px-4 py-2 rounded font-medium text-white transition-colors ${
+            className={`mt-4 px-4 py-2 rounded font-medium text-white transition-all ${
               loading 
                 ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-gradient-to-r from-red-600 via-red-700 to-red-600 hover:from-red-700 hover:via-red-800 hover:to-red-700'
             }`}
           >
             {loading ? 'Loading...' : 'Reload Data'}
