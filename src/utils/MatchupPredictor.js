@@ -2036,6 +2036,8 @@ class MatchupPredictor {
 // Create singleton instance
 const matchupPredictor = new MatchupPredictor();
 
+// Export the class and default instance
+export { MatchupPredictor };
 export default matchupPredictor;
 
 // Named exports for specific functions
