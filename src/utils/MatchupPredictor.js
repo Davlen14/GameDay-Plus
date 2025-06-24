@@ -390,39 +390,12 @@ class MatchupPredictor {
     } = options;
 
     try {
-      // Enhanced team lookup - try multiple methods
-      let homeTeam = this.teams.get(homeTeamId);
-      let awayTeam = this.teams.get(awayTeamId);
-      
-      // If not found by ID, try to find by school name or other identifiers
-      if (!homeTeam && typeof homeTeamId === 'string') {
-        homeTeam = Array.from(this.teams.values()).find(team => 
-          team.school === homeTeamId || 
-          team.abbreviation === homeTeamId ||
-          team.school?.toLowerCase() === homeTeamId.toLowerCase()
-        );
-      }
-      
-      if (!awayTeam && typeof awayTeamId === 'string') {
-        awayTeam = Array.from(this.teams.values()).find(team => 
-          team.school === awayTeamId || 
-          team.abbreviation === awayTeamId ||
-          team.school?.toLowerCase() === awayTeamId.toLowerCase()
-        );
-      }
+      const homeTeam = this.teams.get(homeTeamId);
+      const awayTeam = this.teams.get(awayTeamId);
 
       if (!homeTeam || !awayTeam) {
-        console.error('Team lookup failed:', {
-          homeTeamId,
-          awayTeamId,
-          homeTeam,
-          awayTeam,
-          availableTeams: Array.from(this.teams.keys()).slice(0, 5)
-        });
-        throw new Error(`Team not found - Home: ${homeTeamId}, Away: ${awayTeamId}`);
+        throw new Error('Team not found');
       }
-      
-      console.log(`🎯 Predicting matchup: ${awayTeam.school} @ ${homeTeam.school}`);
 
       // Get historical data for both teams using enhanced GraphQL queries
       const [homeHistory, awayHistory, headToHead, weatherData, comprehensiveData] = await Promise.all([
