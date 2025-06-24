@@ -54,45 +54,83 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const homeData = getHomeTeamData();
   const awayData = getAwayTeamData();
 
-  // Convert drives data to win probability data
+  // Convert plays or drives data to win probability data
   const processWinProbabilityData = () => {
-    if (!drives || drives.length === 0) return [];
+    console.log('Processing data - Plays:', plays, 'Drives:', drives);
     
-    let playNumber = 1;
-    const winProbDataTemp = [];
+    // First try to use plays data directly
+    if (plays && plays.length > 0) {
+      console.log('Using plays data:', plays.length, 'plays');
+      return plays.map((play, index) => {
+        // Calculate mock win probability based on score differential and field position
+        const scoreDiff = (play.homeScore || 0) - (play.awayScore || 0);
+        const fieldPosition = play.yardsToGoal || 50;
+        
+        // Basic win probability calculation
+        let baseWinProb = 0.5;
+        baseWinProb += (scoreDiff * 0.05); // Adjust for score
+        baseWinProb += ((50 - fieldPosition) * 0.002); // Adjust for field position
+        baseWinProb = Math.max(0.05, Math.min(0.95, baseWinProb));
+        
+        return {
+          playId: play.id || index,
+          playNumber: index + 1,
+          homeWinProbability: baseWinProb,
+          homeScore: play.homeScore || 0,
+          awayScore: play.awayScore || 0,
+          down: play.down || 1,
+          distance: play.distance || 10,
+          yardLine: play.yardsToGoal || 50,
+          homeBall: play.offense === homeData.name || play.teamId === (homeTeam?.id || game.homeId),
+          playText: play.playText || play.text || 'Play description not available',
+          period: play.period || play.quarter || 1,
+          clock: play.clock || '15:00'
+        };
+      });
+    }
     
-    drives.forEach(drive => {
-      if (drive.plays && drive.plays.length > 0) {
-        drive.plays.forEach(play => {
-          // Calculate mock win probability based on score differential and field position
-          const scoreDiff = (play.homeScore || 0) - (play.awayScore || 0);
-          const fieldPosition = play.yardsToGoal || 50;
-          
-          // Basic win probability calculation (this would normally come from API)
-          let baseWinProb = 0.5;
-          baseWinProb += (scoreDiff * 0.05); // Adjust for score
-          baseWinProb += ((50 - fieldPosition) * 0.002); // Adjust for field position
-          baseWinProb = Math.max(0.05, Math.min(0.95, baseWinProb));
-          
-          winProbDataTemp.push({
-            playId: play.id,
-            playNumber: playNumber++,
-            homeWinProbability: baseWinProb,
-            homeScore: play.homeScore || 0,
-            awayScore: play.awayScore || 0,
-            down: play.down || 1,
-            distance: play.distance || 10,
-            yardLine: play.yardsToGoal || 50,
-            homeBall: play.teamId === (homeTeam?.id || game.homeId),
-            playText: play.playText || 'Play description not available',
-            period: play.period || 1,
-            clock: play.clock || '15:00'
+    // Fall back to drives data if available
+    if (drives && drives.length > 0) {
+      console.log('Using drives data:', drives.length, 'drives');
+      let playNumber = 1;
+      const winProbDataTemp = [];
+      
+      drives.forEach(drive => {
+        if (drive.plays && drive.plays.length > 0) {
+          drive.plays.forEach(play => {
+            // Calculate mock win probability based on score differential and field position
+            const scoreDiff = (play.homeScore || 0) - (play.awayScore || 0);
+            const fieldPosition = play.yardsToGoal || 50;
+            
+            // Basic win probability calculation
+            let baseWinProb = 0.5;
+            baseWinProb += (scoreDiff * 0.05); // Adjust for score
+            baseWinProb += ((50 - fieldPosition) * 0.002); // Adjust for field position
+            baseWinProb = Math.max(0.05, Math.min(0.95, baseWinProb));
+            
+            winProbDataTemp.push({
+              playId: play.id,
+              playNumber: playNumber++,
+              homeWinProbability: baseWinProb,
+              homeScore: play.homeScore || 0,
+              awayScore: play.awayScore || 0,
+              down: play.down || 1,
+              distance: play.distance || 10,
+              yardLine: play.yardsToGoal || 50,
+              homeBall: play.teamId === (homeTeam?.id || game.homeId),
+              playText: play.playText || 'Play description not available',
+              period: play.period || 1,
+              clock: play.clock || '15:00'
+            });
           });
-        });
-      }
-    });
+        }
+      });
+      
+      return winProbDataTemp;
+    }
     
-    return winProbDataTemp;
+    console.log('No data available for processing');
+    return [];
   };
 
   // Helper functions
@@ -114,16 +152,16 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     }
   };
 
-  // Update win prob data when drives change
+  // Update win prob data when plays or drives change
   React.useEffect(() => {
-    if (drives) {
-      const winProbDataProcessed = processWinProbabilityData();
-      setWinProbData(winProbDataProcessed);
-      if (winProbDataProcessed.length > 0) {
-        setSelectedPlay(winProbDataProcessed[winProbDataProcessed.length - 1]);
-      }
+    console.log('Data changed - Plays:', plays?.length, 'Drives:', drives?.length);
+    const winProbDataProcessed = processWinProbabilityData();
+    console.log('Processed win prob data:', winProbDataProcessed.length, 'plays');
+    setWinProbData(winProbDataProcessed);
+    if (winProbDataProcessed.length > 0) {
+      setSelectedPlay(winProbDataProcessed[winProbDataProcessed.length - 1]);
     }
-  }, [drives]);
+  }, [plays, drives]);
 
   // Debug function to load plays and drives
   const loadPlayByPlayData = async () => {
@@ -299,7 +337,16 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
 
   // Win Probability Chart Component
   const WinProbabilityChart = () => {
-    if (winProbData.length === 0) return null;
+    if (winProbData.length === 0) {
+      return (
+        <div className="bg-gray-50 rounded-xl p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Win Probability</h3>
+          <div className="text-center py-8">
+            <p className="text-gray-500">No play data available to display chart</p>
+          </div>
+        </div>
+      );
+    }
 
     const maxX = Math.max(100, winProbData.length);
     const chartWidth = 100 - 40; // Available width percentage after Y-axis labels
@@ -1032,16 +1079,16 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         </div>
 
         {/* Win Probability Chart */}
-        {!loading && winProbData.length > 0 && <WinProbabilityChart />}
+        <WinProbabilityChart />
 
         {/* Selected Play Details */}
         {selectedPlay && <PlayDetails play={selectedPlay} />}
 
         {/* Game Statistics */}
-        {!loading && winProbData.length > 0 && <GameStatistics />}
+        {winProbData.length > 0 && <GameStatistics />}
 
         {/* All Plays List */}
-        {!loading && winProbData.length > 0 && <AllPlaysList />}
+        {winProbData.length > 0 && <AllPlaysList />}
 
         {/* Loading/Error States */}
         {loading && (
@@ -1064,6 +1111,49 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             </div>
           </div>
         )}
+
+        {/* Debug Information */}
+        <div className="bg-gray-100 rounded-xl p-4 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Debug Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="bg-white p-3 rounded">
+              <h4 className="font-semibold mb-2">Data Status</h4>
+              <p>Plays: {plays ? `${plays.length} items` : 'null'}</p>
+              <p>Drives: {drives ? `${drives.length} items` : 'null'}</p>
+              <p>Win Prob Data: {winProbData.length} items</p>
+              <p>Loading: {loading ? 'Yes' : 'No'}</p>
+            </div>
+            <div className="bg-white p-3 rounded">
+              <h4 className="font-semibold mb-2">Game Info</h4>
+              <p>ID: {game?.id || 'N/A'}</p>
+              <p>Season: {game?.season || 'N/A'}</p>
+              <p>Week: {game?.week || 'N/A'}</p>
+              <p>Home: {homeData.name}</p>
+              <p>Away: {awayData.name}</p>
+            </div>
+            <div className="bg-white p-3 rounded">
+              <h4 className="font-semibold mb-2">Sample Data</h4>
+              {winProbData.length > 0 ? (
+                <pre className="text-xs overflow-auto max-h-32">
+                  {JSON.stringify(winProbData[0], null, 2)}
+                </pre>
+              ) : (
+                <p className="text-gray-500">No processed data</p>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={loadPlayByPlayData}
+            disabled={loading}
+            className={`mt-4 px-4 py-2 rounded font-medium text-white transition-colors ${
+              loading 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
+            {loading ? 'Loading...' : 'Reload Data'}
+          </button>
+        </div>
       </div>
     </div>
   );
