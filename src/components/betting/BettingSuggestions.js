@@ -208,14 +208,32 @@ const BettingSuggestions = () => {
       }
 
       // Get games for the selected week/year
-      const games = await gameService.getGamesByWeek(selectedYear, selectedWeek, 'regular');
-      console.log(`📅 Loaded ${games?.length || 0} games for ${selectedYear} Week ${selectedWeek}`);
+      const allGames = await gameService.getGamesByWeek(selectedYear, selectedWeek, 'regular');
+      console.log(`📅 Loaded ${allGames?.length || 0} total games for ${selectedYear} Week ${selectedWeek}`);
 
-      if (!games || games.length === 0) {
+      if (!allGames || allGames.length === 0) {
         setErrorMessage(`No games found for ${selectedYear} Week ${selectedWeek}`);
         setIsLoading(false);
         return;
       }
+
+      // Filter to only FBS games (allow FBS vs FCS, but both teams need to be found in our team data)
+      const games = allGames.filter(game => {
+        const homeTeamName = game.homeTeam || game.home_team;
+        const awayTeamName = game.awayTeam || game.away_team;
+        
+        const homeTeam = teams.find(t => 
+          t.school?.toLowerCase() === homeTeamName?.toLowerCase()
+        );
+        const awayTeam = teams.find(t => 
+          t.school?.toLowerCase() === awayTeamName?.toLowerCase()
+        );
+        
+        // Only include if at least the home team is FBS (this allows FBS vs FCS games)
+        return homeTeam && (homeTeam.classification === 'fbs' || !homeTeam.classification);
+      });
+      
+      console.log(`🏈 Filtered to ${games.length} FBS games from ${allGames.length} total games`);
 
       // Get betting lines if available (mainly for 2024)
       let bettingLines = [];

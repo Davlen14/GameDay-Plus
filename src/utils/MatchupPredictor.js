@@ -366,10 +366,24 @@ class MatchupPredictor {
     const recentPtsScored = this.calculateAverage(recentGames.map(g => g.pointsScored));
     const recentPtsAllowed = this.calculateAverage(recentGames.map(g => g.pointsAllowed));
 
-    // Get ratings with better error handling
-    const spRating = this.spRatings.get(team.school) || { rating: 0, ranking: 64 };
-    const recruiting = this.recruitingData.get(team.school) || { rank: 64, points: 0 };
-    const eloRating = this.eloRatings.get(team.school) || { elo: null };
+    // Get ratings with better error handling and prefer 2024 data
+    let spRating = this.spRatings.get(team.school) || { rating: 0, ranking: 64 };
+    let recruiting = this.recruitingData.get(team.school) || { rank: 64, points: 0 };
+    let eloRating = this.eloRatings.get(team.school) || { elo: null };
+    
+    // Try to get more accurate SP+ ratings for 2024
+    try {
+      const currentRatings = await teamService.getTeamRatings(team.school, 2024);
+      if (currentRatings && currentRatings.length > 0) {
+        const spData = currentRatings.find(r => r.rating_type === 'sp+' || r.type === 'sp+');
+        if (spData) {
+          spRating = { rating: spData.rating || spData.value, ranking: spData.ranking || spData.rank };
+          console.log(`📈 [METRICS] Updated SP+ for ${team.school}: ${spRating.rating.toFixed(1)}`);
+        }
+      }
+    } catch (error) {
+      console.warn(`⚠️ [METRICS] Could not load current ratings for ${team.school}:`, error.message);
+    }
 
     // Advanced metrics from game data
     const strengthOfSchedule = this.calculateSOS(allGames);
@@ -525,6 +539,14 @@ class MatchupPredictor {
       console.log(`🔧 [CALC DEBUG] Conference game adjustment: ${adjustment.toFixed(1)}`);
     }
 
+    // Head-to-head historical adjustment
+    if (headToHead && headToHead.totalGames > 2) {
+      const h2hAdjustment = this.calculateHeadToHeadImpact(headToHead, homeTeam, awayTeam);
+      homeScore += h2hAdjustment.home;
+      awayScore += h2hAdjustment.away;
+      console.log(`🔧 [CALC DEBUG] Head-to-head adjustment: Home ${h2hAdjustment.home.toFixed(1)}, Away ${h2hAdjustment.away.toFixed(1)}`);
+    }
+
     // Ensure reasonable bounds
     homeScore = Math.max(10, Math.min(70, homeScore));
     awayScore = Math.max(7, Math.min(65, awayScore));
@@ -571,33 +593,103 @@ class MatchupPredictor {
   }
 
   /**
-   * Calculate dynamic base score based on team characteristics
+   * Calculate dynamic base score based on team characteristics and historical performance
    */
   calculateDynamicBaseScore(team, metrics) {
-    // Start with national average
-    let baseScore = 26.5;
+    // Start with more realistic national averages
+    let baseScore = 24.8; // 2024 FBS average
     
-    // Use team name hash for consistency but variety
-    const teamHash = team?.school ? this.simpleHash(team.school) : Math.random() * 1000;
-    const teamVariation = (teamHash % 16) - 8; // -8 to +8 variation
+    console.log(`🎯 [BASE SCORE] Starting calculation for ${team?.school || 'Unknown'}`);
     
-    baseScore += teamVariation;
-    
-    // Add metrics-based adjustments if available
+    // Priority 1: Use actual season statistics if available
     if (metrics.avgPointsScored && metrics.avgPointsScored > 0) {
       baseScore = metrics.avgPointsScored;
-    } else if (metrics.winPercentage !== undefined) {
-      // Estimate scoring based on win percentage
-      baseScore += (metrics.winPercentage - 0.5) * 10; // Better teams score more
+      console.log(`✅ [BASE SCORE] Using actual PPG: ${baseScore.toFixed(1)}`);
+      return Math.max(10, Math.min(55, baseScore));
     }
     
-    // Factor in recruiting or talent if available
+    // Priority 2: Use advanced metrics to estimate scoring
+    let scoreEstimate = baseScore;
+    
+    // SP+ Rating influence (most predictive)
+    if (metrics.spRating && Math.abs(metrics.spRating) > 0.1) {
+      // SP+ is centered around 0, positive is better
+      const spBonus = metrics.spRating * 0.6; // Strong influence
+      scoreEstimate += spBonus;
+      console.log(`📈 [BASE SCORE] SP+ adjustment: ${spBonus.toFixed(1)} (rating: ${metrics.spRating.toFixed(1)})`);
+    }
+    
+    // Win percentage influence
+    if (metrics.winPercentage !== undefined && metrics.totalGames > 0) {
+      // Better teams typically score more
+      const winBonus = (metrics.winPercentage - 0.5) * 8; // 8 point swing for perfect vs worst
+      scoreEstimate += winBonus;
+      console.log(`🏆 [BASE SCORE] Win% adjustment: ${winBonus.toFixed(1)} (${(metrics.winPercentage * 100).toFixed(1)}%)`);
+    }
+    
+    // Recruiting/Talent influence (long-term program strength)
     if (metrics.talentComposite && metrics.talentComposite > 0) {
-      const talentBonus = (metrics.talentComposite - 85) * 0.2; // Scale around 85 average
-      baseScore += talentBonus;
+      // Scale around 85 rating (average)
+      const talentBonus = (metrics.talentComposite - 85) * 0.15;
+      scoreEstimate += talentBonus;
+      console.log(`⭐ [BASE SCORE] Talent adjustment: ${talentBonus.toFixed(1)} (rating: ${metrics.talentComposite.toFixed(1)})`);
     }
     
-    return Math.max(14, Math.min(45, baseScore)); // Reasonable bounds
+    // Point differential as backup indicator
+    if (metrics.pointDifferential !== undefined && Math.abs(metrics.pointDifferential) > 0.1) {
+      const diffBonus = metrics.pointDifferential * 0.25;
+      scoreEstimate += diffBonus;
+      console.log(`📊 [BASE SCORE] Point diff adjustment: ${diffBonus.toFixed(1)} (diff: ${metrics.pointDifferential.toFixed(1)})`);
+    }
+    
+    // Offensive efficiency bonus
+    if (metrics.offensiveEfficiency && metrics.offensiveEfficiency > 0.1) {
+      const efficiencyBonus = (metrics.offensiveEfficiency - 0.5) * 12; // Scale around 50% efficiency
+      scoreEstimate += efficiencyBonus;
+      console.log(`⚡ [BASE SCORE] Offensive efficiency adjustment: ${efficiencyBonus.toFixed(1)}`);
+    }
+    
+    // Conference strength adjustment
+    if (team?.conference) {
+      const conferenceAdjustment = this.getConferenceAdjustment(team.conference);
+      scoreEstimate += conferenceAdjustment;
+      console.log(`🏛️ [BASE SCORE] Conference adjustment: ${conferenceAdjustment.toFixed(1)} (${team.conference})`);
+    }
+    
+    // Add some controlled randomness for teams without good data
+    if (!metrics.avgPointsScored && (!metrics.spRating || Math.abs(metrics.spRating) < 0.1)) {
+      const teamHash = team?.school ? this.simpleHash(team.school) : Math.random() * 1000;
+      const randomVariation = ((teamHash % 12) - 6) * 0.5; // -3 to +3 variation
+      scoreEstimate += randomVariation;
+      console.log(`🎲 [BASE SCORE] Random variation for ${team?.school || 'Unknown'}: ${randomVariation.toFixed(1)}`);
+    }
+    
+    // Ensure realistic bounds
+    const finalScore = Math.max(12, Math.min(50, scoreEstimate));
+    console.log(`✅ [BASE SCORE] Final score for ${team?.school || 'Unknown'}: ${finalScore.toFixed(1)}`);
+    
+    return finalScore;
+  }
+
+  /**
+   * Get conference strength adjustment
+   */
+  getConferenceAdjustment(conference) {
+    const conferenceStrength = {
+      'SEC': 2.5,
+      'Big Ten': 2.0,
+      'Big 12': 1.5,
+      'ACC': 1.0,
+      'Pac-12': 1.0,
+      'American Athletic': 0.0,
+      'Mountain West': -0.5,
+      'Conference USA': -1.0,
+      'MAC': -1.5,
+      'Sun Belt': -1.0,
+      'FBS Independents': 0.0
+    };
+    
+    return conferenceStrength[conference] || 0;
   }
 
   /**
@@ -804,6 +896,45 @@ class MatchupPredictor {
     
     // Bound probability
     return Math.max(0.02, Math.min(0.98, prob));
+  }
+
+  /**
+   * Calculate head-to-head historical impact on scoring prediction
+   */
+  calculateHeadToHeadImpact(headToHead, homeTeam, awayTeam) {
+    if (!headToHead || headToHead.totalGames < 3) {
+      return { home: 0, away: 0 };
+    }
+    
+    // Calculate historical dominance
+    const homeWins = headToHead.team1Wins || 0;
+    const awayWins = headToHead.team2Wins || 0;
+    const totalGames = headToHead.totalGames;
+    
+    // Determine which team is team1 in the historical data
+    const isHomeTeam1 = homeTeam.school === headToHead.team1Name;
+    const effectiveHomeWins = isHomeTeam1 ? homeWins : awayWins;
+    const effectiveAwayWins = isHomeTeam1 ? awayWins : homeWins;
+    
+    // Calculate win percentage impact (max ±2 points)
+    const homeWinRate = effectiveHomeWins / totalGames;
+    const winRateImpact = (homeWinRate - 0.5) * 4; // ±2 points max
+    
+    // Average point differential impact (max ±1.5 points)
+    const avgPointDiff = headToHead.avgPointDiff || 0;
+    const pointDiffImpact = isHomeTeam1 ? avgPointDiff * 0.3 : -avgPointDiff * 0.3;
+    
+    // Recency bias - weight recent games more heavily
+    const recencyFactor = Math.min(1.0, totalGames / 10); // Full weight after 10 games
+    
+    const homeAdjustment = (winRateImpact + pointDiffImpact) * recencyFactor;
+    
+    console.log(`📚 [H2H] Historical impact: ${homeTeam.school} ${effectiveHomeWins}-${effectiveAwayWins} vs ${awayTeam.school}, adjustment: ${homeAdjustment.toFixed(1)}`);
+    
+    return {
+      home: Math.max(-3, Math.min(3, homeAdjustment)), // Cap at ±3 points
+      away: Math.max(-3, Math.min(3, -homeAdjustment))
+    };
   }
 
   /**
@@ -1242,32 +1373,75 @@ class MatchupPredictor {
   }
 
   generateMockTeamHistory() {
-    console.log('🔄 [API DEBUG] Generating realistic mock team history...');
-    // Generate mock team history for development with more realistic data
+    console.log('🔄 [API DEBUG] Generating enhanced mock team history...');
+    // Generate more realistic mock team history based on CFB patterns
     const games = [];
-    const teamStrength = 0.3 + Math.random() * 0.4; // Random team strength 0.3-0.7
+    
+    // Determine team tier based on name hash for consistency
+    const teamHash = Math.random() * 1000; // This would use actual team name in real scenario
+    let teamTier;
+    
+    if (teamHash % 100 < 15) {
+      teamTier = 'elite'; // Top 15%
+    } else if (teamHash % 100 < 35) {
+      teamTier = 'good'; // Next 20%
+    } else if (teamHash % 100 < 65) {
+      teamTier = 'average'; // Middle 30%
+    } else {
+      teamTier = 'struggling'; // Bottom 35%
+    }
+    
+    // Set performance parameters based on tier
+    let baseOffense, baseDefense, winRate, variance;
+    switch (teamTier) {
+      case 'elite':
+        baseOffense = 35; baseDefense = 18; winRate = 0.75; variance = 12;
+        break;
+      case 'good':
+        baseOffense = 28; baseDefense = 23; winRate = 0.60; variance = 14;
+        break;
+      case 'average':
+        baseOffense = 24; baseDefense = 26; winRate = 0.50; variance = 16;
+        break;
+      default: // struggling
+        baseOffense = 19; baseDefense = 32; winRate = 0.30; variance = 18;
+    }
+    
+    console.log(`🎯 [MOCK] Generating ${teamTier} team profile: ${baseOffense}/${baseDefense} avg, ${(winRate*100).toFixed(0)}% target win rate`);
     
     for (let i = 0; i < 12; i++) {
-      // More realistic scoring with team strength influence
-      const baseOffense = 20 + (teamStrength * 25); // 20-45 base points
-      const baseDefense = 15 + ((1 - teamStrength) * 20); // 15-35 points allowed
+      // Generate realistic scores with some variance
+      const offenseVariance = (Math.random() - 0.5) * variance;
+      const defenseVariance = (Math.random() - 0.5) * (variance * 0.7);
       
-      const homePoints = Math.floor(baseOffense + (Math.random() * 21) - 10); // ±10 variance
-      const awayPoints = Math.floor(baseDefense + (Math.random() * 21) - 10); // ±10 variance
+      const pointsScored = Math.max(0, Math.round(baseOffense + offenseVariance));
+      const pointsAllowed = Math.max(0, Math.round(baseDefense + defenseVariance));
+      
+      // Adjust win probability based on team tier
+      const shouldWin = Math.random() < winRate;
+      const adjustedPointsScored = shouldWin ? 
+        Math.max(pointsScored, pointsAllowed + 1 + Math.floor(Math.random() * 10)) : 
+        pointsScored;
       
       games.push({
-        isWin: homePoints > awayPoints,
-        pointsScored: Math.max(0, homePoints),
-        pointsAllowed: Math.max(0, awayPoints),
+        isWin: adjustedPointsScored > pointsAllowed,
+        pointsScored: adjustedPointsScored,
+        pointsAllowed: pointsAllowed,
         isHome: Math.random() > 0.5,
         week: i + 1,
-        // Add some realistic opponent context
         opponent: `Mock Team ${i + 1}`,
-        excitementIndex: Math.random() * 10
+        excitementIndex: Math.random() * 10,
+        // Add some context for better metrics
+        neutralSite: Math.random() < 0.1, // 10% neutral site games
+        conferenceGame: Math.random() < 0.6 // 60% conference games
       });
     }
     
-    console.log(`✅ [API DEBUG] Generated ${games.length} mock games for fallback`);
+    const actualWinRate = games.filter(g => g.isWin).length / games.length;
+    const avgScored = games.reduce((sum, g) => sum + g.pointsScored, 0) / games.length;
+    const avgAllowed = games.reduce((sum, g) => sum + g.pointsAllowed, 0) / games.length;
+    
+    console.log(`✅ [MOCK] Generated ${games.length} games: ${(actualWinRate*100).toFixed(1)}% wins, ${avgScored.toFixed(1)} PPG, ${avgAllowed.toFixed(1)} PAPG`);
     return games;
   }
 
