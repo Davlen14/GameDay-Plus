@@ -13,6 +13,7 @@ export { driveService } from './driveService';
 export { playService } from './playService';
 export { miscService } from './miscService';
 export { weatherService } from './weatherService';
+export { advancedDataService } from './advancedDataService';
 export { default as graphqlService } from './graphqlService';
 export { default as fetchData, fetchCollegeFootballData, fetchNewsData, fetchYouTubeData } from './core';
 
