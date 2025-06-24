@@ -3,6 +3,7 @@ import { playService } from '../../services/playService';
 import { driveService } from '../../services/driveService';
 import FootballField from './FootballField';
 import WinProbabilityChart from './WinProbabilityChart';
+import GameSimulationModal from './GameSimulationModal';
 
 const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const [winProbData, setWinProbData] = useState([]);
@@ -1118,6 +1119,17 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         </div>
         </div>
       </div>
+
+      {/* Game Simulation Modal */}
+      <GameSimulationModal
+        isOpen={showSimulationModal}
+        onClose={() => setShowSimulationModal(false)}
+        homeTeam={homeData}
+        awayTeam={awayData}
+        plays={winProbData}
+        drives={drives}
+        winProbabilityData={winProbData}
+      />
     </div>
   );
 };
