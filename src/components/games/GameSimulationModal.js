@@ -62,46 +62,54 @@ const GameSimulationModal = ({
 
   const possessingTeam = getPossessingTeam();
 
-  // Calculate ball position and first down marker
+  // Calculate ball position and first down marker (using Swift logic)
   const getBallPosition = () => {
     if (!currentPlay || !currentPlay.yardLine) return 50;
     
-    // Parse yard line (e.g., "TEAM 25" or "25")
-    const yardLineText = currentPlay.yardLine.toString();
-    const match = yardLineText.match(/(\w+)?\s*(\d+)/);
+    const yardLine = parseInt(currentPlay.yardLine) || 50;
     
-    if (match) {
-      const team = match[1];
-      const yards = parseInt(match[2]);
-      
-      // If team is specified, calculate from that team's side
-      if (team && (team === homeTeam?.school || team === awayTeam?.school)) {
-        if (team === awayTeam?.school) {
-          return yards; // Away team side (0-50)
-        } else {
-          return 100 - yards; // Home team side (50-100)
-        }
-      } else {
-        // If no team specified, assume it's from the nearest goal line
-        return yards <= 50 ? yards : 100 - yards;
-      }
+    // Calculate normalized yard line (0-100 scale) based on possession
+    let normalizedYardLine;
+    
+    if (yardLine <= 50) {
+      // If in team's own territory (0-50 yard line)
+      normalizedYardLine = possessingTeam === 'home' ? yardLine : 100 - yardLine;
+    } else {
+      // If in opponent's territory (50-100 yard line)
+      normalizedYardLine = possessingTeam === 'home' ? yardLine : 100 - yardLine;
     }
     
-    return 50; // Default to midfield
+    return Math.max(0, Math.min(100, normalizedYardLine));
   };
 
   const getFirstDownPosition = () => {
-    if (!currentPlay || !currentPlay.distance || !currentPlay.down) return null;
+    if (!currentPlay || !currentPlay.distance || !currentPlay.down || currentPlay.down === 1) return null;
     
-    const ballPos = getBallPosition();
-    const distance = parseInt(currentPlay.distance);
+    const yardLine = parseInt(currentPlay.yardLine) || 50;
+    const distance = parseInt(currentPlay.distance) || 10;
     
-    // Calculate first down position based on possession direction
+    // Calculate first down yard line based on possession
+    let firstDownYardLine;
+    
     if (possessingTeam === 'home') {
-      return Math.min(100, ballPos + distance);
+      // Home team moving towards away endzone (increasing yard line)
+      firstDownYardLine = Math.min(100, yardLine + distance);
     } else {
-      return Math.max(0, ballPos - distance);
+      // Away team moving towards home endzone
+      firstDownYardLine = Math.max(0, yardLine + distance);
     }
+    
+    // Only show first down line if it's within field bounds
+    if (firstDownYardLine >= 0 && firstDownYardLine <= 100) {
+      // Use same calculation as ball position for consistency
+      if (firstDownYardLine <= 50) {
+        return possessingTeam === 'home' ? firstDownYardLine : 100 - firstDownYardLine;
+      } else {
+        return possessingTeam === 'home' ? firstDownYardLine : 100 - firstDownYardLine;
+      }
+    }
+    
+    return null;
   };
 
   const ballPosition = getBallPosition();
@@ -207,51 +215,61 @@ const GameSimulationModal = ({
                   <div className="relative">
                     {/* Ball Marker Line */}
                     <div className="w-1 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 rounded-full shadow-lg" style={{ height: '100px', marginTop: '-50px' }}>
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl animate-bounce">
-                        🏈
-                      </div>
                     </div>
                     
-                    {/* Possession Team Logo */}
+                    {/* Possession Team Logo - Main Ball Marker */}
                     {possessingTeam && (
-                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 animate-pulse">
-                        <img 
-                          src={possessingTeam === 'home' 
-                            ? (homeTeam?.logos?.[0]?.href || homeTeam?.logos?.[0] || '/photos/Whitmer.png')
-                            : (awayTeam?.logos?.[0]?.href || awayTeam?.logos?.[0] || '/photos/ncaaf.png')
-                          }
-                          alt={`${possessingTeam === 'home' ? homeTeam?.school : awayTeam?.school} possession`}
-                          className="w-8 h-8 object-contain bg-white rounded-full border-2 border-yellow-400 shadow-lg"
-                          onError={(e) => { 
-                            e.target.src = possessingTeam === 'home' ? '/photos/Whitmer.png' : '/photos/ncaaf.png'; 
-                          }}
-                        />
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <div className="relative animate-bounce">
+                          <img 
+                            src={possessingTeam === 'home' 
+                              ? (homeTeam?.logos?.[0]?.href || homeTeam?.logos?.[0] || '/photos/Whitmer.png')
+                              : (awayTeam?.logos?.[0]?.href || awayTeam?.logos?.[0] || '/photos/ncaaf.png')
+                            }
+                            alt={`${possessingTeam === 'home' ? homeTeam?.school : awayTeam?.school} possession`}
+                            className="w-10 h-10 object-contain bg-white rounded-full border-3 border-yellow-400 shadow-lg"
+                            onError={(e) => { 
+                              e.target.src = possessingTeam === 'home' ? '/photos/Whitmer.png' : '/photos/ncaaf.png'; 
+                            }}
+                          />
+                          {/* Possession indicator shadow */}
+                          <div className="absolute inset-0 bg-yellow-200 rounded-full opacity-30 animate-pulse scale-125"></div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Down and Distance Label */}
+                    {currentPlay && (
+                      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded font-bold shadow-lg whitespace-nowrap">
+                        {currentPlay.down && `${currentPlay.down} & ${currentPlay.distance}`}
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* First Down Marker */}
-                {firstDownPosition !== null && (
+                {firstDownPosition !== null && currentPlay?.down > 1 && (
                   <div 
                     className="absolute top-1/2 transform -translate-y-1/2 transition-all duration-500 ease-out"
                     style={{ left: `${15 + (firstDownPosition / 100) * 70}%` }}
                   >
                     <div className="w-1 bg-gradient-to-b from-orange-400 via-orange-500 to-orange-400 rounded-full shadow-lg" style={{ height: '100px', marginTop: '-50px' }}>
-                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white text-xs px-2 py-1 rounded font-bold shadow-lg whitespace-nowrap">
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white text-xs px-2 py-1 rounded font-bold shadow-lg whitespace-nowrap">
                         1ST DOWN
                       </div>
+                      {/* First down indicator line at bottom */}
+                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-0.5 bg-orange-500 rounded"></div>
                     </div>
                   </div>
                 )}
 
-                {/* Down and Distance Info */}
+                {/* Yard Line and Game Clock Info */}
                 {currentPlay && (
                   <div className="absolute top-2 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <span>{currentPlay.down && `${currentPlay.down} & ${currentPlay.distance}`}</span>
+                      <span>{currentPlay.yardLine ? `${currentPlay.yardLine} YD LINE` : 'MIDFIELD'}</span>
                       <span>•</span>
-                      <span>{currentPlay.yardLine}</span>
+                      <span>{currentPlay?.clock && formatTime(currentPlay.clock)} Q{currentPlay?.period || 1}</span>
                     </div>
                   </div>
                 )}
