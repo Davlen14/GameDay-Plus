@@ -4,6 +4,8 @@ import { BettingCalculations } from '../../utils';
 import ArbitrageView from './ArbitrageView';
 import ArbitrageModal from './ArbitrageModal';
 import EVBettingView from './EVBettingView';
+import BoostsView from './BoostsView';
+import MiddlesView from './MiddlesView';
 
 const ArbitrageEV = () => {
   // State management
@@ -300,6 +302,24 @@ const ArbitrageEV = () => {
     };
   }, [getEVGames]);
 
+  const boostsStats = React.useMemo(() => {
+    // Mock stats for boosts - would be calculated from real boost data
+    return {
+      boostCount: 23,
+      avgBoostValue: 35,
+      bestEV: 18.5
+    };
+  }, []);
+
+  const middlesStats = React.useMemo(() => {
+    // Mock stats for middles - would be calculated from real middle data
+    return {
+      middleCount: 12,
+      avgGap: 4.2,
+      bestProbability: 22.3
+    };
+  }, []);
+
   // Data fetching functions
   const fetchBettingLines = async () => {
     setIsLoading(true);
@@ -512,7 +532,7 @@ const ArbitrageEV = () => {
             <div className="text-2xl font-bold text-yellow-600">{evStats.bestEV.toFixed(1)}%</div>
           </div>
         </>
-      ) : (
+      ) : selectedTab === 1 ? (
         // Arbitrage Stats
         <>
           <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
@@ -537,6 +557,56 @@ const ArbitrageEV = () => {
               <span className="text-sm text-gray-600">Best Profit</span>
             </div>
             <div className="text-2xl font-bold text-yellow-600">{arbitrageStats.bestProfit.toFixed(1)}%</div>
+          </div>
+        </>
+      ) : selectedTab === 2 ? (
+        // Boosts Stats
+        <>
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center mb-2">
+              <i className="fas fa-arrow-up text-yellow-600 mr-2"></i>
+              <span className="text-sm text-gray-600">Active Boosts</span>
+            </div>
+            <div className="text-2xl font-bold gradient-text">{boostsStats.boostCount}</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center mb-2">
+              <i className="fas fa-percentage text-orange-600 mr-2"></i>
+              <span className="text-sm text-gray-600">Avg Boost</span>
+            </div>
+            <div className="text-2xl font-bold text-orange-600">{boostsStats.avgBoostValue}%</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center mb-2">
+              <i className="fas fa-star text-green-600 mr-2"></i>
+              <span className="text-sm text-gray-600">Best EV</span>
+            </div>
+            <div className="text-2xl font-bold text-green-600">{boostsStats.bestEV}%</div>
+          </div>
+        </>
+      ) : (
+        // Middles Stats
+        <>
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center mb-2">
+              <i className="fas fa-arrows-alt-v text-purple-600 mr-2"></i>
+              <span className="text-sm text-gray-600">Available Middles</span>
+            </div>
+            <div className="text-2xl font-bold gradient-text">{middlesStats.middleCount}</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center mb-2">
+              <i className="fas fa-expand-alt text-blue-600 mr-2"></i>
+              <span className="text-sm text-gray-600">Avg Gap</span>
+            </div>
+            <div className="text-2xl font-bold text-blue-600">{middlesStats.avgGap} pts</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center mb-2">
+              <i className="fas fa-target text-green-600 mr-2"></i>
+              <span className="text-sm text-gray-600">Best Probability</span>
+            </div>
+            <div className="text-2xl font-bold text-green-600">{middlesStats.bestProbability}%</div>
           </div>
         </>
       )}
@@ -634,9 +704,9 @@ const ArbitrageEV = () => {
       case 1:
         return <ArbitrageViewComponent arbitrageGames={getArbitrageGames()} />;
       case 2:
-        return <ComingSoonView title="Boosts" description="This feature is coming soon!" />;
+        return <BoostsView gameLines={gameLines} teams={teams} />;
       case 3:
-        return <ComingSoonView title="Middle Bets" description="This feature is coming soon!" />;
+        return <MiddlesView gameLines={gameLines} teams={teams} />;
       default:
         return null;
     }
@@ -707,7 +777,7 @@ const ArbitrageEV = () => {
           <WeekSelector />
           
           {/* Stats Summary */}
-          {selectedTab < 2 && <StatsSummary />}
+          <StatsSummary />
 
           {/* Main Content */}
           <div className="bg-white/80 backdrop-blur-md border border-white/30 rounded-lg shadow-xl">
