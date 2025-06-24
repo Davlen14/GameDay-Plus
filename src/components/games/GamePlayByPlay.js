@@ -152,18 +152,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     }
   };
 
-  // Update win prob data when plays or drives change
-  React.useEffect(() => {
-    console.log('Data changed - Plays:', plays?.length, 'Drives:', drives?.length);
-    const winProbDataProcessed = processWinProbabilityData();
-    console.log('Processed win prob data:', winProbDataProcessed.length, 'plays');
-    setWinProbData(winProbDataProcessed);
-    if (winProbDataProcessed.length > 0) {
-      setSelectedPlay(winProbDataProcessed[winProbDataProcessed.length - 1]);
-    }
-  }, [plays, drives]);
-
-  // Debug function to load plays and drives
+  // Debug function to load plays and drives - Updated to match Swift logic
   const loadPlayByPlayData = async () => {
     if (!game) {
       setError('No game data provided');
@@ -176,7 +165,44 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     try {
       console.log('Loading play-by-play data for game:', game);
       
-      // Try multiple approaches to get the data
+      // Primary method: Try to get win probability data directly (like Swift does)
+      if (game.id) {
+        try {
+          console.log('Attempting to load win probability data with game ID:', game.id);
+          // This matches your Swift TeamService.shared.fetchWinProbability(gameId: game.id)
+          const winProbData = await playService.getWinProbability(game.id);
+          console.log('Win probability data loaded:', winProbData);
+          
+          if (winProbData && winProbData.length > 0) {
+            // Process the win probability data directly
+            const processedData = winProbData.map((play, index) => ({
+              playId: play.id || play.playId || index,
+              playNumber: play.playNumber || index + 1,
+              homeWinProbability: play.homeWinProbability || play.winProbability || 0.5,
+              homeScore: play.homeScore || 0,
+              awayScore: play.awayScore || 0,
+              down: play.down || 1,
+              distance: play.distance || 10,
+              yardLine: play.yardLine || play.yardsToGoal || 50,
+              homeBall: play.homeBall || false,
+              playText: play.playText || play.text || 'Play description not available',
+              period: play.period || play.quarter || 1,
+              clock: play.clock || '15:00'
+            }));
+            
+            setWinProbData(processedData);
+            if (processedData.length > 0) {
+              setSelectedPlay(processedData[processedData.length - 1]);
+            }
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.error('Win probability API failed:', err);
+        }
+      }
+      
+      // Fallback methods for when win probability API is not available
       const results = {
         plays: null,
         drives: null,
@@ -241,7 +267,15 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
       setPlays(results.plays);
       setDrives(results.drives);
       
-      if (results.errors.length > 0 && !results.plays && !results.drives) {
+      // Process fallback data
+      const winProbDataProcessed = processWinProbabilityData();
+      console.log('Processed win prob data from fallback:', winProbDataProcessed.length, 'plays');
+      setWinProbData(winProbDataProcessed);
+      if (winProbDataProcessed.length > 0) {
+        setSelectedPlay(winProbDataProcessed[winProbDataProcessed.length - 1]);
+      }
+      
+      if (results.errors.length > 0 && !results.plays && !results.drives && winProbDataProcessed.length === 0) {
         setError(results.errors.join('\n'));
       }
       
@@ -1118,25 +1152,33 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="bg-white p-3 rounded">
               <h4 className="font-semibold mb-2">Data Status</h4>
-              <p>Plays: {plays ? `${plays.length} items` : 'null'}</p>
-              <p>Drives: {drives ? `${drives.length} items` : 'null'}</p>
-              <p>Win Prob Data: {winProbData.length} items</p>
-              <p>Loading: {loading ? 'Yes' : 'No'}</p>
+              <p>Win Prob Data: <span className="font-mono">{winProbData.length} items</span></p>
+              <p>Plays (fallback): <span className="font-mono">{plays ? `${plays.length} items` : 'null'}</span></p>
+              <p>Drives (fallback): <span className="font-mono">{drives ? `${drives.length} items` : 'null'}</span></p>
+              <p>Loading: <span className="font-mono">{loading ? 'Yes' : 'No'}</span></p>
+              <p>Selected Play: <span className="font-mono">{selectedPlay ? `#${selectedPlay.playNumber}` : 'None'}</span></p>
             </div>
             <div className="bg-white p-3 rounded">
               <h4 className="font-semibold mb-2">Game Info</h4>
-              <p>ID: {game?.id || 'N/A'}</p>
-              <p>Season: {game?.season || 'N/A'}</p>
-              <p>Week: {game?.week || 'N/A'}</p>
-              <p>Home: {homeData.name}</p>
-              <p>Away: {awayData.name}</p>
+              <p>ID: <span className="font-mono">{game?.id || 'N/A'}</span></p>
+              <p>Season: <span className="font-mono">{game?.season || 'N/A'}</span></p>
+              <p>Week: <span className="font-mono">{game?.week || 'N/A'}</span></p>
+              <p>Home: <span className="font-mono">{homeData.name}</span></p>
+              <p>Away: <span className="font-mono">{awayData.name}</span></p>
+              <p>Score: <span className="font-mono">{game?.homePoints || 0} - {game?.awayPoints || 0}</span></p>
             </div>
             <div className="bg-white p-3 rounded">
-              <h4 className="font-semibold mb-2">Sample Data</h4>
+              <h4 className="font-semibold mb-2">Win Probability Sample</h4>
               {winProbData.length > 0 ? (
-                <pre className="text-xs overflow-auto max-h-32">
-                  {JSON.stringify(winProbData[0], null, 2)}
-                </pre>
+                <div className="space-y-1">
+                  <p>Play #{winProbData[0].playNumber}</p>
+                  <p>Win%: {Math.round(winProbData[0].homeWinProbability * 100)}%</p>
+                  <p>Score: {winProbData[0].homeScore}-{winProbData[0].awayScore}</p>
+                  <p>Down: {winProbData[0].down} & {winProbData[0].distance}</p>
+                  <p className="text-xs text-gray-600 mt-2">
+                    {winProbData[0].playText.substring(0, 50)}...
+                  </p>
+                </div>
               ) : (
                 <p className="text-gray-500">No processed data</p>
               )}

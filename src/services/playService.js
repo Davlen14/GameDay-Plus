@@ -84,5 +84,10 @@ export const playService = {
   // Get game play stats
   getGamePlayStats: async (gameId) => {
     return await fetchCollegeFootballData('/plays/stats', { gameId });
-  }
+  },
+
+  // GET /win-probability/{gameId} - Get win probability data for a game (like Swift TeamService)
+  getWinProbability: async (gameId) => {
+    return await fetchCollegeFootballData(`/game/${gameId}/win-probability`);
+  },
 };
