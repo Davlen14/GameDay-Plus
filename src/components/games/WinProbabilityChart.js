@@ -57,15 +57,15 @@ const WinProbabilityChart = ({
           {[0, 25, 50, 75, 100].map(y => (
             <g key={`h-${y}`}>
               <line
-                x1="80"
+                x1="60"
                 y1={350 - (y * 3)}
-                x2="950"
+                x2="970"
                 y2={350 - (y * 3)}
                 stroke="#e5e7eb"
                 strokeWidth="1"
               />
               <text
-                x="70"
+                x="50"
                 y={355 - (y * 3)}
                 fontSize="12"
                 fill="#6b7280"
@@ -82,15 +82,15 @@ const WinProbabilityChart = ({
             playNum <= winProbData.length && (
               <g key={`v-${playNum}`}>
                 <line
-                  x1={80 + (870 * playNum) / winProbData.length}
+                  x1={60 + (910 * playNum) / winProbData.length}
                   y1="50"
-                  x2={80 + (870 * playNum) / winProbData.length}
+                  x2={60 + (910 * playNum) / winProbData.length}
                   y2="350"
                   stroke="#f3f4f6"
                   strokeWidth="1"
                 />
                 <text
-                  x={80 + (870 * playNum) / winProbData.length}
+                  x={60 + (910 * playNum) / winProbData.length}
                   y="370"
                   fontSize="10"
                   fill="#9ca3af"
@@ -105,11 +105,11 @@ const WinProbabilityChart = ({
           
           {/* Home team win probability area fill */}
           <path
-            d={`M 80 350 ${winProbData.map((play, index) => {
-              const x = 80 + (870 * index) / (winProbData.length - 1);
+            d={`M 60 350 ${winProbData.map((play, index) => {
+              const x = 60 + (910 * index) / (winProbData.length - 1);
               const y = 350 - (play.homeWinProbability * 300);
               return `L ${x} ${y}`;
-            }).join(' ')} L ${80 + 870} 350 Z`}
+            }).join(' ')} L ${60 + 910} 350 Z`}
             fill={`url(#homeGradient)`}
             opacity="0.2"
           />
@@ -129,7 +129,7 @@ const WinProbabilityChart = ({
           {/* Home team win probability line */}
           <path
             d={winProbData.map((play, index) => {
-              const x = 80 + (870 * index) / (winProbData.length - 1);
+              const x = 60 + (910 * index) / (winProbData.length - 1);
               const y = 350 - (play.homeWinProbability * 300);
               return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
             }).join(' ')}
@@ -141,7 +141,7 @@ const WinProbabilityChart = ({
           {/* Away team win probability line */}
           <path
             d={winProbData.map((play, index) => {
-              const x = 80 + (870 * index) / (winProbData.length - 1);
+              const x = 60 + (910 * index) / (winProbData.length - 1);
               const y = 350 - ((1 - play.homeWinProbability) * 300);
               return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
             }).join(' ')}
@@ -153,7 +153,7 @@ const WinProbabilityChart = ({
           
           {/* Interactive points with team logos */}
           {winProbData.map((play, index) => {
-            const x = 80 + (870 * index) / (winProbData.length - 1);
+            const x = 60 + (910 * index) / (winProbData.length - 1);
             const y = 350 - (play.homeWinProbability * 300);
             const isActive = selectedPlay?.playId === play.playId || hoveredPlay?.playId === play.playId;
             const isScoreChange = index > 0 && (play.homeScore !== winProbData[index - 1].homeScore || play.awayScore !== winProbData[index - 1].awayScore);
@@ -220,7 +220,7 @@ const WinProbabilityChart = ({
         {hoveredPlay && (
           <div className="absolute pointer-events-none bg-white border-2 rounded-lg shadow-xl p-3 z-20 transform -translate-x-1/2 -translate-y-full transition-all duration-200"
                style={{ 
-                 left: `${8 + (87 * winProbData.indexOf(hoveredPlay)) / (winProbData.length - 1)}%`,
+                 left: `${6 + (91 * winProbData.indexOf(hoveredPlay)) / (winProbData.length - 1)}%`,
                  top: `${15 + (85 - (hoveredPlay.homeWinProbability * 75))}%`,
                  borderColor: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor,
                  maxWidth: '250px'
