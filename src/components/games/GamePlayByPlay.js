@@ -13,6 +13,8 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const [hoveredPlay, setHoveredPlay] = useState(null);
   const [showSimulationModal, setShowSimulationModal] = useState(false);
   const [simulationPlay, setSimulationPlay] = useState(null);
+  const [showAllPlays, setShowAllPlays] = useState(false);
+  const [playFilter, setPlayFilter] = useState('all'); // 'all', 'home', 'away', 'scoring'
 
   // Get team data with fallbacks to Whitmer
   const getHomeTeamData = () => {
@@ -811,9 +813,6 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   // All Plays List Component (mirroring Swift functionality)
   const AllPlaysList = () => {
     if (winProbData.length === 0) return null;
-
-    const [showAllPlays, setShowAllPlays] = useState(false);
-    const [playFilter, setPlayFilter] = useState('all'); // 'all', 'home', 'away', 'scoring'
 
     const filteredPlays = winProbData.filter(play => {
       if (playFilter === 'home') return play.homeBall;
