@@ -553,10 +553,10 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const WinProbabilityChart = () => {
     if (winProbData.length === 0) {
       return (
-        <div className="bg-gray-50 rounded-xl p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Win Probability</h3>
-          <div className="text-center py-8">
-            <p className="text-gray-500">No play data available to display chart</p>
+        <div className="bg-gray-50 rounded-xl p-8 mb-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Win Probability</h3>
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No play data available to display chart</p>
           </div>
         </div>
       );
@@ -566,11 +566,11 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     const chartWidth = 100 - 40; // Available width percentage after Y-axis labels
 
     return (
-      <div className="bg-gray-50 rounded-xl p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Win Probability</h3>
+      <div className="bg-gray-50 rounded-xl p-8 mb-8">
+        <h3 className="text-xl font-semibold text-gray-900 mb-6">Win Probability</h3>
         
         {/* Chart Container */}
-        <div className="relative h-96 bg-white rounded-lg p-6 mb-4 overflow-hidden border border-gray-200">
+        <div className="relative h-[500px] bg-white rounded-lg p-8 mb-6 overflow-hidden border border-gray-200 shadow-sm">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             {/* Background Grid - Horizontal lines */}
             {[0, 25, 50, 75, 100].map(y => (
@@ -792,41 +792,41 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         </div>
 
         {/* Chart Legend */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 <div 
-                  className="w-4 h-1 rounded"
+                  className="w-6 h-2 rounded"
                   style={{ backgroundColor: homeData.primaryColor }}
                 ></div>
-                <img src={homeData.logo} alt={homeData.name} className="w-4 h-4 object-contain" />
+                <img src={homeData.logo} alt={homeData.name} className="w-5 h-5 object-contain" />
               </div>
-              <span className="text-sm text-gray-600">{homeData.name}</span>
+              <span className="text-base text-gray-600 font-medium">{homeData.name}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 <div 
-                  className="w-4 h-1 border-dashed border-t-2 rounded"
+                  className="w-6 h-2 border-dashed border-t-2 rounded"
                   style={{ borderColor: awayData.primaryColor }}
                 ></div>
-                <img src={awayData.logo} alt={awayData.name} className="w-4 h-4 object-contain" />
+                <img src={awayData.logo} alt={awayData.name} className="w-5 h-5 object-contain" />
               </div>
-              <span className="text-sm text-gray-600">{awayData.name}</span>
+              <span className="text-base text-gray-600 font-medium">{awayData.name}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-              <span className="text-sm text-gray-600">Score Change</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
+              <span className="text-base text-gray-600 font-medium">Score Change</span>
             </div>
           </div>
           
           {/* Play Count */}
-          <div className="text-sm text-gray-600">
-            Total Plays: <span className="font-semibold text-gray-900">{winProbData.length}</span>
+          <div className="text-base text-gray-600">
+            Total Plays: <span className="font-semibold text-gray-900 text-lg">{winProbData.length}</span>
           </div>
         </div>
 
-        <p className="text-xs text-gray-500">Hover points for details • Click to view on field • Yellow points indicate scoring plays</p>
+        <p className="text-sm text-gray-500 mt-2">Hover points for details • Click to view on field • Yellow points indicate scoring plays</p>
       </div>
     );
   };
@@ -1200,7 +1200,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
                 <div 
                   key={play.playId}
                   className={`border-b border-gray-100 p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                    selectedPlay?.playId === play.playId ? 'bg-blue-50 border-blue-200' : ''
+                    selectedPlay?.playId === play.playId ? 'bg-red-50 border-red-200' : ''
                   } ${isScoreChange ? 'bg-yellow-50' : ''}`}
                   onClick={() => setSelectedPlay(play)}
                 >
@@ -1264,7 +1264,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
 
   return (
     <div className="w-full">
-      <div className="max-w-7xl mx-auto p-4 space-y-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+      <div className="w-[95%] mx-auto p-4 space-y-8" style={{ fontFamily: 'Orbitron, sans-serif' }}>
         {/* Header with team scores */}
         <GameHeader />
 
