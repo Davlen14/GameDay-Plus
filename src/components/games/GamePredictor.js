@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
-import { gameService, teamService, rankingsService, bettingService } from '../../services';
+import { gameService, teamService, rankingsService, bettingService, advancedDataService } from '../../services';
 import graphqlService from '../../services/graphqlService';
 import matchupPredictor from '../../utils/MatchupPredictor';
 import { useScrollPerformance } from '../../hooks/usePerformance';
@@ -568,12 +568,14 @@ const GamePredictor = () => {
   );
 };
 
-// Weekly Prediction Card Component
+// Weekly Prediction Card Component - Enhanced with Advanced Metrics
 const WeeklyPredictionCard = ({ prediction }) => {
   const { 
     homeTeam, awayTeam, predictedScore, prediction: spread, total, winProbability, 
     confidence, summary, isCompleted, actualScore, correctWinner, scoreDifference,
-    excitementIndex, weatherImpact, eloRatings, talentGap, bettingInsights 
+    excitementIndex, weatherImpact, eloRatings, talentGap, bettingInsights,
+    // NEW: Enhanced metrics from advanced prediction system
+    ppaAnalysis, successRateAnalysis, marketDisagreement, multiFactorScore
   } = prediction;
   
   const favorite = spread > 0 ? homeTeam : awayTeam;
@@ -628,8 +630,8 @@ const WeeklyPredictionCard = ({ prediction }) => {
           </div>
         </div>
         
-        {/* Enhanced Status Section */}
-        <div className="text-right">
+        {/* Enhanced Status Section with Advanced Metrics */}
+        <div className="text-right space-y-2">
           {isCompleted ? (
             <div>
               <div className="text-xs text-gray-600 mb-2 font-medium">AI Model Result</div>
@@ -647,7 +649,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
           ) : (
             <div className="space-y-2">
               <div>
-                <div className="text-xs text-gray-600 mb-1 font-medium">Prediction Confidence</div>
+                <div className="text-xs text-gray-600 mb-1 font-medium">Enhanced Confidence</div>
                 <div className={`px-3 py-1 rounded-full text-sm font-bold backdrop-blur-lg border-2 shadow-lg ${
                   confidence >= 0.8 ? 'bg-green-500/30 text-green-700 border-green-400/60' :
                   confidence >= 0.6 ? 'bg-yellow-500/30 text-yellow-700 border-yellow-400/60' :
@@ -659,6 +661,19 @@ const WeeklyPredictionCard = ({ prediction }) => {
                   </div>
                 </div>
               </div>
+              
+              {/* NEW: Market Disagreement Indicator */}
+              {marketDisagreement && marketDisagreement > 0.15 && (
+                <div>
+                  <div className="text-xs text-gray-600 mb-1 font-medium">Value Opportunity</div>
+                  <div className="px-3 py-1 rounded-full text-xs font-bold backdrop-blur-lg border shadow-lg bg-purple-500/30 text-purple-700 border-purple-400/60">
+                    <div className="flex items-center space-x-1">
+                      <i className="fas fa-coins"></i>
+                      <span>High Value</span>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Excitement Index */}
               {excitementIndex > 0 && (
@@ -681,6 +696,47 @@ const WeeklyPredictionCard = ({ prediction }) => {
         </div>
       </div>
 
+      {/* NEW: Advanced Metrics Display */}
+      {(ppaAnalysis || successRateAnalysis) && !isCompleted && (
+        <div className="mb-6 bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+          <div className="text-xs text-gray-600 mb-3 font-medium flex items-center space-x-1">
+            <i className="fas fa-chart-line text-blue-600"></i>
+            <span>Enhanced Prediction Factors</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            {/* PPA Analysis */}
+            {ppaAnalysis && (
+              <div className={`p-2 rounded-lg ${
+                ppaAnalysis.recommendation === 'Home Team' ? 'bg-blue-100/80 text-blue-800' :
+                ppaAnalysis.recommendation === 'Away Team' ? 'bg-red-100/80 text-red-800' :
+                'bg-gray-100/80 text-gray-800'
+              }`}>
+                <div className="font-semibold flex items-center space-x-1">
+                  <i className="fas fa-calculator"></i>
+                  <span>PPA Edge: {ppaAnalysis.recommendation}</span>
+                </div>
+                <div className="text-xs mt-1">{ppaAnalysis.confidence} confidence</div>
+              </div>
+            )}
+            
+            {/* Success Rate Analysis */}
+            {successRateAnalysis && (
+              <div className={`p-2 rounded-lg ${
+                successRateAnalysis.recommendation === 'Home Team' ? 'bg-blue-100/80 text-blue-800' :
+                successRateAnalysis.recommendation === 'Away Team' ? 'bg-red-100/80 text-red-800' :
+                'bg-gray-100/80 text-gray-800'
+              }`}>
+                <div className="font-semibold flex items-center space-x-1">
+                  <i className="fas fa-percentage"></i>
+                  <span>Consistency: {successRateAnalysis.recommendation}</span>
+                </div>
+                <div className="text-xs mt-1">{successRateAnalysis.consistencyFactor} factor</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Enhanced Score Display with Talent Gap */}
       {isCompleted ? (
         <div className="grid grid-cols-2 gap-6 mb-8">
@@ -697,7 +753,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
           <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
             <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
               <i className="fas fa-brain text-blue-600"></i>
-              <span>AI Prediction</span>
+              <span>Enhanced AI Prediction</span>
             </div>
             <div className="font-bold text-gray-800 text-xl">
               {predictedScore.away.toFixed(0)} - {predictedScore.home.toFixed(0)}
@@ -710,10 +766,16 @@ const WeeklyPredictionCard = ({ prediction }) => {
       ) : (
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
-            <div className="text-sm text-gray-500 mb-2">Predicted Score</div>
+            <div className="text-sm text-gray-500 mb-2">Enhanced Score</div>
             <div className="font-bold text-gray-800 text-lg">
               {predictedScore.away.toFixed(0)} - {predictedScore.home.toFixed(0)}
             </div>
+            {/* Multi-Factor Score Display */}
+            {multiFactorScore && (
+              <div className="text-xs text-purple-600 mt-1 font-medium">
+                Multi-Factor: {multiFactorScore.totalImpact > 0 ? '+' : ''}{multiFactorScore.totalImpact.toFixed(1)}
+              </div>
+            )}
             {/* Talent Gap Indicator */}
             {talentGap && (
               <div className="text-xs text-purple-600 mt-1 font-medium">
@@ -746,7 +808,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
             <span className="font-medium">{awayTeam?.school || 'Away Team'}</span>
           </div>
           <div className="text-xs text-gray-600 font-medium">
-            {isCompleted ? 'Pre-Game Win Probability (AI Model)' : 'Win Probability'}
+            {isCompleted ? 'Pre-Game Win Probability (Enhanced AI)' : 'Enhanced Win Probability'}
           </div>
           <div className="flex items-center space-x-2">
             <span className="font-medium">{homeTeam?.school || 'Home Team'}</span>
@@ -787,13 +849,13 @@ const WeeklyPredictionCard = ({ prediction }) => {
         </div>
       </div>
 
-      {/* Enhanced Summary with Weather and Additional Context */}
+      {/* Enhanced Summary with Advanced Metrics and Context */}
       <div className="text-sm text-gray-700 leading-relaxed bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
         {isCompleted ? (
           <div>
             <div className="font-semibold mb-3 flex items-center space-x-2">
               <i className="fas fa-microscope text-blue-600"></i>
-              <span>AI Model Validation Analysis:</span>
+              <span>Enhanced AI Model Validation:</span>
             </div>
             <div className="mb-3">{summary}</div>
             
@@ -807,7 +869,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
                 <div className="flex items-center space-x-2">
                   <i className={`fas ${correctWinner ? 'fa-check-circle' : 'fa-times-circle'} text-lg`}></i>
                   <div>
-                    <div className="font-semibold text-xs">Winner Prediction</div>
+                    <div className="font-semibold text-xs">Enhanced Prediction</div>
                     <div className="text-sm">
                       {correctWinner ? 'Correct! ✓' : 'Incorrect ✗'}
                     </div>
@@ -837,8 +899,8 @@ const WeeklyPredictionCard = ({ prediction }) => {
         ) : (
           <div>
             <div className="font-semibold mb-2 flex items-center space-x-2">
-              <i className="fas fa-robot text-purple-600"></i>
-              <span>Enhanced AI Prediction Analysis:</span>
+              <i className="fas fa-rocket text-purple-600"></i>
+              <span>Enhanced AI Prediction Analysis v2.0:</span>
             </div>
             <div className="mb-3">{summary}</div>
             
@@ -856,9 +918,25 @@ const WeeklyPredictionCard = ({ prediction }) => {
                 </div>
               )}
               
+              {/* PPA Edge Indicator */}
+              {ppaAnalysis && ppaAnalysis.offensiveEdge !== 'None' && (
+                <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <i className="fas fa-chart-line mr-1"></i>
+                  PPA: {ppaAnalysis.offensiveEdge}
+                </div>
+              )}
+              
+              {/* Market Value Indicator */}
+              {marketDisagreement && marketDisagreement > 0.15 && (
+                <div className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                  <i className="fas fa-coins mr-1"></i>
+                  Value Bet Opportunity
+                </div>
+              )}
+              
               {/* ELO Rating Difference */}
               {eloRatings?.home && eloRatings?.away && (
-                <div className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                <div className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                   <i className="fas fa-chart-bar mr-1"></i>
                   ELO Δ: {Math.abs(eloRatings.home - eloRatings.away).toFixed(0)}
                 </div>
