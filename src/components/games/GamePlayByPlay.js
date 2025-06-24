@@ -808,6 +808,200 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     );
   };
 
+  // All Plays List Component (mirroring Swift functionality)
+  const AllPlaysList = () => {
+    if (winProbData.length === 0) return null;
+
+    const [showAllPlays, setShowAllPlays] = useState(false);
+    const [playFilter, setPlayFilter] = useState('all'); // 'all', 'home', 'away', 'scoring'
+
+    const filteredPlays = winProbData.filter(play => {
+      if (playFilter === 'home') return play.homeBall;
+      if (playFilter === 'away') return !play.homeBall;
+      if (playFilter === 'scoring') {
+        const index = winProbData.indexOf(play);
+        if (index === 0) return false;
+        const prevPlay = winProbData[index - 1];
+        return play.homeScore !== prevPlay.homeScore || play.awayScore !== prevPlay.awayScore;
+      }
+      return true;
+    });
+
+    return (
+      <div className="bg-gray-50 rounded-xl p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">All Plays</h3>
+          <div className="flex items-center space-x-4">
+            {/* Filter Buttons */}
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setPlayFilter('all')}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  playFilter === 'all' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                All ({winProbData.length})
+              </button>
+              <button
+                onClick={() => setPlayFilter('home')}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  playFilter === 'home' 
+                    ? 'text-white' 
+                    : 'text-gray-700 hover:bg-gray-300'
+                }`}
+                style={{ 
+                  backgroundColor: playFilter === 'home' ? homeData.primaryColor : '#e5e7eb'
+                }}
+              >
+                {homeData.name} ({winProbData.filter(p => p.homeBall).length})
+              </button>
+              <button
+                onClick={() => setPlayFilter('away')}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  playFilter === 'away' 
+                    ? 'text-white' 
+                    : 'text-gray-700 hover:bg-gray-300'
+                }`}
+                style={{ 
+                  backgroundColor: playFilter === 'away' ? awayData.primaryColor : '#e5e7eb'
+                }}
+              >
+                {awayData.name} ({winProbData.filter(p => !p.homeBall).length})
+              </button>
+              <button
+                onClick={() => setPlayFilter('scoring')}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  playFilter === 'scoring' 
+                    ? 'bg-yellow-500 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Scoring ({winProbData.filter((play, index) => {
+                  if (index === 0) return false;
+                  const prevPlay = winProbData[index - 1];
+                  return play.homeScore !== prevPlay.homeScore || play.awayScore !== prevPlay.awayScore;
+                }).length})
+              </button>
+            </div>
+            
+            <button
+              onClick={() => setShowAllPlays(!showAllPlays)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <span>{showAllPlays ? 'Show Less' : 'Show All Plays'}</span>
+              <svg 
+                className={`w-4 h-4 transition-transform ${showAllPlays ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="bg-white rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-gray-900">{filteredPlays.length}</div>
+            <div className="text-xs text-gray-600">Filtered Plays</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-gray-900">
+              {Math.round(filteredPlays.reduce((sum, play) => sum + play.homeWinProbability, 0) / filteredPlays.length * 100) || 0}%
+            </div>
+            <div className="text-xs text-gray-600">Avg {homeData.name} Win %</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-gray-900">
+              {filteredPlays.length > 0 ? `${filteredPlays[filteredPlays.length - 1].homeScore} - ${filteredPlays[filteredPlays.length - 1].awayScore}` : '0 - 0'}
+            </div>
+            <div className="text-xs text-gray-600">Current Score</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-gray-900">
+              Q{filteredPlays.length > 0 ? filteredPlays[filteredPlays.length - 1].period : 1}
+            </div>
+            <div className="text-xs text-gray-600">Quarter</div>
+          </div>
+        </div>
+
+        {/* Plays List */}
+        <div className="bg-white rounded-lg overflow-hidden">
+          <div className="max-h-96 overflow-y-auto">
+            {(showAllPlays ? filteredPlays : filteredPlays.slice(0, 10)).map((play, index) => {
+              const isScoreChange = index > 0 && filteredPlays[index - 1] && 
+                (play.homeScore !== filteredPlays[index - 1].homeScore || play.awayScore !== filteredPlays[index - 1].awayScore);
+              
+              return (
+                <div 
+                  key={play.playId}
+                  className={`border-b border-gray-100 p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                    selectedPlay?.playId === play.playId ? 'bg-blue-50 border-blue-200' : ''
+                  } ${isScoreChange ? 'bg-yellow-50' : ''}`}
+                  onClick={() => setSelectedPlay(play)}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-bold text-gray-900">#{play.playNumber}</span>
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="w-3 h-3 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: play.homeBall ? homeData.primaryColor : awayData.primaryColor }}
+                        ></div>
+                        <span 
+                          className="text-xs font-medium"
+                          style={{ color: play.homeBall ? homeData.primaryColor : awayData.primaryColor }}
+                        >
+                          {play.homeBall ? homeData.name : awayData.name}
+                        </span>
+                      </div>
+                      {isScoreChange && (
+                        <span className="px-2 py-1 text-xs font-medium bg-yellow-200 text-yellow-800 rounded-full">
+                          SCORE
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-gray-900">
+                        {play.homeScore} - {play.awayScore}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Win%: {Math.round(play.homeWinProbability * 100)}% - {Math.round((1 - play.homeWinProbability) * 100)}%
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-gray-800 mb-2 leading-relaxed">
+                    {play.playText}
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>
+                      {ordinalString(play.down)} & {play.distance} at {formatYardLine(play.yardLine, play.homeBall)}
+                    </span>
+                    <span>Q{play.period} {play.clock}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {!showAllPlays && filteredPlays.length > 10 && (
+            <div className="p-4 bg-gray-50 text-center">
+              <span className="text-sm text-gray-600">
+                Showing 10 of {filteredPlays.length} plays
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full">
       <div className="max-w-6xl mx-auto p-4 space-y-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
@@ -841,11 +1035,14 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         {/* Win Probability Chart */}
         {!loading && winProbData.length > 0 && <WinProbabilityChart />}
 
+        {/* Selected Play Details */}
+        {selectedPlay && <PlayDetails play={selectedPlay} />}
+
         {/* Game Statistics */}
         {!loading && winProbData.length > 0 && <GameStatistics />}
 
-        {/* Selected Play Details */}
-        {selectedPlay && <PlayDetails play={selectedPlay} />}
+        {/* All Plays List */}
+        {!loading && winProbData.length > 0 && <AllPlaysList />}
 
         {/* Loading/Error States */}
         {loading && (
@@ -868,75 +1065,6 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Debug Section */}
-      <div className="p-8 bg-gray-100 mt-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4">Play-by-Play Debug</h2>
-          
-          {/* Game Info */}
-          <div className="mb-4 p-4 bg-white rounded shadow">
-            <h3 className="font-bold mb-2">Game Information:</h3>
-            <pre className="text-sm overflow-auto bg-gray-50 p-2 rounded">
-              {JSON.stringify(game, null, 2)}
-            </pre>
-          </div>
-
-          {/* Load Button */}
-          <div className="mb-4">
-            <button
-              onClick={loadPlayByPlayData}
-              disabled={loading}
-              className={`px-6 py-3 rounded font-bold text-white transition-colors ${
-                loading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
-              }`}
-            >
-              {loading ? 'Loading...' : 'Load Play-by-Play Data'}
-            </button>
-          </div>
-
-          {/* Win Prob Data Display */}
-          {winProbData.length > 0 && (
-            <div className="mb-4 p-4 bg-white rounded shadow">
-              <h3 className="font-bold mb-2">Win Probability Data ({winProbData.length} plays):</h3>
-              <pre className="text-sm overflow-auto bg-gray-50 p-2 rounded max-h-96">
-                {JSON.stringify(winProbData.slice(0, 5), null, 2)}
-                {winProbData.length > 5 && "\n... and more"}
-              </pre>
-            </div>
-          )}
-
-          {/* Error Display */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              <h3 className="font-bold mb-2">Error:</h3>
-              <pre className="whitespace-pre-wrap">{error}</pre>
-            </div>
-          )}
-
-          {/* Plays Display */}
-          {plays && (
-            <div className="mb-4 p-4 bg-white rounded shadow">
-              <h3 className="font-bold mb-2">Plays Data ({plays.length || 0} plays):</h3>
-              <pre className="text-sm overflow-auto bg-gray-50 p-2 rounded max-h-96">
-                {JSON.stringify(plays, null, 2)}
-              </pre>
-            </div>
-          )}
-
-          {/* Drives Display */}
-          {drives && (
-            <div className="mb-4 p-4 bg-white rounded shadow">
-              <h3 className="font-bold mb-2">Drives Data ({drives.length || 0} drives):</h3>
-              <pre className="text-sm overflow-auto bg-gray-50 p-2 rounded max-h-96">
-                {JSON.stringify(drives, null, 2)}
-              </pre>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
