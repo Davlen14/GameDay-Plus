@@ -985,12 +985,14 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
 
   return (
     <div className="w-full">
-      <div className="w-[95%] mx-auto p-4 space-y-8" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+      <div className="w-full space-y-8" style={{ fontFamily: 'Orbitron, sans-serif' }}>
         {/* Header with team scores */}
-        <GameHeader />
+        <div className="px-4">
+          <GameHeader />
+        </div>
 
         {/* Football Field */}
-        <div className="space-y-3">
+        <div className="px-4 space-y-3">
           <FootballField homeTeam={homeTeam} awayTeam={awayTeam} />
           
           {/* Live game indicator */}
@@ -1013,7 +1015,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           </button>
         </div>
 
-        {/* Win Probability Chart */}
+        {/* Win Probability Chart - NO PADDING to allow full width */}
         <WinProbabilityChart 
           winProbData={winProbData}
           homeData={homeData}
@@ -1025,13 +1027,22 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         />
 
         {/* Selected Play Details */}
-        {selectedPlay && <PlayDetails play={selectedPlay} />}
+        <div className="px-4">
+          {selectedPlay && <PlayDetails play={selectedPlay} />}
+        </div>
 
         {/* Game Statistics */}
-        {winProbData.length > 0 && <GameStatistics />}
+        <div className="px-4">
+          {winProbData.length > 0 && <GameStatistics />}
+        </div>
 
         {/* All Plays List */}
-        {winProbData.length > 0 && <AllPlaysList />}
+        <div className="px-4">
+          {winProbData.length > 0 && <AllPlaysList />}
+        </div>
+
+        {/* Loading/Error States */}
+        <div className="px-4">
 
         {/* Loading/Error States */}
         {loading && (
@@ -1104,6 +1115,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           >
             {loading ? 'Loading...' : 'Reload Data'}
           </button>
+        </div>
         </div>
       </div>
     </div>
