@@ -58,7 +58,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const processWinProbabilityData = () => {
     console.log('Processing data - Plays:', plays, 'Drives:', drives);
     
-    // First try to use plays data directly
+    // First try to use plays data directly (includes flattened plays from drives)
     if (plays && plays.length > 0) {
       console.log('Using plays data:', plays.length, 'plays');
       return plays.map((play, index) => {
@@ -89,9 +89,9 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
       });
     }
     
-    // Fall back to drives data if available
+    // Fall back to extracting plays from drives data if plays is not available
     if (drives && drives.length > 0) {
-      console.log('Using drives data:', drives.length, 'drives');
+      console.log('Extracting plays from drives data:', drives.length, 'drives');
       let playNumber = 1;
       const winProbDataTemp = [];
       
@@ -126,6 +126,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
         }
       });
       
+      console.log('Extracted', winProbDataTemp.length, 'plays from drives');
       return winProbDataTemp;
     }
     
@@ -213,9 +214,31 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
       if (game.id) {
         try {
           console.log('Attempting to load live plays with game ID:', game.id);
-          const livePlays = await playService.getLivePlays(game.id);
-          results.plays = livePlays;
-          console.log('Live plays loaded:', livePlays);
+          const liveData = await playService.getLivePlays(game.id);
+          console.log('Live data structure:', liveData);
+          
+          // Check if we got drives data (which contains nested plays)
+          if (liveData && liveData.drives && Array.isArray(liveData.drives)) {
+            console.log('Found drives data, extracting plays from', liveData.drives.length, 'drives');
+            
+            // Flatten all plays from all drives
+            const allPlays = [];
+            liveData.drives.forEach(drive => {
+              if (drive.plays && Array.isArray(drive.plays)) {
+                allPlays.push(...drive.plays);
+              }
+            });
+            
+            console.log('Extracted', allPlays.length, 'plays from drives');
+            results.plays = allPlays;
+            results.drives = liveData.drives;
+          } else if (liveData && Array.isArray(liveData)) {
+            // If it's already a flat array of plays
+            results.plays = liveData;
+            console.log('Live plays loaded (flat array):', liveData.length, 'plays');
+          } else {
+            console.log('Live data format not recognized:', liveData);
+          }
         } catch (err) {
           console.error('Live plays failed:', err);
           results.errors.push(`Live plays error: ${err.message}`);
