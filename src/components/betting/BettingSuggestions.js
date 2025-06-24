@@ -208,7 +208,7 @@ const BettingSuggestions = () => {
       }
 
       // Get games for the selected week/year
-      const games = await gameService.getWeeklyGames(selectedYear, selectedWeek, 'regular');
+      const games = await gameService.getGamesByWeek(selectedYear, selectedWeek, 'regular');
       console.log(`📅 Loaded ${games?.length || 0} games for ${selectedYear} Week ${selectedWeek}`);
 
       if (!games || games.length === 0) {
