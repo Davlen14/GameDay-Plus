@@ -401,27 +401,32 @@ const MiddlesView = ({ gameLines = [], teams = [] }) => {
                     <div className="flex items-center space-x-4 mb-3">
                       {/* Team logos */}
                       <div className="flex items-center space-x-2">
-                        <img
-                          src={getTeamLogo(middle.awayTeam)}
-                          alt={middle.awayTeam}
-                          className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                          onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                        />
-                        <span className="text-gray-400">@</span>
-                        <img
-                          src={getTeamLogo(middle.homeTeam)}
-                          alt={middle.homeTeam}
-                          className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                          onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                        />
+                        <div className="w-8 h-8 rounded-full bg-white/90 border border-gray-200 shadow-sm flex items-center justify-center overflow-hidden">
+                          <img
+                            src={getTeamLogo(middle.awayTeam)}
+                            alt={middle.awayTeam}
+                            className="w-6 h-6 object-contain"
+                            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                          />
+                        </div>
+                        <span className="text-gray-400 font-medium">@</span>
+                        <div className="w-8 h-8 rounded-full bg-white/90 border border-gray-200 shadow-sm flex items-center justify-center overflow-hidden">
+                          <img
+                            src={getTeamLogo(middle.homeTeam)}
+                            alt={middle.homeTeam}
+                            className="w-6 h-6 object-contain"
+                            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                          />
+                        </div>
                       </div>
 
                       {/* Middle badge */}
                       <span 
-                        className="px-3 py-1 text-white text-xs font-bold rounded-full"
+                        className="px-3 py-1 text-white text-xs font-bold rounded-full flex items-center"
                         style={{ background: middleGradient }}
                       >
-                        🎯 {middle.gap} POINT MIDDLE
+                        <i className="fas fa-arrows-alt-v mr-1"></i>
+                        {middle.gap} POINT MIDDLE
                       </span>
 
                       {/* Type badge */}
@@ -434,12 +439,14 @@ const MiddlesView = ({ gameLines = [], teams = [] }) => {
                       {/* Bet 1 */}
                       <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex items-center space-x-2 mb-1">
-                          <img
-                            src={getSportsbookLogo(middle.book1.provider)}
-                            alt={middle.book1.provider}
-                            className="w-4 h-4"
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                          />
+                          <div className="w-5 h-5 bg-white/90 border border-gray-200 rounded flex items-center justify-center overflow-hidden">
+                            <img
+                              src={getSportsbookLogo(middle.book1.provider)}
+                              alt={middle.book1.provider}
+                              className="w-4 h-4 object-contain"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          </div>
                           <span className="text-sm font-medium text-gray-700">{middle.book1.provider}</span>
                         </div>
                         <div className="font-bold text-gray-800">{middle.book1.bet}</div>
@@ -449,12 +456,14 @@ const MiddlesView = ({ gameLines = [], teams = [] }) => {
                       {/* Bet 2 */}
                       <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex items-center space-x-2 mb-1">
-                          <img
-                            src={getSportsbookLogo(middle.book2.provider)}
-                            alt={middle.book2.provider}
-                            className="w-4 h-4"
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                          />
+                          <div className="w-5 h-5 bg-white/90 border border-gray-200 rounded flex items-center justify-center overflow-hidden">
+                            <img
+                              src={getSportsbookLogo(middle.book2.provider)}
+                              alt={middle.book2.provider}
+                              className="w-4 h-4 object-contain"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          </div>
                           <span className="text-sm font-medium text-gray-700">{middle.book2.provider}</span>
                         </div>
                         <div className="font-bold text-gray-800">{middle.book2.bet}</div>
@@ -570,7 +579,10 @@ const MiddlesView = ({ gameLines = [], teams = [] }) => {
         <div className="flex items-start space-x-3">
           <i className="fas fa-graduation-cap text-purple-500 mt-1"></i>
           <div>
-            <h4 className="font-bold text-purple-800 mb-1">🎯 Understanding Middles</h4>
+            <h4 className="font-bold text-purple-800 mb-1 flex items-center">
+              <i className="fas fa-target mr-2"></i>
+              Understanding Middles
+            </h4>
             <p className="text-purple-700 text-sm">
               A middle occurs when you bet both sides of a game at different sportsbooks, hoping the final 
               result falls between your two bets. This allows both bets to win simultaneously. Look for 

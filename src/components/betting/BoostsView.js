@@ -301,37 +301,44 @@ const BoostsView = ({ gameLines = [], teams = [] }) => {
                     <div className="flex items-center space-x-4 mb-3">
                       {/* Team logos */}
                       <div className="flex items-center space-x-2">
-                        <img
-                          src={getTeamLogo(boost.awayTeam)}
-                          alt={boost.awayTeam}
-                          className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                          onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                        />
-                        <span className="text-gray-400">@</span>
-                        <img
-                          src={getTeamLogo(boost.homeTeam)}
-                          alt={boost.homeTeam}
-                          className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                          onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                        />
+                        <div className="w-8 h-8 rounded-full bg-white/90 border border-gray-200 shadow-sm flex items-center justify-center overflow-hidden">
+                          <img
+                            src={getTeamLogo(boost.awayTeam)}
+                            alt={boost.awayTeam}
+                            className="w-6 h-6 object-contain"
+                            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                          />
+                        </div>
+                        <span className="text-gray-400 font-medium">@</span>
+                        <div className="w-8 h-8 rounded-full bg-white/90 border border-gray-200 shadow-sm flex items-center justify-center overflow-hidden">
+                          <img
+                            src={getTeamLogo(boost.homeTeam)}
+                            alt={boost.homeTeam}
+                            className="w-6 h-6 object-contain"
+                            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                          />
+                        </div>
                       </div>
 
                       {/* Boost badges */}
                       <div className="flex items-center space-x-2">
                         {boost.isPopular && (
-                          <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
-                            🔥 POPULAR
+                          <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full flex items-center">
+                            <i className="fas fa-fire mr-1"></i>
+                            POPULAR
                           </span>
                         )}
                         {boost.isLimitedTime && (
-                          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
-                            ⏰ LIMITED
+                          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full flex items-center">
+                            <i className="fas fa-clock mr-1"></i>
+                            LIMITED
                           </span>
                         )}
                         <span 
-                          className="px-2 py-1 text-white text-xs font-bold rounded-full"
+                          className="px-2 py-1 text-white text-xs font-bold rounded-full flex items-center"
                           style={{ background: boostGradient }}
                         >
+                          <i className="fas fa-arrow-up mr-1"></i>
                           +{boost.boostValue}% BOOST
                         </span>
                       </div>
@@ -343,17 +350,23 @@ const BoostsView = ({ gameLines = [], teams = [] }) => {
 
                     <div className="flex items-center space-x-6 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
-                        <img
-                          src={getSportsbookLogo(boost.sportsbook)}
-                          alt={boost.sportsbook}
-                          className="w-5 h-5"
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                        />
+                        <div className="w-5 h-5 bg-white/90 border border-gray-200 rounded flex items-center justify-center overflow-hidden">
+                          <img
+                            src={getSportsbookLogo(boost.sportsbook)}
+                            alt={boost.sportsbook}
+                            className="w-4 h-4 object-contain"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        </div>
                         <span className="font-medium">{boost.sportsbook}</span>
                       </div>
-                      <div>Max Stake: ${boost.maxStake}</div>
-                      <div className={`font-medium ${getTimeRemainingColor(boost.timeRemaining)}`}>
-                        Expires in {formatTimeRemaining(boost.timeRemaining)}
+                      <div className="flex items-center space-x-1">
+                        <i className="fas fa-coins text-yellow-600"></i>
+                        <span>Max Stake: ${boost.maxStake}</span>
+                      </div>
+                      <div className={`font-medium flex items-center space-x-1 ${getTimeRemainingColor(boost.timeRemaining)}`}>
+                        <i className="fas fa-hourglass-half"></i>
+                        <span>Expires in {formatTimeRemaining(boost.timeRemaining)}</span>
                       </div>
                     </div>
                   </div>
@@ -420,9 +433,12 @@ const BoostsView = ({ gameLines = [], teams = [] }) => {
       {/* Bottom info */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-8">
         <div className="flex items-start space-x-3">
-          <i className="fas fa-info-circle text-blue-500 mt-1"></i>
+          <i className="fas fa-lightbulb text-blue-500 mt-1"></i>
           <div>
-            <h4 className="font-bold text-blue-800 mb-1">🚀 Pro Tip: Boost Hunting Strategy</h4>
+            <h4 className="font-bold text-blue-800 mb-1 flex items-center">
+              <i className="fas fa-rocket mr-2"></i>
+              Pro Tip: Boost Hunting Strategy
+            </h4>
             <p className="text-blue-700 text-sm">
               Focus on boosts with 10%+ EV and reasonable maximum stakes. Sportsbooks often offer these 
               as loss leaders to attract customers, creating genuine value opportunities for smart bettors.
