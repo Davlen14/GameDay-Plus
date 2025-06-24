@@ -241,50 +241,41 @@ const GameStatsHeader = ({
         </div>
 
         {/* Game Details */}
-        <div className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             {game.start_date && (
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
-                <p className="text-sm text-gray-500 font-medium mb-1">Date</p>
-                <p className="font-bold text-gray-800">
+              <div>
+                <p className="text-sm text-gray-500">Date</p>
+                <p className="font-medium">
                   {new Date(game.start_date).toLocaleDateString()}
                 </p>
               </div>
             )}
             
-            {game.venue && (
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                <p className="text-sm text-blue-600 font-medium mb-1">Venue</p>
-                <p className="font-bold text-blue-800 text-sm">
-                  {game.venue}
-                </p>
-              </div>
-            )}
-
             {game.attendance && (
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                <p className="text-sm text-green-600 font-medium mb-1">Attendance</p>
-                <p className="font-bold text-green-800">
+              <div>
+                <p className="text-sm text-gray-500">Attendance</p>
+                <p className="font-medium">
                   {game.attendance.toLocaleString()}
                 </p>
               </div>
             )}
 
-            {game.excitement_index ? (
-              <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
-                <p className="text-sm text-red-600 font-medium mb-1">Excitement</p>
-                <p className="font-bold text-red-800">
+            {game.excitement_index && (
+              <div>
+                <p className="text-sm text-gray-500">Excitement</p>
+                <p className="font-medium">
                   {(game.excitement_index * 10).toFixed(1)}/10
                 </p>
               </div>
-            ) : (
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-                <p className="text-sm text-purple-600 font-medium mb-1">Season Type</p>
-                <p className="font-bold text-purple-800 capitalize">
-                  {game.season_type || 'Regular'}
-                </p>
-              </div>
             )}
+
+            <div>
+              <p className="text-sm text-gray-500">Season Type</p>
+              <p className="font-medium capitalize">
+                {game.season_type || 'Regular'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
