@@ -1124,8 +1124,10 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
       <GameSimulationModal
         isOpen={showSimulationModal}
         onClose={() => setShowSimulationModal(false)}
-        homeTeam={homeData}
-        awayTeam={awayData}
+        homeTeam={homeTeam}
+        awayTeam={awayTeam}
+        homeData={homeData}
+        awayData={awayData}
         plays={winProbData}
         drives={drives}
         winProbabilityData={winProbData}
