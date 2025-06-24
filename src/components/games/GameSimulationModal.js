@@ -28,10 +28,10 @@ const GameSimulationModal = ({
 
   useEffect(() => {
     let interval;
-    if (isPlaying && currentPlayIndex < plays.length - 1) {
+    if (isPlaying && plays && currentPlayIndex < plays.length - 1) {
       interval = setInterval(() => {
         setCurrentPlayIndex(prev => {
-          if (prev >= plays.length - 1) {
+          if (!plays || prev >= plays.length - 1) {
             setIsPlaying(false);
             return prev;
           }
@@ -40,10 +40,10 @@ const GameSimulationModal = ({
       }, 2000 / playbackSpeed);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, currentPlayIndex, plays.length, playbackSpeed]);
+  }, [isPlaying, currentPlayIndex, plays, playbackSpeed]);
 
-  const currentPlay = plays[currentPlayIndex];
-  const currentWinProb = winProbabilityData[currentPlayIndex];
+  const currentPlay = plays && plays.length > 0 ? plays[currentPlayIndex] : null;
+  const currentWinProb = winProbabilityData && winProbabilityData.length > 0 ? winProbabilityData[currentPlayIndex] : null;
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -57,7 +57,7 @@ const GameSimulationModal = ({
   };
 
   const handleNext = () => {
-    if (currentPlayIndex < plays.length - 1) {
+    if (plays && currentPlayIndex < plays.length - 1) {
       setCurrentPlayIndex(currentPlayIndex + 1);
       setIsPlaying(false);
     }
@@ -105,7 +105,7 @@ const GameSimulationModal = ({
           <div className="flex items-center space-x-4">
             <h2 className="text-2xl font-bold text-white">Game Simulation</h2>
             <div className="flex items-center space-x-2 text-gray-300">
-              <span className="text-sm">Play {currentPlayIndex + 1} of {plays.length}</span>
+              <span className="text-sm">Play {currentPlayIndex + 1} of {plays ? plays.length : 0}</span>
             </div>
           </div>
           <button
@@ -165,7 +165,7 @@ const GameSimulationModal = ({
                 {/* Next Button */}
                 <button
                   onClick={handleNext}
-                  disabled={currentPlayIndex === plays.length - 1}
+                  disabled={!plays || currentPlayIndex === plays.length - 1}
                   className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +197,7 @@ const GameSimulationModal = ({
                 <div className="w-full bg-gray-700 rounded-full h-2">
                   <div 
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${((currentPlayIndex + 1) / plays.length) * 100}%` }}
+                    style={{ width: `${plays && plays.length > 0 ? ((currentPlayIndex + 1) / plays.length) * 100 : 0}%` }}
                   ></div>
                 </div>
               </div>
@@ -214,9 +214,9 @@ const GameSimulationModal = ({
               {currentPlay && (
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{getPlayTypeIcon(currentPlay.type)}</span>
+                    <span className="text-2xl">{getPlayTypeIcon(currentPlay.playType || currentPlay.type)}</span>
                     <div>
-                      <div className="text-white font-medium">{currentPlay.type || 'Play'}</div>
+                      <div className="text-white font-medium">{currentPlay.playType || currentPlay.type || 'Play'}</div>
                       <div className="text-gray-400 text-sm">
                         {currentPlay.period && `Q${currentPlay.period}`} {formatTime(currentPlay.clock)}
                       </div>
@@ -228,9 +228,9 @@ const GameSimulationModal = ({
                     <div>{currentPlay.yardLine && `${currentPlay.yardLine}`}</div>
                   </div>
                   
-                  {currentPlay.text && (
+                  {(currentPlay.playText || currentPlay.text) && (
                     <div className="text-gray-300 text-sm bg-gray-800 p-3 rounded">
-                      {currentPlay.text}
+                      {currentPlay.playText || currentPlay.text}
                     </div>
                   )}
                 </div>
@@ -244,21 +244,21 @@ const GameSimulationModal = ({
               {currentWinProb && (
                 <div className="mb-4">
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-400">{awayTeam?.school || 'Away'}</span>
-                    <span className="text-gray-400">{homeTeam?.school || 'Home'}</span>
+                    <span className="text-gray-400">{awayTeam?.name || awayTeam?.school || 'Away'}</span>
+                    <span className="text-gray-400">{homeTeam?.name || homeTeam?.school || 'Home'}</span>
                   </div>
                   <div className="flex h-8 bg-gray-700 rounded overflow-hidden">
                     <div 
                       className="bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
-                      style={{ width: `${(1 - (currentWinProb.homeWinPercentage || 0.5)) * 100}%` }}
+                      style={{ width: `${(1 - (currentWinProb.homeWinProbability || 0.5)) * 100}%` }}
                     >
-                      {Math.round((1 - (currentWinProb.homeWinPercentage || 0.5)) * 100)}%
+                      {Math.round((1 - (currentWinProb.homeWinProbability || 0.5)) * 100)}%
                     </div>
                     <div 
                       className="bg-red-500 flex items-center justify-center text-white text-xs font-medium"
-                      style={{ width: `${(currentWinProb.homeWinPercentage || 0.5) * 100}%` }}
+                      style={{ width: `${(currentWinProb.homeWinProbability || 0.5) * 100}%` }}
                     >
-                      {Math.round((currentWinProb.homeWinPercentage || 0.5) * 100)}%
+                      {Math.round((currentWinProb.homeWinProbability || 0.5) * 100)}%
                     </div>
                   </div>
                 </div>
@@ -266,12 +266,15 @@ const GameSimulationModal = ({
 
               {/* Mini Win Probability Chart */}
               <div className="h-64 bg-gray-800 rounded p-2">
-                {winProbabilityData.length > 0 && (
+                {winProbabilityData && winProbabilityData.length > 0 && (
                   <WinProbabilityChart 
-                    data={winProbabilityData.slice(0, currentPlayIndex + 1)}
-                    homeTeam={homeTeam}
-                    awayTeam={awayTeam}
-                    currentPlayIndex={currentPlayIndex}
+                    winProbData={winProbabilityData.slice(0, currentPlayIndex + 1)}
+                    homeData={homeTeam}
+                    awayData={awayTeam}
+                    selectedPlay={currentPlay}
+                    setSelectedPlay={() => {}}
+                    setSimulationPlay={() => {}}
+                    setShowSimulationModal={() => {}}
                   />
                 )}
               </div>
@@ -281,14 +284,14 @@ const GameSimulationModal = ({
             <div className="p-6 border-t border-gray-700">
               <div className="flex justify-between items-center">
                 <div className="text-center">
-                  <div className="text-gray-400 text-sm">{awayTeam?.school || 'Away'}</div>
+                  <div className="text-gray-400 text-sm">{awayTeam?.name || awayTeam?.school || 'Away'}</div>
                   <div className="text-2xl font-bold text-white">
                     {currentPlay?.awayScore || 0}
                   </div>
                 </div>
                 <div className="text-gray-500">vs</div>
                 <div className="text-center">
-                  <div className="text-gray-400 text-sm">{homeTeam?.school || 'Home'}</div>
+                  <div className="text-gray-400 text-sm">{homeTeam?.name || homeTeam?.school || 'Home'}</div>
                   <div className="text-2xl font-bold text-white">
                     {currentPlay?.homeScore || 0}
                   </div>
