@@ -449,11 +449,59 @@ class MatchupPredictor {
         predictionDebugger.log('CACHE', 'Stored comprehensive data in cache', 'success');
       }
 
-      predictionDebugger.log('METRICS', 'Calculating enhanced team metrics', 'info');
+      predictionDebugger.log('METRICS', 'Calculating enhanced team metrics with analytics and drive data', 'info');
 
-      // Calculate enhanced metrics with GraphQL data
-      const homeMetrics = this.calculateEnhancedTeamMetrics(homeTeam, homeHistory, homeTeamId);
-      const awayMetrics = this.calculateEnhancedTeamMetrics(awayTeam, awayHistory, awayTeamId);
+      // Get advanced analytics and drive data for both teams
+      const [homeAnalytics, awayAnalytics, homeDrives, awayDrives] = await Promise.all([
+        analyticsService.getTeamMetrics(homeTeam.school, season).catch(error => {
+          predictionDebugger.trackApiCall('analyticsService', 'getTeamMetrics', { team: homeTeam.school, season }, null, error);
+          return null;
+        }),
+        analyticsService.getTeamMetrics(awayTeam.school, season).catch(error => {
+          predictionDebugger.trackApiCall('analyticsService', 'getTeamMetrics', { team: awayTeam.school, season }, null, error);
+          return null;
+        }),
+        driveService.getTeamDrives(homeTeam.school, season).catch(error => {
+          predictionDebugger.trackApiCall('driveService', 'getTeamDrives', { team: homeTeam.school, season }, null, error);
+          return null;
+        }),
+        driveService.getTeamDrives(awayTeam.school, season).catch(error => {
+          predictionDebugger.trackApiCall('driveService', 'getTeamDrives', { team: awayTeam.school, season }, null, error);
+          return null;
+        })
+      ]);
+
+      // Track successful analytics and drive data fetches
+      if (homeAnalytics) {
+        predictionDebugger.trackApiCall('analyticsService', 'getTeamMetrics', { team: homeTeam.school, season }, homeAnalytics);
+        predictionDebugger.log('ANALYTICS', `Loaded analytics data for ${homeTeam.school}`, 'success', {
+          ppaCount: homeAnalytics.ppa?.length || 0,
+          spRatings: homeAnalytics.spRatings?.length || 0,
+          advancedStats: homeAnalytics.advancedStats?.length || 0,
+          eloRatings: homeAnalytics.eloRatings?.length || 0
+        });
+      }
+      if (awayAnalytics) {
+        predictionDebugger.trackApiCall('analyticsService', 'getTeamMetrics', { team: awayTeam.school, season }, awayAnalytics);
+        predictionDebugger.log('ANALYTICS', `Loaded analytics data for ${awayTeam.school}`, 'success', {
+          ppaCount: awayAnalytics.ppa?.length || 0,
+          spRatings: awayAnalytics.spRatings?.length || 0,
+          advancedStats: awayAnalytics.advancedStats?.length || 0,
+          eloRatings: awayAnalytics.eloRatings?.length || 0
+        });
+      }
+      if (homeDrives) {
+        predictionDebugger.trackApiCall('driveService', 'getTeamDrives', { team: homeTeam.school, season }, homeDrives);
+        predictionDebugger.log('DRIVES', `Loaded ${homeDrives.length} drives for ${homeTeam.school}`, 'success');
+      }
+      if (awayDrives) {
+        predictionDebugger.trackApiCall('driveService', 'getTeamDrives', { team: awayTeam.school, season }, awayDrives);
+        predictionDebugger.log('DRIVES', `Loaded ${awayDrives.length} drives for ${awayTeam.school}`, 'success');
+      }
+
+      // Calculate enhanced metrics with GraphQL data AND analytics/drive data
+      const homeMetrics = this.calculateEnhancedTeamMetrics(homeTeam, homeHistory, homeTeamId, homeAnalytics, homeDrives);
+      const awayMetrics = this.calculateEnhancedTeamMetrics(awayTeam, awayHistory, awayTeamId, awayAnalytics, awayDrives);
 
       predictionDebugger.log('METRICS', 'Team metrics calculated successfully', 'success', {
         homeMetrics: {
@@ -970,7 +1018,77 @@ class MatchupPredictor {
       spread: basePrediction.spread
     });
     
-    // Enhanced adjustments using GraphQL data
+    // Enhanced adjustments using GraphQL data and analytics
+    
+    // PPA (Predicted Points Added) - THE MOST PREDICTIVE METRIC
+    if (homeMetrics.ppaOffense !== undefined && awayMetrics.ppaOffense !== undefined &&
+        homeMetrics.ppaDefense !== undefined && awayMetrics.ppaDefense !== undefined) {
+      
+      // Calculate net PPA advantage
+      const homeNetPPA = homeMetrics.ppaOffense - awayMetrics.ppaDefense;
+      const awayNetPPA = awayMetrics.ppaOffense - homeMetrics.ppaDefense;
+      
+      // PPA directly correlates to scoring - this is the key insight from Ohio State vs Oregon analysis
+      const ppaScoreAdjustment = 0.85; // PPA has very high predictive value
+      homeScore += homeNetPPA * ppaScoreAdjustment;
+      awayScore += awayNetPPA * ppaScoreAdjustment;
+      
+      predictionDebugger.log('PPA_ADJUSTMENT', 'Applied PPA (most predictive metric)', 'info', {
+        homeNetPPA,
+        awayNetPPA,
+        homeOffensePPA: homeMetrics.ppaOffense,
+        homeDefensePPA: homeMetrics.ppaDefense,
+        awayOffensePPA: awayMetrics.ppaOffense,
+        awayDefensePPA: awayMetrics.ppaDefense,
+        homeAdjustment: homeNetPPA * ppaScoreAdjustment,
+        awayAdjustment: awayNetPPA * ppaScoreAdjustment
+      });
+    }
+
+    // Drive Efficiency Impact - Critical for close games
+    if (homeMetrics.driveEfficiency !== null && awayMetrics.driveEfficiency !== null) {
+      const driveEfficiencyDiff = homeMetrics.driveEfficiency - awayMetrics.driveEfficiency;
+      const driveAdjustment = driveEfficiencyDiff * 12; // Drive efficiency strongly correlates to scoring
+      homeScore += driveAdjustment;
+      awayScore -= driveAdjustment;
+      
+      predictionDebugger.log('DRIVE_EFFICIENCY', 'Applied drive efficiency adjustment', 'info', {
+        homeDriveEff: homeMetrics.driveEfficiency,
+        awayDriveEff: awayMetrics.driveEfficiency,
+        driveEfficiencyDiff,
+        driveAdjustment
+      });
+    }
+
+    // Scoring Drive Rate - More granular than just drive efficiency
+    if (homeMetrics.scoringDriveRate !== null && awayMetrics.scoringDriveRate !== null) {
+      const scoringRateDiff = homeMetrics.scoringDriveRate - awayMetrics.scoringDriveRate;
+      const scoringAdjustment = scoringRateDiff * 8; // Direct impact on scoring potential
+      homeScore += scoringAdjustment;
+      awayScore -= scoringAdjustment;
+      
+      predictionDebugger.log('SCORING_DRIVES', 'Applied scoring drive rate adjustment', 'info', {
+        homeScoringRate: homeMetrics.scoringDriveRate,
+        awayScoringRate: awayMetrics.scoringDriveRate,
+        scoringRateDiff,
+        scoringAdjustment
+      });
+    }
+
+    // Red Zone Conversion Rate - Critical for finishing drives
+    if (homeMetrics.redZoneConversionRate !== null && awayMetrics.redZoneConversionRate !== null) {
+      const redZoneDiff = homeMetrics.redZoneConversionRate - awayMetrics.redZoneConversionRate;
+      const redZoneAdjustment = redZoneDiff * 6; // Red zone efficiency impact
+      homeScore += redZoneAdjustment;
+      awayScore -= redZoneAdjustment;
+      
+      predictionDebugger.log('RED_ZONE', 'Applied red zone conversion adjustment', 'info', {
+        homeRedZone: homeMetrics.redZoneConversionRate,
+        awayRedZone: awayMetrics.redZoneConversionRate,
+        redZoneDiff,
+        redZoneAdjustment
+      });
+    }
     
     // ELO Rating adjustments (more accurate than SP+ alone)
     if (homeMetrics.eloRating && awayMetrics.eloRating) {
@@ -1178,16 +1296,79 @@ class MatchupPredictor {
     // Start with base probability
     let prob = this.calculateWinProbability(homeScore, awayScore, homeMetrics, awayMetrics);
     
+    predictionDebugger.log('WIN_PROB_BASE', 'Base win probability calculated', 'info', {
+      baseProb: (prob * 100).toFixed(1) + '%',
+      homeScore,
+      awayScore
+    });
+    
+    // PPA-based probability adjustment (most predictive)
+    if (homeMetrics.ppaOffense !== undefined && awayMetrics.ppaOffense !== undefined &&
+        homeMetrics.ppaDefense !== undefined && awayMetrics.ppaDefense !== undefined) {
+      
+      const homeNetPPA = homeMetrics.ppaOffense - awayMetrics.ppaDefense;
+      const awayNetPPA = awayMetrics.ppaOffense - homeMetrics.ppaDefense;
+      const netPPADiff = homeNetPPA - awayNetPPA;
+      
+      // PPA has strong correlation with win probability
+      const ppaWinAdjustment = netPPADiff * 0.08; // PPA impact on win probability
+      prob += ppaWinAdjustment;
+      
+      predictionDebugger.log('WIN_PROB_PPA', 'Applied PPA adjustment to win probability', 'info', {
+        netPPADiff,
+        ppaWinAdjustment,
+        adjustedProb: ((prob + ppaWinAdjustment) * 100).toFixed(1) + '%'
+      });
+    }
+
+    // Drive efficiency impact on win probability
+    if (homeMetrics.driveEfficiency !== null && awayMetrics.driveEfficiency !== null) {
+      const driveEffDiff = homeMetrics.driveEfficiency - awayMetrics.driveEfficiency;
+      const driveWinAdj = driveEffDiff * 0.25; // Drive efficiency impact
+      prob += driveWinAdj;
+      
+      predictionDebugger.log('WIN_PROB_DRIVES', 'Applied drive efficiency to win probability', 'info', {
+        driveEffDiff,
+        driveWinAdj,
+        homeEff: homeMetrics.driveEfficiency,
+        awayEff: awayMetrics.driveEfficiency
+      });
+    }
+
+    // Scoring drive rate impact
+    if (homeMetrics.scoringDriveRate !== null && awayMetrics.scoringDriveRate !== null) {
+      const scoringRateDiff = homeMetrics.scoringDriveRate - awayMetrics.scoringDriveRate;
+      const scoringWinAdj = scoringRateDiff * 0.20;
+      prob += scoringWinAdj;
+      
+      predictionDebugger.log('WIN_PROB_SCORING', 'Applied scoring rate to win probability', 'info', {
+        scoringRateDiff,
+        scoringWinAdj
+      });
+    }
+    
     // ELO rating adjustment
     if (homeMetrics.eloRating && awayMetrics.eloRating) {
       const eloAdj = (homeMetrics.eloRating - awayMetrics.eloRating) / 400; // ELO scale
       prob += eloAdj * 0.05;
+      
+      predictionDebugger.log('WIN_PROB_ELO', 'Applied ELO adjustment', 'info', {
+        eloAdj,
+        homeElo: homeMetrics.eloRating,
+        awayElo: awayMetrics.eloRating
+      });
     }
     
     // Talent composite adjustment
     if (homeMetrics.talentComposite && awayMetrics.talentComposite) {
       const talentAdj = (homeMetrics.talentComposite - awayMetrics.talentComposite) / 100;
       prob += talentAdj * 0.03;
+      
+      predictionDebugger.log('WIN_PROB_TALENT', 'Applied talent adjustment', 'info', {
+        talentAdj,
+        homeTalent: homeMetrics.talentComposite,
+        awayTalent: awayMetrics.talentComposite
+      });
     }
     
     // Market efficiency check
@@ -1197,12 +1378,28 @@ class MatchupPredictor {
       
       // If we're very different from market, moderate slightly
       if (diff > 0.2) {
+        const oldProb = prob;
         prob = prob * 0.8 + marketProb * 0.2; // Blend with market
+        
+        predictionDebugger.log('WIN_PROB_MARKET', 'Applied market efficiency adjustment', 'warning', {
+          modelProb: (oldProb * 100).toFixed(1) + '%',
+          marketProb: (marketProb * 100).toFixed(1) + '%',
+          finalProb: (prob * 100).toFixed(1) + '%',
+          difference: diff
+        });
       }
     }
     
     // Bound probability
-    return Math.max(0.02, Math.min(0.98, prob));
+    const finalProb = Math.max(0.02, Math.min(0.98, prob));
+    
+    predictionDebugger.log('WIN_PROB_FINAL', 'Final enhanced win probability', 'success', {
+      finalProb: (finalProb * 100).toFixed(1) + '%',
+      homeScore,
+      awayScore
+    });
+    
+    return finalProb;
   }
 
   /**
@@ -2383,9 +2580,15 @@ class MatchupPredictor {
   }
 
   /**
-   * Enhanced team metrics calculation with GraphQL data and REST statistics
+   * Enhanced team metrics calculation with GraphQL data, REST statistics, analytics, and drive data
    */
-  async calculateEnhancedTeamMetrics(team, history, teamId) {
+  async calculateEnhancedTeamMetrics(team, history, teamId, analyticsData = null, driveData = null) {
+    predictionDebugger.log('ENHANCED_METRICS', `Calculating enhanced metrics for ${team.school}`, 'info', {
+      hasAnalytics: !!analyticsData,
+      hasDrives: !!driveData,
+      historySize: history?.length || 0
+    });
+
     // Start with comprehensive base metrics
     const baseMetrics = await this.calculateTeamMetrics(team, history);
     
@@ -2393,31 +2596,42 @@ class MatchupPredictor {
       // Get comprehensive metrics from your new service
       const comprehensiveMetrics = await advancedDataService.getComprehensiveMetrics(team.school, 2024);
       
+      // Initialize enhanced metrics with base metrics
       const enhancedMetrics = {
         ...baseMetrics,
         
-        // PPA Metrics (MOST IMPORTANT)
-        ppa: comprehensiveMetrics.ppa,
-        ppaOffense: comprehensiveMetrics.ppa.offense,
-        ppaDefense: comprehensiveMetrics.ppa.defense,
+        // PPA Metrics (MOST IMPORTANT) - from analyticsService if available
+        ppa: analyticsData?.ppa?.[0] || comprehensiveMetrics.ppa,
+        ppaOffense: analyticsData?.ppa?.[0]?.offense || comprehensiveMetrics.ppa.offense,
+        ppaDefense: analyticsData?.ppa?.[0]?.defense || comprehensiveMetrics.ppa.defense,
         
         // Success Rate Metrics (CRITICAL FOR CLOSE GAMES)
         successRate: comprehensiveMetrics.successRate,
         offensiveSuccessRate: comprehensiveMetrics.successRate.offense,
         defensiveSuccessRate: comprehensiveMetrics.successRate.defense,
         
-        // Advanced Stats
-        explosiveness: comprehensiveMetrics.advanced.explosiveness,
-        havocRate: comprehensiveMetrics.advanced.havoc,
-        stuffRate: comprehensiveMetrics.advanced.stuffRate,
+        // Advanced Stats - enhanced with analyticsService data
+        explosiveness: analyticsData?.advancedStats?.[0]?.explosiveness || comprehensiveMetrics.advanced.explosiveness,
+        havocRate: analyticsData?.advancedStats?.[0]?.havoc || comprehensiveMetrics.advanced.havoc,
+        stuffRate: analyticsData?.advancedStats?.[0]?.stuffRate || comprehensiveMetrics.advanced.stuffRate,
+        
+        // SP Ratings - from analyticsService if available
+        spRating: analyticsData?.spRatings?.[0]?.rating || comprehensiveMetrics.ratings.sp.rating,
+        spOffense: analyticsData?.spRatings?.[0]?.offense || comprehensiveMetrics.ratings.sp.offense,
+        spDefense: analyticsData?.spRatings?.[0]?.defense || comprehensiveMetrics.ratings.sp.defense,
+        
+        // ELO Ratings - from analyticsService if available
+        eloRating: analyticsData?.eloRatings?.[0]?.elo || comprehensiveMetrics.ratings.elo.elo,
         
         // Betting Market Data
         impliedWinRate: comprehensiveMetrics.betting.impliedWinRate,
         averageSpread: comprehensiveMetrics.betting.averageSpread,
         
-        // Drive Efficiency
-        driveEfficiency: comprehensiveMetrics.drives.efficiency,
-        averageDriveYards: comprehensiveMetrics.drives.averageYards,
+        // Enhanced Drive Efficiency - from driveService if available
+        driveEfficiency: this.calculateDriveEfficiency(driveData) || comprehensiveMetrics.drives.efficiency,
+        averageDriveYards: this.calculateAverageDriveYards(driveData) || comprehensiveMetrics.drives.averageYards,
+        scoringDriveRate: this.calculateScoringDriveRate(driveData) || 0,
+        redZoneConversionRate: this.calculateRedZoneRate(driveData) || 0,
         
         // Red Zone Performance
         redZoneScoring: comprehensiveMetrics.redZone.scoring,
@@ -2427,24 +2641,130 @@ class MatchupPredictor {
         transferPortalImpact: comprehensiveMetrics.transfers.impact,
         
         // Enhanced Ratings
-        eloRating: comprehensiveMetrics.ratings.elo.elo,
-        spRating: comprehensiveMetrics.ratings.sp.rating,
         talentComposite: comprehensiveMetrics.ratings.talent.talent
       };
+
+      // Log the enhanced metrics for debugging
+      predictionDebugger.log('ENHANCED_METRICS', `Enhanced metrics calculated for ${team.school}`, 'success', {
+        ppaOffense: enhancedMetrics.ppaOffense,
+        spRating: enhancedMetrics.spRating,
+        eloRating: enhancedMetrics.eloRating,
+        driveEfficiency: enhancedMetrics.driveEfficiency,
+        scoringDriveRate: enhancedMetrics.scoringDriveRate,
+        dataSource: {
+          analyticsUsed: !!analyticsData,
+          drivesUsed: !!driveData,
+          comprehensiveUsed: true
+        }
+      });
 
       console.log(`✅ Enhanced metrics loaded for ${team.school}:`, {
         ppaOffense: enhancedMetrics.ppaOffense,
         successRate: enhancedMetrics.offensiveSuccessRate,
         explosiveness: enhancedMetrics.explosiveness,
-        marketImpliedWinRate: enhancedMetrics.impliedWinRate
+        marketImpliedWinRate: enhancedMetrics.impliedWinRate,
+        driveEfficiency: enhancedMetrics.driveEfficiency,
+        spRating: enhancedMetrics.spRating,
+        eloRating: enhancedMetrics.eloRating
       });
 
       return enhancedMetrics;
       
     } catch (error) {
+      predictionDebugger.error('ENHANCED_METRICS', `Could not load enhanced metrics for ${team.school}`, error);
       console.warn(`⚠️ Could not load enhanced metrics for ${team.school}:`, error.message);
-      return baseMetrics; // Fallback to base metrics
+      
+      // If we have analytics/drive data but comprehensive failed, use what we have
+      if (analyticsData || driveData) {
+        const fallbackMetrics = {
+          ...baseMetrics,
+          ppaOffense: analyticsData?.ppa?.[0]?.offense || 0,
+          ppaDefense: analyticsData?.ppa?.[0]?.defense || 0,
+          spRating: analyticsData?.spRatings?.[0]?.rating || baseMetrics.spRating,
+          eloRating: analyticsData?.eloRatings?.[0]?.elo || 1500,
+          driveEfficiency: this.calculateDriveEfficiency(driveData) || 0,
+          scoringDriveRate: this.calculateScoringDriveRate(driveData) || 0
+        };
+        
+        predictionDebugger.log('ENHANCED_METRICS', `Using fallback metrics with analytics/drive data for ${team.school}`, 'warning');
+        return fallbackMetrics;
+      }
+      
+      return baseMetrics; // Final fallback to base metrics
     }
+  }
+
+  /**
+   * Calculate drive efficiency from drive data
+   */
+  calculateDriveEfficiency(driveData) {
+    if (!driveData || !Array.isArray(driveData) || driveData.length === 0) {
+      return null;
+    }
+
+    const totalDrives = driveData.length;
+    const successfulDrives = driveData.filter(drive => 
+      drive.drive_result === 'TD' || 
+      drive.drive_result === 'FG' || 
+      drive.points > 0
+    ).length;
+
+    return totalDrives > 0 ? successfulDrives / totalDrives : 0;
+  }
+
+  /**
+   * Calculate average drive yards from drive data
+   */
+  calculateAverageDriveYards(driveData) {
+    if (!driveData || !Array.isArray(driveData) || driveData.length === 0) {
+      return null;
+    }
+
+    const totalYards = driveData.reduce((sum, drive) => sum + (drive.yards || 0), 0);
+    return driveData.length > 0 ? totalYards / driveData.length : 0;
+  }
+
+  /**
+   * Calculate scoring drive rate from drive data
+   */
+  calculateScoringDriveRate(driveData) {
+    if (!driveData || !Array.isArray(driveData) || driveData.length === 0) {
+      return null;
+    }
+
+    const totalDrives = driveData.length;
+    const scoringDrives = driveData.filter(drive => 
+      drive.drive_result === 'TD' || 
+      drive.drive_result === 'FG' ||
+      (drive.points && drive.points > 0)
+    ).length;
+
+    return totalDrives > 0 ? scoringDrives / totalDrives : 0;
+  }
+
+  /**
+   * Calculate red zone conversion rate from drive data
+   */
+  calculateRedZoneRate(driveData) {
+    if (!driveData || !Array.isArray(driveData) || driveData.length === 0) {
+      return null;
+    }
+
+    const redZoneDrives = driveData.filter(drive => 
+      drive.start_yardline && drive.start_yardline >= 80 // Red zone drives
+    );
+
+    if (redZoneDrives.length === 0) {
+      return null;
+    }
+
+    const redZoneScores = redZoneDrives.filter(drive => 
+      drive.drive_result === 'TD' || 
+      drive.drive_result === 'FG' ||
+      (drive.points && drive.points > 0)
+    ).length;
+
+    return redZoneScores / redZoneDrives.length;
   }
 
   /**

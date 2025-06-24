@@ -164,6 +164,57 @@ demonstrateDebuggingFeatures()
 3. Track fallback mechanism usage
 4. Identify data source reliability
 
+## 🔧 Analytics Service Integration
+
+The MatchupPredictor now fully integrates `analyticsService` and `driveService` for enhanced prediction accuracy:
+
+### Analytics Service Integration
+- **PPA (Predicted Points Added)**: The most predictive metric, directly incorporated into score calculations
+- **SP Ratings**: Enhanced team ratings from College Football Data API
+- **ELO Ratings**: Dynamic team strength ratings with game-by-game updates
+- **Advanced Stats**: Explosiveness, havoc rate, stuff rate, and other efficiency metrics
+
+### Drive Service Integration
+- **Drive Efficiency**: Percentage of drives that result in scores
+- **Scoring Drive Rate**: More granular scoring potential analysis
+- **Red Zone Conversion Rate**: Critical finishing ability metrics
+- **Average Drive Yards**: Field position and sustained drive analysis
+
+### Key Improvements
+1. **PPA Integration**: Direct correlation between PPA metrics and predicted scores (0.85x multiplier)
+2. **Drive Efficiency Impact**: 12-point scoring adjustment based on drive success rates
+3. **Enhanced Win Probability**: Incorporates PPA, drive efficiency, ELO, and talent metrics
+4. **Market Efficiency Detection**: Compares model predictions to betting market implied probabilities
+5. **Real-time API Tracking**: All analytics and drive service calls are logged via PredictionDebugger
+
+### Testing Analytics Integration
+```javascript
+import { testAnalyticsIntegration } from './tests/analyticsIntegrationTest';
+
+// Run comprehensive analytics integration test
+const result = await testAnalyticsIntegration();
+console.log('Analytics services used:', result.analyticsUsed);
+console.log('Enhanced metrics count:', result.enhancedMetricsCount);
+```
+
+### Debug Output Example
+```
+🔍 API Calls Made (Debug Report):
+----------------------------------
+✅ Made 4 calls to analytics/drive services:
+  • analyticsService.getTeamMetrics({"team":"Ohio State","season":2024}) - ✅ Success
+  • analyticsService.getTeamMetrics({"team":"Oregon","season":2024}) - ✅ Success  
+  • driveService.getTeamDrives({"team":"Ohio State","season":2024}) - ✅ Success
+  • driveService.getTeamDrives({"team":"Oregon","season":2024}) - ✅ Success
+
+🧮 Enhanced Prediction Factors:
+------------------------------
+  • ELO Rating Difference: +127.3
+  • PPA Net Advantage: +0.82
+  • Drive Efficiency Difference: +0.156
+  • Scoring Drive Rate Advantage: +0.089
+```
+
 ## 🎉 Ready to Use!
 
 The debugging system is now fully integrated and ready to help you:
