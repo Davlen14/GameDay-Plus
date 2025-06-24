@@ -1,6 +1,6 @@
 // utilities/MatchupPredictor.js
 
-import { gameService, teamService, rankingsService, bettingService, advancedDataService, analyticsService } from '../services';
+import { gameService, teamService, rankingsService, bettingService, advancedDataService, analyticsService, driveService } from '../services';
 import graphqlService from '../services/graphqlService';
 
 /**
@@ -541,7 +541,7 @@ class MatchupPredictor {
     }
 
     // Advanced metrics from game data
-    const strengthOfSchedule = this.calculateSOS(allGames);
+    const strengthOfSchedule = await this.calculateSOS(team.school);
     const homeFieldAdvantage = this.calculateHomeFieldAdvantage(allGames);
     
     // Enhanced efficiency metrics using season stats when available
@@ -2234,126 +2234,65 @@ class MatchupPredictor {
    * Enhanced team metrics calculation with GraphQL data and REST statistics
    */
   async calculateEnhancedTeamMetrics(team, history, teamId) {
-    // Start with comprehensive base metrics (now includes REST season stats)
+    // Start with comprehensive base metrics
     const baseMetrics = await this.calculateTeamMetrics(team, history);
     
-    // Add enhanced metrics from GraphQL data and additional REST endpoints
-    let enhancedData = {};
-    
     try {
-      // Try to get enhanced ratings via GraphQL
-      if (this.graphqlAvailable) {
-        console.log(`🚀 [API DEBUG] Fetching enhanced ratings for ${team.school}...`);
-        try {
-          // Use improved GraphQL function for enhanced ratings
-          const enhancedRatings = await graphqlService.getEnhancedTeamRatings(team.school, 2024);
-          
-          if (enhancedRatings) {
-            enhancedData = {
-              ...enhancedData,
-              talentComposite: enhancedRatings.talent || null,
-              recruitingRank: enhancedRatings.recruitingRank || null,
-              recruitingPoints: enhancedRatings.recruitingPoints || null,
-              overall: enhancedRatings.overall || null,
-              offense: enhancedRatings.offense || null,
-              defense: enhancedRatings.defense || null,
-              specialTeams: enhancedRatings.specialTeams || null,
-              fpi: enhancedRatings.fpi || null,
-              fpiOffense: enhancedRatings.fpiOffense || null,
-              fpiDefense: enhancedRatings.fpiDefense || null,
-              elo: enhancedRatings.elo || null,
-              srs: enhancedRatings.srs || null,
-              avgPointsScored: enhancedRatings.avgPointsScored || null,
-              avgPointsAllowed: enhancedRatings.avgPointsAllowed || null,
-              gamesPlayed: enhancedRatings.gamesPlayed || 0
-            };
-            console.log(`✅ [API DEBUG] Enhanced ratings loaded for ${team.school} via improved function`);
-          }
-        } catch (graphqlError) {
-          console.warn(`⚠️ [API DEBUG] GraphQL enhanced ratings failed for ${team.school}:`, graphqlError.message);
-        }
-      }
+      // Get comprehensive metrics from your new service
+      const comprehensiveMetrics = await advancedDataService.getComprehensiveMetrics(team.school, 2024);
       
-      // Get talent data from REST API (more reliable)
-      try {
-        console.log(`📊 [API DEBUG] Loading talent data via REST for ${team.school}...`);
-        const talentData = await teamService.getTalentRatings(2024);
-        const teamTalent = talentData.find(t => t.team === team.school);
-        if (teamTalent) {
-          enhancedData.talentComposite = teamTalent.talent;
-          console.log(`✅ [API DEBUG] Talent rating loaded: ${teamTalent.talent}`);
-        }
-      } catch (error) {
-        console.warn(`⚠️ [API DEBUG] Could not load talent data for ${team.school}:`, error.message);
-      }
-      
-      // Get advanced team stats via REST
-      try {
-        console.log(`📊 [API DEBUG] Loading advanced stats via REST for ${team.school}...`);
-        const advancedStats = await teamService.getAdvancedTeamStats(2024, team.school);
-        if (advancedStats && advancedStats.length > 0) {
-          const stats = advancedStats[0];
-          enhancedData = {
-            ...enhancedData,
-            offensiveSuccess: stats.offense?.successRate || null,
-            defensiveSuccess: stats.defense?.successRate || null,
-            explosiveness: stats.offense?.explosiveness || null,
-            defensiveExplosiveness: stats.defense?.explosiveness || null,
-            ppaOffense: stats.offense?.ppa || null,
-            ppaDefense: stats.defense?.ppa || null
-          };
-          console.log(`✅ [API DEBUG] Advanced stats loaded for ${team.school}`);
-        }
-      } catch (error) {
-        console.warn(`⚠️ [API DEBUG] Could not load advanced stats for ${team.school}:`, error.message);
-      }
+      const enhancedMetrics = {
+        ...baseMetrics,
+        
+        // PPA Metrics (MOST IMPORTANT)
+        ppa: comprehensiveMetrics.ppa,
+        ppaOffense: comprehensiveMetrics.ppa.offense,
+        ppaDefense: comprehensiveMetrics.ppa.defense,
+        
+        // Success Rate Metrics (CRITICAL FOR CLOSE GAMES)
+        successRate: comprehensiveMetrics.successRate,
+        offensiveSuccessRate: comprehensiveMetrics.successRate.offense,
+        defensiveSuccessRate: comprehensiveMetrics.successRate.defense,
+        
+        // Advanced Stats
+        explosiveness: comprehensiveMetrics.advanced.explosiveness,
+        havocRate: comprehensiveMetrics.advanced.havoc,
+        stuffRate: comprehensiveMetrics.advanced.stuffRate,
+        
+        // Betting Market Data
+        impliedWinRate: comprehensiveMetrics.betting.impliedWinRate,
+        averageSpread: comprehensiveMetrics.betting.averageSpread,
+        
+        // Drive Efficiency
+        driveEfficiency: comprehensiveMetrics.drives.efficiency,
+        averageDriveYards: comprehensiveMetrics.drives.averageYards,
+        
+        // Red Zone Performance
+        redZoneScoring: comprehensiveMetrics.redZone.scoring,
+        redZoneDefense: comprehensiveMetrics.redZone.defense,
+        
+        // Transfer Portal Impact
+        transferPortalImpact: comprehensiveMetrics.transfers.impact,
+        
+        // Enhanced Ratings
+        eloRating: comprehensiveMetrics.ratings.elo.elo,
+        spRating: comprehensiveMetrics.ratings.sp.rating,
+        talentComposite: comprehensiveMetrics.ratings.talent.talent
+      };
+
+      console.log(`✅ Enhanced metrics loaded for ${team.school}:`, {
+        ppaOffense: enhancedMetrics.ppaOffense,
+        successRate: enhancedMetrics.offensiveSuccessRate,
+        explosiveness: enhancedMetrics.explosiveness,
+        marketImpliedWinRate: enhancedMetrics.impliedWinRate
+      });
+
+      return enhancedMetrics;
       
     } catch (error) {
-      console.warn(`⚠️ [API DEBUG] Error loading enhanced metrics for ${team.school}:`, error.message);
+      console.warn(`⚠️ Could not load enhanced metrics for ${team.school}:`, error.message);
+      return baseMetrics; // Fallback to base metrics
     }
-    
-    // Get cached data from comprehensive data if available
-    const teamData = this.comprehensiveData.get(teamId);
-    const eloData = this.eloRatings.get(team.school);
-    const bettingData = this.bettingData.get(team.school);
-    
-    const enhancedMetrics = {
-      ...baseMetrics,
-      
-      // Enhanced ratings (prefer fresh data over cached)
-      eloRating: eloData?.elo || baseMetrics.eloRating,
-      eloRanking: eloData?.ranking || null,
-      
-      // Betting insights
-      impliedWinRate: bettingData?.impliedWinRate || null,
-      avgClosingLine: bettingData?.avgClosingLine || null,
-      
-      // Advanced analytics from both GraphQL and REST
-      excitementIndex: teamData?.excitementIndex || 0,
-      talentComposite: enhancedData.talentComposite || teamData?.talentComposite || null,
-      transferPortalImpact: teamData?.transferPortalImpact || null,
-      
-      // Enhanced efficiency metrics from REST advanced stats
-      offensiveSuccess: enhancedData.offensiveSuccess || null,
-      defensiveSuccess: enhancedData.defensiveSuccess || null,
-      explosiveness: enhancedData.explosiveness || null,
-      ppaOffense: enhancedData.ppaOffense || null,
-      ppaDefense: enhancedData.ppaDefense || null,
-      
-      // Enhanced season stats (already included in base metrics)
-      yardsPerPlay: baseMetrics.seasonStats ? 
-        (baseMetrics.seasonStats.totalYards / Math.max(baseMetrics.seasonStats.plays || 1, 1)) : null,
-      timePossession: baseMetrics.seasonStats?.possessionTime || null
-    };
-
-    console.log(`✅ [API DEBUG] Enhanced metrics calculated for ${team.school}:`, {
-      talent: enhancedMetrics.talentComposite,
-      eloRating: enhancedMetrics.eloRating,
-      offensiveSuccess: enhancedMetrics.offensiveSuccess,
-      yardsPerPlay: enhancedMetrics.yardsPerPlay
-    });
-
-    return enhancedMetrics;
   }
 
   /**
@@ -2514,26 +2453,61 @@ class MatchupPredictor {
   }
 
   // Missing helper methods for calculateTeamMetrics
-  calculateSOS(games) {
-    // Calculate strength of schedule based on opponent performance
-    if (!games || games.length === 0) return 0.5;
-    
-    // Simple SOS calculation - average of opponents' win percentages
-    // In a real implementation, this would use opponent records
-    return 0.5 + (Math.random() - 0.5) * 0.3; // Mock calculation
+  async calculateSOS(team, year = 2024) {
+    try {
+      const games = await gameService.getGamesByTeam(team, year);
+      if (!games || games.length === 0) return 0.5;
+      
+      let totalOpponentWinPct = 0;
+      let validOpponents = 0;
+      
+      for (const game of games) {
+        const opponent = game.homeTeam === team ? game.awayTeam : game.homeTeam;
+        if (!opponent) continue;
+        
+        try {
+          // Get opponent's season record
+          const oppGames = await gameService.getGamesByTeam(opponent, year);
+          if (oppGames && oppGames.length > 0) {
+            const oppWins = oppGames.filter(g => {
+              const isOppHome = g.homeTeam === opponent;
+              const oppScore = isOppHome ? g.homePoints : g.awayPoints;
+              const otherScore = isOppHome ? g.awayPoints : g.homePoints;
+              return oppScore > otherScore;
+            }).length;
+            
+            totalOpponentWinPct += (oppWins / oppGames.length);
+            validOpponents++;
+          }
+        } catch (oppError) {
+          console.warn(`Could not get record for opponent ${opponent}`);
+        }
+      }
+      
+      return validOpponents > 0 ? totalOpponentWinPct / validOpponents : 0.5;
+    } catch (error) {
+      console.warn('SOS calculation failed:', error);
+      return 0.5;
+    }
   }
 
   calculateHomeFieldAdvantage(games) {
-    // Calculate home field advantage based on home vs away performance
     const homeGames = games.filter(g => g.isHome);
     const awayGames = games.filter(g => !g.isHome);
     
-    if (homeGames.length === 0 || awayGames.length === 0) return 3.2; // Default
+    if (homeGames.length === 0 || awayGames.length === 0) return 6.5; // INCREASED from 3.2
     
-    const homeAvg = this.calculateAverage(homeGames.map(g => g.pointsScored));
-    const awayAvg = this.calculateAverage(awayGames.map(g => g.pointsScored));
+    const homePointDiff = this.calculateAverage(
+      homeGames.map(g => g.pointsScored - g.pointsAllowed)
+    );
+    const awayPointDiff = this.calculateAverage(
+      awayGames.map(g => g.pointsScored - g.pointsAllowed)
+    );
     
-    return Math.max(1.0, Math.min(6.0, homeAvg - awayAvg + 3.2));
+    const hfa = homePointDiff - awayPointDiff;
+    
+    // Enhanced HFA range: 3.0 to 10.0 points (was 1.0 to 6.0)
+    return Math.max(3.0, Math.min(10.0, hfa + 6.5));
   }
 
   calculateOffensiveEfficiency(games) {
@@ -2759,6 +2733,77 @@ class MatchupPredictor {
     }
     
     return null;
+  }
+
+  /**
+   * Calculate multi-factor score using enhanced metrics
+   */
+  calculateMultiFactorScore(homeMetrics, awayMetrics) {
+    const factors = {
+      // PPA Impact (40% weight) - Most predictive
+      ppaImpact: (homeMetrics.ppaOffense - awayMetrics.ppaDefense) * 0.8,
+      
+      // Success Rate Impact (25% weight) - Critical for consistency  
+      successImpact: (homeMetrics.offensiveSuccessRate - awayMetrics.defensiveSuccessRate) * 0.6,
+      
+      // Explosiveness Impact (20% weight) - Big play potential
+      explosiveImpact: (homeMetrics.explosiveness - awayMetrics.explosiveness) * 0.5,
+      
+      // Traditional Metrics (10% weight) - SP+, ELO
+      traditionalImpact: (homeMetrics.spRating - awayMetrics.spRating) * 0.2,
+      
+      // Market Efficiency (5% weight) - Where books might be wrong
+      marketImpact: this.calculateMarketDisagreement(homeMetrics, awayMetrics)
+    };
+
+    const totalImpact = Object.values(factors).reduce((sum, val) => sum + (val || 0), 0);
+    
+    return { factors, totalImpact };
+  }
+
+  /**
+   * Calculate market disagreement for value betting opportunities
+   */
+  calculateMarketDisagreement(homeMetrics, awayMetrics) {
+    if (!homeMetrics.impliedWinRate || !awayMetrics.impliedWinRate) return 0;
+    
+    const marketHomeWinRate = homeMetrics.impliedWinRate;
+    const marketAwayWinRate = awayMetrics.impliedWinRate;
+    
+    // If market shows disagreement with our model's factors, there might be value
+    const modelFactorEdge = (homeMetrics.ppaOffense + homeMetrics.offensiveSuccessRate) - 
+                           (awayMetrics.ppaOffense + awayMetrics.offensiveSuccessRate);
+    
+    const marketFactorEdge = marketHomeWinRate - marketAwayWinRate;
+    
+    return Math.abs(modelFactorEdge - marketFactorEdge) * 0.3;
+  }
+
+  /**
+   * Test enhanced prediction with specific teams
+   */
+  async testEnhancedPrediction(homeTeam = "Ohio State", awayTeam = "Oregon") {
+    console.log(`🧪 Testing enhanced prediction: ${homeTeam} vs ${awayTeam}`);
+    
+    try {
+      const prediction = await this.predictMatchup(homeTeam, awayTeam, {
+        season: 2024,
+        week: 14,
+        neutralSite: false
+      });
+      
+      console.log('✅ Enhanced Prediction Test Results:');
+      console.log(`   Score: ${homeTeam} ${prediction.prediction.score.home} - ${awayTeam} ${prediction.prediction.score.away}`);
+      console.log(`   Spread: ${prediction.prediction.spread.toFixed(1)}`);
+      console.log(`   Total: ${prediction.prediction.total.toFixed(1)}`);
+      console.log(`   Confidence: ${(prediction.confidence * 100).toFixed(1)}%`);
+      console.log(`   Key Factors:`, prediction.prediction.factors);
+      
+      return prediction;
+    } catch (error) {
+      console.error('❌ Enhanced prediction test failed:', error);
+      return null;
+    }
   }
 }
 

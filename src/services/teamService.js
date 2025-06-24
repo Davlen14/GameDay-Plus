@@ -346,5 +346,83 @@ export const teamService = {
     if (team) params.team = team;
     if (seasonType) params.seasonType = seasonType;
     return await fetchCollegeFootballData('/rankings', params);
+  },
+
+  // ===== ENHANCED METHODS FOR ADVANCED PREDICTION =====
+
+  // GET /ppa/teams - PPA (Predicted Points Added) data
+  getTeamPPA: async (year = 2024, team = null) => {
+    const params = { year, excludeGarbageTime: true };
+    if (team) params.team = team;
+    
+    try {
+      return await fetchCollegeFootballData('/ppa/teams', params);
+    } catch (error) {
+      console.error('Error loading PPA data:', error);
+      return [];
+    }
+  },
+
+  // GET /stats/season/advanced - Advanced team statistics
+  getAdvancedTeamStats: async (year = 2024, team = null) => {
+    const params = { year, excludeGarbageTime: true };
+    if (team) params.team = team;
+    
+    try {
+      return await fetchCollegeFootballData('/stats/season/advanced', params);
+    } catch (error) {
+      console.error('Error loading advanced stats:', error);
+      return [];
+    }
+  },
+
+  // GET /ratings/sp - SP+ ratings
+  getSPRatings: async (year = 2024, team = null) => {
+    const params = { year };
+    if (team) params.team = team;
+    
+    try {
+      return await fetchCollegeFootballData('/ratings/sp', params);
+    } catch (error) {
+      console.error('Error loading SP+ ratings:', error);
+      return [];
+    }
+  },
+
+  // GET /ratings/elo - ELO ratings
+  getEloRatings: async (year = 2024, week = null, team = null) => {
+    const params = { year };
+    if (week) params.week = week;
+    if (team) params.team = team;
+    
+    try {
+      return await fetchCollegeFootballData('/ratings/elo', params);
+    } catch (error) {
+      console.error('Error loading ELO ratings:', error);
+      return [];
+    }
+  },
+
+  // GET /talent - Team talent composite ratings
+  getTalentRatings: async (year = 2024) => {
+    try {
+      return await fetchCollegeFootballData('/talent', { year });
+    } catch (error) {
+      console.error('Error loading talent ratings:', error);
+      return [];
+    }
+  },
+
+  // GET /recruiting/teams - Team recruiting rankings
+  getRecruitingRankings: async (year = 2024, team = null) => {
+    const params = { year };
+    if (team) params.team = team;
+    
+    try {
+      return await fetchCollegeFootballData('/recruiting/teams', params);
+    } catch (error) {
+      console.error('Error loading recruiting rankings:', error);
+      return [];
+    }
   }
 };
