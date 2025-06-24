@@ -44,6 +44,24 @@ const GameSimulationModal = ({
     return () => clearInterval(interval);
   }, [isPlaying, currentPlayIndex, plays, playbackSpeed]);
 
+  const currentPlay = plays && plays.length > 0 ? plays[currentPlayIndex] : null;
+  const currentWinProb = winProbabilityData && winProbabilityData.length > 0 ? winProbabilityData[currentPlayIndex] : null;
+
+  // Determine possession for logo display
+  const getPossessingTeam = () => {
+    if (!currentPlay) return null;
+    // Check various possession indicators
+    if (currentPlay.offense === homeTeam?.school || currentPlay.offense_team === homeTeam?.school) {
+      return 'home';
+    } else if (currentPlay.offense === awayTeam?.school || currentPlay.offense_team === awayTeam?.school) {
+      return 'away';
+    }
+    // Default based on play direction or other indicators
+    return null;
+  };
+
+  const possessingTeam = getPossessingTeam();
+
   // Calculate ball position and first down marker
   const getBallPosition = () => {
     if (!currentPlay || !currentPlay.yardLine) return 50;
@@ -88,9 +106,6 @@ const GameSimulationModal = ({
 
   const ballPosition = getBallPosition();
   const firstDownPosition = getFirstDownPosition();
-
-  const currentPlay = plays && plays.length > 0 ? plays[currentPlayIndex] : null;
-  const currentWinProb = winProbabilityData && winProbabilityData.length > 0 ? winProbabilityData[currentPlayIndex] : null;
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -141,19 +156,6 @@ const GameSimulationModal = ({
     }
   };
 
-  // Determine possession for logo display
-  const getPossessingTeam = () => {
-    if (!currentPlay) return null;
-    // Check various possession indicators
-    if (currentPlay.offense === homeTeam?.school || currentPlay.offense_team === homeTeam?.school) {
-      return 'home';
-    } else if (currentPlay.offense === awayTeam?.school || currentPlay.offense_team === awayTeam?.school) {
-      return 'away';
-    }
-    // Default based on play direction or other indicators
-    return null;
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -192,7 +194,7 @@ const GameSimulationModal = ({
                 homeTeam={homeTeam} 
                 awayTeam={awayTeam}
                 currentPlay={currentPlay}
-                possessingTeam={getPossessingTeam()}
+                possessingTeam={possessingTeam}
               />
               
               {/* Enhanced Field Overlay with Ball Position and First Down */}
