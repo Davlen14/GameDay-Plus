@@ -42,17 +42,17 @@ const WinProbabilityChart = ({
     );
   }
 
-  // Chart dimensions - maximize width usage
-  const leftMargin = 25;  // Minimal margin for Y-axis labels
-  const rightMargin = 995;  // Almost to the edge
-  const chartWidth = rightMargin - leftMargin;  // 970 units wide
+  // Chart dimensions - maximize width usage to the extreme
+  const leftMargin = 10;  // Almost no margin for Y-axis labels
+  const rightMargin = 998;  // Almost to the absolute edge
+  const chartWidth = rightMargin - leftMargin;  // 988 units wide
 
   return (
-    <div className="bg-white rounded-xl p-6 mb-8 border border-gray-200 shadow-sm">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">Win Probability Chart</h3>
+    <div className="bg-white mb-8 border border-gray-200 shadow-sm w-full">
+      <h3 className="text-xl font-semibold text-gray-900 mb-4 px-6 pt-6">Win Probability Chart</h3>
       
-      {/* Chart Container - removed padding to maximize space */}
-      <div className="relative h-80 bg-gray-50 rounded-lg mb-4 overflow-visible">
+      {/* Chart Container - ZERO padding, full width */}
+      <div className="relative h-80 bg-gray-50 overflow-visible w-full">
         <svg className="w-full h-full" viewBox="0 0 1000 400" preserveAspectRatio="xMidYMid meet">
           {/* Background Grid - Horizontal lines */}
           {[0, 25, 50, 75, 100].map(y => (
@@ -66,9 +66,9 @@ const WinProbabilityChart = ({
                 strokeWidth="1"
               />
               <text
-                x={leftMargin - 5}
+                x={leftMargin - 2}
                 y={355 - (y * 3)}
-                fontSize="11"
+                fontSize="10"
                 fill="#6b7280"
                 textAnchor="end"
                 dominantBaseline="middle"
@@ -221,7 +221,7 @@ const WinProbabilityChart = ({
         {hoveredPlay && (
           <div className="absolute pointer-events-none bg-white border-2 rounded-lg shadow-xl p-3 z-20 transform -translate-x-1/2 -translate-y-full transition-all duration-200"
                style={{ 
-                 left: `${2.5 + (97 * winProbData.indexOf(hoveredPlay)) / (winProbData.length - 1)}%`,
+                 left: `${1 + (98.8 * winProbData.indexOf(hoveredPlay)) / (winProbData.length - 1)}%`,
                  top: `${15 + (85 - (hoveredPlay.homeWinProbability * 75))}%`,
                  borderColor: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor,
                  maxWidth: '250px'
@@ -281,7 +281,7 @@ const WinProbabilityChart = ({
       </div>
 
       {/* Chart Legend */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-6 pb-4">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2">
             <div 
@@ -311,7 +311,7 @@ const WinProbabilityChart = ({
         </div>
       </div>
 
-      <p className="text-xs text-gray-500 mt-3 text-center">Hover points for details • Click to view on field • ⚡ indicates scoring plays</p>
+      <p className="text-xs text-gray-500 pb-6 px-6 text-center">Hover points for details • Click to view on field • ⚡ indicates scoring plays</p>
     </div>
   );
 };
