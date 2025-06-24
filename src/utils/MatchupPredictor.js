@@ -1562,41 +1562,52 @@ class MatchupPredictor {
     const weaknesses = [];
     const keyStats = [];
 
+    // Safely access metrics with fallbacks
+    const avgPointsScored = metrics.avgPointsScored || 0;
+    const avgPointsAllowed = metrics.avgPointsAllowed || 0;
+    const winPercentage = metrics.winPercentage || 0;
+    const offensiveEfficiency = metrics.offensiveEfficiency || 0;
+    const defensiveEfficiency = metrics.defensiveEfficiency || 0;
+    const redZoneScoring = metrics.redZoneScoring || 0;
+    const redZoneDefense = metrics.redZoneDefense || 0;
+    const turnoverMargin = metrics.turnoverMargin || 0;
+    const recentWinPct = metrics.recentWinPct || 0;
+
     // Identify strengths
-    if (metrics.offensiveEfficiency >= 0.6) strengths.push('Elite Offense');
-    else if (metrics.offensiveEfficiency >= 0.4) strengths.push('Strong Offense');
+    if (offensiveEfficiency >= 0.6) strengths.push('Elite Offense');
+    else if (offensiveEfficiency >= 0.4) strengths.push('Strong Offense');
     
-    if (metrics.defensiveEfficiency >= 0.6) strengths.push('Elite Defense');
-    else if (metrics.defensiveEfficiency >= 0.4) strengths.push('Strong Defense');
+    if (defensiveEfficiency >= 0.6) strengths.push('Elite Defense');
+    else if (defensiveEfficiency >= 0.4) strengths.push('Strong Defense');
     
-    if (metrics.redZoneScoring >= 0.7) strengths.push('Red Zone Efficiency');
-    if (metrics.turnoverMargin >= 0.5) strengths.push('Turnover Creation');
-    if (metrics.recentWinPct >= 0.8) strengths.push('Hot Streak');
+    if (redZoneScoring >= 0.7) strengths.push('Red Zone Efficiency');
+    if (turnoverMargin >= 0.5) strengths.push('Turnover Creation');
+    if (recentWinPct >= 0.8) strengths.push('Hot Streak');
 
     // Identify weaknesses
-    if (metrics.offensiveEfficiency <= 0.3) weaknesses.push('Struggling Offense');
-    if (metrics.defensiveEfficiency <= 0.3) weaknesses.push('Poor Defense');
-    if (metrics.redZoneDefense <= 0.4) weaknesses.push('Red Zone Defense');
-    if (metrics.turnoverMargin <= -0.5) weaknesses.push('Turnover Issues');
-    if (metrics.recentWinPct <= 0.3) weaknesses.push('Poor Recent Form');
+    if (offensiveEfficiency <= 0.3) weaknesses.push('Struggling Offense');
+    if (defensiveEfficiency <= 0.3) weaknesses.push('Poor Defense');
+    if (redZoneDefense <= 0.4) weaknesses.push('Red Zone Defense');
+    if (turnoverMargin <= -0.5) weaknesses.push('Turnover Issues');
+    if (recentWinPct <= 0.3) weaknesses.push('Poor Recent Form');
 
-    // Key stats
+    // Key stats with safe access
     keyStats.push({
       label: 'Points Per Game',
-      value: metrics.avgPointsScored.toFixed(1),
-      rank: this.getRankFromValue(metrics.avgPointsScored, 45, 20)
+      value: avgPointsScored.toFixed(1),
+      rank: this.getRankFromValue(avgPointsScored, 45, 20)
     });
     
     keyStats.push({
       label: 'Points Allowed',
-      value: metrics.avgPointsAllowed.toFixed(1),
-      rank: this.getRankFromValue(metrics.avgPointsAllowed, 15, 35, true)
+      value: avgPointsAllowed.toFixed(1),
+      rank: this.getRankFromValue(avgPointsAllowed, 15, 35, true)
     });
     
     keyStats.push({
       label: 'Win Percentage',
-      value: `${(metrics.winPercentage * 100).toFixed(1)}%`,
-      rank: this.getRankFromValue(metrics.winPercentage, 0.8, 0.4)
+      value: `${(winPercentage * 100).toFixed(1)}%`,
+      rank: this.getRankFromValue(winPercentage, 0.8, 0.4)
     });
 
     return {
@@ -1614,9 +1625,15 @@ class MatchupPredictor {
   identifyMatchupEdges(homeMetrics, awayMetrics) {
     const edges = [];
 
+    // Safely access metrics with fallbacks
+    const homeOffEff = homeMetrics?.offensiveEfficiency || 0;
+    const awayOffEff = awayMetrics?.offensiveEfficiency || 0;
+    const homeDefEff = homeMetrics?.defensiveEfficiency || 0;
+    const awayDefEff = awayMetrics?.defensiveEfficiency || 0;
+
     // Offensive vs Defensive matchups
-    const homeOffVsAwayDef = homeMetrics.offensiveEfficiency - awayMetrics.defensiveEfficiency;
-    const awayOffVsHomeDef = awayMetrics.offensiveEfficiency - homeMetrics.defensiveEfficiency;
+    const homeOffVsAwayDef = homeOffEff - awayDefEff;
+    const awayOffVsHomeDef = awayOffEff - homeDefEff;
 
     if (homeOffVsAwayDef >= 0.2) {
       edges.push({
@@ -2013,8 +2030,16 @@ class MatchupPredictor {
   }
 
   calculateWinProbability(homeScore, awayScore, homeMetrics, awayMetrics) {
-    const scoreDiff = homeScore - awayScore;
-    const strengthDiff = (homeMetrics.spRating - awayMetrics.spRating) / 10;
+    // Safely handle null/undefined values
+    const safeHomeScore = homeScore || 0;
+    const safeAwayScore = awayScore || 0;
+    const homeSpRating = homeMetrics?.spRating || 0;
+    const awaySpRating = awayMetrics?.spRating || 0;
+    const homeRecentWinPct = homeMetrics?.recentWinPct || 0.5;
+    const awayRecentWinPct = awayMetrics?.recentWinPct || 0.5;
+    
+    const scoreDiff = safeHomeScore - safeAwayScore;
+    const strengthDiff = (homeSpRating - awaySpRating) / 10;
     
     // Base probability from score differential
     let prob = 0.5 + (scoreDiff / 35);
@@ -2023,7 +2048,7 @@ class MatchupPredictor {
     prob += strengthDiff * 0.05;
     
     // Adjust for recent form
-    const formDiff = (homeMetrics.recentWinPct - awayMetrics.recentWinPct);
+    const formDiff = (homeRecentWinPct - awayRecentWinPct);
     prob += formDiff * 0.1;
     
     // Bound between 0.05 and 0.95
@@ -2041,18 +2066,25 @@ class MatchupPredictor {
   calculateConfidence(prediction, homeMetrics, awayMetrics) {
     let confidence = 0.7; // Base confidence
 
+    // Safely access metrics with fallbacks
+    const homeGames = homeMetrics?.totalGames || 0;
+    const awayGames = awayMetrics?.totalGames || 0;
+    const homeSpRating = homeMetrics?.spRating || 0;
+    const awaySpRating = awayMetrics?.spRating || 0;
+    const spread = prediction?.spread || 0;
+
     // Data quality
-    const dataQuality = Math.min(homeMetrics.totalGames, awayMetrics.totalGames);
+    const dataQuality = Math.min(homeGames, awayGames);
     if (dataQuality >= 10) confidence += 0.1;
     else if (dataQuality <= 5) confidence -= 0.1;
 
     // Prediction certainty
-    const spreadAbs = Math.abs(prediction.spread);
+    const spreadAbs = Math.abs(spread);
     if (spreadAbs >= 10) confidence += 0.1;
     else if (spreadAbs <= 3) confidence -= 0.05;
 
     // Team strength differential
-    const strengthDiff = Math.abs(homeMetrics.spRating - awayMetrics.spRating);
+    const strengthDiff = Math.abs(homeSpRating - awaySpRating);
     if (strengthDiff >= 10) confidence += 0.1;
     else if (strengthDiff <= 3) confidence -= 0.05;
 
@@ -2682,15 +2714,64 @@ class MatchupPredictor {
           ppaDefense: analyticsData?.ppa?.[0]?.defense || 0,
           spRating: analyticsData?.spRatings?.[0]?.rating || baseMetrics.spRating,
           eloRating: analyticsData?.eloRatings?.[0]?.elo || 1500,
-          driveEfficiency: this.calculateDriveEfficiency(driveData) || 0,
-          scoringDriveRate: this.calculateScoringDriveRate(driveData) || 0
+          driveEfficiency: this.calculateDriveEfficiency(driveData) || 0.5,
+          scoringDriveRate: this.calculateScoringDriveRate(driveData) || 0,
+          redZoneConversionRate: this.calculateRedZoneRate(driveData) || 0
         };
+        
+        predictionDebugger.log('ENHANCED_METRICS', `Enhanced metrics calculated for ${team.school}`, 'success', {
+          ppaOffense: fallbackMetrics.ppaOffense,
+          spRating: fallbackMetrics.spRating,
+          eloRating: fallbackMetrics.eloRating,
+          driveEfficiency: fallbackMetrics.driveEfficiency,
+          scoringDriveRate: fallbackMetrics.scoringDriveRate,
+          dataSource: {
+            analyticsUsed: !!analyticsData,
+            drivesUsed: !!driveData,
+            comprehensiveUsed: false
+          }
+        });
         
         predictionDebugger.log('ENHANCED_METRICS', `Using fallback metrics with analytics/drive data for ${team.school}`, 'warning');
         return fallbackMetrics;
       }
       
-      return baseMetrics; // Final fallback to base metrics
+      // Final fallback - ensure we have all required properties
+      const finalFallback = {
+        ...baseMetrics,
+        ppaOffense: 0,
+        ppaDefense: 0,
+        spRating: baseMetrics.spRating || 0,
+        eloRating: 1500,
+        driveEfficiency: 0.5,
+        scoringDriveRate: 0,
+        redZoneConversionRate: null,
+        // Ensure we have all the basic properties that generateTeamAnalysis needs
+        avgPointsScored: baseMetrics.avgPointsScored || 0,
+        avgPointsAllowed: baseMetrics.avgPointsAllowed || 0,
+        winPercentage: baseMetrics.winPercentage || 0,
+        offensiveEfficiency: baseMetrics.offensiveEfficiency || 0,
+        defensiveEfficiency: baseMetrics.defensiveEfficiency || 0,
+        redZoneScoring: baseMetrics.redZoneScoring || 0,
+        redZoneDefense: baseMetrics.redZoneDefense || 0,
+        turnoverMargin: baseMetrics.turnoverMargin || 0,
+        recentWinPct: baseMetrics.recentWinPct || 0
+      };
+      
+      predictionDebugger.log('ENHANCED_METRICS', `Enhanced metrics calculated for ${team.school}`, 'success', {
+        ppaOffense: finalFallback.ppaOffense,
+        spRating: finalFallback.spRating,
+        eloRating: finalFallback.eloRating,
+        driveEfficiency: finalFallback.driveEfficiency,
+        scoringDriveRate: finalFallback.scoringDriveRate,
+        dataSource: {
+          analyticsUsed: false,
+          drivesUsed: false,
+          comprehensiveUsed: false
+        }
+      });
+      
+      return finalFallback; // Final fallback to base metrics with guaranteed properties
     }
   }
 
@@ -3079,9 +3160,9 @@ class MatchupPredictor {
   }
 
   getOverallGrade(metrics) {
-    // Calculate overall team grade
-    const offenseGrade = metrics.offensiveEfficiency * 100;
-    const defenseGrade = metrics.defensiveEfficiency * 100;
+    // Calculate overall team grade with safe access
+    const offenseGrade = (metrics?.offensiveEfficiency || 0) * 100;
+    const defenseGrade = (metrics?.defensiveEfficiency || 0) * 100;
     const overallGrade = (offenseGrade + defenseGrade) / 2;
     
     if (overallGrade >= 80) return 'A';
@@ -3092,31 +3173,38 @@ class MatchupPredictor {
   }
 
   getTrend(metrics) {
-    // Calculate team trend
-    if (metrics.recentWinPct > 0.7) return 'Hot';
-    if (metrics.recentWinPct > 0.5) return 'Stable';
+    // Calculate team trend with safe access
+    const recentWinPct = metrics?.recentWinPct || 0.5;
+    if (recentWinPct > 0.7) return 'Hot';
+    if (recentWinPct > 0.5) return 'Stable';
     return 'Cold';
   }
 
   // Missing betting analysis methods
   analyzeSpreadConfidence(prediction, homeMetrics, awayMetrics) {
-    const spreadAbs = Math.abs(prediction.spread);
+    const spread = prediction?.spread || 0;
+    const spreadAbs = Math.abs(spread);
     const confidence = spreadAbs > 7 ? 'High' : (spreadAbs > 3 ? 'Medium' : 'Low');
     
     return {
-      recommendation: prediction.spread > 0 ? 'Take Home' : 'Take Away',
+      recommendation: spread > 0 ? 'Take Home' : 'Take Away',
       confidence,
       reasoning: `Spread confidence based on ${spreadAbs.toFixed(1)} point differential`
     };
   }
 
   analyzeTotalConfidence(prediction, homeMetrics, awayMetrics) {
-    const avgCombinedPoints = (homeMetrics.avgPointsScored + awayMetrics.avgPointsScored + 
-                              homeMetrics.avgPointsAllowed + awayMetrics.avgPointsAllowed) / 2;
-    const totalDiff = Math.abs(prediction.total - avgCombinedPoints);
+    const homeAvgScored = homeMetrics?.avgPointsScored || 0;
+    const awayAvgScored = awayMetrics?.avgPointsScored || 0;
+    const homeAvgAllowed = homeMetrics?.avgPointsAllowed || 0;
+    const awayAvgAllowed = awayMetrics?.avgPointsAllowed || 0;
+    const predictionTotal = prediction?.total || 0;
+    
+    const avgCombinedPoints = (homeAvgScored + awayAvgScored + homeAvgAllowed + awayAvgAllowed) / 2;
+    const totalDiff = Math.abs(predictionTotal - avgCombinedPoints);
     
     const confidence = totalDiff < 7 ? 'High' : (totalDiff < 14 ? 'Medium' : 'Low');
-    const recommendation = prediction.total > avgCombinedPoints ? 'Take Under' : 'Take Over';
+    const recommendation = predictionTotal > avgCombinedPoints ? 'Take Under' : 'Take Over';
     
     return {
       recommendation,
