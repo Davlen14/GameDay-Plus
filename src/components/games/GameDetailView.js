@@ -872,7 +872,7 @@ const GameDetailView = ({ gameId }) => {
       </div>
 
       {/* Content Area */}
-      <div className="px-4 py-8 max-w-6xl mx-auto">
+      <div className="px-4 py-8 w-[95%] mx-auto">
         <React.Suspense fallback={
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-600"></div>

@@ -563,7 +563,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
     }
 
     const maxX = Math.max(100, winProbData.length);
-    const chartWidth = 100 - 40; // Available width percentage after Y-axis labels
+    const chartWidth = 100 - 15; // Available width percentage after Y-axis labels (reduced from 40 to 15)
 
     return (
       <div className="bg-gray-50 rounded-xl p-8 mb-8">
@@ -576,16 +576,16 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             {[0, 25, 50, 75, 100].map(y => (
               <g key={`h-${y}`}>
                 <line
-                  x1="12"
+                  x1="8"
                   y1={100 - y}
-                  x2="95"
+                  x2="98"
                   y2={100 - y}
                   stroke="#e5e7eb"
                   strokeWidth="0.2"
                   vectorEffect="non-scaling-stroke"
                 />
                 <text
-                  x="8"
+                  x="5"
                   y={100 - y + 1}
                   fontSize="2"
                   fill="#6b7280"
@@ -601,9 +601,9 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             {Array.from({ length: 11 }, (_, i) => i * 10).map(playNum => (
               <line
                 key={`v-${playNum}`}
-                x1={12 + (chartWidth * playNum) / maxX}
+                x1={8 + (chartWidth * playNum) / maxX}
                 y1="5"
-                x2={12 + (chartWidth * playNum) / maxX}
+                x2={8 + (chartWidth * playNum) / maxX}
                 y2="95"
                 stroke="#f3f4f6"
                 strokeWidth="0.1"
@@ -613,22 +613,22 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             
             {/* Home team win probability area fill */}
             <path
-              d={`M 12 100 ${winProbData.map((play, index) => {
-                const x = 12 + (chartWidth * play.playNumber) / maxX;
+              d={`M 8 100 ${winProbData.map((play, index) => {
+                const x = 8 + (chartWidth * play.playNumber) / maxX;
                 const y = 100 - (play.homeWinProbability * 95);
                 return `L ${x} ${y}`;
-              }).join(' ')} L ${12 + (chartWidth * winProbData.length) / maxX} 100 Z`}
+              }).join(' ')} L ${8 + (chartWidth * winProbData.length) / maxX} 100 Z`}
               fill={`url(#homeGradient)`}
               opacity="0.3"
             />
 
             {/* Away team win probability area fill */}
             <path
-              d={`M 12 0 ${winProbData.map((play, index) => {
-                const x = 12 + (chartWidth * play.playNumber) / maxX;
+              d={`M 8 0 ${winProbData.map((play, index) => {
+                const x = 8 + (chartWidth * play.playNumber) / maxX;
                 const y = 100 - ((1 - play.homeWinProbability) * 95);
                 return `L ${x} ${y}`;
-              }).join(' ')} L ${12 + (chartWidth * winProbData.length) / maxX} 0 Z`}
+              }).join(' ')} L ${8 + (chartWidth * winProbData.length) / maxX} 0 Z`}
               fill={`url(#awayGradient)`}
               opacity="0.2"
             />
@@ -648,7 +648,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             {/* Home team win probability line */}
             <path
               d={winProbData.map((play, index) => {
-                const x = 12 + (chartWidth * play.playNumber) / maxX;
+                const x = 8 + (chartWidth * play.playNumber) / maxX;
                 const y = 100 - (play.homeWinProbability * 95);
                 return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
               }).join(' ')}
@@ -661,7 +661,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             {/* Away team win probability line */}
             <path
               d={winProbData.map((play, index) => {
-                const x = 12 + (chartWidth * play.playNumber) / maxX;
+                const x = 8 + (chartWidth * play.playNumber) / maxX;
                 const y = 100 - ((1 - play.homeWinProbability) * 95);
                 return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
               }).join(' ')}
@@ -674,7 +674,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
             
             {/* Interactive points with team logos */}
             {winProbData.map((play, index) => {
-              const x = 12 + (chartWidth * play.playNumber) / maxX;
+              const x = 8 + (chartWidth * play.playNumber) / maxX;
               const y = 100 - (play.homeWinProbability * 95);
               const isActive = selectedPlay?.playId === play.playId || hoveredPlay?.playId === play.playId;
               const isScoreChange = index > 0 && (play.homeScore !== winProbData[index - 1].homeScore || play.awayScore !== winProbData[index - 1].awayScore);
@@ -733,7 +733,7 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           {hoveredPlay && (
             <div className="absolute pointer-events-none bg-white border-2 rounded-lg shadow-xl p-4 z-20 transform -translate-x-1/2 -translate-y-full transition-all duration-200"
                  style={{ 
-                   left: `${12 + (chartWidth * hoveredPlay.playNumber) / maxX}%`,
+                   left: `${8 + (chartWidth * hoveredPlay.playNumber) / maxX}%`,
                    top: `${100 - (hoveredPlay.homeWinProbability * 95)}%`,
                    borderColor: hoveredPlay.homeBall ? homeData.primaryColor : awayData.primaryColor
                  }}>
