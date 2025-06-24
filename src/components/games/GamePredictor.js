@@ -294,23 +294,58 @@ const GamePredictor = () => {
 
   // Matchup prediction handler
   const handleMatchupPrediction = useCallback(async () => {
-    if (!homeTeam || !awayTeam || !predictorInitialized) return;
+    if (!homeTeam || !awayTeam || !predictorInitialized) {
+      console.warn('Cannot predict matchup:', {
+        homeTeam: !!homeTeam,
+        awayTeam: !!awayTeam,
+        predictorInitialized
+      });
+      return;
+    }
 
     try {
       setIsLoading(true);
+      setErrorMessage(null);
+      
+      console.log('🎯 Starting matchup prediction:', {
+        homeTeam: homeTeam.school,
+        homeTeamId: homeTeam.id,
+        homeTeamIdType: typeof homeTeam.id,
+        awayTeam: awayTeam.school,
+        awayTeamId: awayTeam.id,
+        awayTeamIdType: typeof awayTeam.id,
+        options: {
+          week: selectedWeek,
+          season: selectedYear
+        }
+      });
+      
+      // Try with both numeric and string IDs
+      let homeId = homeTeam.id;
+      let awayId = awayTeam.id;
+      
+      // Ensure IDs are numbers if they're strings
+      if (typeof homeId === 'string' && !isNaN(homeId)) {
+        homeId = parseInt(homeId);
+      }
+      if (typeof awayId === 'string' && !isNaN(awayId)) {
+        awayId = parseInt(awayId);
+      }
+      
       const prediction = await matchupPredictor.predictMatchup(
-        homeTeam.id,  // Use team ID
-        awayTeam.id,  // Use team ID
+        homeId,  // Use processed team ID
+        awayId,  // Use processed team ID
         {
           week: selectedWeek,
           season: selectedYear
         }
       );
       
+      console.log('✅ Matchup prediction successful:', prediction);
       setMatchupPrediction(prediction);
     } catch (error) {
-      console.error('Error generating matchup prediction:', error);
-      setErrorMessage('Failed to generate matchup prediction');
+      console.error('❌ Error generating matchup prediction:', error);
+      setErrorMessage(`Failed to generate matchup prediction: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -1060,6 +1095,47 @@ const MatchupPredictorInterface = ({
               </>
             )}
           </button>
+          
+          {/* Debug Information */}
+          {(homeTeam || awayTeam) && (
+            <div className="mt-4 p-4 bg-gray-100 rounded-lg text-left text-sm">
+              <div className="font-semibold mb-2">Debug Info:</div>
+              {homeTeam && (
+                <div className="mb-1">
+                  <span className="font-medium">Home:</span> {homeTeam.school} (ID: {homeTeam.id}, Type: {typeof homeTeam.id})
+                </div>
+              )}
+              {awayTeam && (
+                <div className="mb-1">
+                  <span className="font-medium">Away:</span> {awayTeam.school} (ID: {awayTeam.id}, Type: {typeof awayTeam.id})
+                </div>
+              )}
+              <div>
+                <span className="font-medium">Total teams loaded:</span> {teams.length}
+              </div>
+              
+              {/* Debug Test Button */}
+              <button
+                onClick={() => {
+                  console.log('🔍 Debug Test - Available teams in MatchupPredictor:');
+                  try {
+                    matchupPredictor.getAvailableTeams();
+                    if (homeTeam) {
+                      console.log('🏠 Looking up home team:', matchupPredictor.findTeam(homeTeam.id));
+                    }
+                    if (awayTeam) {
+                      console.log('✈️ Looking up away team:', matchupPredictor.findTeam(awayTeam.id));
+                    }
+                  } catch (error) {
+                    console.error('Debug test failed:', error);
+                  }
+                }}
+                className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+              >
+                Debug Test
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
