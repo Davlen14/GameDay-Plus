@@ -44,6 +44,51 @@ const GameSimulationModal = ({
     return () => clearInterval(interval);
   }, [isPlaying, currentPlayIndex, plays, playbackSpeed]);
 
+  // Calculate ball position and first down marker
+  const getBallPosition = () => {
+    if (!currentPlay || !currentPlay.yardLine) return 50;
+    
+    // Parse yard line (e.g., "TEAM 25" or "25")
+    const yardLineText = currentPlay.yardLine.toString();
+    const match = yardLineText.match(/(\w+)?\s*(\d+)/);
+    
+    if (match) {
+      const team = match[1];
+      const yards = parseInt(match[2]);
+      
+      // If team is specified, calculate from that team's side
+      if (team && (team === homeTeam?.school || team === awayTeam?.school)) {
+        if (team === awayTeam?.school) {
+          return yards; // Away team side (0-50)
+        } else {
+          return 100 - yards; // Home team side (50-100)
+        }
+      } else {
+        // If no team specified, assume it's from the nearest goal line
+        return yards <= 50 ? yards : 100 - yards;
+      }
+    }
+    
+    return 50; // Default to midfield
+  };
+
+  const getFirstDownPosition = () => {
+    if (!currentPlay || !currentPlay.distance || !currentPlay.down) return null;
+    
+    const ballPos = getBallPosition();
+    const distance = parseInt(currentPlay.distance);
+    
+    // Calculate first down position based on possession direction
+    if (possessingTeam === 'home') {
+      return Math.min(100, ballPos + distance);
+    } else {
+      return Math.max(0, ballPos - distance);
+    }
+  };
+
+  const ballPosition = getBallPosition();
+  const firstDownPosition = getFirstDownPosition();
+
   const currentPlay = plays && plays.length > 0 ? plays[currentPlayIndex] : null;
   const currentWinProb = winProbabilityData && winProbabilityData.length > 0 ? winProbabilityData[currentPlayIndex] : null;
 
@@ -141,7 +186,7 @@ const GameSimulationModal = ({
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-4">
             
-            {/* Football Field with Possession Logo */}
+            {/* Football Field with Enhanced Features */}
             <div className="relative">
               <FootballField 
                 homeTeam={homeTeam} 
@@ -150,14 +195,74 @@ const GameSimulationModal = ({
                 possessingTeam={getPossessingTeam()}
               />
               
-              {/* Overlay Play Info */}
-              <div className="absolute top-4 left-4 bg-white bg-opacity-90 rounded-lg p-3 shadow-lg">
+              {/* Enhanced Field Overlay with Ball Position and First Down */}
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Ball Position Marker */}
+                <div 
+                  className="absolute top-1/2 transform -translate-y-1/2 transition-all duration-500 ease-out"
+                  style={{ left: `${15 + (ballPosition / 100) * 70}%` }}
+                >
+                  <div className="relative">
+                    {/* Ball Marker Line */}
+                    <div className="w-1 h-full bg-gradient-to-b from-yellow-400 via-yellow-500 to-yellow-400 rounded-full shadow-lg" style={{ height: '100px', marginTop: '-50px' }}>
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl animate-bounce">
+                        🏈
+                      </div>
+                    </div>
+                    
+                    {/* Possession Team Logo */}
+                    {possessingTeam && (
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 animate-pulse">
+                        <img 
+                          src={possessingTeam === 'home' 
+                            ? (homeTeam?.logos?.[0]?.href || homeTeam?.logos?.[0] || '/photos/Whitmer.png')
+                            : (awayTeam?.logos?.[0]?.href || awayTeam?.logos?.[0] || '/photos/ncaaf.png')
+                          }
+                          alt={`${possessingTeam === 'home' ? homeTeam?.school : awayTeam?.school} possession`}
+                          className="w-8 h-8 object-contain bg-white rounded-full border-2 border-yellow-400 shadow-lg"
+                          onError={(e) => { 
+                            e.target.src = possessingTeam === 'home' ? '/photos/Whitmer.png' : '/photos/ncaaf.png'; 
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* First Down Marker */}
+                {firstDownPosition !== null && (
+                  <div 
+                    className="absolute top-1/2 transform -translate-y-1/2 transition-all duration-500 ease-out"
+                    style={{ left: `${15 + (firstDownPosition / 100) * 70}%` }}
+                  >
+                    <div className="w-1 bg-gradient-to-b from-orange-400 via-orange-500 to-orange-400 rounded-full shadow-lg" style={{ height: '100px', marginTop: '-50px' }}>
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white text-xs px-2 py-1 rounded font-bold shadow-lg whitespace-nowrap">
+                        1ST DOWN
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Down and Distance Info */}
+                {currentPlay && (
+                  <div className="absolute top-2 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-sm font-medium">
+                    <div className="flex items-center space-x-2">
+                      <span>{currentPlay.down && `${currentPlay.down} & ${currentPlay.distance}`}</span>
+                      <span>•</span>
+                      <span>{currentPlay.yardLine}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Overlay Play Info - Moved to separate section */}
+              <div className="absolute top-4 right-4 bg-white bg-opacity-90 rounded-lg p-3 shadow-lg">
                 <div className="flex items-center space-x-2">
                   <span className="text-xl">{getPlayTypeIcon(currentPlay?.playType || currentPlay?.type)}</span>
                   <div>
                     <div className="text-sm font-medium">{currentPlay?.playType || currentPlay?.type || 'Play'}</div>
                     <div className="text-xs text-gray-600">
-                      {currentPlay?.down && `${currentPlay.down} & ${currentPlay.distance}`} • {currentPlay?.yardLine}
+                      {currentPlay?.clock && formatTime(currentPlay.clock)} • Q{currentPlay?.period || 1}
                     </div>
                   </div>
                 </div>
@@ -236,9 +341,10 @@ const GameSimulationModal = ({
                   <div className="flex items-center space-x-4 text-sm">
                     <div className="flex items-center space-x-2">
                       <img 
-                        src={awayTeam?.logos?.[0]?.href || '/api/placeholder/30/30'} 
+                        src={awayTeam?.logos?.[0]?.href || awayTeam?.logos?.[0] || '/photos/ncaaf.png'} 
                         alt={awayTeam?.school}
                         className="w-6 h-6 object-contain"
+                        onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                       />
                       <span style={{ color: awayTeam?.color || '#000' }} className="font-medium">
                         {Math.round((1 - (currentWinProb.homeWinProbability || 0.5)) * 100)}%
@@ -246,9 +352,10 @@ const GameSimulationModal = ({
                     </div>
                     <div className="flex items-center space-x-2">
                       <img 
-                        src={homeTeam?.logos?.[0]?.href || '/api/placeholder/30/30'} 
+                        src={homeTeam?.logos?.[0]?.href || homeTeam?.logos?.[0] || '/photos/Whitmer.png'} 
                         alt={homeTeam?.school}
                         className="w-6 h-6 object-contain"
+                        onError={(e) => { e.target.src = '/photos/Whitmer.png'; }}
                       />
                       <span style={{ color: homeTeam?.color || '#000' }} className="font-medium">
                         {Math.round((currentWinProb.homeWinProbability || 0.5) * 100)}%
@@ -303,10 +410,18 @@ const GameSimulationModal = ({
               </div>
             </div>
 
-            {/* Play Description */}
+            {/* Play Description - Only show on hover */}
             {(currentPlay?.playText || currentPlay?.text) && (
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <p className="text-sm text-gray-700">{currentPlay.playText || currentPlay.text}</p>
+              <div className="relative group">
+                <div className="bg-gray-100 p-2 rounded-lg cursor-pointer text-center text-gray-500 text-sm">
+                  Hover for play details
+                </div>
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 text-white p-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 shadow-lg">
+                  <p className="text-sm">{currentPlay.playText || currentPlay.text}</p>
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
+                    <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
