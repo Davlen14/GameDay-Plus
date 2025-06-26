@@ -372,7 +372,7 @@ const TransferPortal = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12">
         <div className="container mx-auto px-4 flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="w-16 h-16 border-4 border-red-200 border-t-red-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-16 h-16 border-4 border-gray-200 border-t-current rounded-full animate-spin mx-auto mb-4 icon-gradient"></div>
             <p className="text-gray-600">Loading transfer portal data...</p>
           </div>
         </div>
@@ -386,12 +386,12 @@ const TransferPortal = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12">
         <div className="container mx-auto px-4 flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <i className="fas fa-exclamation-triangle text-6xl text-red-500 mb-4"></i>
+            <i className="fas fa-exclamation-triangle text-6xl icon-gradient mb-4"></i>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Data</h2>
             <p className="text-gray-600 mb-6">{error}</p>
             <button 
               onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="px-6 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition-all"
             >
               Try Again
             </button>
@@ -510,7 +510,7 @@ const TransferPortal = () => {
               />
               {filters.searchTerm && (
                 <button 
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-600 transition-colors"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:gradient-text transition-colors"
                   onClick={() => handleFilterChange("searchTerm", "")}
                 >
                   <i className="fas fa-times"></i>
@@ -650,7 +650,7 @@ const TransferPortal = () => {
                           <div className="flex items-center gap-4">
                             <div className="relative">
                               <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center shadow-lg">
-                                <i className="fas fa-user-graduate text-red-600 text-xl"></i>
+                                <i className="fas fa-user-graduate icon-gradient text-xl"></i>
                               </div>
                               {transfer.stars >= 4 && (
                                 <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
@@ -663,7 +663,7 @@ const TransferPortal = () => {
                                 {transfer.firstName} {transfer.lastName}
                               </h3>
                               <div className="flex items-center gap-2 mt-1">
-                                <div className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-semibold">
+                                <div className="text-xs bg-red-100 gradient-text px-3 py-1 rounded-full font-semibold">
                                   {transfer.position || "N/A"}
                                 </div>
                                 {transfer.eligibility === 'Immediate' && (
@@ -800,7 +800,7 @@ const TransferPortal = () => {
                   <i className="fas fa-search text-4xl text-gray-400 mb-4"></i>
                   <p className="text-gray-600 mb-6">No transfers match your filters.</p>
                   <button 
-                    className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    className="px-6 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition-all"
                     onClick={clearFilters}
                   >
                     Clear Filters
@@ -905,14 +905,14 @@ const TransferPortal = () => {
                   </div>
                   Transfer News
                 </h2>
-                <div className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                <div className="text-xs bg-red-100 gradient-text px-2 py-1 rounded-full font-medium">
                   Latest
                 </div>
               </div>
               
               {newsLoading ? (
                 <div className="text-center py-6">
-                  <div className="w-8 h-8 border-2 border-gray-200 border-t-red-600 rounded-full animate-spin mx-auto mb-2"></div>
+                  <div className="w-8 h-8 border-2 border-gray-200 border-t-current rounded-full animate-spin mx-auto mb-2 icon-gradient"></div>
                   <p className="text-sm text-gray-500">Loading news...</p>
                 </div>
               ) : news.length > 0 ? (
@@ -1012,7 +1012,7 @@ const TransferPortal = () => {
                           {cStats.gained} gained
                         </span>
                         <span className="flex items-center gap-1">
-                          <i className="fas fa-arrow-up text-red-500"></i>
+                          <i className="fas fa-arrow-up icon-gradient"></i>
                           {cStats.lost} lost
                         </span>
                       </div>
