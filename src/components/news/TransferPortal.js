@@ -415,7 +415,7 @@ const TransferPortal = () => {
             <div className="w-16 h-16 bg-gradient-to-r from-red-600 to-red-700 rounded-full flex items-center justify-center mr-4 shadow-lg">
               <i className="fas fa-exchange-alt text-2xl text-white"></i>
             </div>
-            <h1 className="text-6xl font-bold bg-gradient-to-r from-red-600 via-red-500 to-red-700 bg-clip-text text-transparent">
+            <h1 className="text-6xl font-bold gradient-text">
               Transfer Portal
             </h1>
           </div>
@@ -424,17 +424,17 @@ const TransferPortal = () => {
           </p>
           <div className="mt-6 flex items-center justify-center gap-4 text-sm text-gray-500">
             <div className="flex items-center gap-1">
-              <i className="fas fa-star text-yellow-500"></i>
+              <i className="fas fa-star icon-gradient"></i>
               <span>Premium Players</span>
             </div>
             <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
             <div className="flex items-center gap-1">
-              <i className="fas fa-clock text-red-500"></i>
+              <i className="fas fa-clock icon-gradient"></i>
               <span>Real-time Updates</span>
             </div>
             <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
             <div className="flex items-center gap-1">
-              <i className="fas fa-chart-line text-red-500"></i>
+              <i className="fas fa-chart-line icon-gradient"></i>
               <span>Advanced Analytics</span>
             </div>
           </div>
@@ -453,10 +453,10 @@ const TransferPortal = () => {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Players</h3>
               <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-users text-red-600"></i>
+                <i className="fas fa-users icon-gradient"></i>
               </div>
             </div>
-            <div className="text-3xl font-bold text-red-600">{stats.totalTransfers.toLocaleString()}</div>
+            <div className="text-3xl font-bold gradient-text">{stats.totalTransfers.toLocaleString()}</div>
             <p className="text-xs text-gray-500 mt-2">In the portal</p>
           </motion.div>
           
@@ -464,7 +464,7 @@ const TransferPortal = () => {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Committed</h3>
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-check-circle text-green-600"></i>
+                <i className="fas fa-check-circle icon-gradient"></i>
               </div>
             </div>
             <div className="text-3xl font-bold text-green-600">{stats.committedCount.toLocaleString()}</div>
@@ -475,7 +475,7 @@ const TransferPortal = () => {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Available</h3>
               <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-hourglass-half text-orange-600"></i>
+                <i className="fas fa-hourglass-half icon-gradient"></i>
               </div>
             </div>
             <div className="text-3xl font-bold text-orange-600">{stats.uncommittedCount.toLocaleString()}</div>
@@ -486,7 +486,7 @@ const TransferPortal = () => {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Top Position</h3>
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-trophy text-blue-600"></i>
+                <i className="fas fa-trophy icon-gradient"></i>
               </div>
             </div>
             <div className="text-3xl font-bold text-blue-600">
@@ -517,10 +517,9 @@ const TransferPortal = () => {
                 </button>
               )}
             </div>
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">
-                <i className="fas fa-info-circle text-blue-500 mr-1"></i>
-                Starting with <span className="font-semibold text-red-600">5-star QBs</span> to ensure fast loading. 
+            <div className="mt-4 text-center">                <p className="text-sm text-gray-600">
+                <i className="fas fa-info-circle icon-gradient mr-1"></i>
+                Starting with <span className="font-semibold gradient-text">5-star QBs</span> to ensure fast loading. 
                 Adjust filters to see more players.
               </p>
             </div>
@@ -593,8 +592,7 @@ const TransferPortal = () => {
               filters.destinationStatus !== "all" || 
               filters.stars !== 5 || 
               filters.conference !== "All" || 
-              filters.searchTerm) && (
-              <button 
+              filters.searchTerm) && (                <button 
                 className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold"
                 onClick={clearFilters}
               >
@@ -707,7 +705,7 @@ const TransferPortal = () => {
                           </div>
                           
                           <div className="mx-4 flex-shrink-0">
-                            <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-lg">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-lg" style={{background: 'var(--icon-gradient, linear-gradient(135deg, #dc2626, #b91c1c))'}}>
                               <i className="fas fa-arrow-right text-white text-sm"></i>
                             </div>
                           </div>
@@ -744,7 +742,7 @@ const TransferPortal = () => {
                         
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-2 text-gray-600">
-                            <i className="fas fa-calendar-alt text-red-500"></i>
+                            <i className="fas fa-calendar-alt icon-gradient"></i>
                             <span className="font-medium">{formatDate(transfer.transferDate)}</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -819,7 +817,7 @@ const TransferPortal = () => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i className="fas fa-graduation-cap text-blue-600"></i>
+                    <i className="fas fa-graduation-cap icon-gradient"></i>
                   </div>
                   Top Recruits
                 </h2>
@@ -846,7 +844,7 @@ const TransferPortal = () => {
                             <i className="fas fa-user-graduate text-blue-600 text-sm"></i>
                           </div>
                           <div>
-                            <h4 className="font-semibold text-sm text-gray-800 group-hover:text-blue-600 transition-colors">
+                            <h4 className="font-semibold text-sm text-gray-800 group-hover:gradient-text transition-colors">
                               {recruit.name}
                             </h4>
                             <div className="flex items-center gap-2 text-xs">
@@ -903,7 +901,7 @@ const TransferPortal = () => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                   <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i className="fas fa-newspaper text-red-600"></i>
+                    <i className="fas fa-newspaper icon-gradient"></i>
                   </div>
                   Transfer News
                 </h2>
@@ -937,7 +935,7 @@ const TransferPortal = () => {
                             />
                           </div>
                         )}
-                        <h4 className="font-semibold text-sm text-gray-800 group-hover:text-red-600 transition-colors line-clamp-3 leading-relaxed mb-2">
+                        <h4 className="font-semibold text-sm text-gray-800 group-hover:gradient-text transition-colors line-clamp-3 leading-relaxed mb-2">
                           {article.title}
                         </h4>
                         <div className="flex items-center justify-between text-xs text-gray-500">
@@ -964,7 +962,7 @@ const TransferPortal = () => {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                   <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i className="fas fa-chart-bar text-purple-600"></i>
+                    <i className="fas fa-chart-bar icon-gradient"></i>
                   </div>
                   Conference Activity
                 </h3>
@@ -980,7 +978,7 @@ const TransferPortal = () => {
                   .map(([conference, cStats]) => (
                     <div key={conference} className="border border-gray-100 rounded-xl p-4 hover:bg-purple-50 transition-colors group">
                       <div className="flex items-center justify-between mb-3">
-                        <div className="text-sm font-bold text-gray-800 group-hover:text-purple-600 transition-colors">
+                        <div className="text-sm font-bold text-gray-800 group-hover:gradient-text transition-colors">
                           {conference}
                         </div>
                         <div className="text-xs font-bold text-gray-600">
