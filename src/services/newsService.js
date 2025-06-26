@@ -222,5 +222,24 @@ export const newsService = {
       console.error('Error fetching conference news:', error);
       return [];
     }
+  },
+
+  // Transfer Portal specific news
+  fetchTransferPortalNews: async (limit = 10) => {
+    try {
+      const response = await fetchNewsData('college football transfer portal', 'sports', 'en', 'us', limit);
+      
+      const articles = response.articles || [];
+      return {
+        articles: articles.map((article, index) => ({
+          ...article,
+          id: article.id || `transfer-${index + 1}`,
+          image: article.image || "/photos/ncaaf.png"
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching transfer portal news:', error);
+      return { articles: [] };
+    }
   }
 };

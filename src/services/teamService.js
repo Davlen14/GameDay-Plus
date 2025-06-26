@@ -424,5 +424,23 @@ export const teamService = {
       console.error('Error loading recruiting rankings:', error);
       return [];
     }
+  },
+
+  // GET /player/portal - Transfer portal data
+  getPlayerPortal: async (year = 2025) => {
+    try {
+      console.log(`Fetching transfer portal data for year: ${year}`);
+      const transfers = await fetchCollegeFootballData('/player/portal', { year });
+      console.log(`Retrieved ${transfers?.length || 0} transfers from API`);
+      return transfers || [];
+    } catch (error) {
+      console.error('Error loading transfer portal data:', error);
+      throw error; // Don't return mock data, let the component handle the error
+    }
+  },
+
+  // Helper method to get teams (for backward compatibility)
+  getTeams: async () => {
+    return await teamService.getAllTeams();
   }
 };
