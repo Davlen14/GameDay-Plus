@@ -261,7 +261,7 @@ const Header = () => {
               FBS Independents
             </a>
             <a href="#team-outlook" className="block text-gray-600 hover:gradient-text py-1 px-4 flex items-center gap-2">
-              <i className="fas fa-chart-line"></i>
+              <i className="/photos/Sun Belt.png"></i>
               2025 Team Outlook
             </a>
           </div>
