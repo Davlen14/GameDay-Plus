@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const FanProphecy = () => {
-  const [selectedChallenge, setSelectedChallenge] = useState('weekly');
+  const [selectedChallenge, setSelectedChallenge] = useState('all');
   const [userStreak, setUserStreak] = useState(7);
   const [userPoints, setUserPoints] = useState(2840);
   const [fanLevel, setFanLevel] = useState('Oracle');
@@ -38,7 +38,7 @@ const FanProphecy = () => {
       type: 'predictions'
     },
     {
-      id: 'poll',
+      id: 'heisman',
       name: 'Heisman Prophet',
       icon: 'fa-trophy',
       description: 'Predict award winners & rankings',
@@ -46,7 +46,7 @@ const FanProphecy = () => {
       prize: 'Exclusive Badge',
       difficulty: 'Expert',
       timeLeft: '1w 3d',
-      status: 'upcoming',
+      status: 'active',
       color: 'from-yellow-500 to-yellow-600',
       progress: 80,
       type: 'polls'
@@ -282,12 +282,12 @@ const FanProphecy = () => {
           </div>
 
           {/* Recent Activity & Leaderboard */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             {/* My Recent Predictions */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white p-6">
+              <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
                 <h3 className="text-2xl font-bold mb-2">📈 My Recent Predictions</h3>
-                <p className="text-gray-300">Track your latest prophecies</p>
+                <p className="text-purple-100">Track your prophecy accuracy</p>
               </div>
               <div className="p-6">
                 <div className="space-y-4">
@@ -313,11 +313,11 @@ const FanProphecy = () => {
               </div>
             </div>
 
-            {/* Leaderboard */}
+            {/* Global Leaderboard */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-yellow-600 to-orange-600 text-white p-6">
-                <h3 className="text-2xl font-bold mb-2">🏆 Global Leaderboard</h3>
-                <p className="text-yellow-100">Top prophets this season</p>
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-6">
+                <h3 className="text-2xl font-bold mb-2">🏆 Prophet Leaderboard</h3>
+                <p className="text-yellow-100">Top oracles this season</p>
               </div>
               <div className="p-6">
                 <div className="space-y-3">
@@ -335,7 +335,7 @@ const FanProphecy = () => {
                         </div>
                         <div>
                           <div className="font-medium text-gray-800">{user.user}</div>
-                          <div className="text-xs text-gray-600">{user.accuracy}% accuracy</div>
+                          <div className="text-xs text-gray-600">{user.accuracy}% accuracy • {user.badge}</div>
                         </div>
                       </div>
                       <div className="text-right">
@@ -350,18 +350,18 @@ const FanProphecy = () => {
           </div>
 
           {/* Achievements Section */}
-          <div className="mt-12 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
               <h3 className="text-2xl font-bold mb-2">🏅 Prophet Achievements</h3>
-              <p className="text-purple-100">Unlock badges and titles as you master the art of prediction</p>
+              <p className="text-indigo-100">Unlock legendary titles through your prediction mastery</p>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {achievements.map((achievement) => (
                   <div key={achievement.id} className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                     achievement.earned 
-                      ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300 hover:shadow-lg' 
-                      : 'bg-gray-50 border-gray-200'
+                      ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300 hover:shadow-lg transform hover:scale-105' 
+                      : 'bg-gray-50 border-gray-200 opacity-60'
                   }`}>
                     <div className="text-center">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${

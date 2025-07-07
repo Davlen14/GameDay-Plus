@@ -60,7 +60,12 @@ const Highlights = React.lazy(() => import('./components/news/Highlights'));
 const Analysis = React.lazy(() => import('./components/news/Analysis'));
 const PressConferences = React.lazy(() => import('./components/news/PressConferences'));
 
-// FanHub Components
+// FanHub Components - NEW CONSOLIDATED 3-SECTION DESIGN
+const FanHubCentral = React.lazy(() => import('./components/fanhub/FanHubCentral'));
+const TheColosseum = React.lazy(() => import('./components/fanhub/TheColosseum'));
+const FanProphecy = React.lazy(() => import('./components/fanhub/FanProphecy'));
+
+// Legacy FanHub Components (for compatibility)
 const FanForums = React.lazy(() => import('./components/fanhub/FanForums'));
 const FanPredictions = React.lazy(() => import('./components/fanhub/FanPredictions'));
 const Polls = React.lazy(() => import('./components/fanhub/Polls'));
@@ -294,7 +299,15 @@ function App() {
       case 'press-conferences':
         return <PressConferences />;
       
-      // FanHub routes
+      // FanHub routes - NEW CONSOLIDATED 3-SECTION DESIGN
+      case 'fanhub-central':
+        return <FanHubCentral />;
+      case 'the-colosseum':
+        return <TheColosseum />;
+      case 'fan-prophecy':
+        return <FanProphecy />;
+      
+      // Legacy FanHub routes (for compatibility)
       case 'fan-forums':
         return <FanForums />;
       case 'predictions':
