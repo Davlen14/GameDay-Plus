@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 const TheColosseum = () => {
-  const [selectedTeam, setSelectedTeam] = useState('Alabama');
   const [activeStadium, setActiveStadium] = useState('main');
   const [fanCount, setFanCount] = useState(1247);
-  const [liveEvents, setLiveEvents] = useState([]);
   const [showTopicsModal, setShowTopicsModal] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
   const [showCreateTopicModal, setShowCreateTopicModal] = useState(false);
@@ -39,7 +37,6 @@ const TheColosseum = () => {
   ];
 
   // Modern theme colors - matching EVBettingView's sophisticated system
-  const accentColor = 'rgb(204, 0, 28)';
   const metallicGradient = `linear-gradient(135deg, 
     rgb(255, 46, 74), 
     rgb(204, 0, 28), 
@@ -861,6 +858,7 @@ const TheColosseum = () => {
 
                       {/* Join Button */}
                       <button 
+                        onClick={() => window.location.hash = `forum-section-${section.id}`}
                         className="w-full py-3 text-white rounded-md font-semibold transition-all duration-200 hover:shadow-lg hover:scale-[1.02] group"
                         style={{
                           background: section.color,

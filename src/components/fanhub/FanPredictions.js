@@ -178,7 +178,7 @@ const FanProphecy = () => {
       accuracy: true,
       homeTeam: 'Ohio State',
       awayTeam: 'Michigan',
-      homelogo: '/team_logos/ohio state.png',
+      homelogo: '/team_logos/ohio_state.png',
       awaylogo: '/team_logos/michigan.png',
       predictor: 'You',
       predictorPhoto: userPhotos[1],

@@ -64,6 +64,7 @@ const PressConferences = React.lazy(() => import('./components/news/PressConfere
 const FanHubCentral = React.lazy(() => import('./components/fanhub/FanHubCentral'));
 const TheColosseum = React.lazy(() => import('./components/fanhub/TheColosseum'));
 const FanProphecy = React.lazy(() => import('./components/fanhub/FanProphecy'));
+const ForumSectionDetail = React.lazy(() => import('./components/fanhub/ForumSectionDetail'));
 
 // Legacy FanHub Components (for compatibility)
 const FanForums = React.lazy(() => import('./components/fanhub/FanForums'));
@@ -154,7 +155,7 @@ function App() {
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, []);
+  }, [currentPage]);
 
   const renderPage = () => {
     // Check for team detail routes (team-detail-{id})
@@ -182,6 +183,16 @@ function App() {
       return (
         <Suspense fallback={<PageLoader />}>
           <GameDetailView gameId={gameId} />
+        </Suspense>
+      );
+    }
+    
+    // Check for forum section detail routes (forum-section-{sectionId})
+    if (currentPage.startsWith('forum-section-')) {
+      const sectionId = currentPage.replace('forum-section-', '');
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <ForumSectionDetail sectionId={sectionId} />
         </Suspense>
       );
     }
