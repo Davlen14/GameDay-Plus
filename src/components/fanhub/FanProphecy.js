@@ -1,6 +1,67 @@
 import React, { useState, useEffect } from 'react';
 
 const FanProphecy = () => {
+  // Professional gradient system matching EVBettingView
+  const professionalGradients = {
+    red: `linear-gradient(135deg, 
+      rgb(255, 46, 74), 
+      rgb(204, 0, 28), 
+      rgb(161, 0, 20), 
+      rgb(204, 0, 28), 
+      rgb(255, 46, 74)
+    )`,
+    blue: `linear-gradient(135deg, 
+      rgb(59, 130, 246), 
+      rgb(37, 99, 235), 
+      rgb(29, 78, 216), 
+      rgb(37, 99, 235), 
+      rgb(59, 130, 246)
+    )`,
+    green: `linear-gradient(135deg, 
+      rgb(34, 197, 94), 
+      rgb(22, 163, 74), 
+      rgb(15, 118, 54), 
+      rgb(22, 163, 74), 
+      rgb(34, 197, 94)
+    )`,
+    gold: `linear-gradient(135deg, 
+      rgb(250, 204, 21), 
+      rgb(245, 158, 11), 
+      rgb(217, 119, 6), 
+      rgb(245, 158, 11), 
+      rgb(250, 204, 21)
+    )`,
+    purple: `linear-gradient(135deg, 
+      rgb(147, 51, 234), 
+      rgb(126, 34, 206), 
+      rgb(101, 16, 179), 
+      rgb(126, 34, 206), 
+      rgb(147, 51, 234)
+    )`,
+    orange: `linear-gradient(135deg, 
+      rgb(251, 146, 60), 
+      rgb(249, 115, 22), 
+      rgb(234, 88, 12), 
+      rgb(249, 115, 22), 
+      rgb(251, 146, 60)
+    )`,
+    gray: `linear-gradient(135deg, 
+      rgb(156, 163, 175), 
+      rgb(107, 114, 128), 
+      rgb(75, 85, 99), 
+      rgb(107, 114, 128), 
+      rgb(156, 163, 175)
+    )`
+  };
+
+  // Glass morphism effect for premium cards
+  const glassMorphism = {
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+  };
+
   const [selectedChallenge, setSelectedChallenge] = useState('all');
   const [userStreak, setUserStreak] = useState(7);
   const [userPoints, setUserPoints] = useState(2840);
@@ -19,7 +80,8 @@ const FanProphecy = () => {
       difficulty: 'Medium',
       timeLeft: '2d 14h',
       status: 'active',
-      color: 'from-blue-500 to-blue-600',
+      background: professionalGradients.blue,
+      shadowColor: 'rgba(59, 130, 246, 0.3)',
       progress: 60,
       type: 'predictions'
     },
@@ -33,7 +95,8 @@ const FanProphecy = () => {
       difficulty: 'Hard',
       timeLeft: '4d 22h',
       status: 'active',
-      color: 'from-orange-500 to-orange-600',
+      background: professionalGradients.orange,
+      shadowColor: 'rgba(251, 146, 60, 0.3)',
       progress: 40,
       type: 'predictions'
     },
@@ -47,7 +110,8 @@ const FanProphecy = () => {
       difficulty: 'Expert',
       timeLeft: '1w 3d',
       status: 'active',
-      color: 'from-yellow-500 to-yellow-600',
+      background: professionalGradients.gold,
+      shadowColor: 'rgba(250, 204, 21, 0.3)',
       progress: 80,
       type: 'polls'
     },
@@ -61,7 +125,8 @@ const FanProphecy = () => {
       difficulty: 'Legendary',
       timeLeft: '2w 1d',
       status: 'upcoming',
-      color: 'from-purple-500 to-purple-600',
+      background: professionalGradients.purple,
+      shadowColor: 'rgba(147, 51, 234, 0.3)',
       progress: 20,
       type: 'predictions'
     },
@@ -75,7 +140,8 @@ const FanProphecy = () => {
       difficulty: 'Hard',
       timeLeft: '5d 8h',
       status: 'active',
-      color: 'from-green-500 to-green-600',
+      background: professionalGradients.green,
+      shadowColor: 'rgba(34, 197, 94, 0.3)',
       progress: 90,
       type: 'polls'
     }
@@ -106,18 +172,29 @@ const FanProphecy = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9)' }}>
       {/* Hero Section */}
       <div className="pt-32 pb-20 px-6 md:px-12">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <div className="inline-flex items-center space-x-4 mb-6">
-              <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center shadow-xl">
+              <div 
+                className="w-20 h-20 rounded-full flex items-center justify-center shadow-xl"
+                style={{ 
+                  background: professionalGradients.purple,
+                  boxShadow: '0 8px 32px rgba(147, 51, 234, 0.3)'
+                }}
+              >
                 <i className="fas fa-crystal-ball text-white text-3xl"></i>
               </div>
               <div>
                 <h1 className="text-6xl font-extrabold text-left">
-                  <span className="gradient-text">FAN</span>
+                  <span style={{ 
+                    background: professionalGradients.purple,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>FAN</span>
                   <span className="block text-gray-800">PROPHECY</span>
                 </h1>
               </div>
@@ -127,26 +204,57 @@ const FanProphecy = () => {
             </p>
             
             {/* Enhanced User Stats */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 shadow-xl max-w-4xl mx-auto">
+            <div 
+              className="rounded-2xl p-6 border max-w-4xl mx-auto"
+              style={{
+                ...glassMorphism,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+              }}
+            >
               <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                 <div className="text-center">
-                  <div className="text-3xl font-black gradient-text">{fanLevel}</div>
+                  <div className="text-3xl font-black" style={{ 
+                    background: professionalGradients.purple,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>{fanLevel}</div>
                   <div className="text-sm text-gray-600 font-medium">Prophet Level</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-black text-green-600">{userPoints.toLocaleString()}</div>
+                  <div className="text-3xl font-black" style={{ 
+                    background: professionalGradients.green,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>{userPoints.toLocaleString()}</div>
                   <div className="text-sm text-gray-600 font-medium">Total Points</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-black text-orange-600">{userStreak}</div>
+                  <div className="text-3xl font-black" style={{ 
+                    background: professionalGradients.orange,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>{userStreak}</div>
                   <div className="text-sm text-gray-600 font-medium">Day Streak</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-black text-blue-600">{userAccuracy}%</div>
+                  <div className="text-3xl font-black" style={{ 
+                    background: professionalGradients.blue,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>{userAccuracy}%</div>
                   <div className="text-sm text-gray-600 font-medium">Accuracy</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-black text-purple-600">#{leaderboard.findIndex(user => user.user === 'YOU') + 1}</div>
+                  <div className="text-3xl font-black" style={{ 
+                    background: professionalGradients.purple,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>#{leaderboard.findIndex(user => user.user === 'YOU') + 1}</div>
                   <div className="text-sm text-gray-600 font-medium">Global Rank</div>
                 </div>
               </div>
@@ -215,7 +323,13 @@ const FanProphecy = () => {
                 >
                   <div className="bg-white rounded-2xl shadow-xl hover:shadow-2xl border border-gray-100 overflow-hidden h-full">
                     {/* Challenge Header */}
-                    <div className={`relative p-6 bg-gradient-to-br ${challenge.color} text-white`}>
+                    <div 
+                      className="relative p-6 text-white"
+                      style={{ 
+                        background: challenge.background,
+                        boxShadow: `0 4px 20px ${challenge.shadowColor}`
+                      }}
+                    >
                       <div className="flex items-center justify-between mb-3">
                         <i className={`fas ${challenge.icon} text-3xl`}></i>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -264,14 +378,23 @@ const FanProphecy = () => {
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div 
-                            className={`bg-gradient-to-r ${challenge.color} h-2 rounded-full transition-all duration-300`}
-                            style={{ width: `${challenge.progress}%` }}
+                            className="h-2 rounded-full transition-all duration-300"
+                            style={{ 
+                              width: `${challenge.progress}%`,
+                              background: challenge.background 
+                            }}
                           ></div>
                         </div>
                       </div>
 
                       {/* Action Button */}
-                      <button className={`w-full py-3 bg-gradient-to-r ${challenge.color} text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200`}>
+                      <button 
+                        className="w-full py-3 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200"
+                        style={{ 
+                          background: challenge.background,
+                          boxShadow: `0 4px 15px ${challenge.shadowColor}`
+                        }}
+                      >
                         {challenge.status === 'active' ? 'Join Challenge' : 'Coming Soon'}
                       </button>
                     </div>

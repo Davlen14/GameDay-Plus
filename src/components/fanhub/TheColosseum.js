@@ -1,6 +1,67 @@
 import React, { useState, useEffect } from 'react';
 
 const TheColosseum = () => {
+  // Professional gradient system matching EVBettingView
+  const professionalGradients = {
+    red: `linear-gradient(135deg, 
+      rgb(255, 46, 74), 
+      rgb(204, 0, 28), 
+      rgb(161, 0, 20), 
+      rgb(204, 0, 28), 
+      rgb(255, 46, 74)
+    )`,
+    blue: `linear-gradient(135deg, 
+      rgb(59, 130, 246), 
+      rgb(37, 99, 235), 
+      rgb(29, 78, 216), 
+      rgb(37, 99, 235), 
+      rgb(59, 130, 246)
+    )`,
+    green: `linear-gradient(135deg, 
+      rgb(34, 197, 94), 
+      rgb(22, 163, 74), 
+      rgb(15, 118, 54), 
+      rgb(22, 163, 74), 
+      rgb(34, 197, 94)
+    )`,
+    gold: `linear-gradient(135deg, 
+      rgb(250, 204, 21), 
+      rgb(245, 158, 11), 
+      rgb(217, 119, 6), 
+      rgb(245, 158, 11), 
+      rgb(250, 204, 21)
+    )`,
+    purple: `linear-gradient(135deg, 
+      rgb(147, 51, 234), 
+      rgb(126, 34, 206), 
+      rgb(101, 16, 179), 
+      rgb(126, 34, 206), 
+      rgb(147, 51, 234)
+    )`,
+    orange: `linear-gradient(135deg, 
+      rgb(251, 146, 60), 
+      rgb(249, 115, 22), 
+      rgb(234, 88, 12), 
+      rgb(249, 115, 22), 
+      rgb(251, 146, 60)
+    )`,
+    gray: `linear-gradient(135deg, 
+      rgb(156, 163, 175), 
+      rgb(107, 114, 128), 
+      rgb(75, 85, 99), 
+      rgb(107, 114, 128), 
+      rgb(156, 163, 175)
+    )`
+  };
+
+  // Glass morphism effect for premium cards
+  const glassMorphism = {
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+  };
+
   const [selectedSection, setSelectedSection] = useState('main');
   const [fanCount, setFanCount] = useState(1247);
   const [userPoints, setUserPoints] = useState(2840);
@@ -21,7 +82,8 @@ const TheColosseum = () => {
       icon: 'fa-landmark', 
       fans: 456, 
       description: 'General CFB discussion & hot takes', 
-      color: 'from-red-500 to-red-600',
+      background: professionalGradients.red,
+      shadowColor: 'rgba(255, 46, 74, 0.3)',
       posts: 1234,
       activeNow: 45
     },
@@ -31,7 +93,8 @@ const TheColosseum = () => {
       icon: 'fa-tv', 
       fans: 234, 
       description: 'Live game reactions & commentary', 
-      color: 'from-blue-500 to-blue-600',
+      background: professionalGradients.blue,
+      shadowColor: 'rgba(59, 130, 246, 0.3)',
       posts: 892,
       activeNow: 28
     },
@@ -41,7 +104,8 @@ const TheColosseum = () => {
       icon: 'fa-graduation-cap', 
       fans: 189, 
       description: 'Prospect tracking & transfer portal', 
-      color: 'from-green-500 to-green-600',
+      background: professionalGradients.green,
+      shadowColor: 'rgba(34, 197, 94, 0.3)',
       posts: 567,
       activeNow: 19
     },
@@ -51,7 +115,8 @@ const TheColosseum = () => {
       icon: 'fa-fire', 
       fans: 167, 
       description: 'Team vs team heated debates', 
-      color: 'from-orange-500 to-orange-600',
+      background: professionalGradients.orange,
+      shadowColor: 'rgba(251, 146, 60, 0.3)',
       posts: 2341,
       activeNow: 67
     },
@@ -61,7 +126,8 @@ const TheColosseum = () => {
       icon: 'fa-history', 
       fans: 134, 
       description: 'Classic games & legendary moments', 
-      color: 'from-purple-500 to-purple-600',
+      background: professionalGradients.purple,
+      shadowColor: 'rgba(147, 51, 234, 0.3)',
       posts: 445,
       activeNow: 12
     },
@@ -71,7 +137,8 @@ const TheColosseum = () => {
       icon: 'fa-trophy', 
       fans: 289, 
       description: 'Championship talk & CFP predictions', 
-      color: 'from-yellow-500 to-yellow-600',
+      background: professionalGradients.gold,
+      shadowColor: 'rgba(250, 204, 21, 0.3)',
       posts: 1567,
       activeNow: 34
     }
@@ -153,18 +220,34 @@ const TheColosseum = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9)' }}>
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-red-600 to-red-800 text-white">
-        <div className="absolute inset-0 bg-black/20"></div>
+      <div 
+        className="relative overflow-hidden text-white"
+        style={{
+          background: 'linear-gradient(135deg, rgb(31, 41, 55), rgb(55, 65, 81), rgb(75, 85, 99))',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+        }}
+      >
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(255, 46, 74, 0.1), transparent, rgba(255, 46, 74, 0.1))'
+          }}
+        ></div>
         <div className="relative max-w-7xl mx-auto px-6 py-20">
           <div className="text-center">
             <h1 className="text-6xl font-extrabold mb-6">
-              <span className="bg-gradient-to-r from-white to-red-100 bg-clip-text text-transparent">
+              <span style={{ 
+                background: professionalGradients.red,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
                 THE COLOSSEUM
               </span>
             </h1>
-            <p className="text-xl text-red-100 max-w-3xl mx-auto mb-8">
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
               Step into virtual stadium sections where passionate fans gather to debate, celebrate, and share the pure emotion of college football.
             </p>
             
@@ -193,7 +276,12 @@ const TheColosseum = () => {
         <div className="mb-16">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">
-              <span className="gradient-text">Stadium Sections</span>
+              <span style={{ 
+                background: professionalGradients.red,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>Stadium Sections</span>
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
               Choose your arena - each section brings unique energy and discussion
@@ -204,23 +292,46 @@ const TheColosseum = () => {
             {stadiumSections.map((section) => (
               <div 
                 key={section.id}
-                className={`group relative overflow-hidden rounded-xl bg-white shadow-lg border-2 border-gray-100 hover:border-red-300 transition-all duration-300 cursor-pointer transform hover:scale-105 ${selectedSection === section.id ? 'ring-4 ring-red-500 ring-opacity-50' : ''}`}
+                className={`group relative overflow-hidden rounded-xl border-2 border-gray-100 hover:border-red-300 transition-all duration-300 cursor-pointer transform hover:scale-105 ${selectedSection === section.id ? 'ring-4 ring-red-500 ring-opacity-50' : ''}`}
+                style={{
+                  ...glassMorphism,
+                  boxShadow: selectedSection === section.id ? `0 8px 32px ${section.shadowColor}` : '0 8px 32px rgba(0,0,0,0.1)'
+                }}
                 onClick={() => setSelectedSection(section.id)}
               >
-                <div className={`absolute inset-0 bg-gradient-to-r ${section.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                <div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                  style={{ background: section.background }}
+                ></div>
                 
                 <div className="p-6 relative z-10">
                   <div className="flex items-center justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${section.color} flex items-center justify-center text-white`}>
+                    <div 
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-white"
+                      style={{ 
+                        background: section.background,
+                        boxShadow: `0 4px 15px ${section.shadowColor}`
+                      }}
+                    >
                       <i className={`fas ${section.icon} text-lg`}></i>
                     </div>
                     <div className="text-right">
                       <div className="text-sm text-gray-500">Active Now</div>
-                      <div className="text-lg font-bold text-gray-800">{section.activeNow}</div>
+                      <div className="text-lg font-bold" style={{ 
+                        background: section.background,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}>{section.activeNow}</div>
                     </div>
                   </div>
                   
-                  <h3 className="text-xl font-bold mb-2 gradient-text">{section.name}</h3>
+                  <h3 className="text-xl font-bold mb-2" style={{ 
+                    background: section.background,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>{section.name}</h3>
                   <p className="text-gray-600 mb-4">{section.description}</p>
                   
                   <div className="flex items-center justify-between text-sm text-gray-500">
