@@ -8,6 +8,7 @@ const TheColosseum = () => {
   const [showTopicsModal, setShowTopicsModal] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
   const [showCreateTopicModal, setShowCreateTopicModal] = useState(false);
+  const [showAllSections, setShowAllSections] = useState(false);
 
   // User photos for avatars - expanded with new photos
   const userPhotos = [
@@ -654,8 +655,8 @@ const TheColosseum = () => {
           </div>
 
           {/* Stadium Sections Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            {stadiumSections.map((section) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {(showAllSections ? stadiumSections : stadiumSections.slice(0, 6)).map((section) => (
               <div 
                 key={section.id}
                 onClick={() => setActiveStadium(section.id)}
@@ -876,6 +877,43 @@ const TheColosseum = () => {
               </div>
             ))}
           </div>
+
+          {/* View More Button */}
+          {!showAllSections && stadiumSections.length > 6 && (
+            <div className="text-center mb-16">
+              <button 
+                onClick={() => setShowAllSections(true)}
+                className="px-8 py-4 text-white rounded-lg font-bold transition-all duration-200 hover:shadow-lg hover:scale-[1.02] group"
+                style={{
+                  background: metallicGradient,
+                  boxShadow: '0 4px 12px rgba(255, 46, 74, 0.3)'
+                }}
+              >
+                <i className="fas fa-chevron-down mr-2"></i>
+                <span>View More Forum Sections ({stadiumSections.length - 6} more)</span>
+                <i className="fas fa-chevron-down ml-2 group-hover:translate-y-1 transition-transform duration-300"></i>
+              </button>
+            </div>
+          )}
+
+          {/* Show Less Button */}
+          {showAllSections && (
+            <div className="text-center mb-16">
+              <button 
+                onClick={() => setShowAllSections(false)}
+                className="px-8 py-4 text-gray-700 rounded-lg font-bold transition-all duration-200 hover:shadow-lg hover:scale-[1.02] group"
+                style={{
+                  background: 'rgba(249, 250, 251, 0.9)',
+                  border: '1px solid rgba(209, 213, 219, 0.5)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <i className="fas fa-chevron-up mr-2"></i>
+                <span>Show Less</span>
+                <i className="fas fa-chevron-up ml-2 group-hover:-translate-y-1 transition-transform duration-300"></i>
+              </button>
+            </div>
+          )}
 
           {/* Live Fan Activity Feed */}
           <div 
