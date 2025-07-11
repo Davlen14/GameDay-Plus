@@ -41,18 +41,12 @@ const CompareTeamsView = () => {
       <div className="min-h-screen pt-32 px-4 md:px-6 relative overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"></div>
-        
-        {/* Floating Orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-          <div className="absolute bottom-40 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
-        </div>
 
         <div className="max-w-[97%] mx-auto relative z-10">
           <div className="flex items-center justify-center py-20">
             <div className="relative">
               <div className="w-20 h-20 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderTopColor: '#cc001c', borderRightColor: '#a10014' }}></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-gray-600 border-r-gray-400"></div>
               </div>
             </div>
           </div>
@@ -104,13 +98,76 @@ const CompareTeamsView = () => {
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"></div>
       
-      {/* Floating Orbs Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '2s' }}></div>
-        <div className="absolute bottom-20 right-1/3 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '3s' }}></div>
-      </div>
+      {/* Team Logo Background Elements - Medium and small logos only */}
+      {team1 && team2 && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Team 1 logos - left side, varied sizes */}
+          {team1.logos?.[0] && (
+            <>
+              <div className="absolute top-12 left-6 w-12 h-12 opacity-7">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-1/3 left-4 w-10 h-10 opacity-6 rotate-12">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-2/3 left-8 w-10 h-10 opacity-6 -rotate-6">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-32 left-2 w-12 h-12 opacity-7">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-12 left-10 w-8 h-8 opacity-5 rotate-30">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-1/4 left-1 w-9 h-9 opacity-5 rotate-45">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+            </>
+          )}
+          
+          {/* Team 2 logos - right side, varied sizes */}
+          {team2.logos?.[0] && (
+            <>
+              <div className="absolute top-16 right-8 w-12 h-12 opacity-7">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-1/2 right-4 w-9 h-9 opacity-6 rotate-15">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-1/4 right-2 w-10 h-10 opacity-6 -rotate-20">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-20 right-6 w-9 h-9 opacity-6">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-40 right-1 w-8 h-8 opacity-5 -rotate-12">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-8 right-12 w-10 h-10 opacity-5 rotate-25">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+            </>
+          )}
+          
+          {/* Center subtle logos - very small and subtle */}
+          {team1.logos?.[0] && team2.logos?.[0] && (
+            <>
+              <div className="absolute top-1/5 left-1/3 w-7 h-7 opacity-4 rotate-45">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-1/5 right-1/3 w-6 h-6 opacity-3 -rotate-30">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-1/2 left-1/4 w-5 h-5 opacity-3 rotate-60">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-3/4 right-1/4 w-8 h-8 opacity-4 -rotate-45">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="max-w-[97%] mx-auto relative z-10">
         {/* Enhanced Header Section */}
@@ -220,7 +277,7 @@ const CompareTeamsView = () => {
                 Coming Soon
               </p>
               <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2)]">
-                <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+                <i className="fas fa-graduation-cap text-gray-600"></i>
                 <span className="text-lg font-bold gradient-text">Under Development</span>
               </div>
             </div>

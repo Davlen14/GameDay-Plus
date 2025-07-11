@@ -155,21 +155,14 @@ const AllTeams = () => {
       <div className="min-h-screen pt-32 px-4 md:px-6 relative overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"></div>
-        
-        {/* Floating Orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-          <div className="absolute bottom-40 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
-        </div>
 
         <div className="max-w-[97%] mx-auto relative z-10">
           <div className="flex items-center justify-center py-20">
             {/* Enhanced Loading Spinner */}
             <div className="relative">
               <div className="w-20 h-20 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderTopColor: '#cc001c', borderRightColor: '#a10014' }}></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-gray-600 border-r-gray-400"></div>
               </div>
-              <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
             </div>
           </div>
         </div>
@@ -197,12 +190,64 @@ const AllTeams = () => {
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"></div>
       
-      {/* Floating Orbs Background */}
+      {/* College Team Logos Background - Well-spaced distribution with varied sizes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '2s' }}></div>
-        <div className="absolute bottom-20 right-1/3 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '3s' }}></div>
+        {/* Top row - well spaced */}
+        <div className="absolute top-16 left-12 w-12 h-12 opacity-6">
+          <img src="/team_logos/alabama.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        <div className="absolute top-20 right-16 w-10 h-10 opacity-5 rotate-12">
+          <img src="/team_logos/ohio-state.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        
+        {/* Middle left and right - far from center content */}
+        <div className="absolute top-1/3 left-6 w-8 h-8 opacity-4 rotate-45">
+          <img src="/team_logos/texas.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        <div className="absolute top-1/2 right-8 w-9 h-9 opacity-5 -rotate-12">
+          <img src="/team_logos/clemson.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        
+        {/* Additional middle logos */}
+        <div className="absolute top-2/5 left-2 w-14 h-14 opacity-7 rotate-20">
+          <img src="/team_logos/oregon.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        <div className="absolute top-3/5 right-2 w-6 h-6 opacity-4 -rotate-30">
+          <img src="/team_logos/wisconsin.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        
+        {/* Lower section - well separated */}
+        <div className="absolute bottom-32 left-20 w-11 h-11 opacity-6 rotate-90">
+          <img src="/team_logos/notre-dame.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        <div className="absolute bottom-20 right-24 w-10 h-10 opacity-5 -rotate-6">
+          <img src="/team_logos/michigan.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        
+        {/* Corner positions - small and subtle */}
+        <div className="absolute top-2/3 left-2 w-7 h-7 opacity-3 rotate-30">
+          <img src="/team_logos/lsu.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        <div className="absolute bottom-40 right-4 w-8 h-8 opacity-4 -rotate-45">
+          <img src="/team_logos/georgia.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        
+        {/* Additional scattered logos for depth - varied sizes */}
+        <div className="absolute top-1/4 left-1/3 w-6 h-6 opacity-3 rotate-12">
+          <img src="/team_logos/florida.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        <div className="absolute bottom-1/4 right-1/3 w-7 h-7 opacity-4 -rotate-20">
+          <img src="/team_logos/penn-state.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        <div className="absolute top-1/5 right-1/4 w-5 h-5 opacity-3 rotate-60">
+          <img src="/team_logos/stanford.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        <div className="absolute bottom-1/3 left-1/4 w-9 h-9 opacity-5 -rotate-15">
+          <img src="/team_logos/tennessee.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
+        <div className="absolute top-4/5 left-16 w-13 h-13 opacity-6 rotate-40">
+          <img src="/team_logos/utah.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        </div>
       </div>
 
       <div className="max-w-[97%] mx-auto relative z-10">
@@ -219,9 +264,13 @@ const AllTeams = () => {
                 <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/60 via-transparent to-transparent"></div>
                 <i className="fas fa-university text-3xl relative z-10 drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
               </div>
-              {/* Floating particles */}
-              <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-              <div className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full opacity-40 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '0.5s' }}></div>
+              {/* Small floating icons instead of red dots */}
+              <div className="absolute -top-1 -right-1 text-xs opacity-60">
+                <i className="fas fa-star text-yellow-500"></i>
+              </div>
+              <div className="absolute -bottom-1 -left-1 text-xs opacity-40">
+                <i className="fas fa-football-ball text-amber-600"></i>
+              </div>
             </div>
           </div>
           
@@ -242,7 +291,7 @@ const AllTeams = () => {
           {/* Stats Badge with Liquid Glass */}
           <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2),0_15px_35px_rgba(0,0,0,0.1)]">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+              <i className="fas fa-university text-gray-600"></i>
               <span className="text-lg font-bold" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{teams.length} Teams</span>
             </div>
             <div className="w-px h-6 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
