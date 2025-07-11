@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { teamService } from '../../../services/teamService';
 
 const AllTimeTab = ({ team1, team2 }) => {
@@ -9,6 +9,67 @@ const AllTimeTab = ({ team1, team2 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [animateCards, setAnimateCards] = useState(false);
+  const [animateShine, setAnimateShine] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [chartData, setChartData] = useState({ team1WinsData: [], team2WinsData: [] });
+
+  // Chart years (2014-2024 like Swift)
+  const years = useMemo(() => Array.from({ length: 11 }, (_, i) => 2014 + i), []);
+
+  // Utility functions matching Swift implementation
+  const calculateAllTimeWins = useCallback((records) => {
+    return records.reduce((total, record) => total + (record.total?.wins || 0), 0);
+  }, []);
+
+  const calculateWinPercentage = useCallback((records) => {
+    const totalWins = records.reduce((sum, record) => sum + (record.total?.wins || 0), 0);
+    const totalLosses = records.reduce((sum, record) => sum + (record.total?.losses || 0), 0);
+    const totalTies = records.reduce((sum, record) => sum + (record.total?.ties || 0), 0);
+    const totalGames = totalWins + totalLosses + totalTies;
+    return totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
+  }, []);
+
+  const getConferenceChampionships = useCallback((champGamesArray) => {
+    return champGamesArray.flat().length;
+  }, []);
+
+  const getBowlGameStats = useCallback((bowlGamesArray, teamName) => {
+    const allBowlGames = bowlGamesArray.flat();
+    const bowlGames = allBowlGames.length;
+    
+    const bowlWins = allBowlGames.filter(game => {
+      const isHomeTeam = game.homeTeam === teamName;
+      const teamPoints = isHomeTeam ? game.homePoints : game.awayPoints;
+      const opponentPoints = isHomeTeam ? game.awayPoints : game.homePoints;
+      return teamPoints > opponentPoints;
+    }).length;
+    
+    return { bowlGames, bowlWins };
+  }, []);
+
+  const getTeamColor = useCallback((team) => {
+    return team?.color || '#cc001c';
+  }, []);
+
+  // Chart helper functions matching Swift ChartHelpers
+  const ChartHelpers = useMemo(() => ({
+    dataToPoint: (year, wins, maxY, years, geometry) => {
+      const index = years.findIndex(y => y === year);
+      const x = ChartHelpers.xPosition(index, years.length, geometry.width);
+      const y = geometry.height - (wins / maxY) * geometry.height;
+      return { x, y };
+    },
+    xPosition: (index, count, width) => {
+      if (count <= 1) return width / 2;
+      return (width * index) / (count - 1);
+    }
+  }), []);
+
+  // Cache key for localStorage
+  const cacheKey = useMemo(() => 
+    `alltime_${team1?.school}_${team2?.school}`, 
+    [team1?.school, team2?.school]
+  );
 
   useEffect(() => {
     const loadAllTimeData = async () => {
@@ -21,16 +82,29 @@ const AllTimeTab = ({ team1, team2 }) => {
         setLoading(true);
         setError(null);
 
-        // Get comprehensive historical data for both teams (like Swift version)
-        const years = Array.from({ length: 15 }, (_, i) => 2024 - i); // Last 15 years for more data
-        
-        // Fetch real historical data including bowl games and championships
+        // Check cache first
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const cachedData = JSON.parse(cached);
+          if (Date.now() - cachedData.timestamp < 3600000) { // 1 hour cache
+            setAllTimeData(cachedData.data);
+            setChartData(cachedData.chartData);
+            setTimeout(() => {
+              setAnimateCards(true);
+              setAnimateShine(true);
+            }, 300);
+            setLoading(false);
+            return;
+          }
+        }
+
         console.log(`🔍 Loading comprehensive data for ${team1.school} vs ${team2.school}...`);
         
+        // Fetch comprehensive data like Swift implementation
         const [team1Records, team2Records, team1BowlData, team2BowlData, team1ChampData, team2ChampData] = await Promise.all([
           Promise.all(years.map(year => teamService.getTeamRecords(team1.school, year))),
           Promise.all(years.map(year => teamService.getTeamRecords(team2.school, year))),
-          // Get actual bowl game data for both teams
+          // Get actual bowl game data
           Promise.all(years.map(async year => {
             try {
               const games = await teamService.getTeamGames(team1.school, year);
@@ -53,7 +127,7 @@ const AllTimeTab = ({ team1, team2 }) => {
               return [];
             }
           })),
-          // Get actual championship game data
+          // Get championship data
           Promise.all(years.map(async year => {
             try {
               const games = await teamService.getTeamGames(team1.school, year);
@@ -69,7 +143,6 @@ const AllTimeTab = ({ team1, team2 }) => {
               }
               return champGames;
             } catch (err) {
-              console.warn(`⚠️ Failed to get ${team1.school} championship data for ${year}:`, err.message);
               return [];
             }
           })),
@@ -88,112 +161,75 @@ const AllTimeTab = ({ team1, team2 }) => {
               }
               return champGames;
             } catch (err) {
-              console.warn(`⚠️ Failed to get ${team2.school} championship data for ${year}:`, err.message);
               return [];
             }
           }))
         ]);
 
-        // Calculate comprehensive totals (like Swift totalWins function)
-        const calculateAllTimeTotals = (recordsArray) => {
-          const flattened = recordsArray.flat().filter(record => record && record.total);
-          return flattened.reduce((acc, record) => {
-            acc.wins += record.total.wins || 0;
-            acc.losses += record.total.losses || 0;
-            acc.ties += record.total.ties || 0;
-            acc.gamesPlayed += record.gamesPlayed || 0;
-            acc.conferenceWins += record.conferenceGames?.wins || 0;
-            return acc;
-          }, { wins: 0, losses: 0, ties: 0, gamesPlayed: 0, conferenceWins: 0 });
+        // Calculate all-time statistics using utility functions
+        const team1AllRecords = team1Records.flat();
+        const team2AllRecords = team2Records.flat();
+
+        const team1Stats = {
+          wins: calculateAllTimeWins(team1AllRecords),
+          winPercentage: calculateWinPercentage(team1AllRecords),
+          conferenceChampionships: getConferenceChampionships(team1ChampData),
+          bowlGames: getBowlGameStats(team1BowlData, team1.school).bowlGames,
+          bowlWins: getBowlGameStats(team1BowlData, team1.school).bowlWins,
+          records: team1AllRecords
         };
 
-        // Calculate real bowl game statistics
-        const calculateBowlStats = (bowlGamesArray, teamName) => {
-          const allBowlGames = bowlGamesArray.flat();
-          const bowlGames = allBowlGames.length;
-          
-          const bowlWins = allBowlGames.filter(game => {
-            const isHomeTeam = game.homeTeam === teamName;
-            const teamPoints = isHomeTeam ? game.homePoints : game.awayPoints;
-            const opponentPoints = isHomeTeam ? game.awayPoints : game.homePoints;
-            return teamPoints > opponentPoints;
-          }).length;
-          
-          return { bowlGames, bowlWins };
+        const team2Stats = {
+          wins: calculateAllTimeWins(team2AllRecords),
+          winPercentage: calculateWinPercentage(team2AllRecords),
+          conferenceChampionships: getConferenceChampionships(team2ChampData),
+          bowlGames: getBowlGameStats(team2BowlData, team2.school).bowlGames,
+          bowlWins: getBowlGameStats(team2BowlData, team2.school).bowlWins,
+          records: team2AllRecords
         };
 
-        // Calculate real championship statistics
-        const calculateChampionshipStats = (champGamesArray, teamName) => {
-          const allChampGames = champGamesArray.flat();
-          
-          const championships = allChampGames.filter(game => {
-            const isHomeTeam = game.homeTeam === teamName;
-            const teamPoints = isHomeTeam ? game.homePoints : game.awayPoints;
-            const opponentPoints = isHomeTeam ? game.awayPoints : game.homePoints;
-            return teamPoints > opponentPoints; // Won the championship game
-          }).length;
-          
-          return championships;
-        };
-
-        const team1Totals = calculateAllTimeTotals(team1Records);
-        const team2Totals = calculateAllTimeTotals(team2Records);
-
-        // Calculate win percentages (like Swift winPercentage function)
-        const calculateWinPercentage = (totals) => {
-          const totalGames = totals.wins + totals.losses + totals.ties;
-          return totalGames > 0 ? (totals.wins / totalGames) * 100 : 0;
-        };
-
-        const team1WinPct = calculateWinPercentage(team1Totals);
-        const team2WinPct = calculateWinPercentage(team2Totals);
-
-        // Get real bowl and championship data
-        const team1BowlStats = calculateBowlStats(team1BowlData, team1.school);
-        const team2BowlStats = calculateBowlStats(team2BowlData, team2.school);
-        
-        const team1Championships = calculateChampionshipStats(team1ChampData, team1.school);
-        const team2Championships = calculateChampionshipStats(team2ChampData, team2.school);
-
-        // Log final statistics
-        console.log(`📈 Final Stats for ${team1.school}:`, {
-          wins: team1Totals.wins,
-          winPct: team1WinPct.toFixed(1) + '%',
-          bowlGames: team1BowlStats.bowlGames,
-          bowlWins: team1BowlStats.bowlWins,
-          championships: team1Championships
-        });
-        
-        console.log(`📈 Final Stats for ${team2.school}:`, {
-          wins: team2Totals.wins,
-          winPct: team2WinPct.toFixed(1) + '%',
-          bowlGames: team2BowlStats.bowlGames,
-          bowlWins: team2BowlStats.bowlWins,
-          championships: team2Championships
+        // Create chart data like Swift WinData structure
+        const team1WinsData = years.map(year => {
+          const record = team1AllRecords.find(r => r.year === year);
+          return {
+            id: `${team1.school}-${year}`,
+            year,
+            wins: record?.total?.wins || 0,
+            team: team1
+          };
         });
 
-        setAllTimeData({
-          team1: {
-            wins: team1Totals.wins,
-            winPercentage: team1WinPct,
-            conferenceChampionships: team1Championships,
-            bowlGames: team1BowlStats.bowlGames,
-            bowlWins: team1BowlStats.bowlWins,
-            records: team1Records.flat(),
-            totalGames: team1Totals.wins + team1Totals.losses + team1Totals.ties
-          },
-          team2: {
-            wins: team2Totals.wins,
-            winPercentage: team2WinPct,
-            conferenceChampionships: team2Championships,
-            bowlGames: team2BowlStats.bowlGames,
-            bowlWins: team2BowlStats.bowlWins,
-            records: team2Records.flat(),
-            totalGames: team2Totals.wins + team2Totals.losses + team2Totals.ties
-          }
+        const team2WinsData = years.map(year => {
+          const record = team2AllRecords.find(r => r.year === year);
+          return {
+            id: `${team2.school}-${year}`,
+            year,
+            wins: record?.total?.wins || 0,
+            team: team2
+          };
         });
 
-        setTimeout(() => setAnimateCards(true), 300);
+        const finalData = { team1: team1Stats, team2: team2Stats };
+        const finalChartData = { team1WinsData, team2WinsData };
+
+        setAllTimeData(finalData);
+        setChartData(finalChartData);
+
+        // Cache the results
+        localStorage.setItem(cacheKey, JSON.stringify({
+          data: finalData,
+          chartData: finalChartData,
+          timestamp: Date.now()
+        }));
+
+        console.log(`📈 Final Stats for ${team1.school}:`, team1Stats);
+        console.log(`📈 Final Stats for ${team2.school}:`, team2Stats);
+
+        setTimeout(() => {
+          setAnimateCards(true);
+          setAnimateShine(true);
+        }, 300);
+
       } catch (err) {
         console.error('Error loading all-time data:', err);
         setError('Failed to load all-time data');
@@ -203,11 +239,7 @@ const AllTimeTab = ({ team1, team2 }) => {
     };
 
     loadAllTimeData();
-  }, [team1?.school, team2?.school]);
-
-  const getTeamColor = (team) => {
-    return team?.color || '#cc001c';
-  };
+  }, [team1?.school, team2?.school, years, cacheKey, calculateAllTimeWins, calculateWinPercentage, getConferenceChampionships, getBowlGameStats]);
 
   const getWinner = (value1, value2) => {
     if (value1 > value2) return 'team1';
@@ -325,6 +357,253 @@ const AllTimeTab = ({ team1, team2 }) => {
     );
   };
 
+  // Interactive Chart Component (matching Swift modernWinsOverYearsChart)
+  const ModernWinsOverYearsChart = () => {
+    const maxWins = useMemo(() => {
+      const allWins = [...chartData.team1WinsData, ...chartData.team2WinsData].map(d => d.wins);
+      return Math.max(15, Math.max(...allWins)); // Minimum 15 like Swift
+    }, [chartData]);
+
+    const handleYearClick = useCallback((year) => {
+      setSelectedYear(selectedYear === year ? null : year);
+    }, [selectedYear]);
+
+    return (
+      <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 ${animateCards ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        {/* Card Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-2xl shadow-lg flex items-center justify-center" style={{ background: professionalGradients.blue }}>
+            <i className="fas fa-chart-line text-white text-xl"></i>
+          </div>
+          <div>
+            <h3 className="text-2xl font-black gradient-text">Wins Over Years</h3>
+            <p className="text-gray-600 text-sm">Historical performance trends (2014-2024)</p>
+          </div>
+        </div>
+
+        {/* Chart Container */}
+        <div className="relative h-80 mb-6">
+          <svg className="w-full h-full" viewBox="0 0 800 300">
+            {/* Grid Lines */}
+            {Array.from({ length: 4 }, (_, i) => (
+              <line
+                key={i}
+                x1="40"
+                y1={60 + (i * 60)}
+                x2="760"
+                y2={60 + (i * 60)}
+                stroke="rgba(0,0,0,0.1)"
+                strokeWidth="1"
+              />
+            ))}
+            {years.map((year, i) => {
+              if (i % 2 === 0) {
+                const x = 40 + (i * (720 / (years.length - 1)));
+                return (
+                  <line
+                    key={year}
+                    x1={x}
+                    y1="60"
+                    x2={x}
+                    y2="240"
+                    stroke="rgba(0,0,0,0.1)"
+                    strokeWidth="1"
+                  />
+                );
+              }
+              return null;
+            })}
+
+            {/* Team 1 Line */}
+            <path
+              d={chartData.team1WinsData.map((data, i) => {
+                const x = 40 + (i * (720 / (years.length - 1)));
+                const y = 240 - (data.wins / maxWins) * 180;
+                return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+              }).join(' ')}
+              stroke={getTeamColor(team1)}
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transition-all duration-1000"
+              style={{
+                filter: `drop-shadow(0 2px 4px ${getTeamColor(team1)}40)`,
+                strokeDasharray: animateCards ? 'none' : '10,10',
+                animation: animateCards ? 'none' : 'drawLine 2s ease-in-out forwards'
+              }}
+            />
+
+            {/* Team 2 Line */}
+            <path
+              d={chartData.team2WinsData.map((data, i) => {
+                const x = 40 + (i * (720 / (years.length - 1)));
+                const y = 240 - (data.wins / maxWins) * 180;
+                return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+              }).join(' ')}
+              stroke={getTeamColor(team2)}
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transition-all duration-1000"
+              style={{
+                filter: `drop-shadow(0 2px 4px ${getTeamColor(team2)}40)`,
+                strokeDasharray: animateCards ? 'none' : '10,10',
+                animation: animateCards ? 'none' : 'drawLine 2s ease-in-out forwards 0.5s'
+              }}
+            />
+
+            {/* Interactive Points */}
+            {chartData.team1WinsData.map((data, i) => {
+              const x = 40 + (i * (720 / (years.length - 1)));
+              const y = 240 - (data.wins / maxWins) * 180;
+              return (
+                <circle
+                  key={`team1-${data.year}`}
+                  cx={x}
+                  cy={y}
+                  r={selectedYear === data.year ? "8" : "6"}
+                  fill={getTeamColor(team1)}
+                  className="cursor-pointer transition-all duration-200 hover:r-8"
+                  onClick={() => handleYearClick(data.year)}
+                  style={{
+                    filter: `drop-shadow(0 2px 4px ${getTeamColor(team1)}60)`
+                  }}
+                />
+              );
+            })}
+
+            {chartData.team2WinsData.map((data, i) => {
+              const x = 40 + (i * (720 / (years.length - 1)));
+              const y = 240 - (data.wins / maxWins) * 180;
+              return (
+                <circle
+                  key={`team2-${data.year}`}
+                  cx={x}
+                  cy={y}
+                  r={selectedYear === data.year ? "8" : "6"}
+                  fill={getTeamColor(team2)}
+                  className="cursor-pointer transition-all duration-200 hover:r-8"
+                  onClick={() => handleYearClick(data.year)}
+                  style={{
+                    filter: `drop-shadow(0 2px 4px ${getTeamColor(team2)}60)`
+                  }}
+                />
+              );
+            })}
+
+            {/* Axis Labels */}
+            {years.map((year, i) => {
+              if (i % 2 === 0) {
+                const x = 40 + (i * (720 / (years.length - 1)));
+                return (
+                  <text
+                    key={year}
+                    x={x}
+                    y="260"
+                    textAnchor="middle"
+                    fontSize="12"
+                    fill="#666"
+                    className="font-medium"
+                  >
+                    {year}
+                  </text>
+                );
+              }
+              return null;
+            })}
+
+            {/* Y-axis labels */}
+            {[0, 5, 10, 15].map(value => (
+              <text
+                key={value}
+                x="30"
+                y={240 - (value / maxWins) * 180 + 5}
+                textAnchor="end"
+                fontSize="12"
+                fill="#666"
+                className="font-medium"
+              >
+                {value}
+              </text>
+            ))}
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-8 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center">
+              {team1?.logos?.[0] ? (
+                <img src={team1.logos[0]} alt={team1.school} className="w-full h-full object-contain" />
+              ) : (
+                <div className="w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: getTeamColor(team1) }}>
+                  {team1?.school?.[0]}
+                </div>
+              )}
+            </div>
+            <div className="w-6 h-1 rounded" style={{ backgroundColor: getTeamColor(team1) }}></div>
+            <span className="font-medium text-gray-700">{team1.school}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center">
+              {team2?.logos?.[0] ? (
+                <img src={team2.logos[0]} alt={team2.school} className="w-full h-full object-contain" />
+              ) : (
+                <div className="w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: getTeamColor(team2) }}>
+                  {team2?.school?.[0]}
+                </div>
+              )}
+            </div>
+            <div className="w-6 h-1 rounded" style={{ backgroundColor: getTeamColor(team2) }}></div>
+            <span className="font-medium text-gray-700">{team2.school}</span>
+          </div>
+        </div>
+
+        {/* Selected Year Info */}
+        {selectedYear && (
+          <div className="bg-gray-50 rounded-2xl p-6 transition-all duration-300">
+            <h4 className="text-xl font-bold text-center mb-4">{selectedYear} Season Comparison</h4>
+            <div className="flex items-center justify-between">
+              <div className="text-center">
+                <div className="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                  {team1?.logos?.[0] ? (
+                    <img src={team1.logos[0]} alt={team1.school} className="w-full h-full object-contain" />
+                  ) : (
+                    <div className="w-full h-full rounded-xl flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: getTeamColor(team1) }}>
+                      {team1?.school?.[0]}
+                    </div>
+                  )}
+                </div>
+                <div className="font-bold text-2xl" style={{ color: getTeamColor(team1) }}>
+                  {chartData.team1WinsData.find(d => d.year === selectedYear)?.wins || 0}
+                </div>
+                <div className="text-sm text-gray-600">wins</div>
+              </div>
+              <div className="text-2xl font-bold text-gray-400">VS</div>
+              <div className="text-center">
+                <div className="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                  {team2?.logos?.[0] ? (
+                    <img src={team2.logos[0]} alt={team2.school} className="w-full h-full object-contain" />
+                  ) : (
+                    <div className="w-full h-full rounded-xl flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: getTeamColor(team2) }}>
+                      {team2?.school?.[0]}
+                    </div>
+                  )}
+                </div>
+                <div className="font-bold text-2xl" style={{ color: getTeamColor(team2) }}>
+                  {chartData.team2WinsData.find(d => d.year === selectedYear)?.wins || 0}
+                </div>
+                <div className="text-sm text-gray-600">wins</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="relative z-10 flex items-center justify-center h-full">
@@ -413,12 +692,26 @@ const AllTimeTab = ({ team1, team2 }) => {
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
+        @keyframes drawLine {
+          from { stroke-dashoffset: 1000; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes shimmer {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s ease-in-out infinite;
+        }
       `}</style>
 
-      {/* Header */}
+      {/* Modern Header with shine animation */}
       <div className="text-center mb-12">
         <div className="flex items-center justify-center gap-4 mb-6">
-          <div className="w-12 h-12 rounded-2xl shadow-lg flex items-center justify-center" style={{ background: professionalGradients.red }}>
+          <div 
+            className={`w-12 h-12 rounded-2xl shadow-lg flex items-center justify-center ${animateShine ? 'animate-shimmer' : ''}`} 
+            style={{ background: professionalGradients.gold }}
+          >
             <i className="fas fa-chart-bar text-white text-xl"></i>
           </div>
           <div>
@@ -439,7 +732,7 @@ const AllTimeTab = ({ team1, team2 }) => {
         gradientColor={professionalGradients.gold}
       />
 
-      {/* Win Percentage with Circular Progress */}
+      {/* Win Percentage with Enhanced Circular Progress */}
       <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 ${animateCards ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         <div className="flex items-center gap-4 mb-6">
           <div className="w-12 h-12 rounded-2xl shadow-lg flex items-center justify-center" style={{ background: professionalGradients.blue }}>
@@ -475,7 +768,9 @@ const AllTimeTab = ({ team1, team2 }) => {
             <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2">
               <span className="text-gray-600 font-bold">VS</span>
             </div>
-            <i className="fas fa-arrow-right text-green-500 text-xl"></i>
+            {getWinner(allTimeData.team1.winPercentage, allTimeData.team2.winPercentage) !== 'tie' && (
+              <i className={`fas fa-arrow-right text-green-500 text-xl transition-all duration-500 ${animateShine ? 'animate-shimmer' : ''}`}></i>
+            )}
           </div>
 
           <div className="text-center">
@@ -510,18 +805,112 @@ const AllTimeTab = ({ team1, team2 }) => {
         gradientColor={professionalGradients.purple}
       />
 
-      {/* Bowl Games */}
-      <ModernStatsCard 
-        title="Bowl Games"
-        subtitle={`Appearances / Wins`}
-        icon="fas fa-medal"
-        value1={`${allTimeData.team1.bowlGames} / ${allTimeData.team1.bowlWins}`}
-        value2={`${allTimeData.team2.bowlGames} / ${allTimeData.team2.bowlWins}`}
-        animateCards={animateCards}
-        gradientColor={professionalGradients.emerald}
-      />
+      {/* Enhanced Bowl Games with Win Rate */}
+      <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 ${animateCards ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-2xl shadow-lg flex items-center justify-center" style={{ background: professionalGradients.emerald }}>
+            <i className="fas fa-medal text-white text-xl"></i>
+          </div>
+          <div>
+            <h3 className="text-2xl font-black gradient-text">Bowl Games</h3>
+            <p className="text-gray-600 text-sm">Postseason appearances and performance</p>
+          </div>
+        </div>
 
-      {/* Info Section */}
+        <div className="flex items-center">
+          <div className="flex-1 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              {team1?.logos?.[0] ? (
+                <img src={team1.logos[0]} alt={team1.school} className="w-full h-full object-contain" />
+              ) : (
+                <div className="w-full h-full rounded-xl flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: getTeamColor(team1) }}>
+                  {team1?.school?.[0]}
+                </div>
+              )}
+            </div>
+            <div className="mb-2">
+              <div className="text-3xl font-black" style={{ color: getTeamColor(team1) }}>
+                {allTimeData.team1.bowlGames}
+              </div>
+              <div className="text-sm text-gray-600">appearances</div>
+            </div>
+            <div className="mb-4">
+              <div className="text-2xl font-bold text-green-600">
+                {allTimeData.team1.bowlWins}
+              </div>
+              <div className="text-sm text-gray-600">wins</div>
+            </div>
+            {/* Bowl Win Rate Bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <div 
+                className="bg-green-500 h-2 rounded-full transition-all duration-1000" 
+                style={{ 
+                  width: animateCards ? `${allTimeData.team1.bowlGames > 0 ? (allTimeData.team1.bowlWins / allTimeData.team1.bowlGames) * 100 : 0}%` : '0%' 
+                }}
+              ></div>
+            </div>
+            <div className="text-xs text-gray-500">
+              {allTimeData.team1.bowlGames > 0 ? ((allTimeData.team1.bowlWins / allTimeData.team1.bowlGames) * 100).toFixed(1) : 0}% win rate
+            </div>
+            {getWinner(
+              allTimeData.team1.bowlGames > 0 ? allTimeData.team1.bowlWins / allTimeData.team1.bowlGames : 0,
+              allTimeData.team2.bowlGames > 0 ? allTimeData.team2.bowlWins / allTimeData.team2.bowlGames : 0
+            ) === 'team1' && <WinnerBadge />}
+          </div>
+
+          <div className="flex flex-col items-center mx-8">
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+              <span className="text-gray-600 font-bold">VS</span>
+            </div>
+            <i className={`fas fa-arrow-right text-green-500 text-xl ${animateShine ? 'animate-shimmer' : ''}`}></i>
+          </div>
+
+          <div className="flex-1 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              {team2?.logos?.[0] ? (
+                <img src={team2.logos[0]} alt={team2.school} className="w-full h-full object-contain" />
+              ) : (
+                <div className="w-full h-full rounded-xl flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: getTeamColor(team2) }}>
+                  {team2?.school?.[0]}
+                </div>
+              )}
+            </div>
+            <div className="mb-2">
+              <div className="text-3xl font-black" style={{ color: getTeamColor(team2) }}>
+                {allTimeData.team2.bowlGames}
+              </div>
+              <div className="text-sm text-gray-600">appearances</div>
+            </div>
+            <div className="mb-4">
+              <div className="text-2xl font-bold text-green-600">
+                {allTimeData.team2.bowlWins}
+              </div>
+              <div className="text-sm text-gray-600">wins</div>
+            </div>
+            {/* Bowl Win Rate Bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <div 
+                className="bg-green-500 h-2 rounded-full transition-all duration-1000" 
+                style={{ 
+                  width: animateCards ? `${allTimeData.team2.bowlGames > 0 ? (allTimeData.team2.bowlWins / allTimeData.team2.bowlGames) * 100 : 0}%` : '0%' 
+                }}
+              ></div>
+            </div>
+            <div className="text-xs text-gray-500">
+              {allTimeData.team2.bowlGames > 0 ? ((allTimeData.team2.bowlWins / allTimeData.team2.bowlGames) * 100).toFixed(1) : 0}% win rate
+            </div>
+            {getWinner(
+              allTimeData.team1.bowlGames > 0 ? allTimeData.team1.bowlWins / allTimeData.team1.bowlGames : 0,
+              allTimeData.team2.bowlGames > 0 ? allTimeData.team2.bowlWins / allTimeData.team2.bowlGames : 0
+            ) === 'team2' && <WinnerBadge />}
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Wins Over Years Chart */}
+      <ModernWinsOverYearsChart />
+
+      {/* Enhanced Info Section */}
       <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-6 transition-all duration-500 ${animateCards ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: professionalGradients.red }}>
@@ -530,8 +919,15 @@ const AllTimeTab = ({ team1, team2 }) => {
           <h3 className="text-xl font-black gradient-text">About This Data</h3>
         </div>
         <div className="space-y-3 text-sm text-gray-600">
-          <p><strong>Data Sources:</strong> Statistics compiled from recent seasons (2015-2024)</p>
-          <p><strong>Note:</strong> Some historical data may be estimates. Bowl game and championship data are approximations based on available records.</p>
+          <div>
+            <strong>All-Time Records:</strong> Complete historical data including regular season wins, conference championships, and bowl game performances from 2014-2024.
+          </div>
+          <div>
+            <strong>Performance Metrics:</strong> Comprehensive analysis of win percentages, postseason success rates, and year-over-year performance trends.
+          </div>
+          <div>
+            <strong>Interactive Features:</strong> Click on chart points to explore specific season comparisons. Data sourced from College Football Data API.
+          </div>
         </div>
       </div>
     </div>
