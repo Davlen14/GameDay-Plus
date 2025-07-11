@@ -345,7 +345,7 @@ const ForumSectionDetail = ({ sectionId }) => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Forum Section Not Found</h1>
           <button 
-            onClick={() => window.location.hash = 'the-colosseum'}
+            onClick={() => window.location.hash = 'fan-forums'}
             className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             Back to Forums
@@ -369,7 +369,7 @@ const ForumSectionDetail = ({ sectionId }) => {
           <div className="flex items-center justify-between text-white">
             <div className="flex items-center space-x-4">
               <button 
-                onClick={() => window.location.hash = 'the-colosseum'}
+                onClick={() => window.location.hash = 'fan-forums'}
                 className="p-3 rounded-lg transition-all duration-200 hover:bg-white/20"
               >
                 <i className="fas fa-arrow-left text-xl"></i>

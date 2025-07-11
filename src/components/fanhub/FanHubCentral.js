@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import InteractiveForumPost from './InteractiveForumPost';
+import MainForumSection from './MainForumSection';
 
 const FanHubCentral = () => {
   // Professional gradient system matching other FanHub components
@@ -151,6 +153,10 @@ const FanHubCentral = () => {
     }
   ]);
 
+  const [showInteractivePost, setShowInteractivePost] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [showMainForum, setShowMainForum] = useState(false);
+
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9)' }}>
       {/* Hero Header */}
@@ -236,7 +242,7 @@ const FanHubCentral = () => {
       {/* Main Dashboard */}
       <div className="w-full py-12" style={{ width: '97%', margin: '0 auto' }}>
         {/* Quick Access Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           {/* The Colosseum Access */}
           <div className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.02]">
             <div 
@@ -277,60 +283,10 @@ const FanHubCentral = () => {
                       background: professionalGradients.red,
                       boxShadow: '0 4px 15px rgba(255, 46, 74, 0.3)'
                     }}
-                    onClick={() => window.location.hash = 'the-colosseum'}
+                    onClick={() => setShowMainForum(true)}
                   >
                     <i className="fas fa-sign-in-alt mr-2"></i>
                     Enter Stadium
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Fan Prophecy Access */}
-          <div className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.02]">
-            <div 
-              className="rounded-lg shadow-xl hover:shadow-2xl border overflow-hidden"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9))',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-              }}
-            >
-              <div 
-                className="text-white p-6"
-                style={{
-                  background: professionalGradients.purple,
-                  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold mb-2">Fan Prophecy</h3>
-                    <p className="text-purple-100 text-sm mb-4">Test your prediction skills</p>
-                    <div className="flex items-center space-x-4 text-sm">
-                      <span className="bg-white/20 px-3 py-1 rounded-full">7 Active</span>
-                      <span className="bg-white/20 px-3 py-1 rounded-full">73% Accuracy</span>
-                    </div>
-                  </div>
-                  <div className="text-5xl opacity-30">
-                    <i className="fas fa-crystal-ball"></i>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="text-center">
-                  <button 
-                    className="w-full py-3 text-white rounded-md font-bold transition-all duration-200 hover:scale-[1.02]"
-                    style={{
-                      background: professionalGradients.purple,
-                      boxShadow: '0 4px 15px rgba(147, 51, 234, 0.3)'
-                    }}
-                    onClick={() => window.location.hash = 'fan-prophecy'}
-                  >
-                    <i className="fas fa-magic mr-2"></i>
-                    Make Predictions
                   </button>
                 </div>
               </div>
@@ -367,9 +323,8 @@ const FanHubCentral = () => {
           </div>
         </div>
 
-        {/* Activity & Predictions Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Recent Activity */}
+        {/* Recent Activity */}
+        <div className="mb-12">
           <div className="rounded-lg overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-[1.02]"
                style={{ 
                  background: professionalGradients.blue,
@@ -382,11 +337,26 @@ const FanHubCentral = () => {
             <div className="p-6">
               <div className="space-y-4">
                 {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-center space-x-4 p-4 rounded-lg transition-all duration-200 hover:scale-[1.02]"
-                       style={{ 
-                         background: 'rgba(255, 255, 255, 0.1)',
-                         backdropFilter: 'blur(8px)'
-                       }}>
+                  <div 
+                    key={activity.id} 
+                    className="flex items-center space-x-4 p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer transform hover:shadow-lg"
+                    style={{ 
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      backdropFilter: 'blur(8px)'
+                    }}
+                    onClick={() => {
+                      if (activity.type === 'prediction' || activity.type === 'discussion') {
+                        setSelectedPost({
+                          title: activity.title,
+                          section: "The Colosseum - Recent Activity",
+                          replies: Math.floor(Math.random() * 100) + 20,
+                          photo: activity.photo,
+                          user: "@LiveFan"
+                        });
+                        setShowInteractivePost(true);
+                      }
+                    }}
+                  >
                     <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white border-opacity-30 flex-shrink-0"
                          style={{ background: activity.color }}>
                       <img 
@@ -414,43 +384,10 @@ const FanHubCentral = () => {
               </div>
             </div>
           </div>
-
-          {/* Active Predictions */}
-          <div className="rounded-lg overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-[1.02]"
-               style={{ 
-                 background: professionalGradients.purple,
-                 border: 'none'
-               }}>
-            <div className="text-white p-6">
-              <h3 className="text-2xl font-bold mb-2">🔮 Active Predictions</h3>
-              <p className="text-purple-100">Your current prediction challenges</p>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {favoritePredictions.map((pred) => (
-                  <div key={pred.id} className="p-4 rounded-lg transition-all duration-200 hover:scale-[1.02]"
-                       style={{ 
-                         background: 'rgba(255, 255, 255, 0.1)',
-                         backdropFilter: 'blur(8px)'
-                       }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-white">{pred.title}</h4>
-                      <span className="text-sm text-purple-200 font-bold">{pred.timeLeft}</span>
-                    </div>
-                    <div className="text-sm text-purple-100 mb-2">{pred.participants.toLocaleString()} participants</div>
-                    <div className="w-full bg-black bg-opacity-20 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-purple-300 to-purple-200 h-2 rounded-full transition-all duration-300" 
-                           style={{width: `${pred.progress}%`}}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Hot Discussions */}
-        <div className="mt-12 rounded-lg overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-[1.02]"
+        <div className="rounded-lg overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-[1.02]"
              style={{ 
                background: professionalGradients.orange,
                border: 'none'
@@ -462,11 +399,24 @@ const FanHubCentral = () => {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {hotDiscussions.map((discussion) => (
-                <div key={discussion.id} className="p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer"
-                     style={{ 
-                       background: 'rgba(255, 255, 255, 0.1)',
-                       backdropFilter: 'blur(8px)'
-                     }}>
+                <div 
+                  key={discussion.id} 
+                  className="p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer transform hover:shadow-lg"
+                  style={{ 
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(8px)'
+                  }}
+                  onClick={() => {
+                    setSelectedPost({
+                      title: discussion.title,
+                      section: `The Colosseum - ${discussion.section}`,
+                      replies: discussion.replies,
+                      photo: discussion.photo,
+                      user: `@${discussion.section.replace(' ', '')}Fan`
+                    });
+                    setShowInteractivePost(true);
+                  }}
+                >
                   <div className="flex items-center space-x-3 mb-3">
                     <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white border-opacity-30 flex-shrink-0">
                       <img 
@@ -497,6 +447,24 @@ const FanHubCentral = () => {
           </div>
         </div>
       </div>
+
+      {/* Interactive Forum Modal */}
+      {showInteractivePost && selectedPost && (
+        <InteractiveForumPost 
+          post={selectedPost}
+          onClose={() => {
+            setShowInteractivePost(false);
+            setSelectedPost(null);
+          }}
+        />
+      )}
+
+      {/* Main Forum Section */}
+      {showMainForum && (
+        <MainForumSection 
+          onClose={() => setShowMainForum(false)}
+        />
+      )}
     </div>
   );
 };

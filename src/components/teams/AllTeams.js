@@ -134,7 +134,14 @@ const AllTeams = () => {
     if (selectedTeams.find(t => t.id === team.id)) {
       setSelectedTeams(selectedTeams.filter(t => t.id !== team.id));
     } else if (selectedTeams.length < 2) {
-      setSelectedTeams([...selectedTeams, team]);
+      const newSelectedTeams = [...selectedTeams, team];
+      setSelectedTeams(newSelectedTeams);
+      
+      // If we now have 2 teams, automatically go to comparison view
+      if (newSelectedTeams.length === 2) {
+        localStorage.setItem('compareTeams', JSON.stringify(newSelectedTeams));
+        window.location.hash = 'compare-teams';
+      }
     }
   };
 
@@ -145,10 +152,25 @@ const AllTeams = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 px-2 md:px-4 bg-gray-50">
-        <div className="max-w-full mx-auto">
+      <div className="min-h-screen pt-32 px-4 md:px-6 relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"></div>
+        
+        {/* Floating Orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+          <div className="absolute bottom-40 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
+        </div>
+
+        <div className="max-w-[97%] mx-auto relative z-10">
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-500 border-t-transparent"></div>
+            {/* Enhanced Loading Spinner */}
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderTopColor: '#cc001c', borderRightColor: '#a10014' }}></div>
+              </div>
+              <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+            </div>
           </div>
         </div>
       </div>
@@ -156,41 +178,97 @@ const AllTeams = () => {
   }
 
   return (
-    <div className="min-h-screen pt-20 px-4 md:px-6 bg-gradient-to-br from-slate-900 via-slate-800 to-black overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-green-500/10 to-yellow-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+    <div className="min-h-screen pt-20 px-4 md:px-6 relative overflow-hidden">
+      <style>{`
+        .gradient-text {
+          background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .icon-gradient {
+          background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+      `}</style>
+
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"></div>
+      
+      {/* Floating Orbs Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '2s' }}></div>
+        <div className="absolute bottom-20 right-1/3 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '3s' }}></div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Hero Search Section */}
-        <div className="relative mb-12">
-          <div className="text-center mb-8">
-            <h1 className="text-6xl md:text-7xl font-black bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent mb-4 tracking-tight">
-              College Teams
+      <div className="max-w-[97%] mx-auto relative z-10">
+        {/* Enhanced Liquid Glass Header Section */}
+        <div className="text-center mb-20">
+          <div className="flex items-center justify-center mb-8 relative">
+            {/* Liquid Glass Icon Container */}
+            <div className="relative">
+              {/* Outer glass ring */}
+              <div className="absolute inset-0 w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-2xl animate-pulse"></div>
+              {/* Inner glass container */}
+              <div className="relative w-16 h-16 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_10px_30px_rgba(0,0,0,0.1)] flex items-center justify-center">
+                {/* Liquid glass highlight */}
+                <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/60 via-transparent to-transparent"></div>
+                <i className="fas fa-university text-3xl relative z-10 drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
+              </div>
+              {/* Floating particles */}
+              <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+              <div className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full opacity-40 animate-ping" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '0.5s' }}></div>
+            </div>
+          </div>
+          
+          {/* Enhanced Title with Liquid Glass Effect */}
+          <div className="relative mb-8">
+            <h1 className="text-6xl md:text-7xl font-black mb-6 relative">
+              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>College</span>
+              <br />
+              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Teams</span>
+              {/* Animated underline */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-1 rounded-full opacity-60 animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
             </h1>
-            <p className="text-xl text-gray-400 font-light max-w-2xl mx-auto">
-              Discover, explore, and compare your favorite college football teams with advanced analytics
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
+              Explore comprehensive team profiles, statistics, and comparisons for every FBS program
             </p>
           </div>
+          
+          {/* Stats Badge with Liquid Glass */}
+          <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2),0_15px_35px_rgba(0,0,0,0.1)]">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+              <span className="text-lg font-bold" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{teams.length} Teams</span>
+            </div>
+            <div className="w-px h-6 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+            <span className="text-lg text-gray-700 font-medium">
+              FBS Division I
+            </span>
+          </div>
+        </div>
 
-          <div className="relative max-w-4xl mx-auto">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-purple-600 to-blue-600 rounded-3xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-              <div className="relative bg-black/50 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
-                <div className="relative">
-                  {/* Enhanced Search Input */}
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-8 flex items-center pointer-events-none">
-                      <div className="relative">
-                        <i className="fas fa-search text-2xl text-transparent bg-gradient-to-r from-red-400 to-blue-400 bg-clip-text"></i>
-                        <div className="absolute inset-0 animate-pulse">
-                          <i className="fas fa-search text-2xl text-white/30"></i>
-                        </div>
-                      </div>
-                    </div>
+        {/* Liquid Glass Search Container */}
+        <div className="relative mb-16">
+          {/* Liquid Glass Container */}
+          <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
+            {/* Highlight overlay */}
+            <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            
+            {/* Content */}
+            <div className="relative z-10">
+              {/* Enhanced Search Input */}
+              <div className="relative max-w-2xl mx-auto">
+                <div className="relative bg-white/30 backdrop-blur-xl rounded-2xl border border-white/40 shadow-[inset_0_2px_8px_rgba(255,255,255,0.2)] overflow-hidden">
+                  {/* Glass highlight */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                  
+                  <div className="relative flex items-center">
+                    <i className="fas fa-search absolute left-6 text-gray-500 z-10 text-xl"></i>
                     <input
                       type="text"
                       value={searchQuery}
@@ -198,140 +276,157 @@ const AllTeams = () => {
                       onFocus={() => setShowSuggestions(true)}
                       onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                       placeholder="Search teams, conferences, or mascots..."
-                      className="w-full pl-20 pr-8 py-6 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 text-xl backdrop-blur-sm transition-all duration-500 hover:bg-white/10"
+                      className="w-full pl-16 pr-6 py-5 bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 font-medium text-lg"
                     />
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-red-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                   </div>
+                </div>
 
-                  {/* Futuristic Search Suggestions */}
-                  {showSuggestions && (searchSuggestions.length > 0 || recentSearches.length > 0) && (
-                    <div className="absolute top-full left-0 right-0 mt-4 bg-black/70 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl z-50 overflow-hidden">
-                      {searchSuggestions.length > 0 && (
-                        <div className="p-6">
-                          <h4 className="text-sm font-bold text-gray-300 mb-4 uppercase tracking-wider">AI Suggestions</h4>
-                          {searchSuggestions.map((suggestion, index) => (
-                            <button
-                              key={index}
-                              onClick={() => {
-                                setSearchQuery(suggestion.value);
-                                setShowSuggestions(false);
-                              }}
-                              className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-xl transition-all duration-300 flex items-center gap-4 group border border-transparent hover:border-white/20"
-                            >
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500/20 to-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                <i className={`fas ${suggestion.type === 'team' ? 'fa-university' : 'fa-layer-group'} text-white/70`}></i>
-                              </div>
-                              <div className="flex-1">
-                                <span className="text-white font-medium">{suggestion.value}</span>
-                                {suggestion.type === 'conference' && (
-                                  <span className="text-sm text-gray-400 ml-2 px-2 py-1 bg-white/10 rounded-full">Conference</span>
-                                )}
-                              </div>
-                              <i className="fas fa-arrow-right text-white/30 group-hover:text-white/70 group-hover:translate-x-1 transition-all duration-300"></i>
-                            </button>
-                          ))}
-                        </div>
+                {/* Enhanced Search Suggestions */}
+                {showSuggestions && (searchSuggestions.length > 0 || recentSearches.length > 0) && (
+                  <div className="absolute top-full left-0 right-0 mt-4 bg-white/40 backdrop-blur-2xl rounded-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.1)] z-50 overflow-hidden">
+                    {/* Glass highlight */}
+                    <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+                    
+                    {searchSuggestions.length > 0 && (
+                      <div className="p-6 relative z-10">
+                        <h4 className="text-sm font-bold text-gray-600 mb-4 uppercase tracking-wider flex items-center gap-2">
+                          <i className="fas fa-lightbulb gradient-text text-sm"></i>
+                          Suggestions
+                        </h4>
+                        {searchSuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setSearchQuery(suggestion.value);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-white/30 rounded-xl transition-all duration-300 flex items-center gap-3 group"
+                          >
+                            <div className="w-10 h-10 rounded-xl bg-white/40 backdrop-blur-sm border border-white/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                              <i className={`fas ${suggestion.type === 'team' ? 'fa-university' : 'fa-layer-group'} text-gray-600`}></i>
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-gray-900 font-semibold text-lg">{suggestion.value}</span>
+                              {suggestion.type === 'conference' && (
+                                <span className="text-xs text-gray-600 ml-2 px-3 py-1 bg-white/40 rounded-full border border-white/30">Conference</span>
+                              )}
+                            </div>
+                            <i className="fas fa-arrow-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {recentSearches.length > 0 && (
+                      <div className="p-6 border-t border-white/30 relative z-10">
+                        <h4 className="text-sm font-bold text-gray-600 mb-4 uppercase tracking-wider flex items-center gap-2">
+                          <i className="fas fa-clock gradient-text text-sm"></i>
+                          Recent
+                        </h4>
+                        {recentSearches.map((search, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setSearchQuery(search);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-white/30 rounded-xl transition-all duration-300 flex items-center gap-3 group"
+                          >
+                            <div className="w-10 h-10 rounded-xl bg-white/40 backdrop-blur-sm border border-white/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                              <i className="fas fa-clock text-gray-600"></i>
+                            </div>
+                            <span className="text-gray-900 font-semibold text-lg flex-1">{search}</span>
+                            <i className="fas fa-arrow-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Compare Mode Toggle */}
+                {!searchQuery && (
+                  <div className="flex items-center justify-center mt-8 gap-4">
+                    <button
+                      onClick={() => setCompareMode(!compareMode)}
+                      className={`relative flex items-center gap-3 px-6 py-3 rounded-2xl font-bold text-lg transition-all duration-500 transform hover:scale-105 ${
+                        compareMode
+                          ? 'text-white shadow-2xl'
+                          : 'text-gray-700 hover:text-white'
+                      }`}
+                    >
+                      {/* Active gradient background */}
+                      {compareMode && (
+                        <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(204,0,28,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
                       )}
                       
-                      {recentSearches.length > 0 && (
-                        <div className="p-6 border-t border-white/10">
-                          <h4 className="text-sm font-bold text-gray-300 mb-4 uppercase tracking-wider">Recent Searches</h4>
-                          {recentSearches.map((search, index) => (
-                            <button
-                              key={index}
-                              onClick={() => {
-                                setSearchQuery(search);
-                                setShowSuggestions(false);
-                              }}
-                              className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-xl transition-all duration-300 flex items-center gap-4 group"
-                            >
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                <i className="fas fa-clock text-white/70"></i>
-                              </div>
-                              <span className="text-white font-medium flex-1">{search}</span>
-                              <i className="fas fa-arrow-right text-white/30 group-hover:text-white/70 group-hover:translate-x-1 transition-all duration-300"></i>
-                            </button>
-                          ))}
-                        </div>
+                      {/* Inactive glass background */}
+                      {!compareMode && (
+                        <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
                       )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Advanced Action Buttons */}
-                <div className="flex flex-wrap gap-4 mt-8">
-                  <button
-                    onClick={() => setCompareMode(!compareMode)}
-                    className={`group relative px-8 py-4 rounded-2xl font-bold transition-all duration-500 overflow-hidden ${
-                      compareMode 
-                        ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-500/25' 
-                        : 'bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-white/40'
-                    }`}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
-                    <div className="relative flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                        <i className="fas fa-balance-scale text-sm"></i>
-                      </div>
-                      <span>Compare Teams</span>
-                      {selectedTeams.length > 0 && (
-                        <span className="px-2 py-1 bg-white/20 rounded-full text-xs">
-                          {selectedTeams.length}/2
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                  
-                  {compareMode && selectedTeams.length > 0 && (
-                    <button
-                      onClick={clearComparison}
-                      className="group relative px-8 py-4 rounded-2xl font-bold bg-white/10 text-white border border-white/20 hover:bg-red-500/20 hover:border-red-500/40 transition-all duration-500 overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
-                      <div className="relative flex items-center gap-3">
+                      
+                      {/* Glass highlight */}
+                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                      
+                      <span className="relative z-10 flex items-center gap-2">
+                        <i className="fas fa-balance-scale"></i>
+                        {compareMode ? 'Exit Compare Mode' : 'Compare Teams'}
+                        {compareMode && selectedTeams.length > 0 && (
+                          <span className="ml-2 px-2 py-1 bg-white/20 rounded-full text-sm">
+                            {selectedTeams.length}/2
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                    
+                    {compareMode && selectedTeams.length > 0 && (
+                      <button
+                        onClick={clearComparison}
+                        className="relative flex items-center gap-2 px-4 py-3 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300 text-gray-700 font-medium"
+                      >
                         <i className="fas fa-times"></i>
-                        <span>Clear Selection</span>
+                        Clear ({selectedTeams.length})
+                      </button>
+                    )}
+                    
+                    {compareMode && selectedTeams.length === 1 && (
+                      <div className="flex items-center gap-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-2xl text-blue-700 font-medium">
+                        <i className="fas fa-info-circle"></i>
+                        Select one more team to compare
                       </div>
-                    </button>
-                  )}
-                  
-                  {compareMode && selectedTeams.length === 2 && (
-                    <button
-                      onClick={() => console.log('Navigate to comparison:', selectedTeams)}
-                      className="group relative px-10 py-4 rounded-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-500 overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-                      <div className="relative flex items-center gap-3">
-                        <i className="fas fa-rocket"></i>
-                        <span>Compare Now</span>
-                        <i className="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform duration-300"></i>
-                      </div>
-                    </button>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Futuristic Favorites Section */}
+        {/* Enhanced Favorites Section with Liquid Glass */}
         {favorites.length > 0 && !searchQuery && (
-          <div className="mb-12">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 rounded-3xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
-              <div className="relative bg-black/30 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center border border-yellow-500/30">
-                    <i className="fas fa-star text-3xl text-yellow-400 animate-pulse"></i>
+          <div className="mb-16">
+            <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
+              {/* Highlight overlay */}
+              <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center gap-6 mb-8">
+                  <div className="relative">
+                    {/* Outer glass ring */}
+                    <div className="absolute inset-0 w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 shadow-xl"></div>
+                    {/* Inner glass container */}
+                    <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg flex items-center justify-center">
+                      <i className="fas fa-heart text-3xl text-white drop-shadow-lg"></i>
+                    </div>
                   </div>
                   <div>
-                    <h2 className="text-4xl font-black text-white mb-2 tracking-tight">
+                    <h2 className="text-4xl font-black mb-2 tracking-tight gradient-text">
                       Favorite Teams
                     </h2>
-                    <p className="text-gray-400 font-light">Your handpicked elite collection</p>
+                    <p className="text-gray-600 font-light text-lg">Your selected teams for quick access</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
                   {favorites.map(team => (
                     <TeamCard 
                       key={`fav-${team.id}`}
@@ -349,58 +444,75 @@ const AllTeams = () => {
           </div>
         )}
 
-        {/* Teams by Conference */}
+        {/* Teams by Conference with Enhanced Liquid Glass */}
         <div className="space-y-8">
           {Object.entries(teamsByConference).map(([conference, conferenceTeams]) => (
-            <div key={conference} className="bg-white rounded-3xl p-6 border border-gray-200 shadow-lg">
-              {/* Conference Header */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center overflow-hidden">
+            <div key={conference} className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
+              {/* Highlight overlay */}
+              <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+              
+              <div className="relative z-10">
+                {/* Enhanced Conference Header */}
+                <div className="flex items-center gap-6 mb-8">
+                  <div className="relative w-16 h-16 flex items-center justify-center">
                     <img
                       src={`/photos/${conference}.png`}
                       alt={conference}
-                      className="w-8 h-8 object-contain"
+                      className="w-14 h-14 object-contain filter drop-shadow-lg"
                       onError={(e) => {
                         e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
+                        e.target.nextSibling.style.display = 'flex';
                       }}
                     />
-                    <i className="fas fa-layer-group text-gray-400 hidden"></i>
+                    <div className="w-14 h-14 hidden items-center justify-center">
+                      <i className="fas fa-layer-group text-gray-500 text-3xl"></i>
+                    </div>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-800">{conference}</h2>
-                    <p className="text-gray-500">{conferenceTeams.length} teams</p>
+                    <h2 className="text-3xl font-black mb-2 gradient-text">{conference}</h2>
+                    <p className="text-gray-600 font-medium text-lg">{conferenceTeams.length} teams</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Teams Grid */}
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-4">
-                {conferenceTeams.map(team => (
-                  <TeamCard
-                    key={team.id}
-                    team={team}
-                    isFavorite={favorites.some(fav => fav.id === team.id)}
-                    onToggleFavorite={toggleFavorite}
-                    onSelect={handleTeamSelect}
-                    isSelected={selectedTeams.some(t => t.id === team.id)}
-                    compareMode={compareMode}
-                  />
-                ))}
+                {/* Teams Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                  {conferenceTeams.map(team => (
+                    <TeamCard
+                      key={team.id}
+                      team={team}
+                      isFavorite={favorites.some(fav => fav.id === team.id)}
+                      onToggleFavorite={toggleFavorite}
+                      onSelect={handleTeamSelect}
+                      isSelected={selectedTeams.some(t => t.id === team.id)}
+                      compareMode={compareMode}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Empty State */}
+        {/* Enhanced Empty State */}
         {filteredTeams.length === 0 && searchQuery && (
-          <div className="text-center py-20">
-            <i className="fas fa-search text-6xl text-gray-300 mb-6"></i>
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">No teams found</h3>
-            <p className="text-gray-500 text-lg">
-              Try adjusting your search or browse by conference
-            </p>
+          <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-16">
+            {/* Highlight overlay */}
+            <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            
+            <div className="relative z-10 text-center">
+              <div className="relative mb-8">
+                {/* Outer glass ring */}
+                <div className="absolute inset-0 w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-xl mx-auto"></div>
+                {/* Inner glass container */}
+                <div className="relative w-16 h-16 rounded-full bg-white/60 backdrop-blur-sm border border-white/50 shadow-[inset_0_2px_6px_rgba(255,255,255,0.4)] flex items-center justify-center mx-auto">
+                  <i className="fas fa-search text-gray-400 text-3xl"></i>
+                </div>
+              </div>
+              <h3 className="text-3xl font-black mb-4 gradient-text">No teams found</h3>
+              <p className="text-gray-600 text-xl font-light">
+                Try adjusting your search or browse by conference
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -408,80 +520,87 @@ const AllTeams = () => {
   );
 };
 
-// Team Card Component with Metallic 3D Effect
+// Enhanced Team Card Component with Modern Minimalist Design
 const TeamCard = ({ team, isFavorite, onToggleFavorite, onSelect, isSelected, compareMode }) => {
   const teamLogo = team.logos?.[0];
   
   return (
     <div 
-      className={`group relative bg-white backdrop-blur-sm rounded-2xl p-4 border transition-all duration-300 cursor-pointer ${
+      className={`group relative rounded-2xl p-6 transition-all duration-500 cursor-pointer transform hover:scale-105 min-w-0 ${
         isSelected 
-          ? 'border-red-500 bg-gradient-to-br from-red-50 to-red-100 shadow-lg shadow-red-500/25 scale-105' 
-          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:scale-105 shadow-md hover:shadow-lg'
+          ? 'bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-300 shadow-lg shadow-red-500/25' 
+          : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:border-gray-300 hover:bg-white shadow-md hover:shadow-xl'
       }`}
       onClick={() => onSelect(team)}
       title={compareMode ? 'Click to select for comparison' : `View ${team.school} details`}
     >
       {/* Selection Indicator */}
       {compareMode && (
-        <div className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 transition-all duration-300 ${
+        <div className={`absolute top-3 right-3 w-7 h-7 rounded-full border-2 transition-all duration-300 z-10 ${
           isSelected 
-            ? 'bg-red-500 border-red-500' 
+            ? 'shadow-[0_4px_12px_rgba(204,0,28,0.4)]' 
             : 'border-gray-300 group-hover:border-gray-400'
-        }`}>
-          {isSelected && <i className="fas fa-check text-white text-xs absolute inset-0 flex items-center justify-center"></i>}
+        }`}
+        style={{
+          background: isSelected 
+            ? 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)'
+            : 'rgba(255, 255, 255, 0.8)'
+        }}>
+          {isSelected && <i className="fas fa-check text-white text-sm absolute inset-0 flex items-center justify-center"></i>}
         </div>
       )}
 
-      {/* Favorite Button */}
+      {/* Enhanced Favorite Button */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           onToggleFavorite(team);
         }}
-        className={`absolute top-2 left-2 w-8 h-8 rounded-full transition-all duration-300 flex items-center justify-center ${
+        className={`absolute top-3 left-3 w-8 h-8 rounded-full transition-all duration-300 flex items-center justify-center z-10 ${
           isFavorite 
-            ? 'bg-yellow-500 text-white' 
-            : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+            ? 'shadow-[0_4px_12px_rgba(234,179,8,0.4)]' 
+            : 'bg-gray-100 hover:bg-gray-200 hover:scale-110'
         }`}
+        style={{
+          background: isFavorite 
+            ? 'linear-gradient(135deg, #eab308, #d97706, #ea580c)'
+            : undefined
+        }}
       >
-        <i className={`fas fa-star text-xs ${isFavorite ? 'text-white' : ''}`}></i>
+        <i className={`fas fa-star text-sm ${isFavorite ? 'text-white' : 'text-gray-500'} drop-shadow-sm`}></i>
       </button>
 
-      {/* Team Logo with Metallic 3D Effect */}
-      <div className="w-16 h-16 mx-auto mb-3 relative">
-        <div className="w-full h-full rounded-2xl bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400 shadow-lg transform rotate-3 group-hover:rotate-6 transition-transform duration-300"></div>
-        <div className="absolute inset-0 w-full h-full rounded-2xl bg-gradient-to-br from-white via-gray-100 to-gray-300 shadow-inner transform -rotate-3 group-hover:-rotate-6 transition-transform duration-300 overflow-hidden">
-          {teamLogo ? (
-            <img
-              src={teamLogo}
-              alt={team.school}
-              className="w-full h-full object-contain p-2 filter drop-shadow-md"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <i className="fas fa-university text-gray-600 text-xl"></i>
-            </div>
-          )}
-        </div>
+      {/* Modern Team Logo - Bigger and Cleaner */}
+      <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+        {teamLogo ? (
+          <img
+            src={teamLogo}
+            alt={team.school}
+            className="w-full h-full object-contain filter drop-shadow-lg transition-transform duration-300 group-hover:scale-110"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <i className="fas fa-university text-gray-400 text-4xl"></i>
+          </div>
+        )}
       </div>
 
-      {/* Team Info */}
-      <div className="text-center">
-        <h3 className="font-bold text-gray-800 text-sm leading-tight mb-1 group-hover:text-red-600 transition-colors">
+      {/* Enhanced Team Info with Better Text Handling */}
+      <div className="text-center px-2">
+        <h3 className="font-black text-gray-800 text-sm lg:text-base leading-tight mb-2 group-hover:text-red-600 transition-colors duration-300 break-words">
           {team.school}
         </h3>
-        <p className="text-gray-500 text-xs">
+        <p className="text-gray-600 text-xs lg:text-sm font-medium break-words">
           {team.mascot}
         </p>
       </div>
 
-      {/* Team Colors Accent */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl bg-gradient-to-r opacity-60" 
+      {/* Enhanced Team Colors Accent - Simplified */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl" 
            style={{
              background: team.color && team.alternateColor 
-               ? `linear-gradient(to right, ${team.color}, ${team.alternateColor})`
-               : 'linear-gradient(to right, #dc2626, #991b1b)'
+               ? `linear-gradient(90deg, ${team.color}, ${team.alternateColor})`
+               : 'linear-gradient(90deg, #cc001c, #a10014)'
            }}>
       </div>
     </div>

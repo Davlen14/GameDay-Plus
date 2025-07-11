@@ -15,6 +15,7 @@ import LoadingSpinner from './components/UI/LoadingSpinner';
 // Lazy load heavy components
 const HomePageView = React.lazy(() => import('./components/layout/HomePageView'));
 const AllTeams = React.lazy(() => import('./components/teams/AllTeams'));
+const CompareTeamsView = React.lazy(() => import('./components/teams/CompareTeamsView'));
 const TeamDetailView = React.lazy(() => import('./components/teams/TeamDetailView'));
 const SEC = React.lazy(() => import('./components/teams/SEC'));
 const BigTen = React.lazy(() => import('./components/teams/BigTen'));
@@ -221,6 +222,12 @@ function App() {
         return (
           <Suspense fallback={<PageLoader />}>
             <AllTeams />
+          </Suspense>
+        );
+      case 'compare-teams':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <CompareTeamsView />
           </Suspense>
         );
       case 'sec':
