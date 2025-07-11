@@ -553,11 +553,41 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
   }
 
   const professionalGradients = {
-    gold: `linear-gradient(135deg, rgb(250, 204, 21), rgb(245, 158, 11), rgb(217, 119, 6))`,
-    blue: `linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235), rgb(29, 78, 216))`,
-    purple: `linear-gradient(135deg, rgb(168, 85, 247), rgb(139, 69, 219), rgb(124, 58, 193))`,
-    emerald: `linear-gradient(135deg, rgb(16, 185, 129), rgb(5, 150, 105), rgb(4, 120, 87))`,
-    red: `linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38), rgb(185, 28, 28))`
+    gold: `linear-gradient(135deg, 
+      rgb(250, 204, 21), 
+      rgb(245, 158, 11), 
+      rgb(217, 119, 6), 
+      rgb(245, 158, 11), 
+      rgb(250, 204, 21)
+    )`,
+    blue: `linear-gradient(135deg, 
+      rgb(59, 130, 246), 
+      rgb(37, 99, 235), 
+      rgb(29, 78, 216), 
+      rgb(37, 99, 235), 
+      rgb(59, 130, 246)
+    )`,
+    purple: `linear-gradient(135deg, 
+      rgb(168, 85, 247), 
+      rgb(139, 69, 219), 
+      rgb(124, 58, 193), 
+      rgb(139, 69, 219), 
+      rgb(168, 85, 247)
+    )`,
+    emerald: `linear-gradient(135deg, 
+      rgb(16, 185, 129), 
+      rgb(5, 150, 105), 
+      rgb(4, 120, 87), 
+      rgb(5, 150, 105), 
+      rgb(16, 185, 129)
+    )`,
+    red: `linear-gradient(135deg, 
+      rgb(239, 68, 68), 
+      rgb(220, 38, 38), 
+      rgb(185, 28, 28), 
+      rgb(220, 38, 38), 
+      rgb(239, 68, 68)
+    )`
   };
 
   return (
