@@ -190,63 +190,90 @@ const AllTeams = () => {
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"></div>
       
-      {/* College Team Logos Background - Well-spaced distribution with varied sizes */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Top row - well spaced */}
-        <div className="absolute top-16 left-12 w-12 h-12 opacity-6">
-          <img src="/team_logos/alabama.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
-        </div>
-        <div className="absolute top-20 right-16 w-10 h-10 opacity-5 rotate-12">
-          <img src="/team_logos/ohio-state.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+      {/* Conference Logos in Hero Area - Positioned around main content with proper spacing */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        {/* Conference Logos - Uniform size, well-spaced positioning, no overlap */}
+        
+        {/* Top Arc - Above title, wider spacing */}
+        <div className="absolute top-24 left-20 w-20 h-20 opacity-85 -rotate-12 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/SEC.png" alt="SEC" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('SEC logo failed to load');
+            e.target.style.display = 'none';
+          }} />
         </div>
         
-        {/* Middle left and right - far from center content */}
-        <div className="absolute top-1/3 left-6 w-8 h-8 opacity-4 rotate-45">
-          <img src="/team_logos/texas.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
-        </div>
-        <div className="absolute top-1/2 right-8 w-9 h-9 opacity-5 -rotate-12">
-          <img src="/team_logos/clemson.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
-        </div>
-        
-        {/* Additional middle logos */}
-        <div className="absolute top-2/5 left-2 w-14 h-14 opacity-7 rotate-20">
-          <img src="/team_logos/oregon.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
-        </div>
-        <div className="absolute top-3/5 right-2 w-6 h-6 opacity-4 -rotate-30">
-          <img src="/team_logos/wisconsin.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        <div className="absolute top-24 right-20 w-20 h-20 opacity-85 rotate-12 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/Big Ten.png" alt="Big Ten" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('Big Ten logo failed to load');
+            e.target.style.display = 'none';
+          }} />
         </div>
         
-        {/* Lower section - well separated */}
-        <div className="absolute bottom-32 left-20 w-11 h-11 opacity-6 rotate-90">
-          <img src="/team_logos/notre-dame.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
-        </div>
-        <div className="absolute bottom-20 right-24 w-10 h-10 opacity-5 -rotate-6">
-          <img src="/team_logos/michigan.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
-        </div>
-        
-        {/* Corner positions - small and subtle */}
-        <div className="absolute top-2/3 left-2 w-7 h-7 opacity-3 rotate-30">
-          <img src="/team_logos/lsu.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
-        </div>
-        <div className="absolute bottom-40 right-4 w-8 h-8 opacity-4 -rotate-45">
-          <img src="/team_logos/georgia.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        {/* Far Left Side - Vertical spacing */}
+        <div className="absolute top-48 left-4 w-20 h-20 opacity-85 rotate-20 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/ACC.png" alt="ACC" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('ACC logo failed to load');
+            e.target.style.display = 'none';
+          }} />
         </div>
         
-        {/* Additional scattered logos for depth - varied sizes */}
-        <div className="absolute top-1/4 left-1/3 w-6 h-6 opacity-3 rotate-12">
-          <img src="/team_logos/florida.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        <div className="absolute top-80 left-4 w-20 h-20 opacity-85 rotate-25 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/Pac-12.png" alt="Pac-12" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('Pac-12 logo failed to load');
+            e.target.style.display = 'none';
+          }} />
         </div>
-        <div className="absolute bottom-1/4 right-1/3 w-7 h-7 opacity-4 -rotate-20">
-          <img src="/team_logos/penn-state.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        
+        {/* Far Right Side - Vertical spacing */}
+        <div className="absolute top-48 right-4 w-20 h-20 opacity-85 -rotate-20 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/Big 12.png" alt="Big 12" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('Big 12 logo failed to load');
+            e.target.style.display = 'none';
+          }} />
         </div>
-        <div className="absolute top-1/5 right-1/4 w-5 h-5 opacity-3 rotate-60">
-          <img src="/team_logos/stanford.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        
+        <div className="absolute top-80 right-4 w-20 h-20 opacity-85 -rotate-25 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/American Athletic.png" alt="American Athletic" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('American Athletic logo failed to load');
+            e.target.style.display = 'none';
+          }} />
         </div>
-        <div className="absolute bottom-1/3 left-1/4 w-9 h-9 opacity-5 -rotate-15">
-          <img src="/team_logos/tennessee.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        
+        {/* Bottom Arc - Well below stats badge with wider spacing */}
+        <div className="absolute top-96 left-32 w-20 h-20 opacity-85 rotate-30 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/Mountain West.png" alt="Mountain West" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('Mountain West logo failed to load');
+            e.target.style.display = 'none';
+          }} />
         </div>
-        <div className="absolute top-4/5 left-16 w-13 h-13 opacity-6 rotate-40">
-          <img src="/team_logos/utah.png" alt="" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+        
+        <div className="absolute top-104 left-1/2 -translate-x-1/2 w-20 h-20 opacity-85 rotate-0 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/Conference USA.png" alt="Conference USA" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('Conference USA logo failed to load');
+            e.target.style.display = 'none';
+          }} />
+        </div>
+        
+        <div className="absolute top-96 right-32 w-20 h-20 opacity-85 -rotate-30 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/Sun Belt.png" alt="Sun Belt" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('Sun Belt logo failed to load');
+            e.target.style.display = 'none';
+          }} />
+        </div>
+        
+        {/* Additional logos with even more spacing */}
+        <div className="absolute top-112 left-24 w-20 h-20 opacity-85 rotate-15 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/Mid-American.png" alt="Mid-American" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('Mid-American logo failed to load');
+            e.target.style.display = 'none';
+          }} />
+        </div>
+        
+        <div className="absolute top-112 right-24 w-20 h-20 opacity-85 -rotate-15 transform hover:scale-110 transition-transform duration-500">
+          <img src="/photos/FBS Independents.png" alt="FBS Independents" className="w-full h-full object-contain filter drop-shadow-lg" onError={(e) => {
+            console.log('FBS Independents logo failed to load');
+            e.target.style.display = 'none';
+          }} />
         </div>
       </div>
 
