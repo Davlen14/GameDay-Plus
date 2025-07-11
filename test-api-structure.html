@@ -1,0 +1,27 @@
+// Simple test script to check API response structure
+const testAPI = async () => {
+  try {
+    // Test the records API directly
+    const response = await fetch('https://api.collegefootballdata.com/records?year=2023&team=Ohio%20State');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log('=== OHIO STATE 2023 RECORDS STRUCTURE ===');
+    console.log(JSON.stringify(data, null, 2));
+    
+    // Test postseason games
+    const postseasonResponse = await fetch('https://api.collegefootballdata.com/games?year=2023&seasonType=postseason&team=Ohio%20State');
+    if (!postseasonResponse.ok) {
+      throw new Error(`HTTP error! status: ${postseasonResponse.status}`);
+    }
+    const postseasonData = await postseasonResponse.json();
+    console.log('\n=== OHIO STATE 2023 POSTSEASON GAMES ===');
+    console.log(JSON.stringify(postseasonData, null, 2));
+    
+  } catch (error) {
+    console.error('API Test Error:', error);
+  }
+};
+
+testAPI();
