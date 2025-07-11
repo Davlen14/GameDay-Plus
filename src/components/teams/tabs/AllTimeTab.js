@@ -868,17 +868,7 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           <div>
             <strong>Interactive Features:</strong> Click on chart points to explore specific season comparisons. Data sourced from College Football Data API.
           </div>
-          <div className="mt-4">
-            <button 
-              onClick={() => {
-                localStorage.removeItem(cacheKey);
-                window.location.reload();
-              }}
-              className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
-            >
-              Clear Cache & Reload
-            </button>
-          </div>
+
         </div>
       </div>
     </div>
