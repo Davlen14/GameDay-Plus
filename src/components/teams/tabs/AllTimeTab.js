@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { teamService } from '../../../services/teamService';
+import { gameService } from '../../../services/gameService';
 
 const AllTimeTab = ({ team1, team2 }) => {
   const [allTimeData, setAllTimeData] = useState({
@@ -100,111 +101,164 @@ const AllTimeTab = ({ team1, team2 }) => {
 
         console.log(`🔍 Loading comprehensive data for ${team1.school} vs ${team2.school}...`);
         
-        // Fetch comprehensive data like Swift implementation
-        const [team1Records, team2Records, team1BowlData, team2BowlData, team1ChampData, team2ChampData] = await Promise.all([
-          Promise.all(years.map(year => teamService.getTeamRecords(team1.school, year))),
-          Promise.all(years.map(year => teamService.getTeamRecords(team2.school, year))),
-          // Get actual bowl game data
+        // Use your service layer endpoints (proper way!)
+        const [team1RecordsData, team2RecordsData, team1BowlData, team2BowlData] = await Promise.all([
+          // Get records data using gameService.getRecords endpoint
           Promise.all(years.map(async year => {
             try {
-              const games = await teamService.getTeamGames(team1.school, year);
-              const bowlGames = games?.filter(game => game.seasonType === 'postseason') || [];
-              console.log(`📊 ${team1.school} ${year}: ${bowlGames.length} bowl games`);
-              return bowlGames;
+              console.log(`📊 Fetching ${team1.school} records for ${year}...`);
+              const records = await gameService.getRecords(year, team1.school);
+              console.log(`✅ ${team1.school} ${year} records:`, records);
+              return records || [];
             } catch (err) {
-              console.warn(`⚠️ Failed to get ${team1.school} games for ${year}:`, err.message);
+              console.warn(`⚠️ Failed to get ${team1.school} records for ${year}:`, err.message);
               return [];
             }
           })),
           Promise.all(years.map(async year => {
             try {
-              const games = await teamService.getTeamGames(team2.school, year);
-              const bowlGames = games?.filter(game => game.seasonType === 'postseason') || [];
-              console.log(`📊 ${team2.school} ${year}: ${bowlGames.length} bowl games`);
-              return bowlGames;
+              console.log(`📊 Fetching ${team2.school} records for ${year}...`);
+              const records = await gameService.getRecords(year, team2.school);
+              console.log(`✅ ${team2.school} ${year} records:`, records);
+              return records || [];
             } catch (err) {
-              console.warn(`⚠️ Failed to get ${team2.school} games for ${year}:`, err.message);
+              console.warn(`⚠️ Failed to get ${team2.school} records for ${year}:`, err.message);
               return [];
             }
           })),
-          // Get championship data
+          // Get bowl game data using gameService.getGames with seasonType=postseason
           Promise.all(years.map(async year => {
             try {
-              const games = await teamService.getTeamGames(team1.school, year);
-              const champGames = games?.filter(game => 
-                game.notes && (
-                  game.notes.toLowerCase().includes('championship') ||
-                  game.notes.toLowerCase().includes('conference championship') ||
-                  game.notes.toLowerCase().includes('title')
-                )
-              ) || [];
-              if (champGames.length > 0) {
-                console.log(`🏆 ${team1.school} ${year}: ${champGames.length} championship games`);
-              }
-              return champGames;
+              console.log(`🏆 Fetching ${team1.school} bowl games for ${year}...`);
+              const games = await gameService.getGames(year, null, 'postseason', team1.school);
+              console.log(`✅ ${team1.school} ${year} bowl games:`, games?.length || 0);
+              return games || [];
             } catch (err) {
+              console.warn(`⚠️ Failed to get ${team1.school} bowl games for ${year}:`, err.message);
               return [];
             }
           })),
           Promise.all(years.map(async year => {
             try {
-              const games = await teamService.getTeamGames(team2.school, year);
-              const champGames = games?.filter(game => 
-                game.notes && (
-                  game.notes.toLowerCase().includes('championship') ||
-                  game.notes.toLowerCase().includes('conference championship') ||
-                  game.notes.toLowerCase().includes('title')
-                )
-              ) || [];
-              if (champGames.length > 0) {
-                console.log(`🏆 ${team2.school} ${year}: ${champGames.length} championship games`);
-              }
-              return champGames;
+              console.log(`🏆 Fetching ${team2.school} bowl games for ${year}...`);
+              const games = await gameService.getGames(year, null, 'postseason', team2.school);
+              console.log(`✅ ${team2.school} ${year} bowl games:`, games?.length || 0);
+              return games || [];
             } catch (err) {
+              console.warn(`⚠️ Failed to get ${team2.school} bowl games for ${year}:`, err.message);
               return [];
             }
           }))
         ]);
 
-        // Calculate all-time statistics using utility functions
-        const team1AllRecords = team1Records.flat();
-        const team2AllRecords = team2Records.flat();
+        // Calculate all-time statistics using proper records data structure from /records API
+        const team1AllRecords = team1RecordsData.flat();
+        const team2AllRecords = team2RecordsData.flat();
+
+        console.log(`📈 Processing ${team1.school} records:`, team1AllRecords);
+        console.log(`📈 Processing ${team2.school} records:`, team2AllRecords);
+
+        // Calculate totals from records API data (matches Swift totalWins function)
+        // Records API returns: [{ year, team, conference, division, expectedWins, total: { games, wins, losses, ties }, conferenceGames: {...}, homeGames: {...}, awayGames: {...} }]
+        const calculateTotalsFromRecords = (recordsArray) => {
+          return recordsArray.reduce((acc, record) => {
+            if (record && record.total) {
+              acc.wins += record.total.wins || 0;
+              acc.losses += record.total.losses || 0;
+              acc.ties += record.total.ties || 0;
+              // Use record.total.games if available, otherwise calculate
+              acc.games += record.total.games || ((record.total.wins || 0) + (record.total.losses || 0) + (record.total.ties || 0));
+            }
+            return acc;
+          }, { wins: 0, losses: 0, ties: 0, games: 0 });
+        };
+
+        // Calculate bowl statistics from games API data
+        const calculateBowlStats = (bowlGamesArray, teamName) => {
+          const allBowlGames = bowlGamesArray.flat();
+          const bowlGames = allBowlGames.length;
+          
+          const bowlWins = allBowlGames.filter(game => {
+            // Handle both API formats (home_team/away_team and homeTeam/awayTeam)
+            const homeTeam = game.home_team || game.homeTeam;
+            const awayTeam = game.away_team || game.awayTeam;
+            const homePoints = game.home_points || game.homePoints;
+            const awayPoints = game.away_points || game.awayPoints;
+            
+            const isHomeTeam = homeTeam === teamName;
+            const teamPoints = isHomeTeam ? homePoints : awayPoints;
+            const opponentPoints = isHomeTeam ? awayPoints : homePoints;
+            return teamPoints > opponentPoints;
+          }).length;
+          
+          return { bowlGames, bowlWins };
+        };
+
+        // Calculate conference championships from records data
+        // Look for teams that won their conference (high conference win rate and overall performance)
+        const calculateConferenceChampionships = (recordsArray) => {
+          return recordsArray.filter(record => {
+            if (!record || !record.conferenceGames || !record.total) return false;
+            
+            // High threshold for likely conference champions
+            const confWinRate = record.conferenceGames.wins / (record.conferenceGames.wins + record.conferenceGames.losses);
+            const overallWinRate = record.total.wins / record.total.games;
+            
+            // Likely conference champions: high conference win rate (>85%) and strong overall record (>75%)
+            return confWinRate >= 0.85 && overallWinRate >= 0.75 && record.conferenceGames.wins >= 6;
+          }).length;
+        };
+
+        const team1Totals = calculateTotalsFromRecords(team1AllRecords);
+        const team2Totals = calculateTotalsFromRecords(team2AllRecords);
+
+        const team1BowlStats = calculateBowlStats(team1BowlData, team1.school);
+        const team2BowlStats = calculateBowlStats(team2BowlData, team2.school);
+
+        const team1Championships = calculateConferenceChampionships(team1AllRecords);
+        const team2Championships = calculateConferenceChampionships(team2AllRecords);
+
+        // Calculate win percentages
+        const team1WinPct = team1Totals.games > 0 ? (team1Totals.wins / team1Totals.games) * 100 : 0;
+        const team2WinPct = team2Totals.games > 0 ? (team2Totals.wins / team2Totals.games) * 100 : 0;
 
         const team1Stats = {
-          wins: calculateAllTimeWins(team1AllRecords),
-          winPercentage: calculateWinPercentage(team1AllRecords),
-          conferenceChampionships: getConferenceChampionships(team1ChampData),
-          bowlGames: getBowlGameStats(team1BowlData, team1.school).bowlGames,
-          bowlWins: getBowlGameStats(team1BowlData, team1.school).bowlWins,
+          wins: team1Totals.wins,
+          winPercentage: team1WinPct,
+          conferenceChampionships: team1Championships,
+          bowlGames: team1BowlStats.bowlGames,
+          bowlWins: team1BowlStats.bowlWins,
           records: team1AllRecords
         };
 
         const team2Stats = {
-          wins: calculateAllTimeWins(team2AllRecords),
-          winPercentage: calculateWinPercentage(team2AllRecords),
-          conferenceChampionships: getConferenceChampionships(team2ChampData),
-          bowlGames: getBowlGameStats(team2BowlData, team2.school).bowlGames,
-          bowlWins: getBowlGameStats(team2BowlData, team2.school).bowlWins,
+          wins: team2Totals.wins,
+          winPercentage: team2WinPct,
+          conferenceChampionships: team2Championships,
+          bowlGames: team2BowlStats.bowlGames,
+          bowlWins: team2BowlStats.bowlWins,
           records: team2AllRecords
         };
 
-        // Create chart data like Swift WinData structure
+        // Create chart data from records (matches Swift WinData structure)
         const team1WinsData = years.map(year => {
           const record = team1AllRecords.find(r => r.year === year);
+          const wins = record?.total?.wins || 0;
           return {
             id: `${team1.school}-${year}`,
             year,
-            wins: record?.total?.wins || 0,
+            wins,
             team: team1
           };
         });
 
         const team2WinsData = years.map(year => {
           const record = team2AllRecords.find(r => r.year === year);
+          const wins = record?.total?.wins || 0;
           return {
             id: `${team2.school}-${year}`,
             year,
-            wins: record?.total?.wins || 0,
+            wins,
             team: team2
           };
         });
@@ -222,8 +276,21 @@ const AllTimeTab = ({ team1, team2 }) => {
           timestamp: Date.now()
         }));
 
-        console.log(`📈 Final Stats for ${team1.school}:`, team1Stats);
-        console.log(`📈 Final Stats for ${team2.school}:`, team2Stats);
+        console.log(`📈 Final Stats for ${team1.school}:`, {
+          wins: team1Stats.wins,
+          winPct: team1Stats.winPercentage.toFixed(1) + '%',
+          bowlGames: team1Stats.bowlGames,
+          bowlWins: team1Stats.bowlWins,
+          championships: team1Stats.conferenceChampionships
+        });
+        
+        console.log(`📈 Final Stats for ${team2.school}:`, {
+          wins: team2Stats.wins,
+          winPct: team2Stats.winPercentage.toFixed(1) + '%',
+          bowlGames: team2Stats.bowlGames,
+          bowlWins: team2Stats.bowlWins,
+          championships: team2Stats.conferenceChampionships
+        });
 
         setTimeout(() => {
           setAnimateCards(true);
