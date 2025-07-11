@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import {
+  AllTimeTab,
+  HeadToHeadTab,
+  Last5YearsTab,
+  Season2024Tab,
+  WeatherTab,
+  ImpactPlayersTab,
+  AdvancedTab
+} from './tabs';
 
 const CompareTeamsView = () => {
   const [selectedTab, setSelectedTab] = useState(0);
@@ -259,29 +268,14 @@ const CompareTeamsView = () => {
           {/* Highlight overlay */}
           <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
           
-          <div className="relative z-10 flex items-center justify-center h-full">
-            <div className="text-center py-20">
-              <div className="relative mb-8">
-                {/* Outer glass ring */}
-                <div className="absolute inset-0 w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-xl mx-auto"></div>
-                {/* Inner glass container */}
-                <div className="relative w-16 h-16 rounded-full bg-white/60 backdrop-blur-sm border border-white/50 shadow-[inset_0_2px_6px_rgba(255,255,255,0.4)] flex items-center justify-center mx-auto">
-                  <i className="fas fa-cogs text-gray-400 text-3xl"></i>
-                </div>
-              </div>
-              
-              <h3 className="text-4xl font-black mb-4 gradient-text">
-                {tabs[selectedTab]}
-              </h3>
-              <p className="text-xl text-gray-600 font-light mb-8">
-                Coming Soon
-              </p>
-              <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2)]">
-                <i className="fas fa-graduation-cap text-gray-600"></i>
-                <span className="text-lg font-bold gradient-text">Under Development</span>
-              </div>
-            </div>
-          </div>
+          {/* Render the selected tab component */}
+          {selectedTab === 0 && <AllTimeTab team1={team1} team2={team2} />}
+          {selectedTab === 1 && <HeadToHeadTab team1={team1} team2={team2} />}
+          {selectedTab === 2 && <Last5YearsTab team1={team1} team2={team2} />}
+          {selectedTab === 3 && <Season2024Tab team1={team1} team2={team2} />}
+          {selectedTab === 4 && <WeatherTab team1={team1} team2={team2} />}
+          {selectedTab === 5 && <ImpactPlayersTab team1={team1} team2={team2} />}
+          {selectedTab === 6 && <AdvancedTab team1={team1} team2={team2} />}
         </div>
       </div>
     </div>
