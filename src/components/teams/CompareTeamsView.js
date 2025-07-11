@@ -16,13 +16,12 @@ const CompareTeamsView = () => {
   const [team2, setTeam2] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Team records state matching Swift implementation
+  // Add team records state like Swift implementation
   const [team1Records, setTeam1Records] = useState([]);
   const [team2Records, setTeam2Records] = useState([]);
-  const [headToHead, setHeadToHead] = useState(null);
   const [recordsLoaded, setRecordsLoaded] = useState(false);
 
-  // Tabs matching Swift implementation exactly
+  // Tabs from your Swift implementation
   const tabs = [
     "All Time", 
     "Head to Head", 
@@ -46,115 +45,60 @@ const CompareTeamsView = () => {
     setIsLoading(false);
   }, []);
 
-  // Load comparison data matching Swift's loadComparisonData() function
+  // Load team records when teams are set (matches Swift CompareTeamsView architecture)
   useEffect(() => {
-    const loadComparisonData = async () => {
+    const loadTeamRecords = async () => {
       if (!team1?.school || !team2?.school) return;
       
       try {
-        console.log(`🔍 Loading comparison data for ${team1.school} vs ${team2.school}...`);
+        console.log(`🔍 Loading records for ${team1.school} vs ${team2.school}...`);
         setRecordsLoaded(false);
         
-        // Match Swift implementation: parallel async calls
-        const [records1, records2, matchup] = await Promise.all([
-          fetchTeamRecords(team1.school),
-          fetchTeamRecords(team2.school),
-          fetchTeamMatchup(team1.school, team2.school)
+        // Load comprehensive records like Swift implementation
+        const currentYear = new Date().getFullYear();
+        const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => 2000 + i);
+        
+        // Fetch records for both teams in parallel
+        const [team1RecordsData, team2RecordsData] = await Promise.all([
+          Promise.all(years.map(async (year) => {
+            try {
+              const records = await gameService.getRecords(year, team1.school);
+              return records || [];
+            } catch (error) {
+              console.warn(`Failed to get ${team1.school} records for ${year}:`, error.message);
+              return [];
+            }
+          })),
+          Promise.all(years.map(async (year) => {
+            try {
+              const records = await gameService.getRecords(year, team2.school);
+              return records || [];
+            } catch (error) {
+              console.warn(`Failed to get ${team2.school} records for ${year}:`, error.message);
+              return [];
+            }
+          }))
         ]);
         
-        console.log(`✅ Loaded ${records1.length} records for ${team1.school}`);
-        console.log(`✅ Loaded ${records2.length} records for ${team2.school}`);
+        // Flatten the arrays (each year returns an array of records)
+        const team1FlatRecords = team1RecordsData.flat();
+        const team2FlatRecords = team2RecordsData.flat();
         
-        setTeam1Records(records1);
-        setTeam2Records(records2);
-        setHeadToHead(matchup);
+        console.log(`✅ Loaded ${team1FlatRecords.length} records for ${team1.school}`);
+        console.log(`✅ Loaded ${team2FlatRecords.length} records for ${team2.school}`);
+        
+        setTeam1Records(team1FlatRecords);
+        setTeam2Records(team2FlatRecords);
         setRecordsLoaded(true);
         
       } catch (error) {
-        console.error('Error loading comparison data:', error);
-        setRecordsLoaded(true); // Still show UI with empty data
+        console.error('Error loading team records:', error);
+        setRecordsLoaded(true); // Still set to true to show the UI
       }
     };
     
-    loadComparisonData();
+    loadTeamRecords();
   }, [team1?.school, team2?.school]);
-
-  // Helper function matching Swift's TeamService.fetchTeamRecords
-  const fetchTeamRecords = async (teamName) => {
-    try {
-      // Check if your gameService has a method that fetches all records at once
-      if (gameService.fetchTeamRecords) {
-        return await gameService.fetchTeamRecords(teamName);
-      }
-      
-      // Otherwise, batch the year-by-year calls more efficiently
-      const currentYear = new Date().getFullYear();
-      const startYear = 2000; // Match your AllTimeTab years range
-      const years = Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i);
-      
-      console.log(`📅 Fetching records for ${teamName} from ${startYear} to ${currentYear}...`);
-      
-      // Batch requests in chunks to avoid overwhelming the API
-      const chunkSize = 5;
-      const allRecords = [];
-      
-      for (let i = 0; i < years.length; i += chunkSize) {
-        const yearChunk = years.slice(i, i + chunkSize);
-        
-        const chunkResults = await Promise.allSettled(
-          yearChunk.map(async (year) => {
-            try {
-              const records = await gameService.getRecords(year, teamName);
-              return records || [];
-            } catch (error) {
-              console.warn(`Failed to get ${teamName} records for ${year}:`, error.message);
-              return [];
-            }
-          })
-        );
-        
-        // Process results and flatten
-        chunkResults.forEach((result) => {
-          if (result.status === 'fulfilled' && result.value) {
-            allRecords.push(...result.value);
-          }
-        });
-        
-        // Small delay between chunks to be API-friendly
-        if (i + chunkSize < years.length) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
-      
-      console.log(`📊 Total records fetched for ${teamName}: ${allRecords.length}`);
-      return allRecords;
-      
-    } catch (error) {
-      console.error(`Error fetching records for ${teamName}:`, error);
-      return [];
-    }
-  };
-
-  // Helper function matching Swift's TeamService.fetchTeamMatchup
-  const fetchTeamMatchup = async (team1Name, team2Name) => {
-    try {
-      // This would call your head-to-head endpoint
-      if (gameService.fetchTeamMatchup) {
-        return await gameService.fetchTeamMatchup(team1Name, team2Name);
-      }
-      
-      // Fallback: try to find head-to-head games
-      if (gameService.getHeadToHeadGames) {
-        return await gameService.getHeadToHeadGames(team1Name, team2Name);
-      }
-      
-      console.warn('No head-to-head matchup method available');
-      return null;
-    } catch (error) {
-      console.error('Error fetching team matchup:', error);
-      return null;
-    }
-  };
 
   const handleBack = () => {
     // Clear comparison data and go back to teams page
@@ -162,7 +106,6 @@ const CompareTeamsView = () => {
     window.location.hash = 'teams';
   };
 
-  // Loading view matching Swift's LoadingView
   if (isLoading || !recordsLoaded) {
     return (
       <div className="min-h-screen pt-32 px-4 md:px-6 relative overflow-hidden">
@@ -176,12 +119,7 @@ const CompareTeamsView = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-gray-600 border-r-gray-400"></div>
               </div>
               <div className="text-center mt-4">
-                <p className="text-gray-600 font-medium">Loading Comparison Data...</p>
-                {team1 && team2 && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    {team1.school} vs {team2.school}
-                  </p>
-                )}
+                <p className="text-gray-600">Loading team records...</p>
               </div>
             </div>
           </div>
@@ -219,36 +157,85 @@ const CompareTeamsView = () => {
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
+        .icon-gradient {
+          background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
         .metallic-gradient {
           background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
         }
       `}</style>
 
-      {/* Background matching Swift design */}
-      <div className="absolute inset-0 bg-white"></div>
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"></div>
       
-      {/* Team Logo Background Elements - matching Swift's subtle background */}
+      {/* Team Logo Background Elements - Medium and small logos only */}
       {team1 && team2 && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
-          {/* Subtle background logos */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Team 1 logos - left side, varied sizes */}
           {team1.logos?.[0] && (
             <>
-              <div className="absolute top-20 left-6 w-8 h-8 opacity-20">
-                <img src={team1.logos[0].replace('http://', 'https://')} alt="" className="w-full h-full object-contain" />
+              <div className="absolute top-12 left-6 w-12 h-12 opacity-7">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute bottom-32 left-4 w-6 h-6 opacity-15 rotate-12">
-                <img src={team1.logos[0].replace('http://', 'https://')} alt="" className="w-full h-full object-contain" />
+              <div className="absolute top-1/3 left-4 w-10 h-10 opacity-6 rotate-12">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-2/3 left-8 w-10 h-10 opacity-6 -rotate-6">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-32 left-2 w-12 h-12 opacity-7">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-12 left-10 w-8 h-8 opacity-5 rotate-30">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-1/4 left-1 w-9 h-9 opacity-5 rotate-45">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
             </>
           )}
           
+          {/* Team 2 logos - right side, varied sizes */}
           {team2.logos?.[0] && (
             <>
-              <div className="absolute top-32 right-8 w-8 h-8 opacity-20">
-                <img src={team2.logos[0].replace('http://', 'https://')} alt="" className="w-full h-full object-contain" />
+              <div className="absolute top-16 right-8 w-12 h-12 opacity-7">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute bottom-20 right-6 w-6 h-6 opacity-15 -rotate-15">
-                <img src={team2.logos[0].replace('http://', 'https://')} alt="" className="w-full h-full object-contain" />
+              <div className="absolute top-1/2 right-4 w-9 h-9 opacity-6 rotate-15">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-1/4 right-2 w-10 h-10 opacity-6 -rotate-20">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-20 right-6 w-9 h-9 opacity-6">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-40 right-1 w-8 h-8 opacity-5 -rotate-12">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-8 right-12 w-10 h-10 opacity-5 rotate-25">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+            </>
+          )}
+          
+          {/* Center subtle logos - very small and subtle */}
+          {team1.logos?.[0] && team2.logos?.[0] && (
+            <>
+              <div className="absolute top-1/5 left-1/3 w-7 h-7 opacity-4 rotate-45">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute bottom-1/5 right-1/3 w-6 h-6 opacity-3 -rotate-30">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-1/2 left-1/4 w-5 h-5 opacity-3 rotate-60">
+                <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className="absolute top-3/4 right-1/4 w-8 h-8 opacity-4 -rotate-45">
+                <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
             </>
           )}
@@ -256,156 +243,152 @@ const CompareTeamsView = () => {
       )}
 
       <div className="max-w-[97%] mx-auto relative z-10">
-        {/* Header Section - matching Swift headerView */}
-        <div className="mb-8">
+        {/* Enhanced Header Section */}
+        <div className="mb-12">
           {/* Navigation and Title */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-12">
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-300 text-gray-700 font-medium"
+              className="flex items-center gap-3 px-4 py-3 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300 text-gray-700 font-medium"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <i className="fas fa-chevron-left"></i>
               <span>Back</span>
             </button>
 
-            <h1 className="text-2xl font-bold gradient-text">
+            <h1 className="text-4xl md:text-5xl font-black gradient-text text-center">
               Team Comparison
             </h1>
 
-            <div className="w-16"></div> {/* Spacer for balance */}
+            <div className="w-20"></div> {/* Spacer for balance */}
           </div>
 
-          {/* Team Comparison Header - matching Swift teamDisplay */}
-          <div className="flex items-center justify-center gap-8 mb-8">
-            {/* Team 1 */}
-            <TeamDisplay team={team1} alignment="right" />
+          {/* Team Comparison Header */}
+          <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
+            {/* Highlight overlay */}
+            <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
             
-            {/* VS Divider - matching Swift's metallic VS */}
-            <div className="w-15 h-15 rounded-full bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 flex items-center justify-center shadow-lg">
-              <span className="text-lg font-black text-gray-700">VS</span>
-            </div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-8 md:gap-16">
+                {/* Team 1 */}
+                <TeamDisplay team={team1} alignment="right" />
+                
+                {/* VS Divider */}
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-white/60 backdrop-blur-sm border border-white/50 shadow-[inset_0_2px_6px_rgba(255,255,255,0.4)] flex items-center justify-center">
+                    <span className="text-2xl font-black gradient-text">VS</span>
+                  </div>
+                </div>
 
-            {/* Team 2 */}
-            <TeamDisplay team={team2} alignment="left" />
-          </div>
-        </div>
-
-        {/* Tab Selector - matching Swift metalicTabSelector */}
-        <div className="mb-6">
-          <div className="overflow-x-auto">
-            <div className="flex gap-3 min-w-max px-2">
-              {tabs.map((tab, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedTab(index)}
-                  className={`px-5 py-3 rounded-xl font-medium text-sm transition-all duration-300 whitespace-nowrap ${
-                    selectedTab === index
-                      ? 'text-white shadow-lg metallic-gradient'
-                      : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+                {/* Team 2 */}
+                <TeamDisplay team={team2} alignment="left" />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Content Area - matching Swift TabView structure */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 min-h-[600px]">
-          {/* Render the selected tab component with proper data passing */}
-          {selectedTab === 0 && (
-            <AllTimeTab 
-              team1={team1} 
-              team2={team2} 
-              team1Records={team1Records} 
-              team2Records={team2Records} 
-            />
-          )}
-          {selectedTab === 1 && (
-            <HeadToHeadTab 
-              team1={team1} 
-              team2={team2} 
-              headToHead={headToHead}
-            />
-          )}
-          {selectedTab === 2 && (
-            <Last5YearsTab 
-              team1={team1} 
-              team2={team2} 
-              team1Records={team1Records} 
-              team2Records={team2Records} 
-            />
-          )}
-          {selectedTab === 3 && (
-            <Season2024Tab 
-              team1={team1} 
-              team2={team2} 
-            />
-          )}
-          {selectedTab === 4 && (
-            <WeatherTab 
-              team1={team1} 
-              team2={team2} 
-            />
-          )}
-          {selectedTab === 5 && (
-            <ImpactPlayersTab 
-              team1={team1} 
-              team2={team2} 
-            />
-          )}
-          {selectedTab === 6 && (
-            <AdvancedTab 
-              team1={team1} 
-              team2={team2} 
-            />
-          )}
+        {/* Tab Selector */}
+        <div className="relative mb-8">
+          <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-6">
+            {/* Highlight overlay */}
+            <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            
+            <div className="relative z-10">
+              <div className="overflow-x-auto">
+                <div className="flex gap-3 min-w-max px-2">
+                  {tabs.map((tab, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedTab(index)}
+                      className={`relative flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm md:text-base transition-all duration-500 transform hover:scale-105 whitespace-nowrap ${
+                        selectedTab === index
+                          ? 'text-white shadow-2xl'
+                          : 'text-gray-700 hover:text-white'
+                      }`}
+                    >
+                      {/* Active gradient background */}
+                      {selectedTab === index && (
+                        <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(204,0,28,0.3)] metallic-gradient"></div>
+                      )}
+                      
+                      {/* Inactive glass background */}
+                      {selectedTab !== index && (
+                        <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
+                      )}
+                      
+                      {/* Glass highlight */}
+                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                      
+                      <span className="relative z-10">{tab}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8 min-h-[600px]">
+          {/* Highlight overlay */}
+          <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+          
+          {/* Render the selected tab component with records like Swift implementation */}
+          {selectedTab === 0 && <AllTimeTab team1={team1} team2={team2} team1Records={team1Records} team2Records={team2Records} />}
+          {selectedTab === 1 && <HeadToHeadTab team1={team1} team2={team2} />}
+          {selectedTab === 2 && <Last5YearsTab team1={team1} team2={team2} team1Records={team1Records} team2Records={team2Records} />}
+          {selectedTab === 3 && <Season2024Tab team1={team1} team2={team2} />}
+          {selectedTab === 4 && <WeatherTab team1={team1} team2={team2} />}
+          {selectedTab === 5 && <ImpactPlayersTab team1={team1} team2={team2} />}
+          {selectedTab === 6 && <AdvancedTab team1={team1} team2={team2} />}
         </div>
       </div>
     </div>
   );
 };
 
-// Team Display Component - matching Swift's teamDisplay function
+// Team Display Component
 const TeamDisplay = ({ team, alignment }) => {
-  const teamLogo = team.logos?.[0]?.replace('http://', 'https://');
+  const teamLogo = team.logos?.[0];
   
   return (
-    <div className={`flex flex-col items-center text-center max-w-xs`}>
-      {/* Team Logo - matching Swift's logo styling */}
-      <div className="w-20 h-20 mb-4 flex items-center justify-center">
+    <div className={`flex flex-col items-center text-center ${alignment === 'right' ? 'md:items-end md:text-right' : 'md:items-start md:text-left'} flex-1 max-w-xs`}>
+      {/* Team Logo */}
+      <div className="w-24 h-24 md:w-32 md:h-32 mb-4 flex items-center justify-center">
         {teamLogo ? (
           <img
             src={teamLogo}
             alt={team.school}
             className="w-full h-full object-contain filter drop-shadow-lg transition-transform duration-300 hover:scale-110"
-            style={{
-              filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.4))'
-            }}
           />
         ) : (
-          // Fallback logo matching Swift's defaultMetallicLogo
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-2xl">
-              {team.school?.[0] || '?'}
-            </span>
+          <div className="w-full h-full rounded-2xl bg-white/60 backdrop-blur-sm border border-white/50 shadow-[inset_0_2px_6px_rgba(255,255,255,0.4)] flex items-center justify-center">
+            <i className="fas fa-university text-gray-400 text-4xl"></i>
           </div>
         )}
       </div>
 
-      {/* Team Info - matching Swift's text styling */}
-      <div className="space-y-1">
-        <h3 className="text-lg font-bold text-gray-800 leading-tight">
+      {/* Team Info */}
+      <div className="space-y-2">
+        <h3 className="text-xl md:text-2xl font-black text-gray-800 leading-tight break-words">
           {team.school}
         </h3>
+        <p className="text-sm md:text-base text-gray-600 font-medium break-words">
+          {team.mascot}
+        </p>
         {team.conference && (
-          <p className="text-sm text-gray-600">
+          <p className="text-xs md:text-sm text-gray-500 font-medium break-words">
             {team.conference}
           </p>
         )}
+      </div>
+
+      {/* Team Colors Accent */}
+      <div className="w-16 h-1 rounded-full mt-4" 
+           style={{
+             background: team.color && team.alternateColor 
+               ? `linear-gradient(90deg, ${team.color}, ${team.alternateColor})`
+               : 'linear-gradient(90deg, #cc001c, #a10014)'
+           }}>
       </div>
     </div>
   );
