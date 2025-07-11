@@ -334,7 +334,7 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
       <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-2xl p-8 transition-all duration-700 ${animateCards ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-14 h-14 rounded-2xl shadow-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600">
+          <div className="w-14 h-14 rounded-2xl shadow-lg flex items-center justify-center" style={{ background: professionalGradients.blue }}>
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4" />
             </svg>
@@ -445,38 +445,113 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
               }}
             />
 
-            {/* Interactive Points */}
+            {/* Interactive Points - Team 1 Logos */}
             {chartData.team1WinsData.map((data, i) => {
               const x = padding + (i * (chartWidth / (years.length - 1)));
               const y = chartHeight + padding - (data.wins / maxWins) * chartHeight;
+              const logoSize = selectedYear === data.year ? 20 : 16;
               return (
-                <circle
-                  key={`team1-${data.year}`}
-                  cx={x}
-                  cy={y}
-                  r={selectedYear === data.year ? "8" : "6"}
-                  fill={getTeamColor(team1)}
-                  className="cursor-pointer transition-all duration-200 hover:r-8"
-                  onClick={() => handleYearClick(data.year)}
-                  style={{ filter: `drop-shadow(0 2px 4px ${getTeamColor(team1)}60)` }}
-                />
+                <g key={`team1-${data.year}`}>
+                  {/* Background circle for logo */}
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={logoSize / 2 + 2}
+                    fill="white"
+                    stroke={getTeamColor(team1)}
+                    strokeWidth="2"
+                    className="cursor-pointer transition-all duration-200"
+                    onClick={() => handleYearClick(data.year)}
+                    style={{ 
+                      filter: `drop-shadow(0 2px 6px ${getTeamColor(team1)}40)`,
+                      transform: selectedYear === data.year ? 'scale(1.1)' : 'scale(1)'
+                    }}
+                  />
+                  {/* Team logo */}
+                  {team1?.logos?.[0] ? (
+                    <image
+                      x={x - logoSize / 2}
+                      y={y - logoSize / 2}
+                      width={logoSize}
+                      height={logoSize}
+                      href={team1.logos[0].replace('http://', 'https://')}
+                      className="cursor-pointer transition-all duration-200 hover:scale-110"
+                      onClick={() => handleYearClick(data.year)}
+                      style={{
+                        filter: selectedYear === data.year ? 'brightness(1.2)' : 'brightness(1)',
+                        transform: selectedYear === data.year ? 'scale(1.1)' : 'scale(1)'
+                      }}
+                    />
+                  ) : (
+                    <text
+                      x={x}
+                      y={y + 4}
+                      textAnchor="middle"
+                      fontSize="12"
+                      fontWeight="bold"
+                      fill={getTeamColor(team1)}
+                      className="cursor-pointer transition-all duration-200"
+                      onClick={() => handleYearClick(data.year)}
+                    >
+                      {team1?.school?.[0] || '?'}
+                    </text>
+                  )}
+                </g>
               );
             })}
 
+            {/* Interactive Points - Team 2 Logos */}
             {chartData.team2WinsData.map((data, i) => {
               const x = padding + (i * (chartWidth / (years.length - 1)));
               const y = chartHeight + padding - (data.wins / maxWins) * chartHeight;
+              const logoSize = selectedYear === data.year ? 20 : 16;
               return (
-                <circle
-                  key={`team2-${data.year}`}
-                  cx={x}
-                  cy={y}
-                  r={selectedYear === data.year ? "8" : "6"}
-                  fill={getTeamColor(team2)}
-                  className="cursor-pointer transition-all duration-200 hover:r-8"
-                  onClick={() => handleYearClick(data.year)}
-                  style={{ filter: `drop-shadow(0 2px 4px ${getTeamColor(team2)}60)` }}
-                />
+                <g key={`team2-${data.year}`}>
+                  {/* Background circle for logo */}
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={logoSize / 2 + 2}
+                    fill="white"
+                    stroke={getTeamColor(team2)}
+                    strokeWidth="2"
+                    className="cursor-pointer transition-all duration-200"
+                    onClick={() => handleYearClick(data.year)}
+                    style={{ 
+                      filter: `drop-shadow(0 2px 6px ${getTeamColor(team2)}40)`,
+                      transform: selectedYear === data.year ? 'scale(1.1)' : 'scale(1)'
+                    }}
+                  />
+                  {/* Team logo */}
+                  {team2?.logos?.[0] ? (
+                    <image
+                      x={x - logoSize / 2}
+                      y={y - logoSize / 2}
+                      width={logoSize}
+                      height={logoSize}
+                      href={team2.logos[0].replace('http://', 'https://')}
+                      className="cursor-pointer transition-all duration-200 hover:scale-110"
+                      onClick={() => handleYearClick(data.year)}
+                      style={{
+                        filter: selectedYear === data.year ? 'brightness(1.2)' : 'brightness(1)',
+                        transform: selectedYear === data.year ? 'scale(1.1)' : 'scale(1)'
+                      }}
+                    />
+                  ) : (
+                    <text
+                      x={x}
+                      y={y + 4}
+                      textAnchor="middle"
+                      fontSize="12"
+                      fontWeight="bold"
+                      fill={getTeamColor(team2)}
+                      className="cursor-pointer transition-all duration-200"
+                      onClick={() => handleYearClick(data.year)}
+                    >
+                      {team2?.school?.[0] || '?'}
+                    </text>
+                  )}
+                </g>
               );
             })}
           </svg>
