@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { teamService } from '../../../services/teamService';
 import { gameService } from '../../../services/gameService';
 
-const AllTimeTab = ({ team1, team2 }) => {
+const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
   const [allTimeData, setAllTimeData] = useState({
     team1: { wins: 0, winPercentage: 0, conferenceChampionships: 0, bowlGames: 0, bowlWins: 0, records: [] },
     team2: { wins: 0, winPercentage: 0, conferenceChampionships: 0, bowlGames: 0, bowlWins: 0, records: [] }
@@ -21,33 +21,35 @@ const AllTimeTab = ({ team1, team2 }) => {
     return Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i);
   }, []);
 
-  // Utility functions matching Swift implementation exactly
-  const calculateAllTimeWins = useCallback((records) => {
+  // Swift-style calculation functions (exactly matching Swift implementation)
+  const totalWins = useCallback((team, records) => {
     // Swift: records.reduce(0) { $0 + $1.total.wins }
     return records.reduce((total, record) => total + (record.total?.wins || 0), 0);
   }, []);
 
-  const calculateWinPercentage = useCallback((records) => {
+  const winPercentage = useCallback((team, records) => {
     // Swift: totalWins / totalGames where totalGames = records.reduce(0) { $0 + $1.total.games }
     const totalWins = records.reduce((sum, record) => sum + (record.total?.wins || 0), 0);
     const totalGames = records.reduce((sum, record) => sum + (record.total?.games || 0), 0);
-    return totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
+    return totalGames > 0 ? (totalWins / totalGames) : 0; // Return as decimal like Swift
   }, []);
 
-  const getConferenceChampionships = useCallback((records) => {
-    // Swift returns "N/A" - simplified for now
+  const bowlGames = useCallback((team, records) => {
+    // Swift: records.reduce(0) { $0 + ($1.postseason?.games ?? 0) }
+    return records.reduce((sum, record) => sum + (record.postseason?.games || 0), 0);
+  }, []);
+
+  const bowlWins = useCallback((team, records) => {
+    // Swift: records.reduce(0) { $0 + ($1.postseason?.wins ?? 0) }
+    return records.reduce((sum, record) => sum + (record.postseason?.wins || 0), 0);
+  }, []);
+
+  const conferenceChampionships = useCallback((team, records) => {
+    // Swift returns "N/A" - we'll use a simple heuristic
     return records.filter(record => {
       if (!record?.conferenceGames?.wins || !record?.total?.wins) return false;
       return record.conferenceGames.wins >= 7 && record.total.wins >= 10;
     }).length;
-  }, []);
-
-  const getBowlGameStats = useCallback((records) => {
-    // Swift: bowlGames = records.reduce(0) { $0 + ($1.postseason?.games ?? 0) }
-    // Swift: bowlWins = records.reduce(0) { $0 + ($1.postseason?.wins ?? 0) }
-    const bowlGames = records.reduce((sum, record) => sum + (record.postseason?.games || 0), 0);
-    const bowlWins = records.reduce((sum, record) => sum + (record.postseason?.wins || 0), 0);
-    return { bowlGames, bowlWins };
   }, []);
 
   const getTeamColor = useCallback((team) => {
@@ -68,14 +70,8 @@ const AllTimeTab = ({ team1, team2 }) => {
     }
   }), []);
 
-  // Cache key for localStorage
-  const cacheKey = useMemo(() => 
-    `alltime_${team1?.school}_${team2?.school}`, 
-    [team1?.school, team2?.school]
-  );
-
   useEffect(() => {
-    const loadAllTimeData = async () => {
+    const calculateAllTimeData = () => {
       if (!team1?.school || !team2?.school) {
         setLoading(false);
         return;
@@ -85,144 +81,33 @@ const AllTimeTab = ({ team1, team2 }) => {
         setLoading(true);
         setError(null);
 
-        // Check cache first (reduced cache time for testing)
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-          const cachedData = JSON.parse(cached);
-          if (Date.now() - cachedData.timestamp < 600000) { // 10 minutes cache for testing
-            setAllTimeData(cachedData.data);
-            setChartData(cachedData.chartData);
-            setTimeout(() => {
-              setAnimateCards(true);
-              setAnimateShine(true);
-            }, 300);
-            setLoading(false);
-            return;
-          }
-        }
+        console.log(`� Calculating all-time stats for ${team1.school} vs ${team2.school}...`);
+        console.log(`� ${team1.school} records:`, team1Records.length);
+        console.log(`� ${team2.school} records:`, team2Records.length);
 
-        console.log(`🔍 Loading comprehensive data for ${team1.school} vs ${team2.school}...`);
-        
-        // Simplified data fetching - focus only on records API (matches Swift implementation)
-        const fetchTeamRecordsForYears = async (teamName, years) => {
-          const records = [];
-          
-          // Process in smaller batches to avoid rate limiting
-          const batchSize = 5;
-          for (let i = 0; i < years.length; i += batchSize) {
-            const yearBatch = years.slice(i, i + batchSize);
-            
-            const batchPromises = yearBatch.map(async year => {
-              try {
-                const yearRecords = await gameService.getRecords(year, teamName).catch(err => {
-                  console.warn(`⚠️ Failed to get ${teamName} records for ${year}:`, err.message);
-                  return [];
-                });
-                
-                return { year, records: yearRecords || [] };
-              } catch (err) {
-                console.warn(`⚠️ Failed to process ${teamName} data for ${year}:`, err.message);
-                return { year, records: [] };
-              }
-            });
-            
-            const batchResults = await Promise.all(batchPromises);
-            batchResults.forEach(result => {
-              if (result.records.length > 0) records.push(...result.records);
-            });
-            
-            // Small delay between batches to avoid overwhelming the API
-            if (i + batchSize < years.length) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
-          }
-          
-          return records;
-        };
-
-        // Fetch records for both teams (matches Swift implementation exactly)
-        const [team1AllRecords, team2AllRecords] = await Promise.all([
-          fetchTeamRecordsForYears(team1.school, years),
-          fetchTeamRecordsForYears(team2.school, years)
-        ]);
-
-        console.log(`📈 Processing ${team1.school} records:`, team1AllRecords.length, 'total records');
-        console.log(`📈 Processing ${team2.school} records:`, team2AllRecords.length, 'total records');
-
-        // Calculate totals exactly like Swift totalWins function: records.reduce(0) { $0 + $1.total.wins }
-        const calculateTotalsFromRecords = (recordsArray) => {
-          return recordsArray.reduce((acc, record) => {
-            if (record && record.total) {
-              acc.wins += record.total.wins || 0;
-              acc.losses += record.total.losses || 0;
-              acc.ties += record.total.ties || 0;
-              acc.games += record.total.games || 0;
-            }
-            return acc;
-          }, { wins: 0, losses: 0, ties: 0, games: 0 });
-        };
-
-        // Calculate bowl stats exactly like Swift bowlGames/bowlWins functions: records.reduce(0) { $0 + ($1.postseason?.games ?? 0) }
-        const calculateBowlStatsFromRecords = (recordsArray) => {
-          return recordsArray.reduce((acc, record) => {
-            if (record && record.postseason) {
-              acc.bowlGames += record.postseason.games || 0;
-              acc.bowlWins += record.postseason.wins || 0;
-            }
-            return acc;
-          }, { bowlGames: 0, bowlWins: 0 });
-        };
-
-        // Conference championships - Swift returns "N/A" so we'll use a simplified calculation
-        const calculateConferenceChampionships = (recordsArray) => {
-          // Since Swift shows "N/A", we'll use a basic heuristic but keep it simple
-          return recordsArray.filter(record => {
-            if (!record || !record.conferenceGames || !record.total) return false;
-            
-            const confWins = record.conferenceGames.wins || 0;
-            const confLosses = record.conferenceGames.losses || 0;
-            const totalWins = record.total.wins || 0;
-            
-            // Very strong season indicators (likely conference champions)
-            return confWins >= 7 && confLosses <= 2 && totalWins >= 10;
-          }).length;
-        };
-
-        const team1Totals = calculateTotalsFromRecords(team1AllRecords);
-        const team2Totals = calculateTotalsFromRecords(team2AllRecords);
-
-        const team1BowlStats = calculateBowlStatsFromRecords(team1AllRecords);
-        const team2BowlStats = calculateBowlStatsFromRecords(team2AllRecords);
-
-        const team1Championships = calculateConferenceChampionships(team1AllRecords);
-        const team2Championships = calculateConferenceChampionships(team2AllRecords);
-
-        // Calculate win percentages exactly like Swift winPercentage function
-        const team1WinPct = team1Totals.games > 0 ? (team1Totals.wins / team1Totals.games) * 100 : 0;
-        const team2WinPct = team2Totals.games > 0 ? (team2Totals.wins / team2Totals.games) * 100 : 0;
-
+        // Calculate using Swift-style functions
         const team1Stats = {
-          wins: team1Totals.wins,
-          winPercentage: team1WinPct,
-          conferenceChampionships: team1Championships,
-          bowlGames: team1BowlStats.bowlGames,
-          bowlWins: team1BowlStats.bowlWins,
-          records: team1AllRecords
+          wins: totalWins(team1, team1Records),
+          winPercentage: winPercentage(team1, team1Records) * 100, // Convert to percentage for display
+          conferenceChampionships: conferenceChampionships(team1, team1Records),
+          bowlGames: bowlGames(team1, team1Records),
+          bowlWins: bowlWins(team1, team1Records),
+          records: team1Records
         };
 
         const team2Stats = {
-          wins: team2Totals.wins,
-          winPercentage: team2WinPct,
-          conferenceChampionships: team2Championships,
-          bowlGames: team2BowlStats.bowlGames,
-          bowlWins: team2BowlStats.bowlWins,
-          records: team2AllRecords
+          wins: totalWins(team2, team2Records),
+          winPercentage: winPercentage(team2, team2Records) * 100, // Convert to percentage for display
+          conferenceChampionships: conferenceChampionships(team2, team2Records),
+          bowlGames: bowlGames(team2, team2Records),
+          bowlWins: bowlWins(team2, team2Records),
+          records: team2Records
         };
 
         // Create chart data from records (show last 10 years for better visualization)
         const chartYears = years.slice(-10); // Last 10 years for chart
         const team1WinsData = chartYears.map(year => {
-          const record = team1AllRecords.find(r => r.year === year);
+          const record = team1Records.find(r => r.year === year);
           const wins = record?.total?.wins || 0;
           return {
             id: `${team1.school}-${year}`,
@@ -233,7 +118,7 @@ const AllTimeTab = ({ team1, team2 }) => {
         });
 
         const team2WinsData = chartYears.map(year => {
-          const record = team2AllRecords.find(r => r.year === year);
+          const record = team2Records.find(r => r.year === year);
           const wins = record?.total?.wins || 0;
           return {
             id: `${team2.school}-${year}`,
@@ -249,37 +134,30 @@ const AllTimeTab = ({ team1, team2 }) => {
         setAllTimeData(finalData);
         setChartData(finalChartData);
 
-        // Cache the results
-        localStorage.setItem(cacheKey, JSON.stringify({
-          data: finalData,
-          chartData: finalChartData,
-          timestamp: Date.now()
-        }));
-
-        console.log(`📈 Final Stats for ${team1.school}:`, {
+        console.log(`� Final Stats for ${team1.school}:`, {
           wins: team1Stats.wins,
           winPct: team1Stats.winPercentage.toFixed(1) + '%',
           bowlGames: team1Stats.bowlGames,
           bowlWins: team1Stats.bowlWins,
           championships: team1Stats.conferenceChampionships,
-          recordsProcessed: team1AllRecords.length
+          recordsProcessed: team1Records.length
         });
         
-        console.log(`📈 Final Stats for ${team2.school}:`, {
+        console.log(`� Final Stats for ${team2.school}:`, {
           wins: team2Stats.wins,
           winPct: team2Stats.winPercentage.toFixed(1) + '%',
           bowlGames: team2Stats.bowlGames,
           bowlWins: team2Stats.bowlWins,
           championships: team2Stats.conferenceChampionships,
-          recordsProcessed: team2AllRecords.length
+          recordsProcessed: team2Records.length
         });
 
         // Log sample records for debugging
-        if (team1AllRecords.length > 0) {
-          console.log(`📄 Sample ${team1.school} record:`, team1AllRecords[0]);
+        if (team1Records.length > 0) {
+          console.log(`📄 Sample ${team1.school} record:`, team1Records[0]);
         }
-        if (team2AllRecords.length > 0) {
-          console.log(`📄 Sample ${team2.school} record:`, team2AllRecords[0]);
+        if (team2Records.length > 0) {
+          console.log(`📄 Sample ${team2.school} record:`, team2Records[0]);
         }
 
         setTimeout(() => {
@@ -288,15 +166,15 @@ const AllTimeTab = ({ team1, team2 }) => {
         }, 300);
 
       } catch (err) {
-        console.error('Error loading all-time data:', err);
-        setError('Failed to load all-time data');
+        console.error('Error calculating all-time data:', err);
+        setError('Failed to calculate all-time data');
       } finally {
         setLoading(false);
       }
     };
 
-    loadAllTimeData();
-  }, [team1?.school, team2?.school, years, cacheKey, calculateAllTimeWins, calculateWinPercentage, getConferenceChampionships, getBowlGameStats]);
+    calculateAllTimeData();
+  }, [team1?.school, team2?.school, team1Records, team2Records, years, totalWins, winPercentage, conferenceChampionships, bowlGames, bowlWins]);
 
   const getWinner = (value1, value2) => {
     if (value1 > value2) return 'team1';

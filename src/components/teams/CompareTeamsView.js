@@ -8,12 +8,18 @@ import {
   ImpactPlayersTab,
   AdvancedTab
 } from './tabs';
+import { gameService } from '../../services/gameService';
 
 const CompareTeamsView = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [team1, setTeam1] = useState(null);
   const [team2, setTeam2] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Add team records state like Swift implementation
+  const [team1Records, setTeam1Records] = useState([]);
+  const [team2Records, setTeam2Records] = useState([]);
+  const [recordsLoaded, setRecordsLoaded] = useState(false);
 
   // Tabs from your Swift implementation
   const tabs = [
@@ -39,13 +45,68 @@ const CompareTeamsView = () => {
     setIsLoading(false);
   }, []);
 
+  // Load team records when teams are set (matches Swift CompareTeamsView architecture)
+  useEffect(() => {
+    const loadTeamRecords = async () => {
+      if (!team1?.school || !team2?.school) return;
+      
+      try {
+        console.log(`🔍 Loading records for ${team1.school} vs ${team2.school}...`);
+        setRecordsLoaded(false);
+        
+        // Load comprehensive records like Swift implementation
+        const currentYear = new Date().getFullYear();
+        const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => 2000 + i);
+        
+        // Fetch records for both teams in parallel
+        const [team1RecordsData, team2RecordsData] = await Promise.all([
+          Promise.all(years.map(async (year) => {
+            try {
+              const records = await gameService.getRecords(year, team1.school);
+              return records || [];
+            } catch (error) {
+              console.warn(`Failed to get ${team1.school} records for ${year}:`, error.message);
+              return [];
+            }
+          })),
+          Promise.all(years.map(async (year) => {
+            try {
+              const records = await gameService.getRecords(year, team2.school);
+              return records || [];
+            } catch (error) {
+              console.warn(`Failed to get ${team2.school} records for ${year}:`, error.message);
+              return [];
+            }
+          }))
+        ]);
+        
+        // Flatten the arrays (each year returns an array of records)
+        const team1FlatRecords = team1RecordsData.flat();
+        const team2FlatRecords = team2RecordsData.flat();
+        
+        console.log(`✅ Loaded ${team1FlatRecords.length} records for ${team1.school}`);
+        console.log(`✅ Loaded ${team2FlatRecords.length} records for ${team2.school}`);
+        
+        setTeam1Records(team1FlatRecords);
+        setTeam2Records(team2FlatRecords);
+        setRecordsLoaded(true);
+        
+      } catch (error) {
+        console.error('Error loading team records:', error);
+        setRecordsLoaded(true); // Still set to true to show the UI
+      }
+    };
+    
+    loadTeamRecords();
+  }, [team1?.school, team2?.school]);
+
   const handleBack = () => {
     // Clear comparison data and go back to teams page
     localStorage.removeItem('compareTeams');
     window.location.hash = 'teams';
   };
 
-  if (isLoading) {
+  if (isLoading || !recordsLoaded) {
     return (
       <div className="min-h-screen pt-32 px-4 md:px-6 relative overflow-hidden">
         {/* Animated Background */}
@@ -56,6 +117,9 @@ const CompareTeamsView = () => {
             <div className="relative">
               <div className="w-20 h-20 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-gray-600 border-r-gray-400"></div>
+              </div>
+              <div className="text-center mt-4">
+                <p className="text-gray-600">Loading team records...</p>
               </div>
             </div>
           </div>
@@ -268,10 +332,10 @@ const CompareTeamsView = () => {
           {/* Highlight overlay */}
           <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
           
-          {/* Render the selected tab component */}
-          {selectedTab === 0 && <AllTimeTab team1={team1} team2={team2} />}
+          {/* Render the selected tab component with records like Swift implementation */}
+          {selectedTab === 0 && <AllTimeTab team1={team1} team2={team2} team1Records={team1Records} team2Records={team2Records} />}
           {selectedTab === 1 && <HeadToHeadTab team1={team1} team2={team2} />}
-          {selectedTab === 2 && <Last5YearsTab team1={team1} team2={team2} />}
+          {selectedTab === 2 && <Last5YearsTab team1={team1} team2={team2} team1Records={team1Records} team2Records={team2Records} />}
           {selectedTab === 3 && <Season2024Tab team1={team1} team2={team2} />}
           {selectedTab === 4 && <WeatherTab team1={team1} team2={team2} />}
           {selectedTab === 5 && <ImpactPlayersTab team1={team1} team2={team2} />}
