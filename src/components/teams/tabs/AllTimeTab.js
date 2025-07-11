@@ -92,26 +92,7 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
 
         console.log(`🏈 Calculating all-time stats for ${team1.school} vs ${team2.school}...`);
 
-        // Calculate stats using Swift-style functions
-        const team1Stats = {
-          wins: totalWins(team1Records),
-          winPercentage: winPercentage(team1Records),
-          conferenceChampionships: conferenceChampionships(team1Records),
-          bowlGames: bowlGames(team1Records),
-          bowlWins: bowlWins(team1Records),
-          records: team1Records
-        };
-
-        const team2Stats = {
-          wins: totalWins(team2Records),
-          winPercentage: winPercentage(team2Records),
-          conferenceChampionships: conferenceChampionships(team2Records),
-          bowlGames: bowlGames(team2Records),
-          bowlWins: bowlWins(team2Records),
-          records: team2Records
-        };
-
-        // Create chart data (last 11 years: 2014-2024)
+        // Create chart data first (last 11 years: 2014-2024)
         const team1WinsData = years.map(year => {
           const record = team1Records.find(r => r.year === year);
           const wins = record?.total?.wins || getFallbackWins(team1, year);
@@ -133,6 +114,25 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
             team: team2
           };
         });
+
+        // Calculate stats using Swift-style functions with fallback data integration
+        const team1Stats = {
+          wins: totalWins(team1Records) || team1WinsData.reduce((sum, data) => sum + data.wins, 0),
+          winPercentage: winPercentage(team1Records) || (team1WinsData.reduce((sum, data) => sum + data.wins, 0) / (team1WinsData.length * 12)), // Assume 12 game average
+          conferenceChampionships: conferenceChampionships(team1Records),
+          bowlGames: bowlGames(team1Records),
+          bowlWins: bowlWins(team1Records),
+          records: team1Records
+        };
+
+        const team2Stats = {
+          wins: totalWins(team2Records) || team2WinsData.reduce((sum, data) => sum + data.wins, 0),
+          winPercentage: winPercentage(team2Records) || (team2WinsData.reduce((sum, data) => sum + data.wins, 0) / (team2WinsData.length * 12)), // Assume 12 game average
+          conferenceChampionships: conferenceChampionships(team2Records),
+          bowlGames: bowlGames(team2Records),
+          bowlWins: bowlWins(team2Records),
+          records: team2Records
+        };
 
         setAllTimeData({ team1: team1Stats, team2: team2Stats });
         setChartData({ team1WinsData, team2WinsData });
