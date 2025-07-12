@@ -319,7 +319,7 @@ const CompareTeamsView = () => {
           {selectedTab === 0 && <AllTimeTab team1={team1} team2={team2} team1Records={team1Records} team2Records={team2Records} />}
           {selectedTab === 1 && <HeadToHeadTab team1={team1} team2={team2} />}
           {selectedTab === 2 && <Last5YearsTab team1={team1} team2={team2} team1Records={team1Records} team2Records={team2Records} />}
-          {selectedTab === 3 && <Season2024Tab team1={team1} team2={team2} />}
+          {selectedTab === 3 && <Season2024Tab team1={team1} team2={team2} team1Records={team1Records} team2Records={team2Records} />}
           {selectedTab === 4 && <WeatherTab team1={team1} team2={team2} />}
           {selectedTab === 5 && <ImpactPlayersTab team1={team1} team2={team2} />}
           {selectedTab === 6 && <AdvancedTab team1={team1} team2={team2} />}
