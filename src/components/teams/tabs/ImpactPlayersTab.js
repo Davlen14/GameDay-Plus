@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { teamService } from '../../../services/teamService';
+import { fetchCollegeFootballData } from '../../../services/core';
 
 const ImpactPlayersTab = ({ team1, team2 }) => {
   const [loading, setLoading] = useState(true);
@@ -74,27 +76,26 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
 
   const fetchPPAPlayers = async (year, teamName) => {
     try {
-      // Use the correct PPA endpoint - /ppa/players/season
-      const response = await fetch(`/api/college-football?endpoint=/ppa/players/season&year=${year}&team=${encodeURIComponent(teamName)}`);
+      // Use the service function for PPA player data
+      const data = await fetchCollegeFootballData('/ppa/players/season', {
+        year,
+        team: teamName,
+        excludeGarbageTime: true
+      });
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`📈 PPA API success for ${teamName}:`, data.length, 'players');
-        
-        return (data || []).map(player => ({
-          id: player.id || `${player.name}-${Math.random()}`,
-          name: player.name || 'Unknown Player',
-          position: player.position || 'N/A',
-          totalPPA: {
-            all: player.totalPPA?.all || 0
-          },
-          averagePPA: {
-            all: player.averagePPA?.all || 0
-          }
-        }));
-      } else {
-        throw new Error(`API returned ${response.status}`);
-      }
+      console.log(`📈 PPA API success for ${teamName}:`, data.length, 'players');
+      
+      return (data || []).map(player => ({
+        id: player.id || `${player.name}-${Math.random()}`,
+        name: player.name || 'Unknown Player',
+        position: player.position || 'N/A',
+        totalPPA: {
+          all: player.totalPPA?.all || 0
+        },
+        averagePPA: {
+          all: player.averagePPA?.all || 0
+        }
+      }));
     } catch (error) {
       console.warn(`🚨 PPA API unavailable for ${teamName}, using mock data:`, error.message);
       
@@ -105,23 +106,18 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
 
   const fetchTeamRoster = async (year, teamName) => {
     try {
-      // Use the correct roster endpoint - /roster
-      const response = await fetch(`/api/college-football?endpoint=/roster&year=${year}&team=${encodeURIComponent(teamName)}`);
+      // Use the teamService function for roster data
+      const data = await teamService.getTeamRoster(teamName, year);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`👥 Roster API success for ${teamName}:`, data.length, 'players');
-        
-        return (data || []).map(player => ({
-          id: player.id || `${player.firstName}-${player.lastName}-${Math.random()}`,
-          fullName: `${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Unknown',
-          lastName: player.lastName || '',
-          jersey: player.jersey || null,
-          position: player.position || ''
-        }));
-      } else {
-        throw new Error(`API returned ${response.status}`);
-      }
+      console.log(`👥 Roster API success for ${teamName}:`, data.length, 'players');
+      
+      return (data || []).map(player => ({
+        id: player.id || `${player.firstName}-${player.lastName}-${Math.random()}`,
+        fullName: `${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Unknown',
+        lastName: player.lastName || '',
+        jersey: player.jersey || null,
+        position: player.position || ''
+      }));
     } catch (error) {
       console.warn(`🚨 Roster API unavailable for ${teamName}, using mock data:`, error.message);
       
@@ -608,27 +604,50 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
     </div>
   );
 
-  // Position Matchup Row Component
+  // Position Matchup Row Component - Modern Design
   const PositionMatchupRow = ({ position, matchup, index }) => {
     const { team1Player, team2Player } = matchup;
     const winner = determineWinner(team1Player, team2Player);
     
+    // Define gradient colors for different positions
+    const getPositionGradient = (pos) => {
+      const gradients = {
+        'QB': 'from-red-500 to-red-600',
+        'RB': 'from-green-500 to-green-600', 
+        'WR': 'from-blue-500 to-blue-600',
+        'TE': 'from-purple-500 to-purple-600',
+        'OL': 'from-orange-500 to-orange-600',
+        'DL': 'from-gray-600 to-gray-700',
+        'LB': 'from-indigo-500 to-indigo-600',
+        'DB': 'from-teal-500 to-teal-600',
+        'K': 'from-yellow-500 to-yellow-600',
+        'P': 'from-pink-500 to-pink-600'
+      };
+      return gradients[pos] || 'from-slate-500 to-slate-600';
+    };
+    
     return (
-      <div className={`transition-all duration-700 delay-${index * 100} ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-        {/* Position Title */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-lg">
-            <i className="fas fa-football-ball text-white text-lg"></i>
-            <h3 className="text-xl font-black text-white">
-              {getPositionFullName(position)}
-            </h3>
+      <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        {/* Position Header */}
+        <div className="flex items-center space-x-4 mb-8">
+          <div className={`w-12 h-12 bg-gradient-to-br ${getPositionGradient(position)} rounded-xl flex items-center justify-center shadow-lg`}>
+            <i className="fas fa-football-ball text-2xl text-white"></i>
+          </div>
+          <div>
+            <h3 className="text-2xl font-black" style={{ 
+              background: `linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235), rgb(29, 78, 216), rgb(37, 99, 235), rgb(59, 130, 246))`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>{getPositionFullName(position)}</h3>
+            <p className="text-sm text-gray-600 font-medium">Head-to-Head Position Comparison</p>
           </div>
         </div>
 
-        {/* Players Comparison */}
-        <div className="flex items-center space-x-0">
+        {/* Team Comparison */}
+        <div className="flex items-center justify-between">
           {/* Team 1 Player */}
-          <div className="flex-1">
+          <div className="text-center space-y-4 flex-1">
             {team1Player ? (
               <PlayerCard 
                 player={team1Player} 
@@ -641,22 +660,28 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
             )}
           </div>
 
-          {/* Center VS with Winner Arrow */}
-          <div className="flex flex-col items-center mx-6">
-            {winner !== 'unknown' && winner !== 'tie' && (
-              <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center shadow-lg animate-pulse">
-                <i className={`fas fa-arrow-${winner === 'team1' ? 'left' : 'right'} text-white text-lg`}></i>
+          {/* VS Section with Winner Arrow */}
+          <div className="text-center space-y-4 mx-8">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-600 font-bold text-sm">VS</span>
+            </div>
+            
+            {/* Winner Arrow */}
+            {winner && winner !== 'tie' && winner !== 'unknown' && (
+              <div className="bg-green-500 rounded-full w-10 h-10 flex items-center justify-center shadow-lg">
+                <i className={`fas fa-arrow-${winner === 'team1' ? 'left' : 'right'} text-white text-lg ${animateStats ? 'animate-pulse' : ''}`}></i>
               </div>
             )}
+            
             {(winner === 'tie' || winner === 'unknown') && (
-              <div className="w-12 h-12 rounded-full bg-gray-400 flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xs">VS</span>
+              <div className="bg-yellow-500 rounded-full w-10 h-10 flex items-center justify-center shadow-lg">
+                <i className="fas fa-equals text-white text-lg"></i>
               </div>
             )}
           </div>
 
           {/* Team 2 Player */}
-          <div className="flex-1">
+          <div className="text-center space-y-4 flex-1">
             {team2Player ? (
               <PlayerCard 
                 player={team2Player} 
