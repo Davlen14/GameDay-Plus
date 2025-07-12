@@ -74,11 +74,13 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
 
   const fetchPPAPlayers = async (year, teamName) => {
     try {
-      // Try to fetch real PPA data first
-      const response = await fetch(`/api/college-football?endpoint=ppa/players&year=${year}&team=${encodeURIComponent(teamName)}`);
+      // Use the correct PPA endpoint - /ppa/players/season
+      const response = await fetch(`/api/college-football?endpoint=/ppa/players/season&year=${year}&team=${encodeURIComponent(teamName)}`);
       
       if (response.ok) {
         const data = await response.json();
+        console.log(`📈 PPA API success for ${teamName}:`, data.length, 'players');
+        
         return (data || []).map(player => ({
           id: player.id || `${player.name}-${Math.random()}`,
           name: player.name || 'Unknown Player',
@@ -94,7 +96,7 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         throw new Error(`API returned ${response.status}`);
       }
     } catch (error) {
-      console.warn(`PPA API unavailable for ${teamName}, using mock data:`, error.message);
+      console.warn(`🚨 PPA API unavailable for ${teamName}, using mock data:`, error.message);
       
       // Generate realistic mock PPA data based on typical college football positions
       return generateMockPPAData(teamName);
@@ -103,15 +105,17 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
 
   const fetchTeamRoster = async (year, teamName) => {
     try {
-      // Try to fetch real roster data first
-      const response = await fetch(`/api/college-football?endpoint=roster&year=${year}&team=${encodeURIComponent(teamName)}`);
+      // Use the correct roster endpoint - /roster
+      const response = await fetch(`/api/college-football?endpoint=/roster&year=${year}&team=${encodeURIComponent(teamName)}`);
       
       if (response.ok) {
         const data = await response.json();
+        console.log(`👥 Roster API success for ${teamName}:`, data.length, 'players');
+        
         return (data || []).map(player => ({
-          id: player.id || `${player.name}-${Math.random()}`,
-          fullName: player.full_name || player.name || 'Unknown',
-          lastName: player.last_name || '',
+          id: player.id || `${player.firstName}-${player.lastName}-${Math.random()}`,
+          fullName: `${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Unknown',
+          lastName: player.lastName || '',
           jersey: player.jersey || null,
           position: player.position || ''
         }));
@@ -119,7 +123,7 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         throw new Error(`API returned ${response.status}`);
       }
     } catch (error) {
-      console.warn(`Roster API unavailable for ${teamName}, using mock data:`, error.message);
+      console.warn(`🚨 Roster API unavailable for ${teamName}, using mock data:`, error.message);
       
       // Generate realistic mock roster data
       return generateMockRosterData(teamName);
