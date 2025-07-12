@@ -459,6 +459,196 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
     );
   };
 
+  // Team Grading System - Calculate letter grades based on performance metrics
+  const calculateTeamGrades = (teamData) => {
+    // Offensive Grade Calculation (0-100 scale)
+    const offensiveScore = Math.min(100, Math.max(0,
+      // Total yards per game (normalized to 0-25 points, 500+ yards = 25)
+      Math.min(25, (teamData.totalYards / 13) / 500 * 25) +
+      // Yards per play (normalized to 0-20 points, 7+ YPP = 20)
+      Math.min(20, ((teamData.rushingAttempts + teamData.passAttempts) > 0 ? 
+        (teamData.totalYards / (teamData.rushingAttempts + teamData.passAttempts)) / 7 * 20 : 0)) +
+      // Third down conversion rate (normalized to 0-15 points, 50%+ = 15)
+      Math.min(15, teamData.thirdDowns > 0 ? 
+        ((teamData.thirdDownConversions / teamData.thirdDowns) / 0.5 * 15) : 0) +
+      // Total TDs (normalized to 0-15 points, 40+ TDs = 15)
+      Math.min(15, (teamData.passingTDs + teamData.rushingTDs) / 40 * 15) +
+      // Passing efficiency (normalized to 0-15 points, 65%+ completion = 15)
+      Math.min(15, teamData.passAttempts > 0 ? 
+        ((teamData.passCompletions / teamData.passAttempts) / 0.65 * 15) : 0) +
+      // Penalty reduction bonus (0-10 points, fewer penalties = higher score)
+      Math.min(10, Math.max(0, 10 - (teamData.penalties / 13 * 2)))
+    ));
+
+    // Defensive Grade Calculation (0-100 scale)
+    const defensiveScore = Math.min(100, Math.max(0,
+      // Yards allowed per game (normalized to 0-25 points, <300 yards = 25)
+      Math.min(25, Math.max(0, 25 - ((teamData.totalYardsOpponent / 13) - 300) / 10)) +
+      // Yards per play allowed (normalized to 0-20 points, <4.5 YPP = 20)
+      Math.min(20, ((teamData.rushingAttemptsOpponent + teamData.passAttemptsOpponent) > 0 ? 
+        Math.max(0, 20 - ((teamData.totalYardsOpponent / (teamData.rushingAttemptsOpponent + teamData.passAttemptsOpponent)) - 4.5) * 4) : 0)) +
+      // Turnovers forced (normalized to 0-20 points, 25+ turnovers = 20)
+      Math.min(20, teamData.turnoversOpponent / 25 * 20) +
+      // Sacks (normalized to 0-15 points, 40+ sacks = 15)
+      Math.min(15, teamData.sacks / 40 * 15) +
+      // Third down defense (normalized to 0-15 points, <35% allowed = 15)
+      Math.min(15, teamData.thirdDownsOpponent > 0 ? 
+        Math.max(0, 15 - (teamData.thirdDownConversionsOpponent / teamData.thirdDownsOpponent) / 0.35 * 15) : 0) +
+      // Tackles for loss bonus (normalized to 0-5 points, 80+ TFL = 5)
+      Math.min(5, teamData.tacklesForLoss / 80 * 5)
+    ));
+
+    // Overall Grade (weighted average: 40% offense, 35% defense, 25% special factors)
+    const specialFactors = Math.min(25, Math.max(0,
+      // Win percentage (0-15 points)
+      (teamData.winPercentage / 100 * 15) +
+      // Turnover differential bonus (0-10 points)
+      Math.min(10, Math.max(-5, (teamData.turnoversOpponent - teamData.turnovers) + 5))
+    ));
+
+    const overallScore = (offensiveScore * 0.4) + (defensiveScore * 0.35) + (specialFactors * 0.25);
+
+    // Convert scores to letter grades
+    const getLetterGrade = (score) => {
+      if (score >= 90) return 'A+';
+      if (score >= 85) return 'A';
+      if (score >= 80) return 'A-';
+      if (score >= 77) return 'B+';
+      if (score >= 73) return 'B';
+      if (score >= 70) return 'B-';
+      if (score >= 67) return 'C+';
+      if (score >= 63) return 'C';
+      if (score >= 60) return 'C-';
+      if (score >= 57) return 'D+';
+      if (score >= 53) return 'D';
+      if (score >= 50) return 'D-';
+      return 'F';
+    };
+
+    const getGradeColor = (grade) => {
+      if (grade.startsWith('A')) return '#22c55e'; // Green
+      if (grade.startsWith('B')) return '#3b82f6'; // Blue
+      if (grade.startsWith('C')) return '#f59e0b'; // Yellow
+      if (grade.startsWith('D')) return '#f97316'; // Orange
+      return '#ef4444'; // Red for F
+    };
+
+    return {
+      offense: {
+        grade: getLetterGrade(offensiveScore),
+        score: offensiveScore.toFixed(1),
+        color: getGradeColor(getLetterGrade(offensiveScore))
+      },
+      defense: {
+        grade: getLetterGrade(defensiveScore),
+        score: defensiveScore.toFixed(1),
+        color: getGradeColor(getLetterGrade(defensiveScore))
+      },
+      overall: {
+        grade: getLetterGrade(overallScore),
+        score: overallScore.toFixed(1),
+        color: getGradeColor(getLetterGrade(overallScore))
+      }
+    };
+  };
+
+  // Calculate grades for both teams (only if data is loaded)
+  const team1Grades = !loading && !error ? calculateTeamGrades(season2024Data.team1) : null;
+  const team2Grades = !loading && !error ? calculateTeamGrades(season2024Data.team2) : null;
+
+  // Determine which team has the edge
+  const getTeamEdge = () => {
+    if (!team1Grades || !team2Grades) return { winner: 'tie', message: 'Loading...' };
+    
+    const team1Overall = parseFloat(team1Grades.overall.score);
+    const team2Overall = parseFloat(team2Grades.overall.score);
+    
+    if (Math.abs(team1Overall - team2Overall) < 2) {
+      return {
+        winner: 'tie',
+        message: "It's a dead heat! Both teams are evenly matched - may the best team win!"
+      };
+    } else if (team1Overall > team2Overall) {
+      return {
+        winner: 'team1',
+        message: `${team1?.school} has the edge! Argue with your mom, stats don't lie! 📊🔥`
+      };
+    } else {
+      return {
+        winner: 'team2',
+        message: `${team2?.school} has the edge! Argue with your mom, stats don't lie! 📊🔥`
+      };
+    }
+  };
+
+  const teamEdge = getTeamEdge();
+
+  // Grade Card Component
+  const GradeCard = ({ title, grade, score, color, teamColor }) => (
+    <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 p-4 text-center shadow-lg">
+      <h4 className="text-sm font-bold text-gray-700 mb-2">{title}</h4>
+      <div className="text-3xl font-black mb-1" style={{ color }}>
+        {grade}
+      </div>
+      <div className="text-xs text-gray-500">
+        {score}/100
+      </div>
+    </div>
+  );
+
+  // Team Report Card Component
+  const TeamReportCard = ({ team, grades, isWinner }) => (
+    <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 p-6 ${isWinner ? 'ring-4 ring-green-400 ring-opacity-50' : ''} transition-all duration-300`}>
+      <div className="flex items-center space-x-4 mb-6">
+        <div className="w-16 h-16 flex items-center justify-center">
+          {team?.logos?.[0] ? (
+            <img src={team.logos[0]} alt={team.school} className="w-full h-full object-contain drop-shadow-sm" />
+          ) : (
+            <div className="w-full h-full rounded-xl flex items-center justify-center text-white font-bold text-xl" style={{ backgroundColor: getTeamColor(team) }}>
+              {team?.school?.[0]}
+            </div>
+          )}
+        </div>
+        <div className="flex-1">
+          <h3 className="text-xl font-black" style={{ color: getTeamColor(team) }}>
+            {team?.school}
+          </h3>
+          <p className="text-sm text-gray-600">2024 Season Report Card</p>
+          {isWinner && (
+            <div className="inline-flex items-center space-x-2 mt-2 px-3 py-1 rounded-full bg-green-100 border border-green-200">
+              <i className="fas fa-crown text-green-600 text-sm"></i>
+              <span className="text-xs font-bold text-green-700">STATISTICAL ADVANTAGE</span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-4">
+        <GradeCard 
+          title="Offense" 
+          grade={grades.offense.grade} 
+          score={grades.offense.score} 
+          color={grades.offense.color}
+          teamColor={getTeamColor(team)}
+        />
+        <GradeCard 
+          title="Defense" 
+          grade={grades.defense.grade} 
+          score={grades.defense.score} 
+          color={grades.defense.color}
+          teamColor={getTeamColor(team)}
+        />
+        <GradeCard 
+          title="Overall" 
+          grade={grades.overall.grade} 
+          score={grades.overall.score} 
+          color={grades.overall.color}
+          teamColor={getTeamColor(team)}
+        />
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="relative z-10 flex items-center justify-center h-full">
@@ -514,8 +704,70 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
         </p>
       </div>
 
+      {/* Team Report Cards */}
+      {!loading && !error && team1Grades && team2Grades && (
+        <div className={`space-y-6 transition-all duration-500 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+          {/* Statistical Edge Banner */}
+          <div className="bg-gradient-to-r from-red-500 via-red-600 to-red-700 rounded-3xl border border-red-400/50 p-6 text-center shadow-2xl">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <i className="fas fa-chart-line text-white text-3xl"></i>
+              <h3 className="text-2xl font-black text-white">STATISTICAL ANALYSIS</h3>
+              <i className="fas fa-chart-line text-white text-3xl"></i>
+            </div>
+            <p className="text-xl font-bold text-white mb-2">
+              {teamEdge.message}
+            </p>
+            <p className="text-sm text-red-100 font-medium">
+              Based on comprehensive offensive, defensive, and overall performance metrics
+            </p>
+          </div>
+
+          {/* Report Cards Grid */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <TeamReportCard 
+              team={team1} 
+              grades={team1Grades} 
+              isWinner={teamEdge.winner === 'team1'}
+            />
+            <TeamReportCard 
+              team={team2} 
+              grades={team2Grades} 
+              isWinner={teamEdge.winner === 'team2'}
+            />
+          </div>
+
+          {/* Grading Methodology */}
+          <div className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 p-6">
+            <div className="flex items-center space-x-4 mb-4">
+              <i className="fas fa-calculator text-2xl gradient-text"></i>
+              <h3 className="text-xl font-black gradient-text">How We Calculate Grades</h3>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6 text-sm text-gray-700">
+              <div>
+                <h4 className="font-bold text-gray-800 mb-2">🏈 Offense (40%)</h4>
+                <p>Total yards, efficiency metrics, third down conversions, touchdowns, completion %, and penalties</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-800 mb-2">🛡️ Defense (35%)</h4>
+                <p>Yards allowed, takeaways, sacks, tackles for loss, third down stops, and defensive efficiency</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-800 mb-2">⭐ Overall (25%)</h4>
+                <p>Win percentage, turnover differential, and clutch performance factors</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Comparison Cards */}
       <div className="space-y-6">
+        {/* Section Header */}
+        <div className={`text-center space-y-2 transition-all duration-500 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+          <h3 className="text-2xl font-black gradient-text">Detailed Statistical Breakdown</h3>
+          <p className="text-gray-600">Head-to-head comparison of all 2024 season metrics</p>
+        </div>
+
         {/* Overall Record */}
         <ModernComparisonCard
           title="Overall Record"
