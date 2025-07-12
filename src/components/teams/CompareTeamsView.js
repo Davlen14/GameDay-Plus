@@ -51,57 +51,27 @@ const CompareTeamsView = () => {
       if (!team1?.school || !team2?.school) return;
       
       try {
-        console.log(`🔍 Loading records for ${team1.school} vs ${team2.school}...`);
+        console.log(`🔍 Loading ALL historical records for ${team1.school} vs ${team2.school}...`);
         setRecordsLoaded(false);
         
-        // Load comprehensive records like Swift implementation - truly all-time (1869-present)
-        const currentYear = new Date().getFullYear();
-        const startYear = 1869; // Beginning of college football
-        const years = Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i);
-        
-        console.log(`🔍 Loading records for ${years.length} years (${startYear}-${currentYear})...`);
-        
-        // Fetch records for both teams in parallel
-        // Start with modern era (likely to have data) and work backwards if needed
-        const modernYears = years.filter(year => year >= 1978); // Division I-A era and later
-        const historicalYears = years.filter(year => year < 1978); // Early college football
-        
+        // Fetch ALL historical records for both teams in parallel (no year filter)
         const [team1RecordsData, team2RecordsData] = await Promise.all([
-          // First fetch modern era data (most likely to exist)
-          Promise.all(modernYears.map(async (year) => {
-            try {
-              const records = await gameService.getRecords(year, team1.school);
-              return records || [];
-            } catch (error) {
-              console.warn(`Failed to get ${team1.school} records for ${year}:`, error.message);
-              return [];
-            }
-          })),
-          Promise.all(modernYears.map(async (year) => {
-            try {
-              const records = await gameService.getRecords(year, team2.school);
-              return records || [];
-            } catch (error) {
-              console.warn(`Failed to get ${team2.school} records for ${year}:`, error.message);
-              return [];
-            }
-          }))
+          gameService.getAllRecords(team1.school),
+          gameService.getAllRecords(team2.school)
         ]);
         
-        // For historical years, we'll rely on fallback data since API likely doesn't have this data
-        // This approach matches the Swift implementation's comprehensive all-time calculation
+        console.log(`✅ Loaded ${team1RecordsData?.length || 0} historical records for ${team1.school}`);
+        console.log(`✅ Loaded ${team2RecordsData?.length || 0} historical records for ${team2.school}`);
         
-        // Flatten the arrays (each year returns an array of records)
-        const team1FlatRecords = team1RecordsData.flat();
-        const team2FlatRecords = team2RecordsData.flat();
+        // Calculate total wins for verification
+        const team1TotalWins = team1RecordsData?.reduce((sum, record) => sum + (record.total?.wins || 0), 0) || 0;
+        const team2TotalWins = team2RecordsData?.reduce((sum, record) => sum + (record.total?.wins || 0), 0) || 0;
         
-        console.log(`✅ Loaded ${team1FlatRecords.length} records for ${team1.school} (modern era)`);
-        console.log(`✅ Loaded ${team2FlatRecords.length} records for ${team2.school} (modern era)`);
-        console.log(`📊 All-time analysis will cover ${years.length} years total (${startYear}-${currentYear})`);
-        console.log(`🔧 Historical years (${historicalYears.length}) will use fallback data for comprehensive all-time stats`);
+        console.log(`📊 ${team1.school} all-time wins: ${team1TotalWins}`);
+        console.log(`📊 ${team2.school} all-time wins: ${team2TotalWins}`);
         
-        setTeam1Records(team1FlatRecords);
-        setTeam2Records(team2FlatRecords);
+        setTeam1Records(team1RecordsData || []);
+        setTeam2Records(team2RecordsData || []);
         setRecordsLoaded(true);
         
       } catch (error) {

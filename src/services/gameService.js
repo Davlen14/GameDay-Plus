@@ -212,6 +212,15 @@ export const gameService = {
     return await fetchCollegeFootballData('/records', params);
   },
 
+  // GET /records - Get ALL historical records for a team (no year filter)
+  getAllRecords: async (team, conference = null) => {
+    const params = {};
+    if (team) params.team = team;
+    if (conference) params.conference = conference;
+    // Don't include year parameter to get all historical records
+    return await fetchCollegeFootballData('/records', params);
+  },
+
   // GET /calendar - Get game calendar
   getCalendar: async (year = new Date().getFullYear()) => {
     return await fetchCollegeFootballData('/calendar', { year });
