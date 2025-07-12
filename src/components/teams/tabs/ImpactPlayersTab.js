@@ -692,11 +692,11 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
       <h2 
         className="text-5xl font-black mb-4"
         style={{ 
-          background: professionalGradients.blue,
+          background: professionalGradients.red,
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
-          filter: 'drop-shadow(0 4px 8px rgba(59, 130, 246, 0.3))'
+          filter: 'drop-shadow(0 4px 8px rgba(239, 68, 68, 0.3))'
         }}
       >
         Impact Players Analysis
@@ -708,7 +708,7 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         <span 
           className="font-bold"
           style={{ 
-            background: professionalGradients[getTeamColorKey(team1)],
+            background: professionalGradients.red,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
@@ -720,7 +720,7 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         <span 
           className="font-bold"
           style={{ 
-            background: professionalGradients[getTeamColorKey(team2)],
+            background: professionalGradients.red,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
@@ -749,7 +749,15 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
             )}
           </div>
           <div>
-            <h3 className="text-2xl font-black" style={{ color: getTeamColor(team1) }}>
+            <h3 
+              className="text-2xl font-black"
+              style={{ 
+                background: professionalGradients.red,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
               {team1?.school}
             </h3>
             <p className="text-sm text-gray-600 font-medium">{team1?.conference}</p>
@@ -782,7 +790,15 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
             )}
           </div>
           <div>
-            <h3 className="text-2xl font-black" style={{ color: getTeamColor(team2) }}>
+            <h3 
+              className="text-2xl font-black"
+              style={{ 
+                background: professionalGradients.red,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
               {team2?.school}
             </h3>
             <p className="text-sm text-gray-600 font-medium">{team2?.conference}</p>
@@ -1136,7 +1152,15 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         <div className="space-y-8">
           {team1HonorableMentions.length > 0 && (
             <div>
-              <h4 className="text-xl font-bold mb-4" style={{ color: getTeamColor(team1) }}>
+              <h4 
+                className="text-xl font-bold mb-4"
+                style={{ 
+                  background: professionalGradients.red,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
                 {team1.school}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1154,7 +1178,15 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
 
           {team2HonorableMentions.length > 0 && (
             <div>
-              <h4 className="text-xl font-bold mb-4" style={{ color: getTeamColor(team2) }}>
+              <h4 
+                className="text-xl font-bold mb-4"
+                style={{ 
+                  background: professionalGradients.red,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
                 {team2.school}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1327,7 +1359,7 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
 
   return (
     <div className="relative z-10 h-full overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-12">
+      <div className="w-full mx-auto px-8 py-8 space-y-12">
         <ModernHeader />
         <TeamsHeader />
         
