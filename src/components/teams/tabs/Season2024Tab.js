@@ -361,8 +361,8 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
     return 'tie';
   };
 
-  // Modern Comparison Card Component
-  const ModernComparisonCard = ({ title, subtitle, icon, value1, value2, team1, team2, animateStats, getTeamColor, getWinner, compareBy = 'value', team1Value, team2Value }) => {
+  // Modern Comparison Card Component with gradient support
+  const ModernComparisonCard = ({ title, subtitle, icon, value1, value2, team1, team2, animateStats, getTeamColor, getWinner, compareBy = 'value', team1Value, team2Value, gradientClass = 'professional-gradient-bg' }) => {
     // Use custom values for comparison if provided, otherwise parse the display values
     const winner = compareBy === 'wins' && team1Value !== undefined && team2Value !== undefined 
       ? getWinner(team1Value, team2Value)
@@ -372,7 +372,9 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
       <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         {/* Card Header */}
         <div className="flex items-center space-x-4 mb-8">
-          <i className={`fas fa-${icon} text-3xl gradient-text`}></i>
+          <div className={`w-12 h-12 ${gradientClass} rounded-xl flex items-center justify-center shadow-lg`}>
+            <i className={`fas fa-${icon} text-2xl text-white`}></i>
+          </div>
           <div>
             <h3 className="text-2xl font-black gradient-text">{title}</h3>
             <p className="text-sm text-gray-600 font-medium">{subtitle}</p>
@@ -405,9 +407,9 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
 
             {/* Winner Badge */}
             {winner === 'team1' && (
-              <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-green-100 border border-green-200">
-                <i className="fas fa-star text-green-600 text-sm"></i>
-                <span className="text-xs font-bold text-green-700">WINNER</span>
+              <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full ${gradientClass} shadow-lg`}>
+                <i className="fas fa-star text-white text-sm"></i>
+                <span className="text-xs font-bold text-white">WINNER</span>
               </div>
             )}
           </div>
@@ -420,7 +422,9 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
             
             {/* Winner Arrow */}
             {winner !== 'tie' && (
-              <i className={`fas fa-arrow-${winner === 'team1' ? 'left' : 'right'} text-green-500 text-2xl ${animateStats ? 'animate-pulse' : ''}`}></i>
+              <div className={`${gradientClass} rounded-full w-10 h-10 flex items-center justify-center shadow-lg`}>
+                <i className={`fas fa-arrow-${winner === 'team1' ? 'left' : 'right'} text-white text-lg ${animateStats ? 'animate-pulse' : ''}`}></i>
+              </div>
             )}
           </div>
 
@@ -448,9 +452,9 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
 
             {/* Winner Badge */}
             {winner === 'team2' && (
-              <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-green-100 border border-green-200">
-                <i className="fas fa-star text-green-600 text-sm"></i>
-                <span className="text-xs font-bold text-green-700">WINNER</span>
+              <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full ${gradientClass} shadow-lg`}>
+                <i className="fas fa-star text-white text-sm"></i>
+                <span className="text-xs font-bold text-white">WINNER</span>
               </div>
             )}
           </div>
@@ -648,28 +652,46 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
     };
 
     const getGradeColor = (grade) => {
-      if (grade.includes('A')) return '#22c55e'; // Green
-      else if (grade.includes('B')) return '#3b82f6'; // Blue
-      else if (grade.includes('C')) return '#f59e0b'; // Yellow
-      else if (grade.includes('D')) return '#f97316'; // Orange
-      else return '#ef4444'; // Red for F
+      if (grade.includes('A')) return {
+        gradient: 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74), rgb(15, 118, 54), rgb(22, 163, 74), rgb(34, 197, 94))',
+        color: '#22c55e'
+      };
+      else if (grade.includes('B')) return {
+        gradient: 'linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235), rgb(29, 78, 216), rgb(37, 99, 235), rgb(59, 130, 246))',
+        color: '#3b82f6'
+      };
+      else if (grade.includes('C')) return {
+        gradient: 'linear-gradient(135deg, rgb(250, 204, 21), rgb(245, 158, 11), rgb(217, 119, 6), rgb(245, 158, 11), rgb(250, 204, 21))',
+        color: '#f59e0b'
+      };
+      else if (grade.includes('D')) return {
+        gradient: 'linear-gradient(135deg, rgb(251, 146, 60), rgb(249, 115, 22), rgb(234, 88, 12), rgb(249, 115, 22), rgb(251, 146, 60))',
+        color: '#f97316'
+      };
+      else return {
+        gradient: 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38), rgb(185, 28, 28), rgb(220, 38, 38), rgb(239, 68, 68))',
+        color: '#ef4444'
+      };
     };
 
     return {
       offense: {
         grade: getLetterGrade(offensiveScore),
         score: offensiveScore.toFixed(1),
-        color: getGradeColor(getLetterGrade(offensiveScore))
+        color: getGradeColor(getLetterGrade(offensiveScore)).color,
+        gradient: getGradeColor(getLetterGrade(offensiveScore)).gradient
       },
       defense: {
         grade: getLetterGrade(defensiveScore),
         score: defensiveScore.toFixed(1),
-        color: getGradeColor(getLetterGrade(defensiveScore))
+        color: getGradeColor(getLetterGrade(defensiveScore)).color,
+        gradient: getGradeColor(getLetterGrade(defensiveScore)).gradient
       },
       overall: {
         grade: getLetterGrade(overallScore),
         score: overallScore.toFixed(1),
-        color: getGradeColor(getLetterGrade(overallScore))
+        color: getGradeColor(getLetterGrade(overallScore)).color,
+        gradient: getGradeColor(getLetterGrade(overallScore)).gradient
       }
     };
   };
@@ -706,10 +728,13 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
   const teamEdge = getTeamEdge();
 
   // Grade Card Component
-  const GradeCard = ({ title, grade, score, color, teamColor }) => (
+  const GradeCard = ({ title, grade, score, color, gradient, teamColor }) => (
     <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 p-4 text-center shadow-lg">
       <h4 className="text-sm font-bold text-gray-700 mb-2">{title}</h4>
-      <div className="text-3xl font-black mb-1" style={{ color }}>
+      <div 
+        className="text-3xl font-black mb-1 bg-clip-text text-transparent"
+        style={{ background: gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+      >
         {grade}
       </div>
       <div className="text-xs text-gray-500">
@@ -751,6 +776,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           grade={grades.offense.grade} 
           score={grades.offense.score} 
           color={grades.offense.color}
+          gradient={grades.offense.gradient}
           teamColor={getTeamColor(team)}
         />
         <GradeCard 
@@ -758,6 +784,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           grade={grades.defense.grade} 
           score={grades.defense.score} 
           color={grades.defense.color}
+          gradient={grades.defense.gradient}
           teamColor={getTeamColor(team)}
         />
         <GradeCard 
@@ -765,6 +792,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           grade={grades.overall.grade} 
           score={grades.overall.score} 
           color={grades.overall.color}
+          gradient={grades.overall.gradient}
           teamColor={getTeamColor(team)}
         />
       </div>
@@ -812,6 +840,106 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
+        }
+        
+        .professional-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(239, 68, 68), 
+            rgb(220, 38, 38), 
+            rgb(185, 28, 28), 
+            rgb(220, 38, 38), 
+            rgb(239, 68, 68)
+          );
+        }
+        
+        .blue-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(59, 130, 246), 
+            rgb(37, 99, 235), 
+            rgb(29, 78, 216), 
+            rgb(37, 99, 235), 
+            rgb(59, 130, 246)
+          );
+        }
+        
+        .green-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(34, 197, 94), 
+            rgb(22, 163, 74), 
+            rgb(15, 118, 54), 
+            rgb(22, 163, 74), 
+            rgb(34, 197, 94)
+          );
+        }
+        
+        .gold-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(250, 204, 21), 
+            rgb(245, 158, 11), 
+            rgb(217, 119, 6), 
+            rgb(245, 158, 11), 
+            rgb(250, 204, 21)
+          );
+        }
+        
+        .orange-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(251, 146, 60), 
+            rgb(249, 115, 22), 
+            rgb(234, 88, 12), 
+            rgb(249, 115, 22), 
+            rgb(251, 146, 60)
+          );
+        }
+        
+        .teal-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(20, 184, 166), 
+            rgb(13, 148, 136), 
+            rgb(15, 118, 110), 
+            rgb(13, 148, 136), 
+            rgb(20, 184, 166)
+          );
+        }
+        
+        .purple-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(168, 85, 247), 
+            rgb(139, 69, 219), 
+            rgb(124, 58, 193), 
+            rgb(139, 69, 219), 
+            rgb(168, 85, 247)
+          );
+        }
+        
+        .emerald-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(16, 185, 129), 
+            rgb(5, 150, 105), 
+            rgb(4, 120, 87), 
+            rgb(5, 150, 105), 
+            rgb(16, 185, 129)
+          );
+        }
+        
+        .indigo-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(99, 102, 241), 
+            rgb(79, 70, 229), 
+            rgb(67, 56, 202), 
+            rgb(79, 70, 229), 
+            rgb(99, 102, 241)
+          );
+        }
+        
+        .pink-gradient-bg {
+          background: linear-gradient(135deg, 
+            rgb(244, 63, 94), 
+            rgb(225, 29, 72), 
+            rgb(190, 18, 60), 
+            rgb(225, 29, 72), 
+            rgb(244, 63, 94)
+          );
         }
       `}</style>
 
@@ -908,7 +1036,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
             <div className="mt-4 p-3 bg-gray-100 rounded-lg">
               <p className="text-xs text-gray-600 font-medium">
                 <i className="fas fa-chart-bar text-gray-500 mr-1"></i>
-                <strong>Grading Based on 2023 FBS Data:</strong> LSU (543.5 ypg), Michigan (247.0 def ypg), Penn State (74.3 rush def), Oregon (348.1 pass ypg)
+                <strong>GAMEDAY+ Comprehensive Algorithm:</strong> Utilizing very in-depth seasonal analysis based on every factor of the game - offensive production, defensive dominance, special teams excellence, situational performance, and championship-level benchmarks derived from elite FBS Division 1 standards.
               </p>
             </div>
           </div>
@@ -938,6 +1066,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="wins"
           team1Value={season2024Data.team1.wins}
           team2Value={season2024Data.team2.wins}
+          gradientClass="professional-gradient-bg"
         />
 
         {/* Win Percentage */}
@@ -952,6 +1081,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="gold-gradient-bg"
         />
 
         {/* Conference Record */}
@@ -969,6 +1099,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="wins"
           team1Value={season2024Data.team1.conferenceWins}
           team2Value={season2024Data.team2.conferenceWins}
+          gradientClass="purple-gradient-bg"
         />
 
         {/* Total Yards */}
@@ -983,6 +1114,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="blue-gradient-bg"
         />
 
         {/* Rushing Yards */}
@@ -997,6 +1129,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="green-gradient-bg"
         />
 
         {/* Passing Yards */}
@@ -1011,6 +1144,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="teal-gradient-bg"
         />
 
         {/* Total Touchdowns */}
@@ -1025,6 +1159,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="orange-gradient-bg"
         />
 
         {/* Sacks */}
@@ -1039,6 +1174,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="indigo-gradient-bg"
         />
 
         {/* Interceptions */}
@@ -1053,6 +1189,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="emerald-gradient-bg"
         />
 
         {/* Yards Allowed */}
@@ -1067,6 +1204,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison for defensive stat
+          gradientClass="pink-gradient-bg"
         />
 
         {/* === EXPANDED OFFENSIVE STATISTICS === */}
@@ -1086,6 +1224,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="percentage"
           team1Value={season2024Data.team1.passAttempts > 0 ? (season2024Data.team1.passCompletions / season2024Data.team1.passAttempts) * 100 : 0}
           team2Value={season2024Data.team2.passAttempts > 0 ? (season2024Data.team2.passCompletions / season2024Data.team2.passAttempts) * 100 : 0}
+          gradientClass="professional-gradient-bg"
         />
 
         {/* Rushing Attempts */}
@@ -1100,6 +1239,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="blue-gradient-bg"
         />
 
         {/* Yards Per Carry */}
@@ -1117,6 +1257,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="efficiency"
           team1Value={season2024Data.team1.rushingAttempts > 0 ? season2024Data.team1.rushingYards / season2024Data.team1.rushingAttempts : 0}
           team2Value={season2024Data.team2.rushingAttempts > 0 ? season2024Data.team2.rushingYards / season2024Data.team2.rushingAttempts : 0}
+          gradientClass="green-gradient-bg"
         />
 
         {/* Yards Per Pass */}
@@ -1134,6 +1275,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="efficiency"
           team1Value={season2024Data.team1.passAttempts > 0 ? season2024Data.team1.netPassingYards / season2024Data.team1.passAttempts : 0}
           team2Value={season2024Data.team2.passAttempts > 0 ? season2024Data.team2.netPassingYards / season2024Data.team2.passAttempts : 0}
+          gradientClass="teal-gradient-bg"
         />
 
         {/* First Downs */}
@@ -1148,6 +1290,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="gold-gradient-bg"
         />
 
         {/* Third Down Conversion Rate */}
@@ -1165,6 +1308,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="percentage"
           team1Value={season2024Data.team1.thirdDowns > 0 ? (season2024Data.team1.thirdDownConversions / season2024Data.team1.thirdDowns) * 100 : 0}
           team2Value={season2024Data.team2.thirdDowns > 0 ? (season2024Data.team2.thirdDownConversions / season2024Data.team2.thirdDowns) * 100 : 0}
+          gradientClass="orange-gradient-bg"
         />
 
         {/* Fourth Down Conversion Rate */}
@@ -1182,6 +1326,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="percentage"
           team1Value={season2024Data.team1.fourthDowns > 0 ? (season2024Data.team1.fourthDownConversions / season2024Data.team1.fourthDowns) * 100 : 0}
           team2Value={season2024Data.team2.fourthDowns > 0 ? (season2024Data.team2.fourthDownConversions / season2024Data.team2.fourthDowns) * 100 : 0}
+          gradientClass="purple-gradient-bg"
         />
 
         {/* Time of Possession */}
@@ -1196,6 +1341,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="indigo-gradient-bg"
         />
 
         {/* Turnovers */}
@@ -1210,6 +1356,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison - fewer turnovers is better
+          gradientClass="emerald-gradient-bg"
         />
 
         {/* Penalties */}
@@ -1224,6 +1371,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison - fewer penalties is better
+          gradientClass="pink-gradient-bg"
         />
 
         {/* Penalty Yards */}
@@ -1238,6 +1386,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison - fewer penalty yards is better
+          gradientClass="professional-gradient-bg"
         />
 
         {/* === DEFENSIVE STATISTICS === */}
@@ -1254,6 +1403,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison for defensive stat
+          gradientClass="blue-gradient-bg"
         />
 
         {/* Passing Defense */}
@@ -1268,6 +1418,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison for defensive stat
+          gradientClass="green-gradient-bg"
         />
 
         {/* Tackles for Loss */}
@@ -1282,6 +1433,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="teal-gradient-bg"
         />
 
         {/* Forced Turnovers */}
@@ -1296,6 +1448,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="gold-gradient-bg"
         />
 
         {/* Interception Return Yards */}
@@ -1310,6 +1463,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="orange-gradient-bg"
         />
 
         {/* Fumbles Recovered */}
@@ -1324,6 +1478,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="purple-gradient-bg"
         />
 
         {/* Opponent Third Down Defense */}
@@ -1341,6 +1496,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="percentage"
           team1Value={season2024Data.team1.thirdDownsOpponent > 0 ? 100 - ((season2024Data.team1.thirdDownConversionsOpponent / season2024Data.team1.thirdDownsOpponent) * 100) : 0}
           team2Value={season2024Data.team2.thirdDownsOpponent > 0 ? 100 - ((season2024Data.team2.thirdDownConversionsOpponent / season2024Data.team2.thirdDownsOpponent) * 100) : 0}
+          gradientClass="indigo-gradient-bg"
         />
 
         {/* === SPECIAL TEAMS & RETURN GAME === */}
@@ -1360,6 +1516,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="average"
           team1Value={season2024Data.team1.kickReturns > 0 ? season2024Data.team1.kickReturnYards / season2024Data.team1.kickReturns : 0}
           team2Value={season2024Data.team2.kickReturns > 0 ? season2024Data.team2.kickReturnYards / season2024Data.team2.kickReturns : 0}
+          gradientClass="emerald-gradient-bg"
         />
 
         {/* Punt Return Average */}
@@ -1377,6 +1534,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="average"
           team1Value={season2024Data.team1.puntReturns > 0 ? season2024Data.team1.puntReturnYards / season2024Data.team1.puntReturns : 0}
           team2Value={season2024Data.team2.puntReturns > 0 ? season2024Data.team2.puntReturnYards / season2024Data.team2.puntReturns : 0}
+          gradientClass="pink-gradient-bg"
         />
 
         {/* Return Touchdowns */}
@@ -1391,6 +1549,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           animateStats={animateStats}
           getTeamColor={getTeamColor}
           getWinner={getWinner}
+          gradientClass="professional-gradient-bg"
         />
 
         {/* === ADDITIONAL EFFICIENCY METRICS === */}
@@ -1410,6 +1569,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="efficiency"
           team1Value={((season2024Data.team1.rushingAttempts + season2024Data.team1.passAttempts) > 0) ? season2024Data.team1.totalYards / (season2024Data.team1.rushingAttempts + season2024Data.team1.passAttempts) : 0}
           team2Value={((season2024Data.team2.rushingAttempts + season2024Data.team2.passAttempts) > 0) ? season2024Data.team2.totalYards / (season2024Data.team2.rushingAttempts + season2024Data.team2.passAttempts) : 0}
+          gradientClass="blue-gradient-bg"
         />
 
         {/* Yards Per Play Allowed */}
@@ -1427,6 +1587,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           compareBy="efficiency"
           team1Value={((season2024Data.team1.rushingAttemptsOpponent + season2024Data.team1.passAttemptsOpponent) > 0) ? season2024Data.team1.totalYardsOpponent / (season2024Data.team1.rushingAttemptsOpponent + season2024Data.team1.passAttemptsOpponent) : 0}
           team2Value={((season2024Data.team2.rushingAttemptsOpponent + season2024Data.team2.passAttemptsOpponent) > 0) ? season2024Data.team2.totalYardsOpponent / (season2024Data.team2.rushingAttemptsOpponent + season2024Data.team2.passAttemptsOpponent) : 0}
+          gradientClass="green-gradient-bg"
         />
         
         {/* Existing Yards Allowed card... */}
