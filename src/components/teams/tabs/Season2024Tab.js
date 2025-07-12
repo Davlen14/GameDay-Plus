@@ -830,16 +830,16 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
       {!loading && !error && team1Grades && team2Grades && (
         <div className={`space-y-6 transition-all duration-500 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
           {/* Statistical Edge Banner */}
-          <div className="bg-gradient-to-r from-red-500 via-red-600 to-red-700 rounded-3xl border border-red-400/50 p-6 text-center shadow-2xl">
+          <div className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-6 text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              <i className="fas fa-chart-line text-white text-3xl"></i>
-              <h3 className="text-2xl font-black text-white">STATISTICAL ANALYSIS</h3>
-              <i className="fas fa-chart-line text-white text-3xl"></i>
+              <i className="fas fa-chart-line text-3xl gradient-text"></i>
+              <h3 className="text-2xl font-black gradient-text">STATISTICAL ANALYSIS</h3>
+              <i className="fas fa-chart-line text-3xl gradient-text"></i>
             </div>
-            <p className="text-xl font-bold text-white mb-2">
+            <p className="text-xl font-bold gradient-text mb-2">
               {teamEdge.message}
             </p>
-            <p className="text-sm text-red-100 font-medium">
+            <p className="text-sm text-gray-600 font-medium">
               Based on comprehensive offensive, defensive, and overall performance metrics
             </p>
           </div>
@@ -866,7 +866,10 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
             </div>
             <div className="grid md:grid-cols-3 gap-6 text-sm text-gray-700">
               <div>
-                <h4 className="font-bold text-gray-800 mb-2">🏈 Offense (40%)</h4>
+                <div className="flex items-center space-x-2 mb-2">
+                  <i className="fas fa-football-ball text-lg gradient-text"></i>
+                  <h4 className="font-bold text-gray-800">Offense (40%)</h4>
+                </div>
                 <p className="mb-2"><strong>Based on 2023 FBS Benchmarks:</strong></p>
                 <ul className="text-xs space-y-1">
                   <li>• Total Offense: 500+ ypg = A+</li>
@@ -876,7 +879,10 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
                 </ul>
               </div>
               <div>
-                <h4 className="font-bold text-gray-800 mb-2">🛡️ Defense (40%)</h4>
+                <div className="flex items-center space-x-2 mb-2">
+                  <i className="fas fa-shield-alt text-lg gradient-text"></i>
+                  <h4 className="font-bold text-gray-800">Defense (40%)</h4>
+                </div>
                 <p className="mb-2"><strong>Elite Standards:</strong></p>
                 <ul className="text-xs space-y-1">
                   <li>• Total Defense: &lt;250 ypg = A+</li>
@@ -886,7 +892,10 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
                 </ul>
               </div>
               <div>
-                <h4 className="font-bold text-gray-800 mb-2">⭐ Overall (20%)</h4>
+                <div className="flex items-center space-x-2 mb-2">
+                  <i className="fas fa-star text-lg gradient-text"></i>
+                  <h4 className="font-bold text-gray-800">Overall (20%)</h4>
+                </div>
                 <p className="mb-2"><strong>Championship Level:</strong></p>
                 <ul className="text-xs space-y-1">
                   <li>• Win %: 85%+ = A+</li>
@@ -898,7 +907,8 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
             </div>
             <div className="mt-4 p-3 bg-gray-100 rounded-lg">
               <p className="text-xs text-gray-600 font-medium">
-                📊 <strong>Grading Based on 2023 FBS Data:</strong> LSU (543.5 ypg), Michigan (247.0 def ypg), Penn State (74.3 rush def), Oregon (348.1 pass ypg)
+                <i className="fas fa-chart-bar text-gray-500 mr-1"></i>
+                <strong>Grading Based on 2023 FBS Data:</strong> LSU (543.5 ypg), Michigan (247.0 def ypg), Penn State (74.3 rush def), Oregon (348.1 pass ypg)
               </p>
             </div>
           </div>
