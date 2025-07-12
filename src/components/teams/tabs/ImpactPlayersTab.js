@@ -18,6 +18,98 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
   
   // Impact threshold for players (PPA based)
   const IMPACT_THRESHOLD = 15.0;
+
+  // Professional multi-stop gradient system - matching FanForums sophistication
+  const professionalGradients = {
+    red: `linear-gradient(135deg, 
+      rgb(239, 68, 68), 
+      rgb(220, 38, 38), 
+      rgb(185, 28, 28),
+      rgb(220, 38, 38), 
+      rgb(239, 68, 68)
+    )`,
+    blue: `linear-gradient(135deg, 
+      rgb(59, 130, 246), 
+      rgb(37, 99, 235), 
+      rgb(29, 78, 216), 
+      rgb(37, 99, 235), 
+      rgb(59, 130, 246)
+    )`,
+    green: `linear-gradient(135deg, 
+      rgb(34, 197, 94), 
+      rgb(22, 163, 74), 
+      rgb(15, 118, 54), 
+      rgb(22, 163, 74), 
+      rgb(34, 197, 94)
+    )`,
+    gold: `linear-gradient(135deg, 
+      rgb(250, 204, 21), 
+      rgb(245, 158, 11), 
+      rgb(217, 119, 6), 
+      rgb(245, 158, 11), 
+      rgb(250, 204, 21)
+    )`,
+    silver: `linear-gradient(135deg, 
+      rgb(148, 163, 184), 
+      rgb(100, 116, 139), 
+      rgb(71, 85, 105), 
+      rgb(100, 116, 139), 
+      rgb(148, 163, 184)
+    )`,
+    orange: `linear-gradient(135deg, 
+      rgb(251, 146, 60), 
+      rgb(249, 115, 22), 
+      rgb(234, 88, 12), 
+      rgb(249, 115, 22), 
+      rgb(251, 146, 60)
+    )`,
+    teal: `linear-gradient(135deg, 
+      rgb(20, 184, 166), 
+      rgb(13, 148, 136), 
+      rgb(15, 118, 110), 
+      rgb(13, 148, 136), 
+      rgb(20, 184, 166)
+    )`,
+    bronze: `linear-gradient(135deg, 
+      rgb(180, 83, 9), 
+      rgb(154, 52, 18), 
+      rgb(120, 53, 15), 
+      rgb(154, 52, 18), 
+      rgb(180, 83, 9)
+    )`,
+    indigo: `linear-gradient(135deg, 
+      rgb(99, 102, 241), 
+      rgb(79, 70, 229), 
+      rgb(67, 56, 202), 
+      rgb(79, 70, 229), 
+      rgb(99, 102, 241)
+    )`,
+    emerald: `linear-gradient(135deg, 
+      rgb(16, 185, 129), 
+      rgb(5, 150, 105), 
+      rgb(4, 120, 87), 
+      rgb(5, 150, 105), 
+      rgb(16, 185, 129)
+    )`,
+    purple: `linear-gradient(135deg, 
+      rgb(168, 85, 247), 
+      rgb(139, 69, 219), 
+      rgb(124, 58, 193), 
+      rgb(139, 69, 219), 
+      rgb(168, 85, 247)
+    )`,
+    rose: `linear-gradient(135deg, 
+      rgb(244, 63, 94), 
+      rgb(225, 29, 72), 
+      rgb(190, 18, 60), 
+      rgb(225, 29, 72), 
+      rgb(244, 63, 94)
+    )`
+  };
+
+  // Professional glassmorphism effects
+  const glassEffect = 'rgba(255, 255, 255, 0.85)';
+  const backdropBlur = 'blur(12px)';
   
   useEffect(() => {
     loadPlayerData();
@@ -419,6 +511,46 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
     return team?.color || '#cc001c';
   };
 
+  // Helper functions for team gradient mapping
+  const getTeamColorKey = (team) => {
+    const teamName = team?.school?.toLowerCase() || '';
+    
+    // Map teams to gradient colors based on their brand colors
+    if (teamName.includes('alabama') || teamName.includes('red')) return 'red';
+    if (teamName.includes('michigan') || teamName.includes('blue')) return 'blue';
+    if (teamName.includes('oregon') || teamName.includes('green')) return 'emerald';
+    if (teamName.includes('georgia') || teamName.includes('clemson')) return 'orange';
+    if (teamName.includes('ohio') || teamName.includes('state')) return 'red';
+    if (teamName.includes('texas') || teamName.includes('longhorn')) return 'orange';
+    if (teamName.includes('oklahoma') || teamName.includes('sooner')) return 'red';
+    if (teamName.includes('lsu') || teamName.includes('tiger')) return 'purple';
+    if (teamName.includes('florida') || teamName.includes('gator')) return 'blue';
+    if (teamName.includes('notre') || teamName.includes('dame')) return 'gold';
+    if (teamName.includes('penn') || teamName.includes('state')) return 'blue';
+    if (teamName.includes('washington') || teamName.includes('husky')) return 'purple';
+    if (teamName.includes('miami') || teamName.includes('hurricane')) return 'orange';
+    if (teamName.includes('usc') || teamName.includes('trojan')) return 'red';
+    if (teamName.includes('stanford') || teamName.includes('cardinal')) return 'red';
+    if (teamName.includes('wisconsin') || teamName.includes('badger')) return 'red';
+    
+    // Default to red for primary team colors
+    return 'red';
+  };
+
+  const getTeamShadowColor = (team) => {
+    const colorKey = getTeamColorKey(team);
+    const shadowMap = {
+      red: 'rgba(239, 68, 68, 0.3)',
+      blue: 'rgba(59, 130, 246, 0.3)',
+      emerald: 'rgba(16, 185, 129, 0.3)',
+      orange: 'rgba(251, 146, 60, 0.3)',
+      purple: 'rgba(168, 85, 247, 0.3)',
+      gold: 'rgba(250, 204, 21, 0.3)',
+      green: 'rgba(34, 197, 94, 0.3)'
+    };
+    return shadowMap[colorKey] || 'rgba(239, 68, 68, 0.3)';
+  };
+
   // Loading View Component
   const LoadingView = () => (
     <div className="relative z-10 flex items-center justify-center h-full">
@@ -530,22 +662,72 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
   const ModernHeader = () => (
     <div className={`text-center mb-8 transition-all duration-1000 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
       <div className="relative mb-8">
-        <div className="absolute inset-0 w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-xl mx-auto"></div>
-        <div className="relative w-16 h-16 rounded-full bg-white/60 backdrop-blur-sm border border-white/50 shadow-[inset_0_2px_6px_rgba(255,255,255,0.4)] flex items-center justify-center mx-auto">
-          <i className="fas fa-star text-red-500 text-3xl"></i>
+        <div 
+          className="absolute inset-0 w-20 h-20 rounded-full border border-white/30 shadow-xl mx-auto"
+          style={{ 
+            background: 'rgba(255, 255, 255, 0.2)',
+            backdropFilter: backdropBlur
+          }}
+        ></div>
+        <div 
+          className="relative w-16 h-16 rounded-full border border-white/50 flex items-center justify-center mx-auto shadow-lg"
+          style={{ 
+            background: glassEffect,
+            backdropFilter: 'blur(8px)',
+            boxShadow: 'inset 0 2px 6px rgba(255,255,255,0.4), 0 8px 24px rgba(239, 68, 68, 0.3)'
+          }}
+        >
+          <i 
+            className="fas fa-star text-3xl drop-shadow-lg"
+            style={{ 
+              background: professionalGradients.red,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          ></i>
         </div>
       </div>
       
-      <h2 className="text-5xl font-black mb-4 gradient-text">
+      <h2 
+        className="text-5xl font-black mb-4"
+        style={{ 
+          background: professionalGradients.blue,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          filter: 'drop-shadow(0 4px 8px rgba(59, 130, 246, 0.3))'
+        }}
+      >
         Impact Players Analysis
       </h2>
       <p className="text-xl text-gray-600 font-light mb-4">
         Head-to-Head Position Matchups
       </p>
       <div className="flex items-center justify-center space-x-4 text-lg text-gray-500">
-        <span className="font-bold" style={{ color: getTeamColor(team1) }}>{team1?.school}</span>
+        <span 
+          className="font-bold"
+          style={{ 
+            background: professionalGradients[getTeamColorKey(team1)],
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}
+        >
+          {team1?.school}
+        </span>
         <span>vs</span>
-        <span className="font-bold" style={{ color: getTeamColor(team2) }}>{team2?.school}</span>
+        <span 
+          className="font-bold"
+          style={{ 
+            background: professionalGradients[getTeamColorKey(team2)],
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}
+        >
+          {team2?.school}
+        </span>
       </div>
     </div>
   );
@@ -576,8 +758,14 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
 
         {/* VS Badge */}
         <div className="text-center space-y-2 mx-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-lg">VS</span>
+          <div 
+            className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg relative overflow-hidden"
+            style={{ 
+              background: professionalGradients.red,
+              boxShadow: '0 8px 24px rgba(239, 68, 68, 0.4), inset 0 2px 6px rgba(255,255,255,0.2)'
+            }}
+          >
+            <span className="text-white font-bold text-lg drop-shadow-sm">VS</span>
           </div>
         </div>
 
@@ -609,37 +797,95 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
     const { team1Player, team2Player } = matchup;
     const winner = determineWinner(team1Player, team2Player);
     
-    // Define gradient colors for different positions
+    // Define sophisticated gradient colors for different positions with shadow colors
     const getPositionGradient = (pos) => {
-      const gradients = {
-        'QB': 'from-red-500 to-red-600',
-        'RB': 'from-green-500 to-green-600', 
-        'WR': 'from-blue-500 to-blue-600',
-        'TE': 'from-purple-500 to-purple-600',
-        'OL': 'from-orange-500 to-orange-600',
-        'DL': 'from-gray-600 to-gray-700',
-        'LB': 'from-indigo-500 to-indigo-600',
-        'DB': 'from-teal-500 to-teal-600',
-        'K': 'from-yellow-500 to-yellow-600',
-        'P': 'from-pink-500 to-pink-600'
+      const positionStyles = {
+        'QB': { 
+          gradient: professionalGradients.red,
+          shadowColor: 'rgba(239, 68, 68, 0.3)',
+          icon: 'fa-user-tie'
+        },
+        'RB': { 
+          gradient: professionalGradients.emerald,
+          shadowColor: 'rgba(16, 185, 129, 0.3)',
+          icon: 'fa-running'
+        }, 
+        'WR': { 
+          gradient: professionalGradients.blue,
+          shadowColor: 'rgba(59, 130, 246, 0.3)',
+          icon: 'fa-bolt'
+        },
+        'TE': { 
+          gradient: professionalGradients.purple,
+          shadowColor: 'rgba(168, 85, 247, 0.3)',
+          icon: 'fa-hands'
+        },
+        'OL': { 
+          gradient: professionalGradients.orange,
+          shadowColor: 'rgba(251, 146, 60, 0.3)',
+          icon: 'fa-shield-alt'
+        },
+        'DL': { 
+          gradient: professionalGradients.bronze,
+          shadowColor: 'rgba(180, 83, 9, 0.3)',
+          icon: 'fa-fist-raised'
+        },
+        'LB': { 
+          gradient: professionalGradients.indigo,
+          shadowColor: 'rgba(99, 102, 241, 0.3)',
+          icon: 'fa-user-shield'
+        },
+        'DB': { 
+          gradient: professionalGradients.teal,
+          shadowColor: 'rgba(20, 184, 166, 0.3)',
+          icon: 'fa-eye'
+        },
+        'K': { 
+          gradient: professionalGradients.gold,
+          shadowColor: 'rgba(250, 204, 21, 0.3)',
+          icon: 'fa-crosshairs'
+        },
+        'P': { 
+          gradient: professionalGradients.rose,
+          shadowColor: 'rgba(244, 63, 94, 0.3)',
+          icon: 'fa-futbol'
+        }
       };
-      return gradients[pos] || 'from-slate-500 to-slate-600';
+      return positionStyles[pos] || { 
+        gradient: professionalGradients.silver,
+        shadowColor: 'rgba(148, 163, 184, 0.3)',
+        icon: 'fa-football-ball'
+      };
     };
     
+    const positionStyle = getPositionGradient(position);
+    
     return (
-      <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-500 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+      <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_${positionStyle.shadowColor}] p-8 transition-all duration-500 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         {/* Position Header */}
         <div className="flex items-center space-x-4 mb-8">
-          <div className={`w-12 h-12 bg-gradient-to-br ${getPositionGradient(position)} rounded-xl flex items-center justify-center shadow-lg`}>
-            <i className="fas fa-football-ball text-2xl text-white"></i>
+          <div 
+            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg relative overflow-hidden"
+            style={{ 
+              background: positionStyle.gradient,
+              boxShadow: `0 8px 32px ${positionStyle.shadowColor}, inset 0 2px 10px rgba(255,255,255,0.2)`
+            }}
+          >
+            <i className={`fas ${positionStyle.icon} text-2xl text-white drop-shadow-sm`}></i>
           </div>
           <div>
-            <h3 className="text-2xl font-black" style={{ 
-              background: `linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235), rgb(29, 78, 216), rgb(37, 99, 235), rgb(59, 130, 246))`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>{getPositionFullName(position)}</h3>
+            <h3 
+              className="text-2xl font-black"
+              style={{ 
+                background: positionStyle.gradient,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+              }}
+            >
+              {getPositionFullName(position)}
+            </h3>
             <p className="text-sm text-gray-600 font-medium">Head-to-Head Position Comparison</p>
           </div>
         </div>
@@ -662,20 +908,38 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
 
           {/* VS Section with Winner Arrow */}
           <div className="text-center space-y-4 mx-8">
-            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-600 font-bold text-sm">VS</span>
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg relative overflow-hidden"
+              style={{ 
+                background: professionalGradients.silver,
+                boxShadow: '0 8px 24px rgba(148, 163, 184, 0.3), inset 0 2px 6px rgba(255,255,255,0.2)'
+              }}
+            >
+              <span className="text-white font-bold text-sm drop-shadow-sm">VS</span>
             </div>
             
             {/* Winner Arrow */}
             {winner && winner !== 'tie' && winner !== 'unknown' && (
-              <div className="bg-green-500 rounded-full w-10 h-10 flex items-center justify-center shadow-lg">
-                <i className={`fas fa-arrow-${winner === 'team1' ? 'left' : 'right'} text-white text-lg ${animateStats ? 'animate-pulse' : ''}`}></i>
+              <div 
+                className="rounded-full w-10 h-10 flex items-center justify-center shadow-lg relative overflow-hidden"
+                style={{ 
+                  background: professionalGradients.emerald,
+                  boxShadow: '0 6px 20px rgba(16, 185, 129, 0.4), inset 0 2px 6px rgba(255,255,255,0.2)'
+                }}
+              >
+                <i className={`fas fa-arrow-${winner === 'team1' ? 'left' : 'right'} text-white text-lg drop-shadow-sm ${animateStats ? 'animate-pulse' : ''}`}></i>
               </div>
             )}
             
             {(winner === 'tie' || winner === 'unknown') && (
-              <div className="bg-yellow-500 rounded-full w-10 h-10 flex items-center justify-center shadow-lg">
-                <i className="fas fa-equals text-white text-lg"></i>
+              <div 
+                className="rounded-full w-10 h-10 flex items-center justify-center shadow-lg relative overflow-hidden"
+                style={{ 
+                  background: professionalGradients.gold,
+                  boxShadow: '0 6px 20px rgba(250, 204, 21, 0.4), inset 0 2px 6px rgba(255,255,255,0.2)'
+                }}
+              >
+                <i className="fas fa-equals text-white text-lg drop-shadow-sm"></i>
               </div>
             )}
           </div>
@@ -701,24 +965,37 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
   // Player Card Component
   const PlayerCard = ({ player, team, roster, isWinner }) => {
     const jerseyNumber = getJerseyNumber(player, roster);
+    const teamGradient = professionalGradients[getTeamColorKey(team)] || professionalGradients.red;
+    const teamShadowColor = getTeamShadowColor(team);
     
     return (
-      <div className={`bg-white/40 backdrop-blur-2xl rounded-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-6 ${isWinner ? 'ring-2 ring-green-400 ring-offset-2' : ''}`}>
+      <div className={`bg-white/40 backdrop-blur-2xl rounded-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_${teamShadowColor}] p-6 transition-all duration-300 hover:scale-105 ${isWinner ? `ring-2 ring-green-400 ring-offset-2 shadow-[0_0_20px_rgba(34,197,94,0.4)]` : ''}`}>
         {/* Team Logo and Jersey */}
         <div className="flex items-center justify-between mb-4">
           <div className="w-12 h-12 flex items-center justify-center">
             {team?.logos?.[0] ? (
-              <img src={team.logos[0]} alt={team.school} className="w-full h-full object-contain" />
+              <img src={team.logos[0]} alt={team.school} className="w-full h-full object-contain drop-shadow-sm" />
             ) : (
-              <div className="w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-sm"
-                   style={{ backgroundColor: getTeamColor(team) }}>
+              <div 
+                className="w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg"
+                style={{ 
+                  background: teamGradient,
+                  boxShadow: `0 4px 16px ${teamShadowColor}`
+                }}
+              >
                 {team?.school?.[0]}
               </div>
             )}
           </div>
           
           {jerseyNumber && (
-            <div className="flex items-center bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-3 py-1 rounded-lg shadow-lg">
+            <div 
+              className="flex items-center text-black px-3 py-1 rounded-lg shadow-lg relative overflow-hidden"
+              style={{ 
+                background: professionalGradients.gold,
+                boxShadow: `0 4px 16px rgba(250, 204, 21, 0.3), inset 0 2px 6px rgba(255,255,255,0.2)`
+              }}
+            >
               <span className="text-sm font-bold">#</span>
               <span className="text-lg font-black">{jerseyNumber}</span>
             </div>
@@ -728,20 +1005,32 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         {/* Winner Badge */}
         {isWinner && (
           <div className="flex justify-center mb-3">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-green-100 border border-green-200">
-              <i className="fas fa-star text-green-600 text-sm"></i>
-              <span className="text-xs font-bold text-green-700">WINNER</span>
+            <div 
+              className="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-green-200 shadow-lg"
+              style={{ 
+                background: professionalGradients.emerald,
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)'
+              }}
+            >
+              <i className="fas fa-star text-white text-sm drop-shadow-sm"></i>
+              <span className="text-xs font-bold text-white">WINNER</span>
             </div>
           </div>
         )}
 
         {/* Player Info */}
         <div className="text-center space-y-3">
-          <h4 className="text-lg font-bold text-gray-900 leading-tight">
+          <h4 className="text-lg font-bold text-gray-900 leading-tight drop-shadow-sm">
             {player.name}
           </h4>
           
-          <div className="inline-flex items-center px-3 py-1 rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-500 shadow-md">
+          <div 
+            className="inline-flex items-center px-3 py-1 rounded-lg shadow-md"
+            style={{ 
+              background: professionalGradients.gold,
+              boxShadow: '0 4px 16px rgba(250, 204, 21, 0.3)'
+            }}
+          >
             <span className="text-sm font-bold text-black">{player.position}</span>
           </div>
 
@@ -749,14 +1038,30 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Total PPA:</span>
-              <span className="text-lg font-bold" style={{ color: getTeamColor(team) }}>
+              <span 
+                className="text-lg font-bold drop-shadow-sm"
+                style={{ 
+                  background: teamGradient,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
                 {player.totalPPA.all.toFixed(1)}
               </span>
             </div>
             
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Avg PPA:</span>
-              <span className="text-lg font-bold" style={{ color: getTeamColor(team) }}>
+              <span 
+                className="text-lg font-bold drop-shadow-sm"
+                style={{ 
+                  background: teamGradient,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
                 {player.averagePPA.all.toFixed(2)}
               </span>
             </div>
@@ -815,9 +1120,15 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
     return (
       <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8 transition-all duration-1000 delay-1000 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg">
-            <i className="fas fa-medal text-white text-lg"></i>
-            <h3 className="text-2xl font-black text-white">Honorable Mentions</h3>
+          <div 
+            className="inline-flex items-center space-x-3 px-6 py-3 rounded-full shadow-lg relative overflow-hidden"
+            style={{ 
+              background: professionalGradients.purple,
+              boxShadow: '0 8px 32px rgba(168, 85, 247, 0.4), inset 0 2px 10px rgba(255,255,255,0.2)'
+            }}
+          >
+            <i className="fas fa-medal text-white text-lg drop-shadow-sm"></i>
+            <h3 className="text-2xl font-black text-white drop-shadow-sm">Honorable Mentions</h3>
           </div>
           <p className="text-gray-600 mt-4">Other impact players above the PPA threshold</p>
         </div>
@@ -866,16 +1177,29 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
   // Honorable Mention Card Component
   const HonorableMentionCard = ({ player, team, roster }) => {
     const jerseyNumber = getJerseyNumber(player, roster);
+    const teamGradient = professionalGradients[getTeamColorKey(team)] || professionalGradients.red;
+    const teamShadowColor = getTeamShadowColor(team);
     
     return (
-      <div className="bg-white/60 backdrop-blur-xl rounded-xl border border-white/50 shadow-lg p-4">
+      <div 
+        className="backdrop-blur-xl rounded-xl border border-white/50 shadow-lg p-4 transition-all duration-300 hover:scale-105"
+        style={{ 
+          background: 'rgba(255, 255, 255, 0.6)',
+          boxShadow: `0 8px 24px ${teamShadowColor}, inset 0 2px 6px rgba(255,255,255,0.3)`
+        }}
+      >
         <div className="flex items-center space-x-3 mb-3">
           <div className="w-10 h-10 flex items-center justify-center">
             {team?.logos?.[0] ? (
-              <img src={team.logos[0]} alt={team.school} className="w-full h-full object-contain" />
+              <img src={team.logos[0]} alt={team.school} className="w-full h-full object-contain drop-shadow-sm" />
             ) : (
-              <div className="w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-xs"
-                   style={{ backgroundColor: getTeamColor(team) }}>
+              <div 
+                className="w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md"
+                style={{ 
+                  background: teamGradient,
+                  boxShadow: `0 4px 12px ${teamShadowColor}`
+                }}
+              >
                 {team?.school?.[0]}
               </div>
             )}
@@ -883,17 +1207,29 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
           
           <div className="flex-1">
             {jerseyNumber && (
-              <div className="flex items-center bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-2 py-1 rounded-md shadow-sm mb-1 w-fit">
+              <div 
+                className="flex items-center text-black px-2 py-1 rounded-md shadow-sm mb-1 w-fit"
+                style={{ 
+                  background: professionalGradients.gold,
+                  boxShadow: '0 2px 8px rgba(250, 204, 21, 0.3)'
+                }}
+              >
                 <span className="text-xs font-bold">#</span>
                 <span className="text-sm font-black">{jerseyNumber}</span>
               </div>
             )}
             
-            <h5 className="font-bold text-gray-900 text-sm leading-tight">
+            <h5 className="font-bold text-gray-900 text-sm leading-tight drop-shadow-sm">
               {player.name}
             </h5>
             
-            <span className="inline-block px-2 py-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black text-xs font-bold rounded mt-1">
+            <span 
+              className="inline-block px-2 py-1 text-black text-xs font-bold rounded mt-1 shadow-sm"
+              style={{ 
+                background: professionalGradients.gold,
+                boxShadow: '0 2px 8px rgba(250, 204, 21, 0.3)'
+              }}
+            >
               {player.position}
             </span>
           </div>
@@ -902,13 +1238,29 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         <div className="flex justify-between text-sm">
           <div>
             <span className="text-gray-600">Total PPA:</span>
-            <div className="font-bold" style={{ color: getTeamColor(team) }}>
+            <div 
+              className="font-bold drop-shadow-sm"
+              style={{ 
+                background: teamGradient,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
               {player.totalPPA.all.toFixed(1)}
             </div>
           </div>
           <div className="text-right">
             <span className="text-gray-600">Avg PPA:</span>
-            <div className="font-bold" style={{ color: getTeamColor(team) }}>
+            <div 
+              className="font-bold drop-shadow-sm"
+              style={{ 
+                background: teamGradient,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
               {player.averagePPA.all.toFixed(2)}
             </div>
           </div>
@@ -919,10 +1271,28 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
 
   // Legend Component
   const Legend = () => (
-    <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-6 transition-all duration-1000 delay-1200 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+    <div className={`bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(59,130,246,0.2)] p-6 transition-all duration-1000 delay-1200 ${animateStats ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
       <div className="flex items-center space-x-3 mb-4">
-        <i className="fas fa-info-circle text-blue-500 text-xl"></i>
-        <h3 className="text-xl font-black gradient-text">Legend</h3>
+        <i 
+          className="fas fa-info-circle text-xl drop-shadow-sm"
+          style={{ 
+            background: professionalGradients.blue,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}
+        ></i>
+        <h3 
+          className="text-xl font-black"
+          style={{ 
+            background: professionalGradients.blue,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}
+        >
+          Legend
+        </h3>
       </div>
       
       <div className="space-y-3 text-sm">
