@@ -376,7 +376,21 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
             <i className={`fas fa-${icon} text-2xl text-white`}></i>
           </div>
           <div>
-            <h3 className="text-2xl font-black gradient-text">{title}</h3>
+            <h3 className="text-2xl font-black" style={{ 
+              background: gradientClass.includes('professional') ? 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38), rgb(185, 28, 28), rgb(220, 38, 38), rgb(239, 68, 68))' :
+                         gradientClass.includes('blue') ? 'linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235), rgb(29, 78, 216), rgb(37, 99, 235), rgb(59, 130, 246))' :
+                         gradientClass.includes('green') ? 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74), rgb(15, 118, 54), rgb(22, 163, 74), rgb(34, 197, 94))' :
+                         gradientClass.includes('gold') ? 'linear-gradient(135deg, rgb(250, 204, 21), rgb(245, 158, 11), rgb(217, 119, 6), rgb(245, 158, 11), rgb(250, 204, 21))' :
+                         gradientClass.includes('orange') ? 'linear-gradient(135deg, rgb(251, 146, 60), rgb(249, 115, 22), rgb(234, 88, 12), rgb(249, 115, 22), rgb(251, 146, 60))' :
+                         gradientClass.includes('teal') ? 'linear-gradient(135deg, rgb(20, 184, 166), rgb(13, 148, 136), rgb(15, 118, 110), rgb(13, 148, 136), rgb(20, 184, 166))' :
+                         gradientClass.includes('purple') ? 'linear-gradient(135deg, rgb(168, 85, 247), rgb(139, 69, 219), rgb(124, 58, 193), rgb(139, 69, 219), rgb(168, 85, 247))' :
+                         gradientClass.includes('indigo') ? 'linear-gradient(135deg, rgb(99, 102, 241), rgb(79, 70, 229), rgb(67, 56, 202), rgb(79, 70, 229), rgb(99, 102, 241))' :
+                         gradientClass.includes('emerald') ? 'linear-gradient(135deg, rgb(16, 185, 129), rgb(5, 150, 105), rgb(4, 120, 87), rgb(5, 150, 105), rgb(16, 185, 129))' :
+                         'linear-gradient(135deg, rgb(244, 63, 94), rgb(225, 29, 72), rgb(190, 18, 60), rgb(225, 29, 72), rgb(244, 63, 94))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>{title}</h3>
             <p className="text-sm text-gray-600 font-medium">{subtitle}</p>
           </div>
         </div>
@@ -407,9 +421,9 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
 
             {/* Winner Badge */}
             {winner === 'team1' && (
-              <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full ${gradientClass} shadow-lg`}>
-                <i className="fas fa-star text-white text-sm"></i>
-                <span className="text-xs font-bold text-white">WINNER</span>
+              <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-green-100 border border-green-200">
+                <i className="fas fa-star text-green-600 text-sm"></i>
+                <span className="text-xs font-bold text-green-700">WINNER</span>
               </div>
             )}
           </div>
@@ -422,7 +436,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
             
             {/* Winner Arrow */}
             {winner !== 'tie' && (
-              <div className={`${gradientClass} rounded-full w-10 h-10 flex items-center justify-center shadow-lg`}>
+              <div className="bg-green-500 rounded-full w-10 h-10 flex items-center justify-center shadow-lg">
                 <i className={`fas fa-arrow-${winner === 'team1' ? 'left' : 'right'} text-white text-lg ${animateStats ? 'animate-pulse' : ''}`}></i>
               </div>
             )}
@@ -452,9 +466,9 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
 
             {/* Winner Badge */}
             {winner === 'team2' && (
-              <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full ${gradientClass} shadow-lg`}>
-                <i className="fas fa-star text-white text-sm"></i>
-                <span className="text-xs font-bold text-white">WINNER</span>
+              <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-green-100 border border-green-200">
+                <i className="fas fa-star text-green-600 text-sm"></i>
+                <span className="text-xs font-bold text-green-700">WINNER</span>
               </div>
             )}
           </div>
