@@ -14,11 +14,49 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
       netPassingYards: 0,
       passingTDs: 0,
       rushingTDs: 0,
+      rushingAttempts: 0,
+      passCompletions: 0,
+      passAttempts: 0,
+      firstDowns: 0,
+      thirdDowns: 0,
+      thirdDownConversions: 0,
+      fourthDowns: 0,
+      fourthDownConversions: 0,
+      turnovers: 0,
+      fumblesLost: 0,
+      passesIntercepted: 0,
+      penalties: 0,
+      penaltyYards: 0,
+      possessionTime: 0,
+      kickReturns: 0,
+      kickReturnYards: 0,
+      kickReturnTDs: 0,
+      puntReturns: 0,
+      puntReturnYards: 0,
+      puntReturnTDs: 0,
       // Defensive stats
       totalYardsOpponent: 0,
+      rushingYardsOpponent: 0,
+      netPassingYardsOpponent: 0,
+      passingTDsOpponent: 0,
+      rushingTDsOpponent: 0,
       sacks: 0,
       interceptions: 0,
-      tacklesForLoss: 0
+      interceptionYards: 0,
+      interceptionTDs: 0,
+      tacklesForLoss: 0,
+      fumblesRecovered: 0,
+      firstDownsOpponent: 0,
+      thirdDownsOpponent: 0,
+      thirdDownConversionsOpponent: 0,
+      fourthDownsOpponent: 0,
+      fourthDownConversionsOpponent: 0,
+      turnoversOpponent: 0,
+      sacksOpponent: 0,
+      tacklesForLossOpponent: 0,
+      penaltiesOpponent: 0,
+      penaltyYardsOpponent: 0,
+      possessionTimeOpponent: 0
     },
     team2: { 
       wins: 0, 
@@ -32,11 +70,49 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
       netPassingYards: 0,
       passingTDs: 0,
       rushingTDs: 0,
+      rushingAttempts: 0,
+      passCompletions: 0,
+      passAttempts: 0,
+      firstDowns: 0,
+      thirdDowns: 0,
+      thirdDownConversions: 0,
+      fourthDowns: 0,
+      fourthDownConversions: 0,
+      turnovers: 0,
+      fumblesLost: 0,
+      passesIntercepted: 0,
+      penalties: 0,
+      penaltyYards: 0,
+      possessionTime: 0,
+      kickReturns: 0,
+      kickReturnYards: 0,
+      kickReturnTDs: 0,
+      puntReturns: 0,
+      puntReturnYards: 0,
+      puntReturnTDs: 0,
       // Defensive stats
       totalYardsOpponent: 0,
+      rushingYardsOpponent: 0,
+      netPassingYardsOpponent: 0,
+      passingTDsOpponent: 0,
+      rushingTDsOpponent: 0,
       sacks: 0,
       interceptions: 0,
-      tacklesForLoss: 0
+      interceptionYards: 0,
+      interceptionTDs: 0,
+      tacklesForLoss: 0,
+      fumblesRecovered: 0,
+      firstDownsOpponent: 0,
+      thirdDownsOpponent: 0,
+      thirdDownConversionsOpponent: 0,
+      fourthDownsOpponent: 0,
+      fourthDownConversionsOpponent: 0,
+      turnoversOpponent: 0,
+      sacksOpponent: 0,
+      tacklesForLossOpponent: 0,
+      penaltiesOpponent: 0,
+      penaltyYardsOpponent: 0,
+      possessionTimeOpponent: 0
     }
   });
   const [loading, setLoading] = useState(true);
@@ -124,29 +200,139 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
 
       return {
         // Offensive stats
-        totalYards: statsObject.totalYards || 0,
-        rushingYards: statsObject.rushingYards || 0,
-        netPassingYards: statsObject.netPassingYards || 0,
-        passingTDs: statsObject.passingTDs || 0,
-        rushingTDs: statsObject.rushingTDs || 0,
-        // Defensive stats
-        totalYardsOpponent: statsObject.totalYardsOpponent || 0,
-        sacks: statsObject.sacks || 0,
-        interceptions: statsObject.interceptions || 0,
-        tacklesForLoss: statsObject.tacklesForLoss || 0
+        totalYards: parseFloat(statsObject.totalYards) || 0,
+        rushingYards: parseFloat(statsObject.rushingYards) || 0,
+        netPassingYards: parseFloat(statsObject.netPassingYards) || 0,
+        passingTDs: parseInt(statsObject.passingTDs) || 0,
+        rushingTDs: parseInt(statsObject.rushingTDs) || 0,
+        rushingAttempts: parseInt(statsObject.rushingAttempts) || 0,
+        passAttempts: parseInt(statsObject.passAttempts) || 0,
+        passCompletions: parseInt(statsObject.passCompletions) || 0,
+        firstDowns: parseInt(statsObject.firstDowns) || 0,
+        thirdDowns: parseInt(statsObject.thirdDowns) || 0,
+        thirdDownConversions: parseInt(statsObject.thirdDownConversions) || 0,
+        fourthDowns: parseInt(statsObject.fourthDowns) || 0,
+        fourthDownConversions: parseInt(statsObject.fourthDownConversions) || 0,
+        penalties: parseInt(statsObject.penalties) || 0,
+        penaltyYards: parseFloat(statsObject.penaltyYards) || 0,
+        turnovers: parseInt(statsObject.turnovers) || 0,
+        fumblesLost: parseInt(statsObject.fumblesLost) || 0,
+        passesIntercepted: parseInt(statsObject.passesIntercepted) || 0,
+        possessionTime: parseFloat(statsObject.possessionTime) || 0,
+        // Return game
+        kickReturns: parseInt(statsObject.kickReturns) || 0,
+        kickReturnYards: parseFloat(statsObject.kickReturnYards) || 0,
+        kickReturnTDs: parseInt(statsObject.kickReturnTDs) || 0,
+        puntReturns: parseInt(statsObject.puntReturns) || 0,
+        puntReturnYards: parseFloat(statsObject.puntReturnYards) || 0,
+        puntReturnTDs: parseInt(statsObject.puntReturnTDs) || 0,
+        // Defensive stats (what opponent did against this team)
+        totalYardsOpponent: parseFloat(statsObject.totalYardsOpponent) || 0,
+        rushingYardsOpponent: parseFloat(statsObject.rushingYardsOpponent) || 0,
+        netPassingYardsOpponent: parseFloat(statsObject.netPassingYardsOpponent) || 0,
+        passingTDsOpponent: parseInt(statsObject.passingTDsOpponent) || 0,
+        rushingTDsOpponent: parseInt(statsObject.rushingTDsOpponent) || 0,
+        rushingAttemptsOpponent: parseInt(statsObject.rushingAttemptsOpponent) || 0,
+        passAttemptsOpponent: parseInt(statsObject.passAttemptsOpponent) || 0,
+        passCompletionsOpponent: parseInt(statsObject.passCompletionsOpponent) || 0,
+        firstDownsOpponent: parseInt(statsObject.firstDownsOpponent) || 0,
+        thirdDownsOpponent: parseInt(statsObject.thirdDownsOpponent) || 0,
+        thirdDownConversionsOpponent: parseInt(statsObject.thirdDownConversionsOpponent) || 0,
+        fourthDownsOpponent: parseInt(statsObject.fourthDownsOpponent) || 0,
+        fourthDownConversionsOpponent: parseInt(statsObject.fourthDownConversionsOpponent) || 0,
+        penaltiesOpponent: parseInt(statsObject.penaltiesOpponent) || 0,
+        penaltyYardsOpponent: parseFloat(statsObject.penaltyYardsOpponent) || 0,
+        turnoversOpponent: parseInt(statsObject.turnoversOpponent) || 0,
+        fumblesLostOpponent: parseInt(statsObject.fumblesLostOpponent) || 0,
+        passesInterceptedOpponent: parseInt(statsObject.passesInterceptedOpponent) || 0,
+        possessionTimeOpponent: parseFloat(statsObject.possessionTimeOpponent) || 0,
+        // Opponent return stats (what this team allowed in returns)
+        kickReturnsOpponent: parseInt(statsObject.kickReturnsOpponent) || 0,
+        kickReturnYardsOpponent: parseFloat(statsObject.kickReturnYardsOpponent) || 0,
+        kickReturnTDsOpponent: parseInt(statsObject.kickReturnTDsOpponent) || 0,
+        puntReturnsOpponent: parseInt(statsObject.puntReturnsOpponent) || 0,
+        puntReturnYardsOpponent: parseFloat(statsObject.puntReturnYardsOpponent) || 0,
+        puntReturnTDsOpponent: parseInt(statsObject.puntReturnTDsOpponent) || 0,
+        // Defensive stats (what this team did on defense)
+        sacks: parseInt(statsObject.sacks) || 0,
+        interceptions: parseInt(statsObject.interceptions) || 0,
+        interceptionYards: parseFloat(statsObject.interceptionYards) || 0,
+        interceptionTDs: parseInt(statsObject.interceptionTDs) || 0,
+        tacklesForLoss: parseInt(statsObject.tacklesForLoss) || 0,
+        fumblesRecovered: parseInt(statsObject.fumblesRecovered) || 0,
+        sacksOpponent: parseInt(statsObject.sacksOpponent) || 0,
+        tacklesForLossOpponent: parseInt(statsObject.tacklesForLossOpponent) || 0,
+        interceptionsOpponent: parseInt(statsObject.interceptionsOpponent) || 0,
+        interceptionYardsOpponent: parseFloat(statsObject.interceptionYardsOpponent) || 0,
+        interceptionTDsOpponent: parseInt(statsObject.interceptionTDsOpponent) || 0
       };
     } catch (error) {
       console.error(`Error fetching season stats for ${teamName}:`, error);
       return {
+        // Offensive stats
         totalYards: 0,
         rushingYards: 0,
         netPassingYards: 0,
         passingTDs: 0,
         rushingTDs: 0,
+        rushingAttempts: 0,
+        passAttempts: 0,
+        passCompletions: 0,
+        firstDowns: 0,
+        thirdDowns: 0,
+        thirdDownConversions: 0,
+        fourthDowns: 0,
+        fourthDownConversions: 0,
+        penalties: 0,
+        penaltyYards: 0,
+        turnovers: 0,
+        fumblesLost: 0,
+        passesIntercepted: 0,
+        possessionTime: 0,
+        // Return game
+        kickReturns: 0,
+        kickReturnYards: 0,
+        kickReturnTDs: 0,
+        puntReturns: 0,
+        puntReturnYards: 0,
+        puntReturnTDs: 0,
+        // Defensive stats
         totalYardsOpponent: 0,
+        rushingYardsOpponent: 0,
+        netPassingYardsOpponent: 0,
+        passingTDsOpponent: 0,
+        rushingTDsOpponent: 0,
+        rushingAttemptsOpponent: 0,
+        passAttemptsOpponent: 0,
+        passCompletionsOpponent: 0,
+        firstDownsOpponent: 0,
+        thirdDownsOpponent: 0,
+        thirdDownConversionsOpponent: 0,
+        fourthDownsOpponent: 0,
+        fourthDownConversionsOpponent: 0,
+        penaltiesOpponent: 0,
+        penaltyYardsOpponent: 0,
+        turnoversOpponent: 0,
+        fumblesLostOpponent: 0,
+        passesInterceptedOpponent: 0,
+        possessionTimeOpponent: 0,
+        kickReturnsOpponent: 0,
+        kickReturnYardsOpponent: 0,
+        kickReturnTDsOpponent: 0,
+        puntReturnsOpponent: 0,
+        puntReturnYardsOpponent: 0,
+        puntReturnTDsOpponent: 0,
         sacks: 0,
         interceptions: 0,
-        tacklesForLoss: 0
+        interceptionYards: 0,
+        interceptionTDs: 0,
+        tacklesForLoss: 0,
+        fumblesRecovered: 0,
+        sacksOpponent: 0,
+        tacklesForLossOpponent: 0,
+        interceptionsOpponent: 0,
+        interceptionYardsOpponent: 0,
+        interceptionTDsOpponent: 0
       };
     }
   };
@@ -475,6 +661,368 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           getTeamColor={getTeamColor}
           getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison for defensive stat
         />
+
+        {/* === EXPANDED OFFENSIVE STATISTICS === */}
+        
+        {/* Passing Efficiency */}
+        <ModernComparisonCard
+          title="Passing Efficiency"
+          subtitle="Completion Percentage"
+          icon="bullseye"
+          value1={season2024Data.team1.passAttempts > 0 ? ((season2024Data.team1.passCompletions / season2024Data.team1.passAttempts) * 100).toFixed(1) + '%' : '0%'}
+          value2={season2024Data.team2.passAttempts > 0 ? ((season2024Data.team2.passCompletions / season2024Data.team2.passAttempts) * 100).toFixed(1) + '%' : '0%'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+          compareBy="percentage"
+          team1Value={season2024Data.team1.passAttempts > 0 ? (season2024Data.team1.passCompletions / season2024Data.team1.passAttempts) * 100 : 0}
+          team2Value={season2024Data.team2.passAttempts > 0 ? (season2024Data.team2.passCompletions / season2024Data.team2.passAttempts) * 100 : 0}
+        />
+
+        {/* Rushing Attempts */}
+        <ModernComparisonCard
+          title="Rushing Attempts"
+          subtitle="Total Ground Game Carries"
+          icon="running"
+          value1={season2024Data.team1.rushingAttempts.toLocaleString()}
+          value2={season2024Data.team2.rushingAttempts.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Yards Per Carry */}
+        <ModernComparisonCard
+          title="Yards Per Carry"
+          subtitle="Rushing Efficiency"
+          icon="tachometer-alt"
+          value1={season2024Data.team1.rushingAttempts > 0 ? (season2024Data.team1.rushingYards / season2024Data.team1.rushingAttempts).toFixed(1) : '0.0'}
+          value2={season2024Data.team2.rushingAttempts > 0 ? (season2024Data.team2.rushingYards / season2024Data.team2.rushingAttempts).toFixed(1) : '0.0'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+          compareBy="efficiency"
+          team1Value={season2024Data.team1.rushingAttempts > 0 ? season2024Data.team1.rushingYards / season2024Data.team1.rushingAttempts : 0}
+          team2Value={season2024Data.team2.rushingAttempts > 0 ? season2024Data.team2.rushingYards / season2024Data.team2.rushingAttempts : 0}
+        />
+
+        {/* Yards Per Pass */}
+        <ModernComparisonCard
+          title="Yards Per Pass"
+          subtitle="Passing Efficiency"
+          icon="paper-plane"
+          value1={season2024Data.team1.passAttempts > 0 ? (season2024Data.team1.netPassingYards / season2024Data.team1.passAttempts).toFixed(1) : '0.0'}
+          value2={season2024Data.team2.passAttempts > 0 ? (season2024Data.team2.netPassingYards / season2024Data.team2.passAttempts).toFixed(1) : '0.0'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+          compareBy="efficiency"
+          team1Value={season2024Data.team1.passAttempts > 0 ? season2024Data.team1.netPassingYards / season2024Data.team1.passAttempts : 0}
+          team2Value={season2024Data.team2.passAttempts > 0 ? season2024Data.team2.netPassingYards / season2024Data.team2.passAttempts : 0}
+        />
+
+        {/* First Downs */}
+        <ModernComparisonCard
+          title="First Downs"
+          subtitle="Drive Sustainability"
+          icon="arrow-right"
+          value1={season2024Data.team1.firstDowns.toLocaleString()}
+          value2={season2024Data.team2.firstDowns.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Third Down Conversion Rate */}
+        <ModernComparisonCard
+          title="Third Down Conversion Rate"
+          subtitle="Clutch Performance"
+          icon="percentage"
+          value1={season2024Data.team1.thirdDowns > 0 ? ((season2024Data.team1.thirdDownConversions / season2024Data.team1.thirdDowns) * 100).toFixed(1) + '%' : '0%'}
+          value2={season2024Data.team2.thirdDowns > 0 ? ((season2024Data.team2.thirdDownConversions / season2024Data.team2.thirdDowns) * 100).toFixed(1) + '%' : '0%'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+          compareBy="percentage"
+          team1Value={season2024Data.team1.thirdDowns > 0 ? (season2024Data.team1.thirdDownConversions / season2024Data.team1.thirdDowns) * 100 : 0}
+          team2Value={season2024Data.team2.thirdDowns > 0 ? (season2024Data.team2.thirdDownConversions / season2024Data.team2.thirdDowns) * 100 : 0}
+        />
+
+        {/* Fourth Down Conversion Rate */}
+        <ModernComparisonCard
+          title="Fourth Down Conversion Rate"
+          subtitle="High-Risk Situations"
+          icon="exclamation-triangle"
+          value1={season2024Data.team1.fourthDowns > 0 ? ((season2024Data.team1.fourthDownConversions / season2024Data.team1.fourthDowns) * 100).toFixed(1) + '%' : '0%'}
+          value2={season2024Data.team2.fourthDowns > 0 ? ((season2024Data.team2.fourthDownConversions / season2024Data.team2.fourthDowns) * 100).toFixed(1) + '%' : '0%'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+          compareBy="percentage"
+          team1Value={season2024Data.team1.fourthDowns > 0 ? (season2024Data.team1.fourthDownConversions / season2024Data.team1.fourthDowns) * 100 : 0}
+          team2Value={season2024Data.team2.fourthDowns > 0 ? (season2024Data.team2.fourthDownConversions / season2024Data.team2.fourthDowns) * 100 : 0}
+        />
+
+        {/* Time of Possession */}
+        <ModernComparisonCard
+          title="Time of Possession"
+          subtitle="Ball Control (Minutes)"
+          icon="clock"
+          value1={season2024Data.team1.possessionTime.toFixed(1)}
+          value2={season2024Data.team2.possessionTime.toFixed(1)}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Turnovers */}
+        <ModernComparisonCard
+          title="Turnovers"
+          subtitle="Offensive Mistakes (Lower is Better)"
+          icon="exclamation-circle"
+          value1={season2024Data.team1.turnovers.toString()}
+          value2={season2024Data.team2.turnovers.toString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison - fewer turnovers is better
+        />
+
+        {/* Penalties */}
+        <ModernComparisonCard
+          title="Penalties"
+          subtitle="Discipline Issues (Lower is Better)"
+          icon="flag"
+          value1={season2024Data.team1.penalties.toString()}
+          value2={season2024Data.team2.penalties.toString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison - fewer penalties is better
+        />
+
+        {/* Penalty Yards */}
+        <ModernComparisonCard
+          title="Penalty Yards"
+          subtitle="Yardage Lost to Penalties (Lower is Better)"
+          icon="flag"
+          value1={season2024Data.team1.penaltyYards.toLocaleString()}
+          value2={season2024Data.team2.penaltyYards.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison - fewer penalty yards is better
+        />
+
+        {/* === DEFENSIVE STATISTICS === */}
+
+        {/* Rushing Defense */}
+        <ModernComparisonCard
+          title="Rushing Defense"
+          subtitle="Rushing Yards Allowed (Lower is Better)"
+          icon="shield-alt"
+          value1={season2024Data.team1.rushingYardsOpponent.toLocaleString()}
+          value2={season2024Data.team2.rushingYardsOpponent.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison for defensive stat
+        />
+
+        {/* Passing Defense */}
+        <ModernComparisonCard
+          title="Passing Defense"
+          subtitle="Passing Yards Allowed (Lower is Better)"
+          icon="shield"
+          value1={season2024Data.team1.netPassingYardsOpponent.toLocaleString()}
+          value2={season2024Data.team2.netPassingYardsOpponent.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison for defensive stat
+        />
+
+        {/* Tackles for Loss */}
+        <ModernComparisonCard
+          title="Tackles for Loss"
+          subtitle="Disruptive Defensive Plays"
+          icon="hand-rock"
+          value1={season2024Data.team1.tacklesForLoss.toString()}
+          value2={season2024Data.team2.tacklesForLoss.toString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Forced Turnovers */}
+        <ModernComparisonCard
+          title="Forced Turnovers"
+          subtitle="Defensive Takeaways"
+          icon="hand-paper"
+          value1={season2024Data.team1.turnoversOpponent.toString()}
+          value2={season2024Data.team2.turnoversOpponent.toString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Interception Return Yards */}
+        <ModernComparisonCard
+          title="Interception Return Yards"
+          subtitle="Pick-Six Potential"
+          icon="hand-scissors"
+          value1={season2024Data.team1.interceptionYards.toLocaleString()}
+          value2={season2024Data.team2.interceptionYards.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Fumbles Recovered */}
+        <ModernComparisonCard
+          title="Fumbles Recovered"
+          subtitle="Opportunistic Defense"
+          icon="football-ball"
+          value1={season2024Data.team1.fumblesRecovered.toString()}
+          value2={season2024Data.team2.fumblesRecovered.toString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Opponent Third Down Defense */}
+        <ModernComparisonCard
+          title="Third Down Defense"
+          subtitle="Third Down Stop Rate"
+          icon="hand-paper"
+          value1={season2024Data.team1.thirdDownsOpponent > 0 ? (100 - ((season2024Data.team1.thirdDownConversionsOpponent / season2024Data.team1.thirdDownsOpponent) * 100)).toFixed(1) + '%' : '0%'}
+          value2={season2024Data.team2.thirdDownsOpponent > 0 ? (100 - ((season2024Data.team2.thirdDownConversionsOpponent / season2024Data.team2.thirdDownsOpponent) * 100)).toFixed(1) + '%' : '0%'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+          compareBy="percentage"
+          team1Value={season2024Data.team1.thirdDownsOpponent > 0 ? 100 - ((season2024Data.team1.thirdDownConversionsOpponent / season2024Data.team1.thirdDownsOpponent) * 100) : 0}
+          team2Value={season2024Data.team2.thirdDownsOpponent > 0 ? 100 - ((season2024Data.team2.thirdDownConversionsOpponent / season2024Data.team2.thirdDownsOpponent) * 100) : 0}
+        />
+
+        {/* === SPECIAL TEAMS & RETURN GAME === */}
+
+        {/* Kick Return Average */}
+        <ModernComparisonCard
+          title="Kick Return Average"
+          subtitle="Kickoff Return Efficiency"
+          icon="fast-forward"
+          value1={season2024Data.team1.kickReturns > 0 ? (season2024Data.team1.kickReturnYards / season2024Data.team1.kickReturns).toFixed(1) : '0.0'}
+          value2={season2024Data.team2.kickReturns > 0 ? (season2024Data.team2.kickReturnYards / season2024Data.team2.kickReturns).toFixed(1) : '0.0'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+          compareBy="average"
+          team1Value={season2024Data.team1.kickReturns > 0 ? season2024Data.team1.kickReturnYards / season2024Data.team1.kickReturns : 0}
+          team2Value={season2024Data.team2.kickReturns > 0 ? season2024Data.team2.kickReturnYards / season2024Data.team2.kickReturns : 0}
+        />
+
+        {/* Punt Return Average */}
+        <ModernComparisonCard
+          title="Punt Return Average"
+          subtitle="Punt Return Efficiency"
+          icon="undo"
+          value1={season2024Data.team1.puntReturns > 0 ? (season2024Data.team1.puntReturnYards / season2024Data.team1.puntReturns).toFixed(1) : '0.0'}
+          value2={season2024Data.team2.puntReturns > 0 ? (season2024Data.team2.puntReturnYards / season2024Data.team2.puntReturns).toFixed(1) : '0.0'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+          compareBy="average"
+          team1Value={season2024Data.team1.puntReturns > 0 ? season2024Data.team1.puntReturnYards / season2024Data.team1.puntReturns : 0}
+          team2Value={season2024Data.team2.puntReturns > 0 ? season2024Data.team2.puntReturnYards / season2024Data.team2.puntReturns : 0}
+        />
+
+        {/* Return Touchdowns */}
+        <ModernComparisonCard
+          title="Return Touchdowns"
+          subtitle="Special Teams Scores"
+          icon="star"
+          value1={(season2024Data.team1.kickReturnTDs + season2024Data.team1.puntReturnTDs).toString()}
+          value2={(season2024Data.team2.kickReturnTDs + season2024Data.team2.puntReturnTDs).toString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* === ADDITIONAL EFFICIENCY METRICS === */}
+
+        {/* Yards Per Play */}
+        <ModernComparisonCard
+          title="Yards Per Play"
+          subtitle="Overall Offensive Efficiency"
+          icon="chart-line"
+          value1={((season2024Data.team1.rushingAttempts + season2024Data.team1.passAttempts) > 0) ? (season2024Data.team1.totalYards / (season2024Data.team1.rushingAttempts + season2024Data.team1.passAttempts)).toFixed(1) : '0.0'}
+          value2={((season2024Data.team2.rushingAttempts + season2024Data.team2.passAttempts) > 0) ? (season2024Data.team2.totalYards / (season2024Data.team2.rushingAttempts + season2024Data.team2.passAttempts)).toFixed(1) : '0.0'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+          compareBy="efficiency"
+          team1Value={((season2024Data.team1.rushingAttempts + season2024Data.team1.passAttempts) > 0) ? season2024Data.team1.totalYards / (season2024Data.team1.rushingAttempts + season2024Data.team1.passAttempts) : 0}
+          team2Value={((season2024Data.team2.rushingAttempts + season2024Data.team2.passAttempts) > 0) ? season2024Data.team2.totalYards / (season2024Data.team2.rushingAttempts + season2024Data.team2.passAttempts) : 0}
+        />
+
+        {/* Yards Per Play Allowed */}
+        <ModernComparisonCard
+          title="Yards Per Play Allowed"
+          subtitle="Defensive Efficiency (Lower is Better)"
+          icon="shield-virus"
+          value1={((season2024Data.team1.rushingAttemptsOpponent + season2024Data.team1.passAttemptsOpponent) > 0) ? (season2024Data.team1.totalYardsOpponent / (season2024Data.team1.rushingAttemptsOpponent + season2024Data.team1.passAttemptsOpponent)).toFixed(1) : '0.0'}
+          value2={((season2024Data.team2.rushingAttemptsOpponent + season2024Data.team2.passAttemptsOpponent) > 0) ? (season2024Data.team2.totalYardsOpponent / (season2024Data.team2.rushingAttemptsOpponent + season2024Data.team2.passAttemptsOpponent)).toFixed(1) : '0.0'}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison for defensive stat
+          compareBy="efficiency"
+          team1Value={((season2024Data.team1.rushingAttemptsOpponent + season2024Data.team1.passAttemptsOpponent) > 0) ? season2024Data.team1.totalYardsOpponent / (season2024Data.team1.rushingAttemptsOpponent + season2024Data.team1.passAttemptsOpponent) : 0}
+          team2Value={((season2024Data.team2.rushingAttemptsOpponent + season2024Data.team2.passAttemptsOpponent) > 0) ? season2024Data.team2.totalYardsOpponent / (season2024Data.team2.rushingAttemptsOpponent + season2024Data.team2.passAttemptsOpponent) : 0}
+        />
+        
+        {/* Existing Yards Allowed card... */}
       </div>
 
       {/* Legend */}
@@ -487,17 +1035,32 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
         <div className="space-y-4 text-gray-700">
           <div>
             <h4 className="font-bold text-gray-800 mb-2">Current Season</h4>
-            <p className="text-sm">Comprehensive 2024 college football season statistics for both teams.</p>
+            <p className="text-sm">Complete 2024 college football season statistics for both teams, including record and comprehensive performance metrics.</p>
           </div>
           
           <div>
-            <h4 className="font-bold text-gray-800 mb-2">Metrics Included</h4>
-            <p className="text-sm">Overall and conference records, total offensive production, rushing and passing statistics, touchdowns, and key defensive metrics including sacks, interceptions, and yards allowed.</p>
+            <h4 className="font-bold text-gray-800 mb-2">Offensive Metrics</h4>
+            <p className="text-sm">Total yards, rushing/passing production, efficiency rates (yards per carry/pass), first downs, third/fourth down conversions, time of possession, penalties, and turnovers.</p>
+          </div>
+          
+          <div>
+            <h4 className="font-bold text-gray-800 mb-2">Defensive Metrics</h4>
+            <p className="text-sm">Yards allowed (total, rushing, passing), sacks, tackles for loss, interceptions, fumbles recovered, forced turnovers, and defensive stop rates on key downs.</p>
+          </div>
+          
+          <div>
+            <h4 className="font-bold text-gray-800 mb-2">Special Teams</h4>
+            <p className="text-sm">Kick and punt return averages, return touchdowns, and overall special teams efficiency ratings.</p>
+          </div>
+          
+          <div>
+            <h4 className="font-bold text-gray-800 mb-2">Efficiency Analysis</h4>
+            <p className="text-sm">Advanced metrics including yards per play (offense and defense), completion percentages, conversion rates, and turnover differentials.</p>
           </div>
           
           <div>
             <h4 className="font-bold text-gray-800 mb-2">Data Source</h4>
-            <p className="text-sm">Statistics sourced from College Football Data API, providing official NCAA game data.</p>
+            <p className="text-sm">Live statistics from the College Football Data API, featuring official NCAA game data updated throughout the season.</p>
           </div>
         </div>
       </div>
