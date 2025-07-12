@@ -12,6 +12,16 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
   const [selectedYear, setSelectedYear] = useState(null);
   const [chartData, setChartData] = useState({ team1WinsData: [], team2WinsData: [] });
 
+  // Debug state for real-time monitoring
+  const [debugData, setDebugData] = useState({
+    team1RecordsCount: 0,
+    team2RecordsCount: 0,
+    apiDataYears: [],
+    fallbackDataYears: [],
+    lastUpdated: null,
+    dataSource: 'loading'
+  });
+
   // Chart years - matching Swift implementation (2014-2024)
   const years = useMemo(() => Array.from({ length: 11 }, (_, i) => 2014 + i), []);
 
@@ -134,28 +144,43 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
         setError(null);
 
         console.log(`🏈 Calculating all-time stats for ${team1.school} vs ${team2.school}...`);
+        console.log(`📊 Input data - Team1 Records: ${team1Records.length}, Team2 Records: ${team2Records.length}`);
+
+        // Track API vs fallback data usage
+        let apiDataYears = [];
+        let fallbackDataYears = [];
 
         // Create chart data first (last 11 years: 2014-2024)
         const team1WinsData = years.map(year => {
           const record = team1Records.find(r => r.year === year);
-          const wins = record?.total?.wins || getFallbackWins(team1, year);
-          return {
-            id: `${team1.school}-${year}`,
-            year,
-            wins,
-            team: team1
-          };
+          const wins = record?.total?.wins;
+          
+          if (wins !== undefined) {
+            apiDataYears.push(year);
+            console.log(`📡 API data for ${team1.school} ${year}: ${wins} wins`);
+            return { id: `${team1.school}-${year}`, year, wins, team: team1, source: 'api' };
+          } else {
+            const fallbackWins = getFallbackWins(team1, year);
+            fallbackDataYears.push(year);
+            console.log(`🔄 Fallback data for ${team1.school} ${year}: ${fallbackWins} wins`);
+            return { id: `${team1.school}-${year}`, year, wins: fallbackWins, team: team1, source: 'fallback' };
+          }
         });
 
         const team2WinsData = years.map(year => {
           const record = team2Records.find(r => r.year === year);
-          const wins = record?.total?.wins || getFallbackWins(team2, year);
-          return {
-            id: `${team2.school}-${year}`,
-            year,
-            wins,
-            team: team2
-          };
+          const wins = record?.total?.wins;
+          
+          if (wins !== undefined) {
+            if (!apiDataYears.includes(year)) apiDataYears.push(year);
+            console.log(`📡 API data for ${team2.school} ${year}: ${wins} wins`);
+            return { id: `${team2.school}-${year}`, year, wins, team: team2, source: 'api' };
+          } else {
+            if (!fallbackDataYears.includes(year)) fallbackDataYears.push(year);
+            const fallbackWins = getFallbackWins(team2, year);
+            console.log(`🔄 Fallback data for ${team2.school} ${year}: ${fallbackWins} wins`);
+            return { id: `${team2.school}-${year}`, year, wins: fallbackWins, team: team2, source: 'fallback' };
+          }
         });
 
         // Create comprehensive all-time data (truly historical: 1869-present)
@@ -190,42 +215,36 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
         const team2TotalGames = allTimeYears.reduce((sum, year) => sum + estimateGamesPerYear(year), 0);
 
         // Calculate stats using Swift-style functions with truly comprehensive all-time data
-        // Prioritize the comprehensive calculation over sparse API records for all-time stats
-        const team1ApiWins = totalWins(team1Records);
-        const team2ApiWins = totalWins(team2Records);
-        
         const team1Stats = {
-          // Use comprehensive all-time calculation for wins (accounts for full historical range)
-          wins: team1TotalWins,
-          winPercentage: team1TotalWins / team1TotalGames,
-          // Use API data for specific stats when available, fallback to estimates
-          conferenceChampionships: conferenceChampionships(team1Records) || Math.floor(team1TotalWins / 45), // Rough estimate: 1 championship per 45 wins
-          bowlGames: bowlGames(team1Records) || Math.floor(team1TotalWins / 25), // Rough estimate: 1 bowl per 25 wins
-          bowlWins: bowlWins(team1Records) || Math.floor(team1TotalWins / 40), // Rough estimate: 1 bowl win per 40 wins
-          records: team1Records,
-          // Additional metadata for debugging
-          apiWins: team1ApiWins,
-          estimatedWins: team1TotalWins - team1ApiWins,
-          yearsAnalyzed: allTimeYears.length
+          wins: totalWins(team1Records) || team1TotalWins,
+          winPercentage: winPercentage(team1Records) || (team1TotalWins / team1TotalGames),
+          conferenceChampionships: conferenceChampionships(team1Records),
+          bowlGames: bowlGames(team1Records),
+          bowlWins: bowlWins(team1Records),
+          records: team1Records
         };
 
         const team2Stats = {
-          // Use comprehensive all-time calculation for wins (accounts for full historical range)
-          wins: team2TotalWins,
-          winPercentage: team2TotalWins / team2TotalGames,
-          // Use API data for specific stats when available, fallback to estimates
-          conferenceChampionships: conferenceChampionships(team2Records) || Math.floor(team2TotalWins / 45), // Rough estimate: 1 championship per 45 wins
-          bowlGames: bowlGames(team2Records) || Math.floor(team2TotalWins / 25), // Rough estimate: 1 bowl per 25 wins
-          bowlWins: bowlWins(team2Records) || Math.floor(team2TotalWins / 40), // Rough estimate: 1 bowl win per 40 wins
-          records: team2Records,
-          // Additional metadata for debugging
-          apiWins: team2ApiWins,
-          estimatedWins: team2TotalWins - team2ApiWins,
-          yearsAnalyzed: allTimeYears.length
+          wins: totalWins(team2Records) || team2TotalWins,
+          winPercentage: winPercentage(team2Records) || (team2TotalWins / team2TotalGames),
+          conferenceChampionships: conferenceChampionships(team2Records),
+          bowlGames: bowlGames(team2Records),
+          bowlWins: bowlWins(team2Records),
+          records: team2Records
         };
 
         setAllTimeData({ team1: team1Stats, team2: team2Stats });
         setChartData({ team1WinsData, team2WinsData });
+
+        // Update debug data
+        setDebugData({
+          team1RecordsCount: team1Records.length,
+          team2RecordsCount: team2Records.length,
+          apiDataYears: apiDataYears.sort((a, b) => a - b),
+          fallbackDataYears: fallbackDataYears.sort((a, b) => a - b),
+          lastUpdated: new Date().toLocaleTimeString(),
+          dataSource: team1Records.length > 0 || team2Records.length > 0 ? 'API + Fallback' : 'Fallback Only'
+        });
 
         console.log(`✅ Comprehensive All-Time Stats (${allTimeYears[0]}-${allTimeYears[allTimeYears.length - 1]}):`, {
           team1: {
@@ -233,24 +252,25 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
             totalWins: team1Stats.wins,
             winPct: (team1Stats.winPercentage * 100).toFixed(1) + '%',
             yearsAnalyzed: allTimeYears.length,
-            apiRecords: team1Records.length,
-            apiWins: team1Stats.apiWins,
-            estimatedWins: team1Stats.estimatedWins,
             bowlGames: team1Stats.bowlGames,
             bowlWins: team1Stats.bowlWins,
-            championships: team1Stats.conferenceChampionships
+            championships: team1Stats.conferenceChampionships,
+            recordsFromAPI: team1Records.length
           },
           team2: {
             name: team2.school,
             totalWins: team2Stats.wins,
             winPct: (team2Stats.winPercentage * 100).toFixed(1) + '%',
             yearsAnalyzed: allTimeYears.length,
-            apiRecords: team2Records.length,
-            apiWins: team2Stats.apiWins,
-            estimatedWins: team2Stats.estimatedWins,
             bowlGames: team2Stats.bowlGames,
             bowlWins: team2Stats.bowlWins,
-            championships: team2Stats.conferenceChampionships
+            championships: team2Stats.conferenceChampionships,
+            recordsFromAPI: team2Records.length
+          },
+          dataBreakdown: {
+            apiYears: apiDataYears.length,
+            fallbackYears: fallbackDataYears.length,
+            totalYears: allTimeYears.length
           }
         });
 
@@ -270,6 +290,39 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
 
     calculateAllTimeData();
   }, [team1, team2, team1Records, team2Records, years, allTimeYears, totalWins, winPercentage, conferenceChampionships, bowlGames, bowlWins, getFallbackWins, getAllTimeFallbackWins]);
+
+  // Update debug data
+  useEffect(() => {
+    if (team1Records.length > 0 || team2Records.length > 0) {
+      setDebugData(prev => ({
+        ...prev,
+        team1RecordsCount: team1Records.length,
+        team2RecordsCount: team2Records.length,
+        apiDataYears: years.filter(year => team1Records.some(r => r.year === year) || team2Records.some(r => r.year === year)),
+        fallbackDataYears: years.filter(year => !team1Records.some(r => r.year === year) && !team2Records.some(r => r.year === year)),
+        lastUpdated: new Date().toLocaleString(),
+        dataSource: 'API'
+      }));
+    } else {
+      setDebugData(prev => ({
+        ...prev,
+        lastUpdated: new Date().toLocaleString(),
+        dataSource: 'Fallback'
+      }));
+    }
+  }, [team1Records, team2Records, years]);
+
+  // Enhanced console debugging
+  useEffect(() => {
+    console.log(`🔍 [AllTimeTab] Props received:`, {
+      team1: team1?.school,
+      team2: team2?.school,
+      team1RecordsLength: team1Records?.length || 0,
+      team2RecordsLength: team2Records?.length || 0,
+      sampleTeam1Record: team1Records?.[0],
+      sampleTeam2Record: team2Records?.[0]
+    });
+  }, [team1, team2, team1Records, team2Records]);
 
   const getWinner = useCallback((value1, value2) => {
     if (value1 > value2) return 'team1';
@@ -696,6 +749,45 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     );
   };
 
+  // Real-time data debugger component
+  const DataDebugger = () => {
+    if (process.env.NODE_ENV === 'production') return null;
+    
+    return (
+      <div className="fixed top-4 right-4 bg-black/90 text-white p-4 rounded-lg text-xs font-mono z-50 max-w-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span className="font-bold">ALL-TIME DATA DEBUGGER</span>
+        </div>
+        
+        <div className="space-y-1">
+          <div><span className="text-yellow-400">Data Source:</span> {debugData.dataSource}</div>
+          <div><span className="text-yellow-400">Last Updated:</span> {debugData.lastUpdated}</div>
+          <div><span className="text-blue-400">{team1?.school} Records:</span> {debugData.team1RecordsCount}</div>
+          <div><span className="text-red-400">{team2?.school} Records:</span> {debugData.team2RecordsCount}</div>
+          <div><span className="text-green-400">API Years:</span> {debugData.apiDataYears.length}</div>
+          <div><span className="text-orange-400">Fallback Years:</span> {debugData.fallbackDataYears.length}</div>
+          <div><span className="text-purple-400">Total Years Analyzed:</span> {allTimeYears.length}</div>
+          
+          {/* Real-time stats */}
+          <div className="border-t border-gray-600 pt-2 mt-2">
+            <div><span className="text-cyan-400">{team1?.school} Wins:</span> {allTimeData.team1.wins}</div>
+            <div><span className="text-pink-400">{team2?.school} Wins:</span> {allTimeData.team2.wins}</div>
+            <div><span className="text-green-400">Win %:</span> {(allTimeData.team1.winPercentage * 100).toFixed(1)}% vs {(allTimeData.team2.winPercentage * 100).toFixed(1)}%</div>
+          </div>
+          
+          {/* Year breakdown */}
+          {debugData.apiDataYears.length > 0 && (
+            <div className="border-t border-gray-600 pt-2 mt-2">
+              <div className="text-green-400 text-xs">API Data Years:</div>
+              <div className="text-xs text-gray-300">{debugData.apiDataYears.slice(0, 5).join(', ')}{debugData.apiDataYears.length > 5 ? '...' : ''}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -765,6 +857,9 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
 
   return (
     <div className="space-y-8 p-6">
+      {/* Real-time Data Debugger */}
+      <DataDebugger />
+      
       <style>{`
         .gradient-text {
           background: linear-gradient(135deg, #cc001c, #a10014, #73000d);
@@ -1024,6 +1119,9 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           </div>
         </div>
       </div>
+
+      {/* Debugger Component */}
+      <DataDebugger />
     </div>
   );
 };
