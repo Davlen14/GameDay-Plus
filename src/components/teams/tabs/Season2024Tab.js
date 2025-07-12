@@ -2,15 +2,49 @@ import React, { useState, useEffect } from 'react';
 
 const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
   const [season2024Data, setSeason2024Data] = useState({
-    team1: { wins: 0, losses: 0, winPercentage: 0, conferenceWins: 0, conferenceLosses: 0 },
-    team2: { wins: 0, losses: 0, winPercentage: 0, conferenceWins: 0, conferenceLosses: 0 }
+    team1: { 
+      wins: 0, 
+      losses: 0, 
+      winPercentage: 0, 
+      conferenceWins: 0, 
+      conferenceLosses: 0,
+      // Offensive stats
+      totalYards: 0,
+      rushingYards: 0,
+      netPassingYards: 0,
+      passingTDs: 0,
+      rushingTDs: 0,
+      // Defensive stats
+      totalYardsOpponent: 0,
+      sacks: 0,
+      interceptions: 0,
+      tacklesForLoss: 0
+    },
+    team2: { 
+      wins: 0, 
+      losses: 0, 
+      winPercentage: 0, 
+      conferenceWins: 0, 
+      conferenceLosses: 0,
+      // Offensive stats
+      totalYards: 0,
+      rushingYards: 0,
+      netPassingYards: 0,
+      passingTDs: 0,
+      rushingTDs: 0,
+      // Defensive stats
+      totalYardsOpponent: 0,
+      sacks: 0,
+      interceptions: 0,
+      tacklesForLoss: 0
+    }
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [animateStats, setAnimateStats] = useState(false);
 
   useEffect(() => {
-    const loadSeason2024Data = () => {
+    const loadSeason2024Data = async () => {
       if (!team1?.school || !team2?.school) {
         setLoading(false);
         return;
@@ -30,16 +64,27 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
         console.log(`📈 Found 2024 record for ${team1.school}:`, team1_2024Record);
         console.log(`📈 Found 2024 record for ${team2.school}:`, team2_2024Record);
 
-        // Calculate team stats
-        const team1Stats = calculate2024Stats(team1_2024Record);
-        const team2Stats = calculate2024Stats(team2_2024Record);
+        // Calculate team stats from records and fetch season stats
+        const [team1Stats, team1SeasonStats] = await Promise.all([
+          calculate2024Stats(team1_2024Record),
+          fetchSeasonStats(team1.school, 2024)
+        ]);
+        
+        const [team2Stats, team2SeasonStats] = await Promise.all([
+          calculate2024Stats(team2_2024Record),
+          fetchSeasonStats(team2.school, 2024)
+        ]);
 
-        console.log(`✅ ${team1.school} 2024 Stats:`, team1Stats);
-        console.log(`✅ ${team2.school} 2024 Stats:`, team2Stats);
+        // Combine record stats with detailed season stats
+        const team1Combined = { ...team1Stats, ...team1SeasonStats };
+        const team2Combined = { ...team2Stats, ...team2SeasonStats };
+
+        console.log(`✅ ${team1.school} 2024 Complete Stats:`, team1Combined);
+        console.log(`✅ ${team2.school} 2024 Complete Stats:`, team2Combined);
 
         setSeason2024Data({
-          team1: team1Stats,
-          team2: team2Stats
+          team1: team1Combined,
+          team2: team2Combined
         });
 
         setTimeout(() => setAnimateStats(true), 300);
@@ -54,33 +99,68 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
     loadSeason2024Data();
   }, [team1?.school, team2?.school, team1Records, team2Records]);
 
-  const calculate2024Stats = (record) => {
-    if (!record) {
-      return { 
-        wins: 0, 
-        losses: 0, 
-        winPercentage: 0, 
-        conferenceWins: 0, 
-        conferenceLosses: 0 
+  const fetchSeasonStats = async (teamName, year) => {
+    try {
+      const response = await fetch(
+        `https://api.collegefootballdata.com/stats/season?year=${year}&team=${encodeURIComponent(teamName)}`,
+        {
+          headers: {
+            'Authorization': 'Bearer p5M3+9PK7Kt1CIMox0hgi7zgyWKCeO86buPF+tEH/zPCExymKp+v+IBrl7rKucSq'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const stats = await response.json();
+      
+      // Convert array of stats to object for easier access
+      const statsObject = {};
+      stats.forEach(stat => {
+        statsObject[stat.statName] = stat.statValue;
+      });
+
+      return {
+        // Offensive stats
+        totalYards: statsObject.totalYards || 0,
+        rushingYards: statsObject.rushingYards || 0,
+        netPassingYards: statsObject.netPassingYards || 0,
+        passingTDs: statsObject.passingTDs || 0,
+        rushingTDs: statsObject.rushingTDs || 0,
+        // Defensive stats
+        totalYardsOpponent: statsObject.totalYardsOpponent || 0,
+        sacks: statsObject.sacks || 0,
+        interceptions: statsObject.interceptions || 0,
+        tacklesForLoss: statsObject.tacklesForLoss || 0
+      };
+    } catch (error) {
+      console.error(`Error fetching season stats for ${teamName}:`, error);
+      return {
+        totalYards: 0,
+        rushingYards: 0,
+        netPassingYards: 0,
+        passingTDs: 0,
+        rushingTDs: 0,
+        totalYardsOpponent: 0,
+        sacks: 0,
+        interceptions: 0,
+        tacklesForLoss: 0
       };
     }
+  };
 
-    const wins = record.total?.wins || 0;
-    const losses = record.total?.losses || 0;
-    const totalGames = wins + losses;
-    const winPercentage = totalGames > 0 ? (wins / totalGames) * 100 : 0;
-
-    // Conference record (if available)
-    const conferenceWins = record.conferenceGames?.wins || 0;
-    const conferenceLosses = record.conferenceGames?.losses || 0;
-
-    return {
-      wins,
-      losses,
-      winPercentage,
-      conferenceWins,
-      conferenceLosses
-    };
+  const calculate2024Stats = (record) => {
+    return Promise.resolve({
+      wins: record?.total?.wins || 0,
+      losses: record?.total?.losses || 0,
+      winPercentage: record?.total?.wins && record?.total?.losses 
+        ? (record.total.wins / (record.total.wins + record.total.losses)) * 100 
+        : 0,
+      conferenceWins: record?.conferenceGames?.wins || 0,
+      conferenceLosses: record?.conferenceGames?.losses || 0
+    });
   };
 
   const getTeamColor = (team) => {
@@ -297,6 +377,104 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
           team1Value={season2024Data.team1.conferenceWins}
           team2Value={season2024Data.team2.conferenceWins}
         />
+
+        {/* Total Yards */}
+        <ModernComparisonCard
+          title="Total Yards"
+          subtitle="Total Offensive Production"
+          icon="arrows-alt-h"
+          value1={season2024Data.team1.totalYards.toLocaleString()}
+          value2={season2024Data.team2.totalYards.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Rushing Yards */}
+        <ModernComparisonCard
+          title="Rushing Yards"
+          subtitle="Ground Game Production"
+          icon="running"
+          value1={season2024Data.team1.rushingYards.toLocaleString()}
+          value2={season2024Data.team2.rushingYards.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Passing Yards */}
+        <ModernComparisonCard
+          title="Passing Yards"
+          subtitle="Aerial Attack Production"
+          icon="paper-plane"
+          value1={season2024Data.team1.netPassingYards.toLocaleString()}
+          value2={season2024Data.team2.netPassingYards.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Total Touchdowns */}
+        <ModernComparisonCard
+          title="Total Touchdowns"
+          subtitle="Passing + Rushing TDs"
+          icon="football-ball"
+          value1={(season2024Data.team1.passingTDs + season2024Data.team1.rushingTDs).toString()}
+          value2={(season2024Data.team2.passingTDs + season2024Data.team2.rushingTDs).toString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Sacks */}
+        <ModernComparisonCard
+          title="Sacks"
+          subtitle="Quarterback Pressures"
+          icon="shield-alt"
+          value1={season2024Data.team1.sacks.toString()}
+          value2={season2024Data.team2.sacks.toString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Interceptions */}
+        <ModernComparisonCard
+          title="Interceptions"
+          subtitle="Defensive Takeaways"
+          icon="hand-paper"
+          value1={season2024Data.team1.interceptions.toString()}
+          value2={season2024Data.team2.interceptions.toString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={getWinner}
+        />
+
+        {/* Yards Allowed */}
+        <ModernComparisonCard
+          title="Yards Allowed"
+          subtitle="Total Defensive Yards Allowed (Lower is Better)"
+          icon="shield"
+          value1={season2024Data.team1.totalYardsOpponent.toLocaleString()}
+          value2={season2024Data.team2.totalYardsOpponent.toLocaleString()}
+          team1={team1}
+          team2={team2}
+          animateStats={animateStats}
+          getTeamColor={getTeamColor}
+          getWinner={(v1, v2) => getWinner(v2, v1)} // Reverse comparison for defensive stat
+        />
       </div>
 
       {/* Legend */}
@@ -309,12 +487,17 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
         <div className="space-y-4 text-gray-700">
           <div>
             <h4 className="font-bold text-gray-800 mb-2">Current Season</h4>
-            <p className="text-sm">Data shows the 2024 college football season performance for both teams.</p>
+            <p className="text-sm">Comprehensive 2024 college football season statistics for both teams.</p>
           </div>
           
           <div>
             <h4 className="font-bold text-gray-800 mb-2">Metrics Included</h4>
-            <p className="text-sm">Overall record, win percentage, and conference play statistics for the current season.</p>
+            <p className="text-sm">Overall and conference records, total offensive production, rushing and passing statistics, touchdowns, and key defensive metrics including sacks, interceptions, and yards allowed.</p>
+          </div>
+          
+          <div>
+            <h4 className="font-bold text-gray-800 mb-2">Data Source</h4>
+            <p className="text-sm">Statistics sourced from College Football Data API, providing official NCAA game data.</p>
           </div>
         </div>
       </div>
