@@ -12,6 +12,8 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
   const [team2Players, setTeam2Players] = useState([]);
   const [team1Roster, setTeam1Roster] = useState([]);
   const [team2Roster, setTeam2Roster] = useState([]);
+  const [team1SeasonStats, setTeam1SeasonStats] = useState([]);
+  const [team2SeasonStats, setTeam2SeasonStats] = useState([]);
   const [positionMatchups, setPositionMatchups] = useState({});
   const [team1HonorableMentions, setTeam1HonorableMentions] = useState([]);
   const [team2HonorableMentions, setTeam2HonorableMentions] = useState([]);
@@ -129,12 +131,21 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
       const currentYear = 2024;
       console.log(`🏈 Fetching Impact Players data for ${team1.school} vs ${team2.school} (${currentYear})`);
       
-      // Fetch PPA data and roster simultaneously using Promise.allSettled for better error handling
-      const [team1PlayersData, team2PlayersData, team1RosterData, team2RosterData] = await Promise.allSettled([
+      // Fetch PPA data, roster data, and season stats simultaneously using Promise.allSettled for better error handling
+      const [
+        team1PlayersData, 
+        team2PlayersData, 
+        team1RosterData, 
+        team2RosterData,
+        team1StatsData,
+        team2StatsData
+      ] = await Promise.allSettled([
         fetchPPAPlayers(currentYear, team1.school),
         fetchPPAPlayers(currentYear, team2.school),
         fetchTeamRoster(currentYear, team1.school),
-        fetchTeamRoster(currentYear, team2.school)
+        fetchTeamRoster(currentYear, team2.school),
+        fetchPlayerSeasonStats(currentYear, team1.school),
+        fetchPlayerSeasonStats(currentYear, team2.school)
       ]);
       
       // Extract results, defaulting to empty arrays if promises were rejected
@@ -142,21 +153,31 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
       const team2PlayersResult = team2PlayersData.status === 'fulfilled' ? team2PlayersData.value : [];
       const team1RosterResult = team1RosterData.status === 'fulfilled' ? team1RosterData.value : [];
       const team2RosterResult = team2RosterData.status === 'fulfilled' ? team2RosterData.value : [];
+      const team1StatsResult = team1StatsData.status === 'fulfilled' ? team1StatsData.value : [];
+      const team2StatsResult = team2StatsData.status === 'fulfilled' ? team2StatsData.value : [];
       
       console.log(`📊 Data loaded:`, {
         team1Players: team1PlayersResult.length,
         team2Players: team2PlayersResult.length,
         team1Roster: team1RosterResult.length,
-        team2Roster: team2RosterResult.length
+        team2Roster: team2RosterResult.length,
+        team1Stats: team1StatsResult.length,
+        team2Stats: team2StatsResult.length
       });
       
-      setTeam1Players(team1PlayersResult);
-      setTeam2Players(team2PlayersResult);
+      // Merge PPA data with season stats for enhanced player cards
+      const team1Enhanced = mergePlayerData(team1PlayersResult, team1StatsResult);
+      const team2Enhanced = mergePlayerData(team2PlayersResult, team2StatsResult);
+      
+      setTeam1Players(team1Enhanced);
+      setTeam2Players(team2Enhanced);
       setTeam1Roster(team1RosterResult);
       setTeam2Roster(team2RosterResult);
+      setTeam1SeasonStats(team1StatsResult);
+      setTeam2SeasonStats(team2StatsResult);
       
       // Create position matchups and honorable mentions
-      createPositionMatchups(team1PlayersResult, team2PlayersResult);
+      createPositionMatchups(team1Enhanced, team2Enhanced);
       
     } catch (err) {
       console.error('❌ Critical error loading player data:', err);
@@ -194,6 +215,88 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
       // Generate realistic mock PPA data based on typical college football positions
       return generateMockPPAData(teamName);
     }
+  };
+
+  const fetchPlayerSeasonStats = async (year, teamName) => {
+    try {
+      // Use the service function for player season stats
+      const data = await fetchCollegeFootballData('/stats/player/season', {
+        year,
+        team: teamName
+      });
+      
+      console.log(`📊 Season Stats API success for ${teamName}:`, data.length, 'players');
+      
+      return (data || []).map(player => ({
+        id: player.id || `${player.name}-${Math.random()}`,
+        name: player.name || player.player || 'Unknown Player',
+        position: player.position || 'N/A',
+        category: player.category || 'offense',
+        // Passing stats
+        completions: player.completions || 0,
+        attempts: player.attempts || 0,
+        passingYards: player.passingYards || 0,
+        passingTDs: player.passingTDs || 0,
+        interceptions: player.interceptions || 0,
+        // Rushing stats
+        carries: player.carries || 0,
+        rushingYards: player.rushingYards || 0,
+        rushingTDs: player.rushingTDs || 0,
+        // Receiving stats
+        receptions: player.receptions || 0,
+        receivingYards: player.receivingYards || 0,
+        receivingTDs: player.receivingTDs || 0,
+        // Defensive stats
+        tackles: player.tackles || 0,
+        sacks: player.sacks || 0,
+        interceptionsMade: player.interceptionsMade || 0,
+        // Kicking stats
+        fgMade: player.fgMade || 0,
+        fgAttempted: player.fgAttempted || 0,
+        extraPoints: player.extraPoints || 0
+      }));
+    } catch (error) {
+      console.warn(`🚨 Season Stats API unavailable for ${teamName}:`, error.message);
+      return [];
+    }
+  };
+
+  // Function to merge PPA data with season stats for enhanced player information
+  const mergePlayerData = (ppaPlayers, seasonStats) => {
+    return ppaPlayers.map(ppaPlayer => {
+      // Find matching player in season stats (try both name formats)
+      const matchingStats = seasonStats.find(statPlayer => {
+        const ppaName = ppaPlayer.name.toLowerCase().trim();
+        const statName = statPlayer.name.toLowerCase().trim();
+        
+        // Try exact match first
+        if (ppaName === statName) return true;
+        
+        // Try partial match (last name + position)
+        const ppaLastName = ppaName.split(' ').pop();
+        const statLastName = statName.split(' ').pop();
+        
+        return ppaLastName === statLastName && 
+               ppaPlayer.position === statPlayer.position;
+      });
+
+      // Merge the data
+      return {
+        ...ppaPlayer,
+        seasonStats: matchingStats || null,
+        // Include specific stats for easy access
+        passingYards: matchingStats?.passingYards || 0,
+        passingTDs: matchingStats?.passingTDs || 0,
+        rushingYards: matchingStats?.rushingYards || 0,
+        rushingTDs: matchingStats?.rushingTDs || 0,
+        receivingYards: matchingStats?.receivingYards || 0,
+        receivingTDs: matchingStats?.receivingTDs || 0,
+        tackles: matchingStats?.tackles || 0,
+        sacks: matchingStats?.sacks || 0,
+        fgMade: matchingStats?.fgMade || 0,
+        fgAttempted: matchingStats?.fgAttempted || 0
+      };
+    });
   };
 
   const fetchTeamRoster = async (year, teamName) => {
@@ -238,6 +341,8 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         
         // Only include players above threshold or make some just below for realism
         if (totalPPA >= IMPACT_THRESHOLD - 5) {
+          const mockStats = generateMockSeasonStats(position);
+          
           mockPlayers.push({
             id: `${teamName}-${position}-${playerNum}`,
             name: `${generateMockName()} ${generateMockLastName()}`,
@@ -247,7 +352,19 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
             },
             averagePPA: {
               all: Math.max(0, avgPPA)
-            }
+            },
+            // Add mock season stats
+            seasonStats: mockStats,
+            passingYards: mockStats.passingYards || 0,
+            passingTDs: mockStats.passingTDs || 0,
+            rushingYards: mockStats.rushingYards || 0,
+            rushingTDs: mockStats.rushingTDs || 0,
+            receivingYards: mockStats.receivingYards || 0,
+            receivingTDs: mockStats.receivingTDs || 0,
+            tackles: mockStats.tackles || 0,
+            sacks: mockStats.sacks || 0,
+            fgMade: mockStats.fgMade || 0,
+            fgAttempted: mockStats.fgAttempted || 0
           });
         }
       }
@@ -307,6 +424,54 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
       'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker', 'Young'
     ];
     return lastNames[Math.floor(Math.random() * lastNames.length)];
+  };
+
+  const generateMockSeasonStats = (position) => {
+    const stats = {};
+    
+    switch (position) {
+      case 'QB':
+        stats.passingYards = Math.floor(Math.random() * 2000) + 1500; // 1500-3500 yards
+        stats.passingTDs = Math.floor(Math.random() * 20) + 10; // 10-30 TDs
+        stats.rushingYards = Math.floor(Math.random() * 400) + 50; // 50-450 yards
+        stats.rushingTDs = Math.floor(Math.random() * 8) + 1; // 1-8 TDs
+        break;
+      case 'RB':
+        stats.rushingYards = Math.floor(Math.random() * 1000) + 600; // 600-1600 yards
+        stats.rushingTDs = Math.floor(Math.random() * 12) + 5; // 5-17 TDs
+        stats.receivingYards = Math.floor(Math.random() * 300) + 100; // 100-400 yards
+        stats.receivingTDs = Math.floor(Math.random() * 4) + 1; // 1-4 TDs
+        break;
+      case 'WR':
+        stats.receivingYards = Math.floor(Math.random() * 800) + 400; // 400-1200 yards
+        stats.receivingTDs = Math.floor(Math.random() * 10) + 3; // 3-13 TDs
+        stats.rushingYards = Math.floor(Math.random() * 50); // 0-50 yards
+        break;
+      case 'TE':
+        stats.receivingYards = Math.floor(Math.random() * 500) + 200; // 200-700 yards
+        stats.receivingTDs = Math.floor(Math.random() * 8) + 2; // 2-10 TDs
+        break;
+      case 'DL':
+        stats.tackles = Math.floor(Math.random() * 40) + 25; // 25-65 tackles
+        stats.sacks = Math.floor(Math.random() * 8) + 2; // 2-10 sacks
+        break;
+      case 'LB':
+        stats.tackles = Math.floor(Math.random() * 60) + 40; // 40-100 tackles
+        stats.sacks = Math.floor(Math.random() * 6) + 1; // 1-7 sacks
+        break;
+      case 'DB':
+        stats.tackles = Math.floor(Math.random() * 50) + 30; // 30-80 tackles
+        stats.sacks = Math.floor(Math.random() * 3); // 0-3 sacks
+        break;
+      case 'K':
+        stats.fgMade = Math.floor(Math.random() * 15) + 10; // 10-25 made
+        stats.fgAttempted = stats.fgMade + Math.floor(Math.random() * 5) + 2; // Add 2-7 misses
+        break;
+      default:
+        break;
+    }
+    
+    return stats;
   };
 
   const createPositionMatchups = (team1PlayersData, team2PlayersData) => {
@@ -984,6 +1149,41 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
     const teamGradient = professionalGradients[getTeamColorKey(team)] || professionalGradients.red;
     const teamShadowColor = getTeamShadowColor(team);
     
+    // Get position-specific stats to display
+    const getPositionStats = () => {
+      const position = player.position;
+      
+      if (position === 'QB') {
+        return [
+          { label: 'Pass Yds', value: player.passingYards, icon: 'fas fa-football-ball' },
+          { label: 'Pass TDs', value: player.passingTDs, icon: 'fas fa-bullseye' }
+        ];
+      } else if (position === 'RB') {
+        return [
+          { label: 'Rush Yds', value: player.rushingYards, icon: 'fas fa-running' },
+          { label: 'Rush TDs', value: player.rushingTDs, icon: 'fas fa-flag-checkered' }
+        ];
+      } else if (['WR', 'TE'].includes(position)) {
+        return [
+          { label: 'Rec Yds', value: player.receivingYards, icon: 'fas fa-hands-catching' },
+          { label: 'Rec TDs', value: player.receivingTDs, icon: 'fas fa-flag-checkered' }
+        ];
+      } else if (['DL', 'LB', 'DB'].includes(position)) {
+        return [
+          { label: 'Tackles', value: player.tackles, icon: 'fas fa-user-slash' },
+          { label: 'Sacks', value: player.sacks, icon: 'fas fa-shield-alt' }
+        ];
+      } else if (position === 'K') {
+        return [
+          { label: 'FG Made', value: player.fgMade, icon: 'fas fa-crosshairs' },
+          { label: 'FG Att', value: player.fgAttempted, icon: 'fas fa-target' }
+        ];
+      }
+      return [];
+    };
+
+    const positionStats = getPositionStats();
+    
     return (
       <div className={`bg-white/40 backdrop-blur-2xl rounded-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_${teamShadowColor}] p-6 transition-all duration-300 hover:scale-105 ${isWinner ? `ring-2 ring-green-400 ring-offset-2 shadow-[0_0_20px_rgba(34,197,94,0.4)]` : ''}`}>
         {/* Team Logo and Jersey */}
@@ -1051,7 +1251,7 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
           </div>
 
           {/* PPA Stats */}
-          <div className="space-y-2">
+          <div className="space-y-2 mb-4">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Total PPA:</span>
               <span 
@@ -1082,6 +1282,44 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
               </span>
             </div>
           </div>
+
+          {/* Season Stats */}
+          {positionStats.length > 0 && (
+            <div className="border-t border-gray-200/30 pt-3">
+              <div 
+                className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider"
+                style={{ 
+                  background: teamGradient,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                2024 Season Stats
+              </div>
+              <div className="space-y-2">
+                {positionStats.map((stat, index) => (
+                  <div key={index} className="flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                      <i className={`${stat.icon} text-gray-500 text-xs`}></i>
+                      <span className="text-sm font-medium text-gray-600">{stat.label}:</span>
+                    </div>
+                    <span 
+                      className="text-sm font-bold"
+                      style={{ 
+                        background: teamGradient,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}
+                    >
+                      {stat.value.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1339,6 +1577,10 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         <div>
           <strong className="text-gray-800">Position Matchups:</strong>
           <p className="text-gray-600">Head-to-head comparison of the best impact player at each position between teams.</p>
+        </div>
+        <div>
+          <strong className="text-gray-800">Season Stats:</strong>
+          <p className="text-gray-600">2024 season performance data including yards, touchdowns, tackles, sacks, and field goals by position.</p>
         </div>
       </div>
     </div>
