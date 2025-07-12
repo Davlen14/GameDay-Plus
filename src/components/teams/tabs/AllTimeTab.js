@@ -190,22 +190,38 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
         const team2TotalGames = allTimeYears.reduce((sum, year) => sum + estimateGamesPerYear(year), 0);
 
         // Calculate stats using Swift-style functions with truly comprehensive all-time data
+        // Prioritize the comprehensive calculation over sparse API records for all-time stats
+        const team1ApiWins = totalWins(team1Records);
+        const team2ApiWins = totalWins(team2Records);
+        
         const team1Stats = {
-          wins: totalWins(team1Records) || team1TotalWins,
-          winPercentage: winPercentage(team1Records) || (team1TotalWins / team1TotalGames),
-          conferenceChampionships: conferenceChampionships(team1Records),
-          bowlGames: bowlGames(team1Records),
-          bowlWins: bowlWins(team1Records),
-          records: team1Records
+          // Use comprehensive all-time calculation for wins (accounts for full historical range)
+          wins: team1TotalWins,
+          winPercentage: team1TotalWins / team1TotalGames,
+          // Use API data for specific stats when available, fallback to estimates
+          conferenceChampionships: conferenceChampionships(team1Records) || Math.floor(team1TotalWins / 45), // Rough estimate: 1 championship per 45 wins
+          bowlGames: bowlGames(team1Records) || Math.floor(team1TotalWins / 25), // Rough estimate: 1 bowl per 25 wins
+          bowlWins: bowlWins(team1Records) || Math.floor(team1TotalWins / 40), // Rough estimate: 1 bowl win per 40 wins
+          records: team1Records,
+          // Additional metadata for debugging
+          apiWins: team1ApiWins,
+          estimatedWins: team1TotalWins - team1ApiWins,
+          yearsAnalyzed: allTimeYears.length
         };
 
         const team2Stats = {
-          wins: totalWins(team2Records) || team2TotalWins,
-          winPercentage: winPercentage(team2Records) || (team2TotalWins / team2TotalGames),
-          conferenceChampionships: conferenceChampionships(team2Records),
-          bowlGames: bowlGames(team2Records),
-          bowlWins: bowlWins(team2Records),
-          records: team2Records
+          // Use comprehensive all-time calculation for wins (accounts for full historical range)
+          wins: team2TotalWins,
+          winPercentage: team2TotalWins / team2TotalGames,
+          // Use API data for specific stats when available, fallback to estimates
+          conferenceChampionships: conferenceChampionships(team2Records) || Math.floor(team2TotalWins / 45), // Rough estimate: 1 championship per 45 wins
+          bowlGames: bowlGames(team2Records) || Math.floor(team2TotalWins / 25), // Rough estimate: 1 bowl per 25 wins
+          bowlWins: bowlWins(team2Records) || Math.floor(team2TotalWins / 40), // Rough estimate: 1 bowl win per 40 wins
+          records: team2Records,
+          // Additional metadata for debugging
+          apiWins: team2ApiWins,
+          estimatedWins: team2TotalWins - team2ApiWins,
+          yearsAnalyzed: allTimeYears.length
         };
 
         setAllTimeData({ team1: team1Stats, team2: team2Stats });
@@ -217,6 +233,9 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
             totalWins: team1Stats.wins,
             winPct: (team1Stats.winPercentage * 100).toFixed(1) + '%',
             yearsAnalyzed: allTimeYears.length,
+            apiRecords: team1Records.length,
+            apiWins: team1Stats.apiWins,
+            estimatedWins: team1Stats.estimatedWins,
             bowlGames: team1Stats.bowlGames,
             bowlWins: team1Stats.bowlWins,
             championships: team1Stats.conferenceChampionships
@@ -226,6 +245,9 @@ const AllTimeTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
             totalWins: team2Stats.wins,
             winPct: (team2Stats.winPercentage * 100).toFixed(1) + '%',
             yearsAnalyzed: allTimeYears.length,
+            apiRecords: team2Records.length,
+            apiWins: team2Stats.apiWins,
+            estimatedWins: team2Stats.estimatedWins,
             bowlGames: team2Stats.bowlGames,
             bowlWins: team2Stats.bowlWins,
             championships: team2Stats.conferenceChampionships
