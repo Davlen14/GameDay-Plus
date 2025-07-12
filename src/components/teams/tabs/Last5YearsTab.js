@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { teamService } from '../../../services/teamService';
 
-const Last5YearsTab = ({ team1, team2 }) => {
+const Last5YearsTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
   const [last5YearsData, setLast5YearsData] = useState({
     team1: { wins: 0, winPercentage: 0, bowlGames: 0, confTitles: 'N/A' },
     team2: { wins: 0, winPercentage: 0, bowlGames: 0, confTitles: 'N/A' }
@@ -11,7 +10,7 @@ const Last5YearsTab = ({ team1, team2 }) => {
   const [animateStats, setAnimateStats] = useState(false);
 
   useEffect(() => {
-    const loadLast5YearsData = async () => {
+    const loadLast5YearsData = () => {
       if (!team1?.school || !team2?.school) {
         setLoading(false);
         return;
@@ -21,21 +20,32 @@ const Last5YearsTab = ({ team1, team2 }) => {
         setLoading(true);
         setError(null);
 
+        console.log(`🔍 Processing Last 5 Years data for ${team1.school} vs ${team2.school}`);
+        console.log(`📊 Team1 Records: ${team1Records.length}, Team2 Records: ${team2Records.length}`);
+
         const currentYear = new Date().getFullYear();
         const last5Years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+        
+        console.log(`📅 Analyzing years: ${last5Years.join(', ')}`);
 
-        // Fetch records for both teams for the last 5 years
-        const team1Records = await Promise.all(
-          last5Years.map(year => teamService.getTeamRecords(team1.school, year))
+        // Filter records for the last 5 years
+        const team1Last5Records = team1Records.filter(record => 
+          last5Years.includes(record.year)
         );
         
-        const team2Records = await Promise.all(
-          last5Years.map(year => teamService.getTeamRecords(team2.school, year))
+        const team2Last5Records = team2Records.filter(record => 
+          last5Years.includes(record.year)
         );
 
-        // Calculate team 1 stats
-        const team1Stats = calculateLast5YearsStats(team1Records.flat());
-        const team2Stats = calculateLast5YearsStats(team2Records.flat());
+        console.log(`📈 Found ${team1Last5Records.length} records for ${team1.school} in last 5 years`);
+        console.log(`📈 Found ${team2Last5Records.length} records for ${team2.school} in last 5 years`);
+
+        // Calculate team stats
+        const team1Stats = calculateLast5YearsStats(team1Last5Records);
+        const team2Stats = calculateLast5YearsStats(team2Last5Records);
+
+        console.log(`✅ ${team1.school} Last 5 Years Stats:`, team1Stats);
+        console.log(`✅ ${team2.school} Last 5 Years Stats:`, team2Stats);
 
         setLast5YearsData({
           team1: team1Stats,
@@ -44,15 +54,15 @@ const Last5YearsTab = ({ team1, team2 }) => {
 
         setTimeout(() => setAnimateStats(true), 300);
       } catch (err) {
-        console.error('Error loading last 5 years data:', err);
-        setError('Failed to load last 5 years data');
+        console.error('Error processing last 5 years data:', err);
+        setError('Failed to process last 5 years data');
       } finally {
         setLoading(false);
       }
     };
 
     loadLast5YearsData();
-  }, [team1?.school, team2?.school]);
+  }, [team1?.school, team2?.school, team1Records, team2Records]);
 
   const calculateLast5YearsStats = (records) => {
     if (!records || records.length === 0) {
