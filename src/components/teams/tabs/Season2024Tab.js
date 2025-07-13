@@ -729,7 +729,7 @@ const Season2024Tab = ({ team1, team2, team1Records = [], team2Records = [] }) =
     } else if (team1Overall > team2Overall) {
       return {
         winner: 'team1',
-        message: `${team1?.school} has the edge! Argue with your mom, stats don't lie! 📊🔥`
+        message: `${team1?.school} Walks away with the W! Argue with the data, stats over feelings!`
       };
     } else {
       return {
