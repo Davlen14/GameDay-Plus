@@ -7,6 +7,7 @@ const HomePageView = () => {
   const [articles, setArticles] = useState([]);
   const [topRecruits, setTopRecruits] = useState([]);
   const [pollRankings, setPollRankings] = useState([]);
+  const [coachesPollRankings, setCoachesPollRankings] = useState([]);
   const [teams, setTeams] = useState([]);
   const [featuredGame, setFeaturedGame] = useState(null);
   const [error, setError] = useState(null);
@@ -56,10 +57,11 @@ const HomePageView = () => {
     setLoading(true);
     try {
       // Fetch all data in parallel
-      const [newsData, recruitsData, pollData, teamsData, gameData] = await Promise.all([
+      const [newsData, recruitsData, pollData, coachesPollData, teamsData, gameData] = await Promise.all([
         fetchNews(),
         fetchTopRecruits(),
         fetchAPPoll(),
+        fetchCoachesPoll(),
         fetchTeams(),
         fetchFeaturedGame()
       ]);
@@ -67,6 +69,7 @@ const HomePageView = () => {
       setArticles(newsData);
       setTopRecruits(recruitsData);
       setPollRankings(pollData);
+      setCoachesPollRankings(coachesPollData);
       setTeams(teamsData);
       setFeaturedGame(gameData);
     } catch (err) {
@@ -109,7 +112,7 @@ const HomePageView = () => {
       const recruits = await rankingsService.getPlayerRecruitingRankings(2025);
       
       // Transform API data to match our component's expected format
-      return recruits.slice(0, 25).map((recruit, index) => ({
+      return recruits.slice(0, 40).map((recruit, index) => ({
         id: recruit.id || index + 1,
         name: recruit.name,
         position: recruit.position,
@@ -121,7 +124,7 @@ const HomePageView = () => {
       }));
     } catch (error) {
       console.error('Error fetching recruits:', error);
-      // Fallback recruits data if API fails - extended to 25
+      // Fallback recruits data if API fails - extended to 40
       return [
         { id: 1, name: "Marcus Johnson", position: "QB", ranking: 1, stars: 5, school: "De La Salle High School", state: "CA", committedTo: "Georgia" },
         { id: 2, name: "Trevor Williams", position: "RB", ranking: 2, stars: 5, school: "IMG Academy", state: "FL", committedTo: "Alabama" },
@@ -147,7 +150,22 @@ const HomePageView = () => {
         { id: 22, name: "Cole Anderson", position: "RB", ranking: 22, stars: 4, school: "Basha", state: "AZ", committedTo: "Arizona State" },
         { id: 23, name: "Blake Garcia", position: "WR", ranking: 23, stars: 4, school: "Dutch Fork", state: "SC", committedTo: "Clemson" },
         { id: 24, name: "Carson Taylor", position: "DE", ranking: 24, stars: 4, school: "Skyline", state: "TX", committedTo: null },
-        { id: 25, name: "Isaiah White", position: "CB", ranking: 25, stars: 4, school: "Serra", state: "CA", committedTo: "Stanford" }
+        { id: 25, name: "Isaiah White", position: "CB", ranking: 25, stars: 4, school: "Serra", state: "CA", committedTo: "Stanford" },
+        { id: 26, name: "Jordan Miller", position: "OT", ranking: 26, stars: 4, school: "St. Thomas Aquinas", state: "FL", committedTo: "Miami" },
+        { id: 27, name: "Andrew Jackson", position: "WR", ranking: 27, stars: 4, school: "Shadow Creek", state: "TX", committedTo: "Texas A&M" },
+        { id: 28, name: "Cameron Smith", position: "LB", ranking: 28, stars: 4, school: "Don Bosco Prep", state: "NJ", committedTo: null },
+        { id: 29, name: "Xavier Thompson", position: "DT", ranking: 29, stars: 4, school: "North Shore", state: "TX", committedTo: "Texas" },
+        { id: 30, name: "Malik Washington", position: "RB", ranking: 30, stars: 4, school: "DeMatha", state: "MD", committedTo: "Penn State" },
+        { id: 31, name: "Devin Harris", position: "CB", ranking: 31, stars: 4, school: "Lakeland", state: "FL", committedTo: "Florida State" },
+        { id: 32, name: "Tyler Brooks", position: "TE", ranking: 32, stars: 4, school: "Trinity Christian", state: "TX", committedTo: "Notre Dame" },
+        { id: 33, name: "Joshua Martinez", position: "OG", ranking: 33, stars: 4, school: "Central Catholic", state: "CA", committedTo: "Oregon" },
+        { id: 34, name: "Antonio Davis", position: "S", ranking: 34, stars: 4, school: "Cocoa", state: "FL", committedTo: null },
+        { id: 35, name: "Marcus Lewis", position: "DE", ranking: 35, stars: 4, school: "Grayson", state: "GA", committedTo: "Georgia" },
+        { id: 36, name: "Christian Moore", position: "QB", ranking: 36, stars: 4, school: "Bishop Gorman", state: "NV", committedTo: "USC" },
+        { id: 37, name: "Jaylen Cooper", position: "WR", ranking: 37, stars: 4, school: "Cedar Hill", state: "TX", committedTo: null },
+        { id: 38, name: "Terrell Johnson", position: "RB", ranking: 38, stars: 4, school: "Mallard Creek", state: "NC", committedTo: "North Carolina" },
+        { id: 39, name: "Emmanuel Walker", position: "LB", ranking: 39, stars: 4, school: "Katy", state: "TX", committedTo: "Alabama" },
+        { id: 40, name: "Damon Rodriguez", position: "CB", ranking: 40, stars: 4, school: "Venice", state: "CA", committedTo: "UCLA" }
       ];
     }
   };
@@ -195,6 +213,53 @@ const HomePageView = () => {
         { rank: 13, school: "Florida State", conference: "ACC", points: 770 },
         { rank: 14, school: "Tennessee", conference: "SEC", points: 705 },
         { rank: 15, school: "Utah", conference: "Pac-12", points: 640 }
+      ];
+    }
+  };
+
+  const fetchCoachesPoll = async () => {
+    try {
+      // Fetch actual Coaches Poll rankings using rankings service
+      const rankingsData = await rankingsService.getHistoricalRankings(2024, 1, 'postseason');
+      
+      // Find the most recent Coaches poll
+      for (let i = rankingsData.length - 1; i >= 0; i--) {
+        const weekData = rankingsData[i];
+        const coachesPoll = weekData.polls?.find(poll => poll.poll === 'Coaches Poll');
+        if (coachesPoll && coachesPoll.ranks) {
+          // Return all teams from the poll (typically 25) for the sidebar
+          return coachesPoll.ranks.map(team => ({
+            rank: team.rank,
+            school: team.school,
+            conference: team.conference || 'Unknown',
+            points: team.points || 0,
+            firstPlaceVotes: team.firstPlaceVotes || 0
+          }));
+        }
+      }
+      
+      // Fallback if no Coaches poll found - return empty array to show no rankings
+      console.warn('No Coaches poll found in rankings data');
+      return [];
+    } catch (error) {
+      console.error('Error fetching Coaches Poll:', error);
+      // Return mock data as fallback if API fails
+      return [
+        { rank: 1, school: "Alabama", conference: "SEC", points: 1575 },
+        { rank: 2, school: "Georgia", conference: "SEC", points: 1510 },
+        { rank: 3, school: "Ohio State", conference: "Big Ten", points: 1445 },
+        { rank: 4, school: "Michigan", conference: "Big Ten", points: 1380 },
+        { rank: 5, school: "Texas", conference: "Big 12", points: 1315 },
+        { rank: 6, school: "USC", conference: "Pac-12", points: 1250 },
+        { rank: 7, school: "Clemson", conference: "ACC", points: 1185 },
+        { rank: 8, school: "Oregon", conference: "Pac-12", points: 1120 },
+        { rank: 9, school: "Oklahoma", conference: "SEC", points: 1055 },
+        { rank: 10, school: "Notre Dame", conference: "Independent", points: 990 },
+        { rank: 11, school: "LSU", conference: "SEC", points: 925 },
+        { rank: 12, school: "Penn State", conference: "Big Ten", points: 860 },
+        { rank: 13, school: "Florida State", conference: "ACC", points: 795 },
+        { rank: 14, school: "Tennessee", conference: "SEC", points: 730 },
+        { rank: 15, school: "Utah", conference: "Pac-12", points: 665 }
       ];
     }
   };
@@ -402,7 +467,7 @@ const HomePageView = () => {
               </div>
               
               <div className="grid grid-cols-1 gap-2">
-                {topRecruits.slice(0, 25).map((recruit) => (
+                {topRecruits.slice(0, 40).map((recruit) => (
                   <div key={recruit.id} className="p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-md">
                     {/* Main row with clean 247 Sports-style alignment */}
                     <div className="flex items-center space-x-3">
@@ -521,18 +586,59 @@ const HomePageView = () => {
             </div>
           </div>
 
-          {/* Right Sidebar - AP Top 25 Poll */}
-          <div className="lg:col-span-3">
+          {/* Right Sidebar - Both Polls */}
+          <div className="lg:col-span-3 space-y-8">
+            {/* AP Top 25 Poll */}
             <div className="bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-xl p-6">
               <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 -m-6 mb-6 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold gradient-text">AP TOP 25</h2>
-                  <img src="/photos/AP25.jpg" alt="AP Poll" className="h-6 object-contain" />
+                  <img src="/photos/committee.png" alt="AP Poll" className="h-6 object-contain" />
                 </div>
               </div>
               
               <div className="grid grid-cols-1 gap-2">
                 {pollRankings.slice(0, 25).map((team) => (
+                  <div key={team.rank} className="flex items-center space-x-3 p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-md">
+                    <div className="flex-shrink-0 w-6 h-6 gradient-bg rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-xs">{team.rank}</span>
+                    </div>
+                    
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                      <img 
+                        src={getTeamLogo(team.school)} 
+                        alt={`${team.school} logo`}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.target.src = '/photos/ncaaf.png';
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-sm text-gray-800 truncate">{team.school}</h4>
+                      <p className="text-xs text-gray-600 truncate">{team.conference}</p>
+                    </div>
+                    
+                    <div className="text-right">
+                      <span className="text-xs text-gray-500">{team.points}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Coaches Poll */}
+            <div className="bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-xl p-6">
+              <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 -m-6 mb-6 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold gradient-text">COACHES POLL</h2>
+                  <img src="/photos/committee.png" alt="Coaches Poll" className="h-6 object-contain" />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-2">
+                {coachesPollRankings.slice(0, 25).map((team) => (
                   <div key={team.rank} className="flex items-center space-x-3 p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-md">
                     <div className="flex-shrink-0 w-6 h-6 gradient-bg rounded-full flex items-center justify-center">
                       <span className="text-white font-bold text-xs">{team.rank}</span>
