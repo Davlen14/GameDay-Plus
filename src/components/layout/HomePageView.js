@@ -519,7 +519,7 @@ const HomePageView = () => {
                                 <img 
                                   src={getTeamLogo(recruit.committedTo)} 
                                   alt={`${recruit.committedTo} logo`}
-                                  className="w-full h-full object-contain"
+                                  className="w-full h-full object-contain filter brightness-85 contrast-115 saturate-130 drop-shadow-sm"
                                   onError={(e) => {
                                     e.target.src = '/photos/ncaaf.png';
                                   }}
@@ -608,7 +608,7 @@ const HomePageView = () => {
                       <img 
                         src={getTeamLogo(team.school)} 
                         alt={`${team.school} logo`}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain filter brightness-85 contrast-115 saturate-130 drop-shadow-sm"
                         onError={(e) => {
                           e.target.src = '/photos/ncaaf.png';
                         }}
@@ -648,7 +648,7 @@ const HomePageView = () => {
                       <img 
                         src={getTeamLogo(team.school)} 
                         alt={`${team.school} logo`}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain filter brightness-85 contrast-115 saturate-130 drop-shadow-sm"
                         onError={(e) => {
                           e.target.src = '/photos/ncaaf.png';
                         }}
