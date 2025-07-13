@@ -17,7 +17,6 @@ const GamePredictor = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [activeView, setActiveView] = useState('weekly'); // 'weekly', 'matchup', 'models'
-  const [showDebugControls, setShowDebugControls] = useState(false);
   
   // Data state
   const [games, setGames] = useState([]);
@@ -362,10 +361,10 @@ const GamePredictor = () => {
             <span className="gradient-text">Game Predictor</span>
           </h1>
           <p className="text-xl text-gray-700 max-w-4xl mx-auto leading-relaxed">
-            Advanced AI-powered predictions using machine learning algorithms and comprehensive statistical analysis.
+            Advanced GAMEDAY+ predictions using machine learning algorithms and comprehensive statistical analysis.
             <span className="block mt-2 text-lg text-gray-600">
               <i className="fas fa-microscope mr-2 text-blue-600"></i>
-              Validate our AI model accuracy by comparing 2024 predictions vs actual game results, or explore 2025 predictions.
+              Validate our GAMEDAY+ model accuracy by comparing 2024 predictions vs actual game results, or explore 2025 predictions.
             </span>
             <span className="block mt-2 text-sm text-purple-600 font-medium">
               <i className="fas fa-rocket mr-2"></i>
@@ -428,7 +427,7 @@ const GamePredictor = () => {
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
             <p className="mt-4 text-gray-700">
-              {!predictorInitialized ? 'Initializing AI models...' : 'Generating predictions...'}
+              {!predictorInitialized ? 'Initializing GAMEDAY+ models...' : 'Generating predictions...'}
             </p>
           </div>
         )}
@@ -441,11 +440,11 @@ const GamePredictor = () => {
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="flex flex-col">
                   <h2 className="text-2xl font-bold gradient-text">
-                    Week {selectedWeek} {selectedYear === 2024 ? 'AI Model Validation' : 'Game Predictions'}
+                    Week {selectedWeek} {selectedYear === 2024 ? 'GAMEDAY+ Model Validation' : 'Game Predictions'}
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">
                     {selectedYear === 2024 
-                      ? 'Actual game results vs our AI predictions - validating model accuracy'
+                      ? 'Actual game results vs our GAMEDAY+ predictions - validating model accuracy'
                       : 'Advanced machine learning predictions for upcoming games'
                     }
                   </p>
@@ -453,7 +452,7 @@ const GamePredictor = () => {
                     <div className="mt-4 bg-white/40 backdrop-blur-sm rounded-xl p-4 border border-white/50">
                       <div className="flex items-center gap-2 mb-2">
                         <i className="fas fa-chart-line text-blue-500"></i>
-                        <span className="font-semibold text-gray-800">Enhanced AI Model Performance</span>
+                        <span className="font-semibold text-gray-800">Enhanced GAMEDAY+ Model Performance</span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                         <div className="flex items-center space-x-2">
@@ -566,12 +565,6 @@ const GamePredictor = () => {
           <ModelDetailsView />
         )}
       </div>
-
-      {/* Prediction Debug Controls */}
-      <PredictionDebugControls 
-        isVisible={showDebugControls}
-        onToggle={() => setShowDebugControls(!showDebugControls)}
-      />
     </div>
   );
 };
@@ -640,7 +633,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
         <div className="text-right">
           {isCompleted ? (
             <div>
-              <div className="text-xs text-gray-600 mb-2 font-medium">AI Model Result</div>
+              <div className="text-xs text-gray-600 mb-2 font-medium">GAMEDAY+ Model Result</div>
               <div className={`px-4 py-2 rounded-full text-sm font-bold backdrop-blur-lg border-2 shadow-lg ${
                 correctWinner 
                   ? 'bg-green-500/30 text-green-700 border-green-400/60' 
@@ -702,11 +695,10 @@ const WeeklyPredictionCard = ({ prediction }) => {
             </div>
             <div className="text-xs text-green-600 mt-1 font-medium">Official Result</div>
           </div>
-          <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
-            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
-              <i className="fas fa-brain text-blue-600"></i>
-              <span>AI Prediction</span>
-            </div>
+          <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">                  <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
+                    <i className="fas fa-brain text-blue-600"></i>
+                    <span>GAMEDAY+ Prediction</span>
+                  </div>
             <div className="font-bold text-gray-800 text-xl">
               {predictedScore.away.toFixed(0)} - {predictedScore.home.toFixed(0)}
             </div>
@@ -753,8 +745,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
             />
             <span className="font-medium">{awayTeam?.school || 'Away Team'}</span>
           </div>
-          <div className="text-xs text-gray-600 font-medium">
-            {isCompleted ? 'Pre-Game Win Probability (AI Model)' : 'Win Probability'}
+          <div className="text-xs text-gray-600 font-medium">                  {isCompleted ? 'Pre-Game Win Probability (GAMEDAY+ Model)' : 'Win Probability'}
           </div>
           <div className="flex items-center space-x-2">
             <span className="font-medium">{homeTeam?.school || 'Home Team'}</span>
@@ -801,7 +792,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
           <div>
             <div className="font-semibold mb-3 flex items-center space-x-2">
               <i className="fas fa-microscope text-blue-600"></i>
-              <span>AI Model Validation Analysis:</span>
+              <span>GAMEDAY+ Model Validation Analysis:</span>
             </div>
             <div className="mb-3">{summary}</div>
             
@@ -846,7 +837,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
           <div>
             <div className="font-semibold mb-2 flex items-center space-x-2">
               <i className="fas fa-robot text-purple-600"></i>
-              <span>Enhanced AI Prediction Analysis:</span>
+              <span>Enhanced GAMEDAY+ Prediction Analysis:</span>
             </div>
             <div className="mb-3">{summary}</div>
             
@@ -972,23 +963,22 @@ const MatchupPredictorInterface = ({
           </div>
         </div>
 
-        <div className="text-center mt-8">
-          <button
-            onClick={onPredict}
-            disabled={!homeTeam || !awayTeam || isLoading}
-            className="gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {isLoading ? (
-              <>
-                <i className="fas fa-spinner fa-spin mr-2"></i>
-                Generating Prediction...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-brain mr-2"></i>
-                Generate Prediction
-              </>
-            )}
+        <div className="text-center mt-8">            <button
+              onClick={onPredict}
+              disabled={!homeTeam || !awayTeam || isLoading}
+              className="gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {isLoading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  Generating Prediction...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-brain mr-2"></i>
+                  Generate GAMEDAY+ Prediction
+                </>
+              )}
           </button>
         </div>
       </div>
@@ -1266,10 +1256,10 @@ const ModelDetailsView = () => {
     <div className="space-y-8">
       {/* Model Overview */}
       <div className="bg-white/40 backdrop-blur-lg border border-white/50 rounded-2xl shadow-xl p-8">
-        <h2 className="text-2xl font-bold gradient-text mb-6">Prediction Model Details</h2>
+        <h2 className="text-2xl font-bold gradient-text mb-6">GAMEDAY+ Prediction Model Details</h2>
         <div className="prose max-w-none">
           <p className="text-gray-700 leading-relaxed mb-6">
-            Our AI-powered prediction system combines multiple sophisticated models to generate 
+            Our GAMEDAY+ prediction system combines multiple sophisticated models to generate 
             accurate game predictions. Each model contributes unique insights based on different 
             aspects of team performance and game dynamics.
           </p>
