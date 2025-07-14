@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import { teamService } from '../../services/teamService';
 import { gameService } from '../../services/gameService';
 import { rankingsService } from '../../services/rankingsService';
+import teamsService from '../../services/teamsService';
+import newsService from '../../services/newsService';
 
 // Fix for marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -557,33 +559,6 @@ const BigTen = () => {
   const [mapCenter, setMapCenter] = useState([41.0, -85.0]);
   const [mapZoom, setMapZoom] = useState(6);
 
-  // Big Ten team IDs - correct 18 teams
-  const bigTenTeamIds = [
-    130, 135, 158, 193, 213, 239, 253, 254, 269, 275, 294, 329, 331, 356, 371, 405, 419, 2
-  ];
-
-  // Big Ten team locations (you can adjust these coordinates)
-  const teamLocations = {
-    'Michigan': { latitude: 42.2780, longitude: -83.7382, city: 'Ann Arbor, MI' },
-    'Ohio State': { latitude: 40.0142, longitude: -83.0309, city: 'Columbus, OH' },
-    'Penn State': { latitude: 40.7982, longitude: -77.8599, city: 'University Park, PA' },
-    'Wisconsin': { latitude: 43.0759, longitude: -89.4124, city: 'Madison, WI' },
-    'Iowa': { latitude: 41.6627, longitude: -91.5566, city: 'Iowa City, IA' },
-    'Minnesota': { latitude: 44.9778, longitude: -93.2650, city: 'Minneapolis, MN' },
-    'Illinois': { latitude: 40.1020, longitude: -88.2272, city: 'Champaign, IL' },
-    'Indiana': { latitude: 39.1754, longitude: -86.5119, city: 'Bloomington, IN' },
-    'Purdue': { latitude: 40.4237, longitude: -86.9212, city: 'West Lafayette, IN' },
-    'Michigan State': { latitude: 42.7335, longitude: -84.4861, city: 'East Lansing, MI' },
-    'Northwestern': { latitude: 42.0564, longitude: -87.6755, city: 'Evanston, IL' },
-    'Nebraska': { latitude: 40.8202, longitude: -96.7005, city: 'Lincoln, NE' },
-    'Maryland': { latitude: 38.9869, longitude: -76.9426, city: 'College Park, MD' },
-    'Rutgers': { latitude: 40.5008, longitude: -74.4474, city: 'Piscataway, NJ' },
-    'Oregon': { latitude: 44.0582, longitude: -123.0351, city: 'Eugene, OR' },
-    'UCLA': { latitude: 34.0689, longitude: -118.4452, city: 'Los Angeles, CA' },
-    'USC': { latitude: 34.0224, longitude: -118.2851, city: 'Los Angeles, CA' },
-    'Washington': { latitude: 47.6553, longitude: -122.3035, city: 'Seattle, WA' }
-  };
-
   const categories = ['Map', 'Standings', 'Talent Rankings', 'Recent Games', 'Rankings', 'News', 'Recruiting'];
 
   useEffect(() => {
@@ -595,253 +570,198 @@ const BigTen = () => {
     setErrorMessage(null);
 
     try {
-      // Load all teams first - ensuring we get exactly 18 Big Ten teams
-      const allTeams = await teamService.getFBSTeams(true);
+      console.log("Starting data fetch process...");
       
-      // Filter for Big Ten teams only using the correct IDs
-      const bigTenTeams = allTeams.filter(team => 
-        bigTenTeamIds.includes(team.id)
+      // Fetch teams using the proper service that filters by conference
+      const allTeams = await teamsService.getTeams();
+      const bigTenTeams = allTeams.filter(team => team.conference === "Big Ten");
+      const teamsWithLocations = bigTenTeams.filter(team =>
+          team.location && team.location.latitude && team.location.longitude
       );
-      
-      // Ensure we have exactly 18 teams
-      if (bigTenTeams.length !== 18) {
-        console.warn(`Expected 18 Big Ten teams, found ${bigTenTeams.length}`);
+
+      if (teamsWithLocations.length === 0) {
+          throw new Error("No Big Ten teams with location data found");
       }
-      
-      // Add location data to teams
-      const teamsWithLocations = bigTenTeams.map(team => ({
-        ...team,
-        location: teamLocations[team.school] || { latitude: 40.0, longitude: -85.0, city: 'Unknown' }
-      }));
-      
+
+      console.log(`Found ${teamsWithLocations.length} Big Ten teams with locations`);
       setTeams(teamsWithLocations);
 
+      if (teamsWithLocations.length > 0) {
+          const latSum = teamsWithLocations.reduce((sum, team) => sum + team.location.latitude, 0);
+          const lngSum = teamsWithLocations.reduce((sum, team) => sum + team.location.longitude, 0);
+          setMapCenter([latSum / teamsWithLocations.length, lngSum / teamsWithLocations.length]);
+      }
+
+      // Fetch team talent data
+      try {
+          console.log("Fetching team talent data");
+          const talentData = await teamsService.getTeamTalent();
+          
+          if (talentData && talentData.length > 0) {
+              // Filter for Big Ten teams and sort by talent score (highest to lowest)
+              const bigTenTalent = talentData
+                  .filter(team => 
+                      bigTenTeams.some(t => 
+                          t.school === team.team || 
+                          t.mascot === team.team
+                      )
+                  )
+                  .sort((a, b) => b.talent - a.talent);
+              
+              setTeamTalent(bigTenTalent);
+              console.log("Big Ten talent data:", bigTenTalent);
+          }
+      } catch (error) {
+          console.error("Error fetching talent data:", error);
+      }
+
+      // Fetch news using the working approach from LatestUpdates component
+      try {
+          console.log("Fetching news with general fetchNews method...");
+          const newsData = await newsService.fetchNews();
+          
+          if (newsData && newsData.articles && newsData.articles.length > 0) {
+              console.log("Successfully fetched news articles:", newsData.articles.length);
+              // Sort by published date (newest first) if publishedAt exists
+              const sortedArticles = [...newsData.articles].sort((a, b) => {
+                  if (a.publishedAt && b.publishedAt) {
+                      return new Date(b.publishedAt) - new Date(a.publishedAt);
+                  }
+                  return 0;
+              });
+              setNews(sortedArticles.slice(0, 10)); // Show top 10 news articles
+          } else {
+              console.error("News API returned empty or invalid data:", newsData);
+              setNews([]);
+          }
+      } catch (error) {
+          console.error("Error fetching news:", error);
+          setNews([]);
+      }
+
+      // Fetch top recruits
+      try {
+          const recruitsData = await teamsService.getAllRecruits();
+          if (recruitsData && recruitsData.length > 0) {
+              // Filter for Big Ten recruits and sort by stars/rating
+              const bigTenRecruits = recruitsData
+                  .filter(recruit => 
+                      recruit.committedTo && 
+                      bigTenTeams.some(t => 
+                          t.school === recruit.committedTo || 
+                          t.mascot === recruit.committedTo
+                      )
+                  )
+                  .sort((a, b) => b.rating - a.rating)
+                  .slice(0, 20); // Show top 20 recruits
+              
+              // Add team logo URLs to each recruit
+              const recruitsWithLogos = bigTenRecruits.map(recruit => {
+                  const team = bigTenTeams.find(t => 
+                      t.school === recruit.committedTo || 
+                      t.mascot === recruit.committedTo
+                  );
+                  return {
+                      ...recruit,
+                      teamLogo: team?.logos?.[0] || null
+                  };
+              });
+              
+              setRecruits(recruitsWithLogos);
+          }
+      } catch (error) {
+          console.error("Error fetching recruits:", error);
+          setRecruits([]);
+      }
+
+      // Fetch team records for standings
+      console.log("Fetching records for Big Ten teams...");
+      
+      try {
+          const allRecords = await teamsService.getTeamRecords(); // Get all records
+          console.log("All records fetched:", allRecords);
+          
+          // Map Big Ten teams with their records
+          const standingsData = bigTenTeams.map(team => {
+              // Find the record for this team
+              const teamRecord = allRecords.find(r => r.teamId === team.id) || {};
+              console.log(`Record for ${team.school}:`, teamRecord);
+              
+              return {
+                  id: team.id,
+                  school: team.school,
+                  mascot: team.mascot,
+                  logo: team.logos?.[0],
+                  color: team.color,
+                  conference: {
+                      wins: teamRecord.conferenceGames?.wins || 0,
+                      losses: teamRecord.conferenceGames?.losses || 0,
+                      ties: teamRecord.conferenceGames?.ties || 0
+                  },
+                  overall: {
+                      wins: teamRecord.total?.wins || 0,
+                      losses: teamRecord.total?.losses || 0,
+                      ties: teamRecord.total?.ties || 0
+                  },
+                  expectedWins: teamRecord.expectedWins,
+                  homeRecord: teamRecord.homeGames,
+                  awayRecord: teamRecord.awayGames,
+                  postseasonRecord: teamRecord.postseason
+              };
+          });
+          
+          // Sort by conference win percentage
+          const sortedStandings = standingsData.sort((a, b) => {
+              const aWinPct = a.conference.wins / Math.max(1, (a.conference.wins + a.conference.losses + a.conference.ties));
+              const bWinPct = b.conference.wins / Math.max(1, (b.conference.wins + b.conference.losses + b.conference.ties));
+              
+              if (bWinPct !== aWinPct) {
+                  return bWinPct - aWinPct;
+              }
+              
+              // If tie in conference, sort by overall record
+              const aOverallWinPct = a.overall.wins / Math.max(1, (a.overall.wins + a.overall.losses + a.overall.ties));
+              const bOverallWinPct = b.overall.wins / Math.max(1, (b.overall.wins + b.overall.losses + b.overall.ties));
+              
+              return bOverallWinPct - aOverallWinPct;
+          });
+          
+          console.log("Sorted standings:", sortedStandings);
+          setStandings(sortedStandings);
+          
+      } catch (error) {
+          console.error("Error fetching all records:", error);
+          setStandings([]);
+      }
+
       // Load recent games for Big Ten teams
-      const currentWeek = 1; // You can make this dynamic
-      const recentGames = await gameService.getGamesByWeek(2024, currentWeek, 'regular', false);
-      const bigTenGames = recentGames.filter(game => 
-        bigTenTeamIds.includes(game.home_id || game.homeId) || 
-        bigTenTeamIds.includes(game.away_id || game.awayId)
-      );
-      setGames(bigTenGames);
+      try {
+          const currentWeek = 1;
+          const recentGames = await gameService.getGamesByWeek(2024, currentWeek, 'regular', false);
+          const bigTenGames = recentGames.filter(game => 
+              bigTenTeams.some(t => t.id === (game.home_id || game.homeId)) || 
+              bigTenTeams.some(t => t.id === (game.away_id || game.awayId))
+          );
+          setGames(bigTenGames);
+      } catch (error) {
+          console.error("Error fetching games:", error);
+          setGames([]);
+      }
 
       // Load rankings
       try {
-        const rankingsData = await rankingsService.getHistoricalRankings(2024, null, 'postseason');
-        const apPoll = rankingsData.find(week => 
-          week.polls?.find(poll => poll.poll === 'AP Top 25')
-        );
-        if (apPoll) {
-          const apRankings = apPoll.polls.find(poll => poll.poll === 'AP Top 25');
-          setRankings(apRankings?.ranks || []);
-        }
+          const rankingsData = await rankingsService.getHistoricalRankings(2024, null, 'postseason');
+          const apPoll = rankingsData.find(week => 
+              week.polls?.find(poll => poll.poll === 'AP Top 25')
+          );
+          if (apPoll) {
+              const apRankings = apPoll.polls.find(poll => poll.poll === 'AP Top 25');
+              setRankings(apRankings?.ranks || []);
+          }
       } catch (error) {
-        console.warn('Error loading rankings:', error);
-        setRankings([]);
+          console.warn('Error loading rankings:', error);
+          setRankings([]);
       }
-
-      // Enhanced mock news data
-      const mockNews = [
-        {
-          title: "Big Ten Championship Race Heats Up",
-          description: "Multiple teams vie for conference title as season progresses with playoff implications",
-          date: new Date().toISOString(),
-          source: "Big Ten Network",
-          image: "/photos/Big Ten.png"
-        },
-        {
-          title: "Transfer Portal Impact on Big Ten",
-          description: "How portal transfers are reshaping conference competition and team dynamics",
-          date: new Date(Date.now() - 86400000).toISOString(),
-          source: "ESPN",
-          image: null
-        },
-        {
-          title: "Big Ten Recruiting Update",
-          description: "Latest commitments and recruiting news across the conference for 2024 class",
-          date: new Date(Date.now() - 172800000).toISOString(),
-          source: "247Sports",
-          image: null
-        },
-        {
-          title: "College Football Playoff Expansion Impact",
-          description: "How the new 12-team playoff format affects Big Ten championship hopes",
-          date: new Date(Date.now() - 259200000).toISOString(),
-          source: "The Athletic",
-          image: null
-        },
-        {
-          title: "Big Ten Media Days Highlights",
-          description: "Key takeaways from coaches and players at Big Ten Media Days",
-          date: new Date(Date.now() - 345600000).toISOString(),
-          source: "Big Ten Network",
-          image: null
-        }
-      ];
-      setNews(mockNews);
-
-      // Enhanced mock recruiting data
-      const mockRecruits = [
-        {
-          name: "Marcus Johnson",
-          position: "QB",
-          height: "6'3\"",
-          weight: 215,
-          rating: 4.5,
-          city: "Chicago",
-          state: "IL",
-          school: "Lincoln High School",
-          year: 2024,
-          committedTo: "Michigan"
-        },
-        {
-          name: "David Rodriguez",
-          position: "RB",
-          height: "5'11\"",
-          weight: 195,
-          rating: 4.0,
-          city: "Columbus",
-          state: "OH",
-          school: "Central High School",
-          year: 2024,
-          committedTo: "Ohio State"
-        },
-        {
-          name: "Tyler Williams",
-          position: "WR",
-          height: "6'2\"",
-          weight: 185,
-          rating: 4.2,
-          city: "Philadelphia",
-          state: "PA",
-          school: "Northeast High",
-          year: 2024,
-          committedTo: "Penn State"
-        },
-        {
-          name: "Anthony Davis",
-          position: "OL",
-          height: "6'5\"",
-          weight: 290,
-          rating: 3.8,
-          city: "Milwaukee",
-          state: "WI",
-          school: "North High School",
-          year: 2024,
-          committedTo: "Wisconsin"
-        },
-        {
-          name: "Cameron Smith",
-          position: "DL",
-          height: "6'4\"",
-          weight: 265,
-          rating: 4.1,
-          city: "Detroit",
-          state: "MI",
-          school: "Central Catholic",
-          year: 2024,
-          committedTo: "Michigan State"
-        },
-        {
-          name: "Jordan Thompson",
-          position: "LB",
-          height: "6'1\"",
-          weight: 225,
-          rating: 3.9,
-          city: "Indianapolis",
-          state: "IN",
-          school: "Warren Central",
-          year: 2024,
-          committedTo: "Indiana"
-        },
-        {
-          name: "Malik Jackson",
-          position: "DB",
-          height: "6'0\"",
-          weight: 180,
-          rating: 4.3,
-          city: "Minneapolis",
-          state: "MN",
-          school: "South High School",
-          year: 2024,
-          committedTo: "Minnesota"
-        },
-        {
-          name: "Robert Wilson",
-          position: "TE",
-          height: "6'4\"",
-          weight: 240,
-          rating: 3.7,
-          city: "Omaha",
-          state: "NE",
-          school: "Westside High",
-          year: 2024,
-          committedTo: "Nebraska"
-        }
-      ];
-      setRecruits(mockRecruits);
-
-      // Big Ten specific talent ratings based on actual teams
-      const mockTalent = bigTenTeams.map((team, index) => {
-        // Assign realistic talent scores based on typical Big Ten hierarchy
-        let baseScore;
-        const teamName = team.school.toLowerCase();
-        
-        if (teamName.includes('ohio state') || teamName.includes('michigan')) {
-          baseScore = 950 + Math.random() * 40; // Top tier: 950-990
-        } else if (teamName.includes('penn state') || teamName.includes('wisconsin') || teamName.includes('oregon')) {
-          baseScore = 920 + Math.random() * 30; // Second tier: 920-950
-        } else if (teamName.includes('iowa') || teamName.includes('minnesota') || teamName.includes('nebraska') || teamName.includes('ucla') || teamName.includes('usc') || teamName.includes('washington')) {
-          baseScore = 890 + Math.random() * 30; // Third tier: 890-920
-        } else {
-          baseScore = 850 + Math.random() * 40; // Fourth tier: 850-890
-        }
-        
-        return {
-          school: team.school,
-          talent: Math.min(Math.max(baseScore, 850), 1000), // Keep within realistic bounds
-          elo: baseScore + Math.random() * 100 - 50 // ELO similar to talent but with some variance
-        };
-      }).sort((a, b) => b.talent - a.talent); // Sort by talent descending
-      
-      setTeamTalent(mockTalent);
-
-      // Generate realistic standings based on talent
-      const mockStandings = bigTenTeams.map((team, index) => {
-        const teamTalentData = mockTalent.find(t => t.school === team.school);
-        const talentScore = teamTalentData?.talent || 850;
-        
-        // Base wins on talent with some randomness
-        let baseWins;
-        if (talentScore >= 950) {
-          baseWins = 9 + Math.floor(Math.random() * 4); // 9-12 wins
-        } else if (talentScore >= 920) {
-          baseWins = 7 + Math.floor(Math.random() * 4); // 7-10 wins
-        } else if (talentScore >= 890) {
-          baseWins = 5 + Math.floor(Math.random() * 4); // 5-8 wins
-        } else {
-          baseWins = 2 + Math.floor(Math.random() * 5); // 2-6 wins
-        }
-        
-        const wins = Math.min(baseWins, 12);
-        const losses = 12 - wins;
-        const confWins = Math.floor(wins * 0.7); // Roughly 70% of wins are conference
-        const confLosses = 9 - confWins; // 9 conference games
-        
-        return {
-          team: team.school,
-          wins,
-          losses,
-          ties: 0,
-          confWins,
-          confLosses,
-          confTies: 0,
-          winPct: wins / (wins + losses),
-          confWinPct: confWins / (confWins + confLosses)
-        };
-      }).sort((a, b) => b.confWinPct - a.confWinPct || b.winPct - a.winPct);
-      
-      setStandings(mockStandings);
 
     } catch (error) {
       setErrorMessage(error.message);
