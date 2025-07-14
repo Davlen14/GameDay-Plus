@@ -1169,7 +1169,7 @@ const BigTen = () => {
                 <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                 
                 <div className="relative z-10">
-                  <h2 className="text-2xl font-bold mb-6" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  <h2 className="text-2xl font-bold mb-6" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     Recent Games
                   </h2>
                   
