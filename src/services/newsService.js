@@ -241,5 +241,20 @@ export const newsService = {
       console.error('Error fetching transfer portal news:', error);
       return { articles: [] };
     }
+  },
+
+  // Legacy method name for compatibility
+  fetchNews: async (limit = 20) => {
+    try {
+      const response = await fetchNewsData('college football', 'sports', 'en', 'us', limit);
+      
+      // Return the same structure as legacy
+      return {
+        articles: response.articles || []
+      };
+    } catch (error) {
+      console.error('Error in fetchNews:', error);
+      return { articles: [] };
+    }
   }
 };

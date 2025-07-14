@@ -439,6 +439,14 @@ export const teamService = {
     }
   },
 
+  // Helper method to get all recruits (for backward compatibility with legacy)
+  getAllRecruits: async (year = new Date().getFullYear()) => {
+    return await fetchCollegeFootballData('/recruiting/players', { 
+      year, 
+      classification: 'HighSchool' 
+    });
+  },
+
   // Helper method to get teams (for backward compatibility)
   getTeams: async () => {
     return await teamService.getAllTeams();

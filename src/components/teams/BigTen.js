@@ -484,12 +484,12 @@ const RecruitingTracker = ({ recruits, teams }) => {
                                     
                                     <div className="flex-1">
                                         <h4 className="font-bold text-gray-800 text-sm">
-                                            {recruit.name || `${recruit.team} Class`}
+                                            {recruit.name || `${recruit.team || recruit.committedTo} Class`}
                                         </h4>
                                         <div className="flex items-center space-x-2">
                                             <span className="text-xs font-medium text-gray-600">{recruit.position}</span>
                                             <span className="text-xs text-gray-500">•</span>
-                                            <span className="text-xs text-gray-500">{recruit.team}</span>
+                                            <span className="text-xs text-gray-500">{recruit.team || recruit.committedTo}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -550,7 +550,7 @@ const TalentRatings = ({ teamTalent, maxTalent }) => {
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center space-x-3">
                                     <span className="text-sm font-bold text-gray-700">#{index + 1}</span>
-                                    <h4 className="font-bold text-gray-800 text-sm">{team.school}</h4>
+                                    <h4 className="font-bold text-gray-800 text-sm">{team.team || team.school}</h4>
                                 </div>
                                 <div className="text-right">
                                     <span className="text-sm font-bold text-gray-800">{team.talent?.toFixed(1) || 'N/A'}</span>
@@ -573,14 +573,16 @@ const TalentRatings = ({ teamTalent, maxTalent }) => {
 };
 
 const BigTen = () => {
-  // State management
+  // State management - simplified like the old working file
   const [teams, setTeams] = useState([]);
   const [games, setGames] = useState([]);
   const [standings, setStandings] = useState([]);
-  const [rankings, setRankings] = useState([]);
   const [news, setNews] = useState([]);
   const [recruits, setRecruits] = useState([]);
   const [teamTalent, setTeamTalent] = useState([]);
+  const [rankings, setRankings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Map');
@@ -623,18 +625,20 @@ const BigTen = () => {
       // Fetch team talent data
       try {
           console.log("Fetching team talent data");
-          const talentData = await teamService.getTalentRatings();
+          const talentData = await teamService.getTeamTalent();
           
           if (talentData && talentData.length > 0) {
               // Filter for Big Ten teams and sort by talent score (highest to lowest)
               const bigTenTalent = talentData
                   .filter(team => 
                       bigTenTeams.some(t => 
-                          t.school === team.school || 
-                          t.mascot === team.school
+                          t.school === team.team || 
+                          t.school === team.school ||
+                          t.mascot === team.team ||
+                          t.displayName === team.team
                       )
                   )
-                  .sort((a, b) => b.talent - a.talent);
+                  .sort((a, b) => (b.talent || 0) - (a.talent || 0));
               
               setTeamTalent(bigTenTalent);
               console.log("Big Ten talent data:", bigTenTalent);
@@ -643,15 +647,15 @@ const BigTen = () => {
           console.error("Error fetching talent data:", error);
       }
 
-      // Fetch news using the working approach from LatestUpdates component
+      // Fetch news using the legacy file approach
       try {
-          console.log("Fetching news with general getLatestNews method...");
-          const newsData = await newsService.getLatestNews();
+          console.log("Fetching news with fetchNews method...");
+          const newsData = await newsService.fetchNews();
           
-          if (newsData && newsData.length > 0) {
-              console.log("Successfully fetched news articles:", newsData.length);
+          if (newsData && newsData.articles && newsData.articles.length > 0) {
+              console.log("Successfully fetched news articles:", newsData.articles.length);
               // Sort by published date (newest first) if publishedAt exists
-              const sortedArticles = [...newsData].sort((a, b) => {
+              const sortedArticles = [...newsData.articles].sort((a, b) => {
                   if (a.publishedAt && b.publishedAt) {
                       return new Date(b.publishedAt) - new Date(a.publishedAt);
                   }
@@ -667,43 +671,66 @@ const BigTen = () => {
           setNews([]);
       }
 
-      // Fetch top recruits
+      // Fetch actual individual recruits like in legacy file
       try {
-          const recruitsData = await teamService.getRecruitingRankings();
+          console.log("Fetching individual recruits...");
+          // Try teamService first like legacy file
+          let recruitsData = await teamService.getAllRecruits();
+          
+          if (!recruitsData || recruitsData.length === 0) {
+              console.log("No data from teamService, trying rankingsService...");
+              recruitsData = await rankingsService.getPlayerRecruitingRankings(2024);
+          }
+          
           if (recruitsData && recruitsData.length > 0) {
-              // Filter for Big Ten recruits and sort by rank (lower rank is better)
+              // Filter for Big Ten commits and sort by rating
               const bigTenRecruits = recruitsData
                   .filter(recruit => 
+                      recruit.committedTo && 
                       bigTenTeams.some(t => 
-                          t.school === recruit.team || 
-                          t.mascot === recruit.team
+                          t.school === recruit.committedTo || 
+                          t.displayName === recruit.committedTo ||
+                          t.mascot === recruit.committedTo
                       )
                   )
-                  .sort((a, b) => a.rank - b.rank)
-                  .slice(0, 20); // Show top 20 recruits
+                  .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                  .slice(0, 30); // Show top 30 recruits like legacy
               
-              // Transform recruiting rankings to look like individual recruits
-              const recruitsWithLogos = bigTenRecruits.map(recruit => ({
-                  name: `${recruit.team} Class`,
-                  team: recruit.team,
-                  position: 'CLASS',
-                  rating: 5 - (recruit.rank / 20), // Convert rank to star rating
-                  year: new Date().getFullYear(),
-                  school: 'Various High Schools',
-                  city: 'National',
-                  state: 'USA',
-                  height: '6-2',
-                  weight: '200',
-                  committedTo: recruit.team,
-                  rank: recruit.rank,
-                  points: recruit.points
-              }));
-              
-              setRecruits(recruitsWithLogos);
+              setRecruits(bigTenRecruits);
+              console.log("Big Ten recruits:", bigTenRecruits);
+          } else {
+              console.log("No recruit data found, trying team recruiting rankings...");
+              // Final fallback to recruiting team rankings if individual recruits fail
+              const teamRecruitingData = await teamService.getRecruitingRankings();
+              if (teamRecruitingData && teamRecruitingData.length > 0) {
+                  const bigTenTeamRecruits = teamRecruitingData
+                      .filter(recruit => 
+                          bigTenTeams.some(t => 
+                              t.school === recruit.team || 
+                              t.displayName === recruit.team
+                          )
+                      )
+                      .sort((a, b) => a.rank - b.rank);
+                  
+                  setRecruits(bigTenTeamRecruits);
+              }
           }
       } catch (error) {
           console.error("Error fetching recruits:", error);
           setRecruits([]);
+      }
+
+      // Fetch AP Rankings
+      try {
+          console.log("Fetching AP Rankings...");
+          const apRankings = await rankingsService.getAPPoll();
+          if (apRankings && apRankings.length > 0) {
+              setRankings(apRankings);
+              console.log("AP Rankings:", apRankings);
+          }
+      } catch (error) {
+          console.error("Error fetching AP rankings:", error);
+          setRankings([]);
       }
 
       // Fetch team records for standings
@@ -784,19 +811,6 @@ const BigTen = () => {
       } catch (error) {
           console.error("Error fetching games:", error);
           setGames([]);
-      }
-
-      // Load rankings
-      try {
-          const rankingsData = await rankingsService.getAPPoll(2024);
-          if (rankingsData && rankingsData.length > 0) {
-              // Get the most recent AP Poll
-              const latestPoll = rankingsData[rankingsData.length - 1];
-              setRankings(latestPoll?.ranks || []);
-          }
-      } catch (error) {
-          console.warn('Error loading rankings:', error);
-          setRankings([]);
       }
 
     } catch (error) {
@@ -1018,7 +1032,7 @@ const BigTen = () => {
         <div className="absolute bottom-20 right-1/3 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', animationDelay: '3s' }}></div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="w-[97%] mx-auto relative z-10">
         {/* Enhanced Liquid Glass Header Section */}
         <div className="text-center mb-20">
           <div className="flex items-center justify-center mb-8 relative">
