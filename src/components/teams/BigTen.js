@@ -1389,37 +1389,161 @@ const BigTen = () => {
                             const confWinPct = confTotal > 0 ? (team.conference?.wins || 0) / confTotal : 0;
                             const overallWinPct = overallTotal > 0 ? (team.overall?.wins || 0) / overallTotal : 0;
                             
+                            // Determine trophy icon and colors based on performance
+                            const isChampion = index === 0; // First place team
+                            const isOhioState = team.school?.toLowerCase().includes('ohio state');
+                            const hasHighWinPct = confWinPct >= 0.7; // 70% or higher
+                            const isAbove500 = confWinPct > 0.5; // Above .500
+                            const isPoorRecord = confWinPct < 0.4; // Poor record
+                            
+                            // Trophy and gradient styles as React style objects
+                            let trophyIconStyle = {};
+                            let textStyle = {};
+                            let rankStyle = {};
+                            let showTrophy = false;
+                            
+                            if (isOhioState) {
+                              // Gold gradient for Ohio State
+                              const goldGradient = 'linear-gradient(135deg, #FFD700, #FFA500, #FFD700)';
+                              trophyIconStyle = { 
+                                background: goldGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text',
+                                filter: 'drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4))'
+                              };
+                              textStyle = { 
+                                background: goldGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                              rankStyle = { background: goldGradient };
+                              showTrophy = true;
+                            } else if (isChampion) {
+                              // Blue gradient for champion
+                              const blueGradient = 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)';
+                              trophyIconStyle = { 
+                                background: blueGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text',
+                                filter: 'drop-shadow(0 2px 4px rgba(0, 136, 206, 0.4))'
+                              };
+                              textStyle = { 
+                                background: blueGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                              rankStyle = { background: blueGradient };
+                              showTrophy = true;
+                            } else if (hasHighWinPct || isAbove500) {
+                              // Green gradient for good records
+                              const greenGradient = 'linear-gradient(135deg, #10B981, #059669, #10B981)';
+                              trophyIconStyle = { 
+                                background: greenGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text',
+                                filter: 'drop-shadow(0 2px 4px rgba(16, 185, 129, 0.4))'
+                              };
+                              textStyle = { 
+                                background: greenGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                              rankStyle = { background: greenGradient };
+                              showTrophy = hasHighWinPct; // Only show trophy for 70%+ win rate
+                            } else if (isPoorRecord) {
+                              // Red gradient for poor records
+                              const redGradient = 'linear-gradient(135deg, #EF4444, #DC2626, #EF4444)';
+                              textStyle = { 
+                                background: redGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                              rankStyle = { background: redGradient };
+                            } else {
+                              // Default black gradient for neutral
+                              const blackGradient = 'linear-gradient(135deg, #374151, #1F2937, #374151)';
+                              textStyle = { 
+                                background: blackGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                              rankStyle = { background: blackGradient };
+                            }
+                            
                             return (
                               <tr key={team.id} className={`border-b border-gray-200 hover:bg-white/20 transition-colors ${index % 2 === 0 ? 'bg-white/10' : ''}`}>
                                 <td className="py-3 px-4">
                                   <div className="flex items-center space-x-3">
-                                    <span className="text-sm font-bold text-gray-600">#{index + 1}</span>
+                                    {/* Dynamic Rank Badge with Trophy */}
+                                    <div className="relative flex items-center space-x-2">
+                                      <div 
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg" 
+                                        style={rankStyle}
+                                      >
+                                        #{index + 1}
+                                      </div>
+                                      
+                                      {/* Trophy Icon for Champions and Special Teams */}
+                                      {showTrophy && (
+                                        <i 
+                                          className="fas fa-trophy text-lg animate-pulse" 
+                                          style={trophyIconStyle}
+                                          title={isOhioState ? 'Ohio State Excellence' : isChampion ? 'Conference Leader' : 'Strong Performance'}
+                                        ></i>
+                                      )}
+                                    </div>
+                                    
                                     <img 
                                       src={team.logo || '/photos/ncaaf.png'} 
                                       alt={team.school}
                                       className="w-6 h-6 object-contain"
                                       onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                                     />
-                                    <span className="font-semibold text-gray-800">{team.school}</span>
+                                    <span 
+                                      className="font-semibold text-lg"
+                                      style={textStyle}
+                                    >
+                                      {team.school}
+                                    </span>
                                   </div>
                                 </td>
-                                <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {(team.conference?.wins || 0)}-{(team.conference?.losses || 0)}{(team.conference?.ties || 0) > 0 ? `-${team.conference.ties}` : ''}
+                                <td className="text-center py-3 px-4 font-medium">
+                                  <span style={textStyle}>
+                                    {(team.conference?.wins || 0)}-{(team.conference?.losses || 0)}{(team.conference?.ties || 0) > 0 ? `-${team.conference.ties}` : ''}
+                                  </span>
                                 </td>
-                                <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {confTotal > 0 ? (confWinPct * 100).toFixed(1) : '0.0'}%
+                                <td className="text-center py-3 px-4 font-bold">
+                                  <span style={textStyle}>
+                                    {confTotal > 0 ? (confWinPct * 100).toFixed(1) : '0.0'}%
+                                  </span>
                                 </td>
-                                <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {(team.overall?.wins || 0)}-{(team.overall?.losses || 0)}{(team.overall?.ties || 0) > 0 ? `-${team.overall.ties}` : ''}
+                                <td className="text-center py-3 px-4 font-medium">
+                                  <span style={textStyle}>
+                                    {(team.overall?.wins || 0)}-{(team.overall?.losses || 0)}{(team.overall?.ties || 0) > 0 ? `-${team.overall.ties}` : ''}
+                                  </span>
                                 </td>
-                                <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {overallTotal > 0 ? (overallWinPct * 100).toFixed(1) : '0.0'}%
+                                <td className="text-center py-3 px-4 font-bold">
+                                  <span style={textStyle}>
+                                    {overallTotal > 0 ? (overallWinPct * 100).toFixed(1) : '0.0'}%
+                                  </span>
                                 </td>
-                                <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {team.homeRecord?.wins || 0}-{team.homeRecord?.losses || 0}
+                                <td className="text-center py-3 px-4 font-medium">
+                                  <span style={textStyle}>
+                                    {team.homeRecord?.wins || 0}-{team.homeRecord?.losses || 0}
+                                  </span>
                                 </td>
-                                <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {team.awayRecord?.wins || 0}-{team.awayRecord?.losses || 0}
+                                <td className="text-center py-3 px-4 font-medium">
+                                  <span style={textStyle}>
+                                    {team.awayRecord?.wins || 0}-{team.awayRecord?.losses || 0}
+                                  </span>
                                 </td>
                               </tr>
                             );
