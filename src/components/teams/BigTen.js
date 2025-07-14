@@ -267,6 +267,14 @@ const ConferenceNews = ({ news }) => {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
+    const handleNewsClick = (article) => {
+        if (article.url) {
+            window.open(article.url, '_blank', 'noopener,noreferrer');
+        } else if (article.link) {
+            window.open(article.link, '_blank', 'noopener,noreferrer');
+        }
+    };
+
     if (!news || news.length === 0) {
         return (
             <div className="text-center py-8">
@@ -281,15 +289,19 @@ const ConferenceNews = ({ news }) => {
     return (
         <div className="space-y-4">
             {news.slice(0, 6).map((article, index) => (
-                <div key={index} className="relative bg-white/30 backdrop-blur-xl rounded-xl border border-white/40 p-4">
+                <div 
+                    key={index} 
+                    className="relative bg-white/30 backdrop-blur-xl rounded-xl border border-white/40 p-4 cursor-pointer hover:bg-white/40 transition-all duration-300"
+                    onClick={() => handleNewsClick(article)}
+                >
                     <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
                     
                     <div className="relative z-10">
                         <div className="flex items-start space-x-4">
-                            {article.image && (
+                            {(article.image || article.urlToImage) && (
                                 <div className="flex-shrink-0">
                                     <img 
-                                        src={article.image} 
+                                        src={article.image || article.urlToImage} 
                                         alt={article.title}
                                         className="w-16 h-16 object-cover rounded-lg"
                                         onError={(e) => { e.target.style.display = 'none'; }}
@@ -309,8 +321,8 @@ const ConferenceNews = ({ news }) => {
                                 )}
                                 
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-500">{article.source || 'Big Ten Network'}</span>
-                                    <span className="text-gray-400">{formatNewsDate(article.date)}</span>
+                                    <span className="text-gray-500">{article.source?.name || article.source || 'Big Ten Network'}</span>
+                                    <span className="text-gray-400">{formatNewsDate(article.publishedAt || article.date)}</span>
                                 </div>
                             </div>
                         </div>
@@ -539,6 +551,17 @@ const TalentRatings = ({ teamTalent, maxTalent }) => {
         return 'Developing';
     };
 
+    if (!teamTalent || teamTalent.length === 0) {
+        return (
+            <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center">
+                    <i className="fas fa-chart-bar text-2xl text-gray-400" />
+                </div>
+                <p className="text-gray-600">No talent data available</p>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-3">
             {teamTalent.slice(0, 18).map((team, index) => (
@@ -550,7 +573,7 @@ const TalentRatings = ({ teamTalent, maxTalent }) => {
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center space-x-3">
                                     <span className="text-sm font-bold text-gray-700">#{index + 1}</span>
-                                    <h4 className="font-bold text-gray-800 text-sm">{team.team || team.school}</h4>
+                                    <h4 className="font-bold text-gray-800 text-sm">{team.team || team.school || 'Unknown Team'}</h4>
                                 </div>
                                 <div className="text-right">
                                     <span className="text-sm font-bold text-gray-800">{team.talent?.toFixed(1) || 'N/A'}</span>
@@ -604,22 +627,35 @@ const BigTen = () => {
       
       // Fetch teams using the proper service that filters by conference
       const allTeams = await teamService.getTeams();
-      const bigTenTeams = allTeams.filter(team => team.conference === "Big Ten");
+      console.log("All teams fetched:", allTeams.length);
+      
+      const bigTenTeams = allTeams.filter(team => 
+        team.conference === "Big Ten" || 
+        team.conference === "Big 10" ||
+        team.conference?.includes("Big Ten") ||
+        team.conference?.includes("Big 10")
+      );
+      console.log("Big Ten teams found:", bigTenTeams.map(t => t.school));
+      
       const teamsWithLocations = bigTenTeams.filter(team =>
           team.location && team.location.latitude && team.location.longitude
       );
 
       if (teamsWithLocations.length === 0) {
-          throw new Error("No Big Ten teams with location data found");
+          console.warn("No Big Ten teams with location data found, using all Big Ten teams");
+          setTeams(bigTenTeams);
+      } else {
+          console.log(`Found ${teamsWithLocations.length} Big Ten teams with locations`);
+          setTeams(teamsWithLocations);
       }
-
-      console.log(`Found ${teamsWithLocations.length} Big Ten teams with locations`);
-      setTeams(teamsWithLocations);
 
       if (teamsWithLocations.length > 0) {
           const latSum = teamsWithLocations.reduce((sum, team) => sum + team.location.latitude, 0);
           const lngSum = teamsWithLocations.reduce((sum, team) => sum + team.location.longitude, 0);
           setMapCenter([latSum / teamsWithLocations.length, lngSum / teamsWithLocations.length]);
+      } else {
+          // Use default Big Ten region center
+          setMapCenter([41.0, -85.0]);
       }
 
       // Fetch team talent data
@@ -628,23 +664,34 @@ const BigTen = () => {
           const talentData = await teamService.getTeamTalent();
           
           if (talentData && talentData.length > 0) {
+              console.log("Raw talent data:", talentData);
               // Filter for Big Ten teams and sort by talent score (highest to lowest)
               const bigTenTalent = talentData
-                  .filter(team => 
-                      bigTenTeams.some(t => 
-                          t.school === team.team || 
-                          t.school === team.school ||
-                          t.mascot === team.team ||
-                          t.displayName === team.team
-                      )
-                  )
+                  .filter(talentTeam => {
+                      const teamName = talentTeam.team || talentTeam.school;
+                      return bigTenTeams.some(t => 
+                          t.school === teamName || 
+                          t.displayName === teamName ||
+                          t.mascot === teamName ||
+                          t.abbreviation === teamName
+                      );
+                  })
+                  .map(talentTeam => ({
+                      ...talentTeam,
+                      team: talentTeam.team || talentTeam.school,
+                      school: talentTeam.school || talentTeam.team
+                  }))
                   .sort((a, b) => (b.talent || 0) - (a.talent || 0));
               
               setTeamTalent(bigTenTalent);
               console.log("Big Ten talent data:", bigTenTalent);
+          } else {
+              console.log("No talent data returned from API");
+              setTeamTalent([]);
           }
       } catch (error) {
           console.error("Error fetching talent data:", error);
+          setTeamTalent([]);
       }
 
       // Fetch news using the legacy file approach
@@ -725,8 +772,11 @@ const BigTen = () => {
           console.log("Fetching AP Rankings...");
           const apRankings = await rankingsService.getAPPoll();
           if (apRankings && apRankings.length > 0) {
+              console.log("AP Rankings data:", apRankings);
               setRankings(apRankings);
-              console.log("AP Rankings:", apRankings);
+          } else {
+              console.log("No AP rankings data available");
+              setRankings([]);
           }
       } catch (error) {
           console.error("Error fetching AP rankings:", error);
@@ -860,12 +910,12 @@ const BigTen = () => {
   };
 
   const getTeamRecord = (teamId) => {
-    const teamStanding = standings.find(s => s.id === teamId);
+    const teamStanding = standings.find(s => s.id === teamId || s.school === teamId);
     if (teamStanding) {
       return {
-        wins: teamStanding.overall.wins,
-        losses: teamStanding.overall.losses,
-        ties: teamStanding.overall.ties || 0
+        wins: teamStanding.overall?.wins || teamStanding.wins || 0,
+        losses: teamStanding.overall?.losses || teamStanding.losses || 0,
+        ties: teamStanding.overall?.ties || teamStanding.ties || 0
       };
     }
     return {
@@ -876,12 +926,16 @@ const BigTen = () => {
   };
 
   const getTeamElo = (teamSchool) => {
-    const talent = teamTalent.find(t => t.school === teamSchool);
+    const talent = teamTalent.find(t => 
+      (t.school === teamSchool) || (t.team === teamSchool)
+    );
     return talent?.elo || null;
   };
 
   const getTeamTalent = (teamSchool) => {
-    const talent = teamTalent.find(t => t.school === teamSchool);
+    const talent = teamTalent.find(t => 
+      (t.school === teamSchool) || (t.team === teamSchool)
+    );
     return talent?.talent || null;
   };
 
@@ -1190,7 +1244,7 @@ const BigTen = () => {
                   
                   <TalentRatings 
                     teamTalent={teamTalent}
-                    maxTalent={teamTalent.length > 0 ? teamTalent[0].talent : 1000}
+                    maxTalent={teamTalent && teamTalent.length > 0 ? Math.max(...teamTalent.map(t => t.talent || 0)) : 1000}
                   />
                 </div>
               </div>
@@ -1220,7 +1274,22 @@ const BigTen = () => {
                   </h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {teams.map((team, index) => (
+                    {standings && standings.length > 0 ? standings.map((teamStanding, index) => {
+                      const team = teams.find(t => t.id === teamStanding.id || t.school === teamStanding.school);
+                      if (!team) return null;
+                      
+                      return (
+                        <TeamPerformanceCard
+                          key={team.id}
+                          team={team}
+                          rank={getTeamRank(team.id)}
+                          record={getTeamRecord(team.id)}
+                          eloRating={getTeamElo(team.school)}
+                          talentRating={getTeamTalent(team.school)}
+                          onTeamClick={handleTeamClick}
+                        />
+                      );
+                    }) : teams.map((team, index) => (
                       <TeamPerformanceCard
                         key={team.id}
                         team={team}
@@ -1264,41 +1333,60 @@ const BigTen = () => {
                     AP Top 25 Rankings
                   </h2>
                   
-                  <div className="space-y-4">
-                    {rankings.filter(rank => 
-                      teams.some(team => team.school.toLowerCase() === rank.school.toLowerCase())
-                    ).map((ranking, index) => {
-                      const team = teams.find(t => t.school.toLowerCase() === ranking.school.toLowerCase());
-                      return (
-                        <div key={index} className="relative bg-white/30 backdrop-blur-xl rounded-xl border border-white/40 p-4">
-                          <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                          
-                          <div className="relative z-10 flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}>
-                                {ranking.rank}
-                              </div>
-                              <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center overflow-hidden">
-                                  <img 
-                                    src={team?.logos?.[0] || '/photos/ncaaf.png'} 
-                                    alt={ranking.school}
-                                    className="w-6 h-6 object-contain"
-                                    onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                                  />
+                  {rankings && rankings.length > 0 ? (
+                    <div className="space-y-4">
+                      {rankings.filter(rank => 
+                        teams.some(team => 
+                          team.school.toLowerCase().includes(rank.school?.toLowerCase()) ||
+                          rank.school?.toLowerCase().includes(team.school.toLowerCase()) ||
+                          team.displayName?.toLowerCase().includes(rank.school?.toLowerCase()) ||
+                          rank.school?.toLowerCase().includes(team.displayName?.toLowerCase())
+                        )
+                      ).map((ranking, index) => {
+                        const team = teams.find(t => 
+                          t.school.toLowerCase().includes(ranking.school?.toLowerCase()) ||
+                          ranking.school?.toLowerCase().includes(t.school.toLowerCase()) ||
+                          t.displayName?.toLowerCase().includes(ranking.school?.toLowerCase()) ||
+                          ranking.school?.toLowerCase().includes(t.displayName?.toLowerCase())
+                        );
+                        return (
+                          <div key={index} className="relative bg-white/30 backdrop-blur-xl rounded-xl border border-white/40 p-4">
+                            <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                            
+                            <div className="relative z-10 flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}>
+                                  {ranking.rank}
                                 </div>
-                                <span className="font-bold text-gray-800">{ranking.school}</span>
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center overflow-hidden">
+                                    <img 
+                                      src={team?.logos?.[0] || '/photos/ncaaf.png'} 
+                                      alt={ranking.school}
+                                      className="w-6 h-6 object-contain"
+                                      onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                                    />
+                                  </div>
+                                  <span className="font-bold text-gray-800">{ranking.school}</span>
+                                </div>
                               </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-sm font-semibold text-gray-700">{ranking.points} pts</div>
-                              <div className="text-xs text-gray-500">{ranking.firstPlaceVotes || 0} first place</div>
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-gray-700">{ranking.points || ranking.votes || 'N/A'} pts</div>
+                                <div className="text-xs text-gray-500">{ranking.firstPlaceVotes || ranking.first_place_votes || 0} first place</div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center">
+                        <i className="fas fa-trophy text-2xl text-gray-400" />
+                      </div>
+                      <p className="text-gray-600">No Big Ten teams in current AP Top 25</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1353,9 +1441,12 @@ const BigTen = () => {
                   <div className="flex justify-between items-center py-2 border-b border-gray-200/50">
                     <span className="text-sm text-gray-600">Ranked Teams</span>
                     <span className="font-bold text-gray-800">
-                      {rankings.filter(rank => 
-                        teams.some(team => team.school.toLowerCase() === rank.school.toLowerCase())
-                      ).length}
+                      {rankings && rankings.length > 0 ? rankings.filter(rank => 
+                        teams.some(team => 
+                          team.school.toLowerCase().includes(rank.school?.toLowerCase()) ||
+                          rank.school?.toLowerCase().includes(team.school.toLowerCase())
+                        )
+                      ).length : 0}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2">
@@ -1367,6 +1458,20 @@ const BigTen = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Debug information */}
+      <div className="hidden">
+        {/*
+        console.log("=== DEBUG INFO ===");
+        console.log("Teams:", teams.length);
+        console.log("TeamTalent:", teamTalent.length);
+        console.log("Rankings:", rankings.length);
+        console.log("News:", news.length);
+        console.log("Games:", games.length);
+        console.log("Standings:", standings.length);
+        console.log("==================");
+        */}
       </div>
     </div>
   );
