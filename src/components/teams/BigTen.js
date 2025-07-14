@@ -196,13 +196,13 @@ const RecentGames = ({ games, teams, getTeamLogo, getTeamAbbreviation }) => {
                             <div className="flex items-center space-x-4">
                                 <div className="flex items-center space-x-2">
                                     <img 
-                                        src={getTeamLogo(game.away_id || game.awayId)} 
+                                        src={getTeamLogo(game.away_team || game.away_id)} 
                                         alt="Away Team"
                                         className="w-6 h-6 object-contain"
                                         onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                                     />
                                     <span className="font-medium text-sm text-gray-800">
-                                        {getTeamAbbreviation(game.away_id || game.awayId, 'AWAY')}
+                                        {getTeamAbbreviation(game.away_team || game.away_id, 'AWAY')}
                                     </span>
                                 </div>
                                 
@@ -210,13 +210,13 @@ const RecentGames = ({ games, teams, getTeamLogo, getTeamAbbreviation }) => {
                                 
                                 <div className="flex items-center space-x-2">
                                     <img 
-                                        src={getTeamLogo(game.home_id || game.homeId)} 
+                                        src={getTeamLogo(game.home_team || game.home_id)} 
                                         alt="Home Team"
                                         className="w-6 h-6 object-contain"
                                         onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                                     />
                                     <span className="font-medium text-sm text-gray-800">
-                                        {getTeamAbbreviation(game.home_id || game.homeId, 'HOME')}
+                                        {getTeamAbbreviation(game.home_team || game.home_id, 'HOME')}
                                     </span>
                                 </div>
                             </div>
@@ -420,7 +420,7 @@ const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
 };
 
 // Enhanced Recruiting Component
-const RecruitingTracker = ({ recruits }) => {
+const RecruitingTracker = ({ recruits, teams }) => {
     const getPositionIcon = (position) => {
         const pos = position?.toLowerCase() || 'unknown';
         if (pos.includes('qb')) return 'fas fa-crosshairs';
@@ -430,6 +430,7 @@ const RecruitingTracker = ({ recruits }) => {
         if (pos.includes('lb')) return 'fas fa-fist-raised';
         if (pos.includes('db') || pos.includes('cb') || pos.includes('s')) return 'fas fa-eye';
         if (pos.includes('k') || pos.includes('p')) return 'fas fa-bullseye';
+        if (pos.includes('class')) return 'fas fa-graduation-cap';
         return 'fas fa-football-ball';
     };
 
@@ -442,8 +443,25 @@ const RecruitingTracker = ({ recruits }) => {
         if (pos.includes('lb')) return 'text-yellow-600';
         if (pos.includes('db') || pos.includes('cb') || pos.includes('s')) return 'text-indigo-600';
         if (pos.includes('k') || pos.includes('p')) return 'text-gray-600';
+        if (pos.includes('class')) return 'text-blue-700';
         return 'text-gray-500';
     };
+
+    const getTeamLogo = (teamName) => {
+        const team = teams.find(t => t.school === teamName);
+        return team?.logos?.[0] || '/photos/ncaaf.png';
+    };
+
+    if (!recruits || recruits.length === 0) {
+        return (
+            <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center">
+                    <i className="fas fa-users text-2xl text-gray-400" />
+                </div>
+                <p className="text-gray-600">No recruiting data found</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-3">
@@ -455,29 +473,40 @@ const RecruitingTracker = ({ recruits }) => {
                         <div className="relative z-10">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center space-x-3">
-                                    <div className={`w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center shadow-lg`}>
-                                        <i className={`${getPositionIcon(recruit.position)} ${getPositionColor(recruit.position)} text-sm`} />
+                                    <div className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center overflow-hidden">
+                                        <img 
+                                            src={getTeamLogo(recruit.team || recruit.committedTo)} 
+                                            alt={recruit.team}
+                                            className="w-8 h-8 object-contain"
+                                            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                                        />
                                     </div>
                                     
                                     <div className="flex-1">
-                                        <h4 className="font-bold text-gray-800 text-sm">{recruit.name}</h4>
+                                        <h4 className="font-bold text-gray-800 text-sm">
+                                            {recruit.name || `${recruit.team} Class`}
+                                        </h4>
                                         <div className="flex items-center space-x-2">
                                             <span className="text-xs font-medium text-gray-600">{recruit.position}</span>
                                             <span className="text-xs text-gray-500">•</span>
-                                            <span className="text-xs text-gray-500">{recruit.height} • {recruit.weight}lbs</span>
+                                            <span className="text-xs text-gray-500">{recruit.team}</span>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div className="text-right">
                                     <StarRating rating={recruit.rating || 3} />
-                                    <p className="text-xs text-gray-500 mt-1">{recruit.city}, {recruit.state}</p>
+                                    <p className="text-xs text-gray-500 mt-1">#{recruit.rank}</p>
                                 </div>
                             </div>
                             
                             <div className="flex justify-between items-center text-xs">
-                                <span className="text-gray-600">High School: {recruit.school}</span>
-                                <span className="text-gray-500">Class of {recruit.year || '2024'}</span>
+                                <span className="text-gray-600">
+                                    {recruit.school || 'Various High Schools'}
+                                </span>
+                                <span className="text-gray-500">
+                                    {recruit.points && `${recruit.points} pts`}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -594,15 +623,15 @@ const BigTen = () => {
       // Fetch team talent data
       try {
           console.log("Fetching team talent data");
-          const talentData = await teamService.getTeamTalent();
+          const talentData = await teamService.getTalentRatings();
           
           if (talentData && talentData.length > 0) {
               // Filter for Big Ten teams and sort by talent score (highest to lowest)
               const bigTenTalent = talentData
                   .filter(team => 
                       bigTenTeams.some(t => 
-                          t.school === team.team || 
-                          t.mascot === team.team
+                          t.school === team.school || 
+                          t.mascot === team.school
                       )
                   )
                   .sort((a, b) => b.talent - a.talent);
@@ -681,37 +710,44 @@ const BigTen = () => {
       console.log("Fetching records for Big Ten teams...");
       
       try {
-          const allRecords = await teamService.getTeamRecords(); // Get all records
-          console.log("All records fetched:", allRecords);
-          
-          // Map Big Ten teams with their records
-          const standingsData = bigTenTeams.map(team => {
-              // Find the record for this team
-              const teamRecord = allRecords.find(r => r.teamId === team.id) || {};
-              console.log(`Record for ${team.school}:`, teamRecord);
-              
-              return {
-                  id: team.id,
-                  school: team.school,
-                  mascot: team.mascot,
-                  logo: team.logos?.[0],
-                  color: team.color,
-                  conference: {
-                      wins: teamRecord.conferenceGames?.wins || 0,
-                      losses: teamRecord.conferenceGames?.losses || 0,
-                      ties: teamRecord.conferenceGames?.ties || 0
-                  },
-                  overall: {
-                      wins: teamRecord.total?.wins || 0,
-                      losses: teamRecord.total?.losses || 0,
-                      ties: teamRecord.total?.ties || 0
-                  },
-                  expectedWins: teamRecord.expectedWins,
-                  homeRecord: teamRecord.homeGames,
-                  awayRecord: teamRecord.awayGames,
-                  postseasonRecord: teamRecord.postseason
-              };
+          // Get team records using the correct method for each team
+          const standingsPromises = bigTenTeams.map(async (team) => {
+              try {
+                  const teamRecords = await teamService.getTeamRecords(team.school, 2024);
+                  const record = teamRecords[0] || {};
+                  
+                  return {
+                      id: team.id,
+                      school: team.school,
+                      mascot: team.mascot,
+                      logo: team.logos?.[0],
+                      color: team.color,
+                      conference: record.conferenceGames || { wins: 0, losses: 0, ties: 0 },
+                      overall: record.total || { wins: 0, losses: 0, ties: 0 },
+                      expectedWins: record.expectedWins,
+                      homeRecord: record.homeGames || { wins: 0, losses: 0, ties: 0 },
+                      awayRecord: record.awayGames || { wins: 0, losses: 0, ties: 0 },
+                      postseasonRecord: record.postseason,
+                      winPercentage: record.winPercentage || 0
+                  };
+              } catch (error) {
+                  console.error(`Error fetching records for ${team.school}:`, error);
+                  return {
+                      id: team.id,
+                      school: team.school,
+                      mascot: team.mascot,
+                      logo: team.logos?.[0],
+                      color: team.color,
+                      conference: { wins: 0, losses: 0, ties: 0 },
+                      overall: { wins: 0, losses: 0, ties: 0 },
+                      homeRecord: { wins: 0, losses: 0, ties: 0 },
+                      awayRecord: { wins: 0, losses: 0, ties: 0 },
+                      winPercentage: 0
+                  };
+              }
           });
+          
+          const standingsData = await Promise.all(standingsPromises);
           
           // Sort by conference win percentage
           const sortedStandings = standingsData.sort((a, b) => {
@@ -733,18 +769,17 @@ const BigTen = () => {
           setStandings(sortedStandings);
           
       } catch (error) {
-          console.error("Error fetching all records:", error);
+          console.error("Error fetching standings:", error);
           setStandings([]);
       }
 
       // Load recent games for Big Ten teams
       try {
-          const currentWeek = 1;
-          const recentGames = await gameService.getGamesByWeek(2024, currentWeek, 'regular', false);
+          const currentYear = 2024;
+          const recentGames = await gameService.getGames(currentYear, null, 'regular', null, null, null, 'Big Ten');
           const bigTenGames = recentGames.filter(game => 
-              bigTenTeams.some(t => t.id === (game.home_id || game.homeId)) || 
-              bigTenTeams.some(t => t.id === (game.away_id || game.awayId))
-          );
+              bigTenTeams.some(t => t.school === game.home_team || t.school === game.away_team)
+          ).slice(0, 20); // Get the most recent 20 games
           setGames(bigTenGames);
       } catch (error) {
           console.error("Error fetching games:", error);
@@ -753,13 +788,11 @@ const BigTen = () => {
 
       // Load rankings
       try {
-          const rankingsData = await rankingsService.getHistoricalRankings(2024, null, 'postseason');
-          const apPoll = rankingsData.find(week => 
-              week.polls?.find(poll => poll.poll === 'AP Top 25')
-          );
-          if (apPoll) {
-              const apRankings = apPoll.polls.find(poll => poll.poll === 'AP Top 25');
-              setRankings(apRankings?.ranks || []);
+          const rankingsData = await rankingsService.getAPPoll(2024);
+          if (rankingsData && rankingsData.length > 0) {
+              // Get the most recent AP Poll
+              const latestPoll = rankingsData[rankingsData.length - 1];
+              setRankings(latestPoll?.ranks || []);
           }
       } catch (error) {
           console.warn('Error loading rankings:', error);
@@ -775,12 +808,26 @@ const BigTen = () => {
   };
 
   const getTeamLogo = (teamId) => {
-    const team = teams.find(t => t.id === teamId);
+    // First try to find by ID
+    let team = teams.find(t => t.id === teamId);
+    
+    // If not found by ID, try to find by team name if teamId is a string
+    if (!team && typeof teamId === 'string') {
+      team = teams.find(t => t.school === teamId || t.mascot === teamId);
+    }
+    
     return team?.logos?.[0] || '/photos/ncaaf.png';
   };
 
   const getTeamAbbreviation = (teamId, fallback) => {
-    const team = teams.find(t => t.id === teamId);
+    // First try to find by ID
+    let team = teams.find(t => t.id === teamId);
+    
+    // If not found by ID, try to find by team name if teamId is a string
+    if (!team && typeof teamId === 'string') {
+      team = teams.find(t => t.school === teamId || t.mascot === teamId);
+    }
+    
     if (team?.abbreviation) return team.abbreviation;
     if (team?.school) {
       const words = team.school.split(' ').filter(w => w.length > 0);
@@ -799,10 +846,18 @@ const BigTen = () => {
   };
 
   const getTeamRecord = (teamId) => {
-    // Mock record data - you can replace with real standings data
+    const teamStanding = standings.find(s => s.id === teamId);
+    if (teamStanding) {
+      return {
+        wins: teamStanding.overall.wins,
+        losses: teamStanding.overall.losses,
+        ties: teamStanding.overall.ties || 0
+      };
+    }
     return {
-      wins: Math.floor(Math.random() * 10) + 2,
-      losses: Math.floor(Math.random() * 4)
+      wins: 0,
+      losses: 0,
+      ties: 0
     };
   };
 
@@ -1136,7 +1191,7 @@ const BigTen = () => {
                     Top Recruits
                   </h2>
                   
-                  <RecruitingTracker recruits={recruits} />
+                  <RecruitingTracker recruits={recruits} teams={teams} />
                 </div>
               </div>
             )}
