@@ -790,17 +790,39 @@ const BigTen = () => {
           // First approach - try to get all records at once using gameService
           const allRecords = await gameService.getRecords(2024); // Get all records for 2024 season
           console.log("All records fetched:", allRecords);
+          console.log("Sample record structure:", allRecords?.[0]);
           
           // Map Big Ten teams with their records
           const standingsData = bigTenTeams.map(team => {
-              // Find the record for this team using the "team" property from API response
-              const teamRecord = allRecords.find(r => 
-                  r.team === team.school || 
-                  r.team === team.displayName ||
-                  r.school === team.school ||
-                  r.school === team.displayName
-              ) || {};
+              // Find the record for this team - try multiple field variations
+              const teamRecord = allRecords?.find(r => {
+                  // Check various possible field names for team identification
+                  const recordTeam = r.team || r.school || r.teamName || r.name;
+                  return recordTeam === team.school || 
+                         recordTeam === team.displayName ||
+                         recordTeam === team.abbreviation ||
+                         recordTeam === team.mascot;
+              }) || {};
+              
               console.log(`Record for ${team.school}:`, teamRecord);
+              console.log(`Available fields in record:`, Object.keys(teamRecord));
+              
+              // Try to extract wins/losses from various possible field structures
+              const getRecordData = (record, type) => {
+                  // Try different possible structures for records data
+                  if (record[type]) return record[type];
+                  if (record[`${type}Games`]) return record[`${type}Games`];
+                  if (record[`${type}_games`]) return record[`${type}_games`];
+                  if (record.games && record.games[type]) return record.games[type];
+                  
+                  // For overall/total records, try these variations
+                  if (type === 'total' || type === 'overall') {
+                      if (record.wins !== undefined) return { wins: record.wins, losses: record.losses, ties: record.ties || 0 };
+                      if (record.totalWins !== undefined) return { wins: record.totalWins, losses: record.totalLosses, ties: record.totalTies || 0 };
+                  }
+                  
+                  return { wins: 0, losses: 0, ties: 0 };
+              };
               
               return {
                   id: team.id,
@@ -808,19 +830,11 @@ const BigTen = () => {
                   mascot: team.mascot,
                   logo: team.logos?.[0],
                   color: team.color,
-                  conference: {
-                      wins: teamRecord.conferenceGames?.wins || 0,
-                      losses: teamRecord.conferenceGames?.losses || 0,
-                      ties: teamRecord.conferenceGames?.ties || 0
-                  },
-                  overall: {
-                      wins: teamRecord.total?.wins || 0,
-                      losses: teamRecord.total?.losses || 0,
-                      ties: teamRecord.total?.ties || 0
-                  },
+                  conference: getRecordData(teamRecord, 'conference'),
+                  overall: getRecordData(teamRecord, 'total') || getRecordData(teamRecord, 'overall'),
                   expectedWins: teamRecord.expectedWins,
-                  homeRecord: teamRecord.homeGames,
-                  awayRecord: teamRecord.awayGames,
+                  homeRecord: getRecordData(teamRecord, 'home'),
+                  awayRecord: getRecordData(teamRecord, 'away'),
                   postseasonRecord: teamRecord.postseason
               };
           });
@@ -852,11 +866,30 @@ const BigTen = () => {
           const fallbackStandings = await Promise.all(
               bigTenTeams.map(async (team) => {
                   try {
-                      const records = await teamService.getTeamRecords(team.school, 2024); // Use team.school not team.id
-                      console.log(`Records for ${team.school}:`, records);
+                      console.log(`Trying to fetch records for: ${team.school}`);
+                      
+                      // Try multiple approaches to get team records
+                      let records = null;
+                      
+                      // First try with team school name
+                      try {
+                          records = await teamService.getTeamRecords(team.school, 2024);
+                          console.log(`Team records for ${team.school}:`, records);
+                      } catch (err) {
+                          console.log(`Failed with school name, trying display name for ${team.school}`);
+                          // Try with display name if school name fails
+                          try {
+                              records = await teamService.getTeamRecords(team.displayName, 2024);
+                          } catch (err2) {
+                              console.log(`Failed with display name, trying abbreviation for ${team.school}`);
+                              // Try with abbreviation
+                              records = await teamService.getTeamRecords(team.abbreviation, 2024);
+                          }
+                      }
                       
                       // Handle the array response from teamService.getTeamRecords
                       const teamRecord = Array.isArray(records) ? records[0] : records;
+                      console.log(`Final record for ${team.school}:`, teamRecord);
                       
                       return {
                           id: team.id,
