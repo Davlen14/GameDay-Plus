@@ -783,48 +783,42 @@ const BigTen = () => {
           setRankings([]);
       }
 
-      // Fetch team records for standings
+      // Fetch team records for standings - Using working approach from old project
       console.log("Fetching records for Big Ten teams...");
       
       try {
-          // Get team records using the correct method for each team
-          const standingsPromises = bigTenTeams.map(async (team) => {
-              try {
-                  const teamRecords = await teamService.getTeamRecords(team.school, 2024);
-                  const record = teamRecords[0] || {};
-                  
-                  return {
-                      id: team.id,
-                      school: team.school,
-                      mascot: team.mascot,
-                      logo: team.logos?.[0],
-                      color: team.color,
-                      conference: record.conferenceGames || { wins: 0, losses: 0, ties: 0 },
-                      overall: record.total || { wins: 0, losses: 0, ties: 0 },
-                      expectedWins: record.expectedWins,
-                      homeRecord: record.homeGames || { wins: 0, losses: 0, ties: 0 },
-                      awayRecord: record.awayGames || { wins: 0, losses: 0, ties: 0 },
-                      postseasonRecord: record.postseason,
-                      winPercentage: record.winPercentage || 0
-                  };
-              } catch (error) {
-                  console.error(`Error fetching records for ${team.school}:`, error);
-                  return {
-                      id: team.id,
-                      school: team.school,
-                      mascot: team.mascot,
-                      logo: team.logos?.[0],
-                      color: team.color,
-                      conference: { wins: 0, losses: 0, ties: 0 },
-                      overall: { wins: 0, losses: 0, ties: 0 },
-                      homeRecord: { wins: 0, losses: 0, ties: 0 },
-                      awayRecord: { wins: 0, losses: 0, ties: 0 },
-                      winPercentage: 0
-                  };
-              }
-          });
+          // First approach - try to get all records at once like in working version
+          const allRecords = await teamService.getTeamRecords(); // Get all records
+          console.log("All records fetched:", allRecords);
           
-          const standingsData = await Promise.all(standingsPromises);
+          // Map Big Ten teams with their records
+          const standingsData = bigTenTeams.map(team => {
+              // Find the record for this team using teamId like in working version
+              const teamRecord = allRecords.find(r => r.teamId === team.id) || {};
+              console.log(`Record for ${team.school}:`, teamRecord);
+              
+              return {
+                  id: team.id,
+                  school: team.school,
+                  mascot: team.mascot,
+                  logo: team.logos?.[0],
+                  color: team.color,
+                  conference: {
+                      wins: teamRecord.conferenceGames?.wins || 0,
+                      losses: teamRecord.conferenceGames?.losses || 0,
+                      ties: teamRecord.conferenceGames?.ties || 0
+                  },
+                  overall: {
+                      wins: teamRecord.total?.wins || 0,
+                      losses: teamRecord.total?.losses || 0,
+                      ties: teamRecord.total?.ties || 0
+                  },
+                  expectedWins: teamRecord.expectedWins,
+                  homeRecord: teamRecord.homeGames,
+                  awayRecord: teamRecord.awayGames,
+                  postseasonRecord: teamRecord.postseason
+              };
+          });
           
           // Sort by conference win percentage
           const sortedStandings = standingsData.sort((a, b) => {
@@ -846,8 +840,60 @@ const BigTen = () => {
           setStandings(sortedStandings);
           
       } catch (error) {
-          console.error("Error fetching standings:", error);
-          setStandings([]);
+          console.error("Error fetching all records:", error);
+          
+          // Fallback: Fetch individual team records like in working version
+          console.log("Falling back to individual record fetching...");
+          const fallbackStandings = await Promise.all(
+              bigTenTeams.map(async (team) => {
+                  try {
+                      const records = await teamService.getTeamRecords(team.id); // Use team.id not team.school
+                      console.log(`Records for ${team.school}:`, records);
+                      return {
+                          id: team.id,
+                          school: team.school,
+                          mascot: team.mascot,
+                          logo: team.logos?.[0],
+                          color: team.color,
+                          conference: {
+                              wins: records.conferenceGames?.wins || 0,
+                              losses: records.conferenceGames?.losses || 0,
+                              ties: records.conferenceGames?.ties || 0
+                          },
+                          overall: {
+                              wins: records.total?.wins || 0,
+                              losses: records.total?.losses || 0,
+                              ties: records.total?.ties || 0
+                          },
+                          expectedWins: records.expectedWins,
+                          homeRecord: records.homeGames,
+                          awayRecord: records.awayGames,
+                          postseasonRecord: records.postseason
+                      };
+                  } catch (error) {
+                      console.error(`Error fetching records for ${team.school}:`, error);
+                      return {
+                          id: team.id,
+                          school: team.school,
+                          mascot: team.mascot,
+                          logo: team.logos?.[0],
+                          color: team.color,
+                          conference: { wins: 0, losses: 0, ties: 0 },
+                          overall: { wins: 0, losses: 0, ties: 0 }
+                      };
+                  }
+              })
+          );
+          
+          // Sort and set the standings
+          const sortedFallback = fallbackStandings.sort((a, b) => {
+              const aWinPct = a.conference.wins / Math.max(1, (a.conference.wins + a.conference.losses));
+              const bWinPct = b.conference.wins / Math.max(1, (b.conference.wins + b.conference.losses));
+              return bWinPct - aWinPct;
+          });
+          
+          console.log("Fallback sorted standings:", sortedFallback);
+          setStandings(sortedFallback);
       }
 
       // Load recent games for Big Ten teams
@@ -1273,34 +1319,77 @@ const BigTen = () => {
                     Conference Standings
                   </h2>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {standings && standings.length > 0 ? standings.map((teamStanding, index) => {
-                      const team = teams.find(t => t.id === teamStanding.id || t.school === teamStanding.school);
-                      if (!team) return null;
-                      
-                      return (
-                        <TeamPerformanceCard
-                          key={team.id}
-                          team={team}
-                          rank={getTeamRank(team.id)}
-                          record={getTeamRecord(team.id)}
-                          eloRating={getTeamElo(team.school)}
-                          talentRating={getTeamTalent(team.school)}
-                          onTeamClick={handleTeamClick}
-                        />
-                      );
-                    }) : teams.map((team, index) => (
-                      <TeamPerformanceCard
-                        key={team.id}
-                        team={team}
-                        rank={getTeamRank(team.id)}
-                        record={getTeamRecord(team.id)}
-                        eloRating={getTeamElo(team.school)}
-                        talentRating={getTeamTalent(team.school)}
-                        onTeamClick={handleTeamClick}
-                      />
-                    ))}
-                  </div>
+                  {standings && standings.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b-2 border-gray-300">
+                            <th className="text-left py-3 px-4 font-bold text-gray-800">Team</th>
+                            <th className="text-center py-3 px-4 font-bold text-gray-800">Conference</th>
+                            <th className="text-center py-3 px-4 font-bold text-gray-800">Pct</th>
+                            <th className="text-center py-3 px-4 font-bold text-gray-800">Overall</th>
+                            <th className="text-center py-3 px-4 font-bold text-gray-800">Pct</th>
+                            <th className="text-center py-3 px-4 font-bold text-gray-800">Home</th>
+                            <th className="text-center py-3 px-4 font-bold text-gray-800">Away</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {standings.map((team, index) => {
+                            const confWinPct = team.conference.wins / Math.max(1, team.conference.wins + team.conference.losses + (team.conference.ties || 0));
+                            const overallWinPct = team.overall.wins / Math.max(1, team.overall.wins + team.overall.losses + (team.overall.ties || 0));
+                            
+                            return (
+                              <tr key={team.id} className={`border-b border-gray-200 hover:bg-white/20 transition-colors ${index % 2 === 0 ? 'bg-white/10' : ''}`}>
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center space-x-3">
+                                    <span className="text-sm font-bold text-gray-600">#{index + 1}</span>
+                                    <img 
+                                      src={team.logo || '/photos/ncaaf.png'} 
+                                      alt={team.school}
+                                      className="w-6 h-6 object-contain"
+                                      onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                                    />
+                                    <span className="font-semibold text-gray-800">{team.school}</span>
+                                  </div>
+                                </td>
+                                <td className="text-center py-3 px-4 font-medium text-gray-700">
+                                  {team.conference.wins}-{team.conference.losses}{team.conference.ties > 0 ? `-${team.conference.ties}` : ''}
+                                </td>
+                                <td className="text-center py-3 px-4 font-medium text-gray-700">
+                                  {(confWinPct * 100).toFixed(1)}%
+                                </td>
+                                <td className="text-center py-3 px-4 font-medium text-gray-700">
+                                  {team.overall.wins}-{team.overall.losses}{team.overall.ties > 0 ? `-${team.overall.ties}` : ''}
+                                </td>
+                                <td className="text-center py-3 px-4 font-medium text-gray-700">
+                                  {(overallWinPct * 100).toFixed(1)}%
+                                </td>
+                                <td className="text-center py-3 px-4 font-medium text-gray-700">
+                                  {team.homeRecord?.wins || 0}-{team.homeRecord?.losses || 0}
+                                </td>
+                                <td className="text-center py-3 px-4 font-medium text-gray-700">
+                                  {team.awayRecord?.wins || 0}-{team.awayRecord?.losses || 0}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center">
+                        <i className="fas fa-table text-2xl text-gray-400" />
+                      </div>
+                      <p className="text-gray-600 mb-4">No standings data available</p>
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+                      >
+                        Refresh Data
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1426,7 +1515,7 @@ const BigTen = () => {
 
             {/* Quick Stats */}
             <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
-              <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+              <div className="absolute inset-1 rounded-2xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
               
               <div className="relative z-10">
                 <h3 className="text-lg font-bold mb-4" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
@@ -1470,6 +1559,9 @@ const BigTen = () => {
         console.log("News:", news.length);
         console.log("Games:", games.length);
         console.log("Standings:", standings.length);
+        if (standings.length > 0) {
+          console.log("Sample standing:", standings[0]);
+        }
         console.log("==================");
         */}
       </div>
