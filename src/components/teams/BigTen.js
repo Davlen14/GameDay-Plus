@@ -787,8 +787,8 @@ const BigTen = () => {
       console.log("Fetching records for Big Ten teams...");
       
       try {
-          // First approach - try to get all records at once like in working version
-          const allRecords = await teamService.getTeamRecords(); // Get all records
+          // First approach - try to get all records at once using gameService
+          const allRecords = await gameService.getRecords(2024); // Get all records for 2024 season
           console.log("All records fetched:", allRecords);
           
           // Map Big Ten teams with their records
@@ -797,7 +797,8 @@ const BigTen = () => {
               const teamRecord = allRecords.find(r => 
                   r.team === team.school || 
                   r.team === team.displayName ||
-                  r.teamId === team.id
+                  r.school === team.school ||
+                  r.school === team.displayName
               ) || {};
               console.log(`Record for ${team.school}:`, teamRecord);
               
@@ -851,8 +852,12 @@ const BigTen = () => {
           const fallbackStandings = await Promise.all(
               bigTenTeams.map(async (team) => {
                   try {
-                      const records = await teamService.getTeamRecords(team.id); // Use team.id not team.school
+                      const records = await teamService.getTeamRecords(team.school, 2024); // Use team.school not team.id
                       console.log(`Records for ${team.school}:`, records);
+                      
+                      // Handle the array response from teamService.getTeamRecords
+                      const teamRecord = Array.isArray(records) ? records[0] : records;
+                      
                       return {
                           id: team.id,
                           school: team.school,
@@ -860,19 +865,19 @@ const BigTen = () => {
                           logo: team.logos?.[0],
                           color: team.color,
                           conference: {
-                              wins: records.conferenceGames?.wins || 0,
-                              losses: records.conferenceGames?.losses || 0,
-                              ties: records.conferenceGames?.ties || 0
+                              wins: teamRecord?.conferenceGames?.wins || 0,
+                              losses: teamRecord?.conferenceGames?.losses || 0,
+                              ties: teamRecord?.conferenceGames?.ties || 0
                           },
                           overall: {
-                              wins: records.total?.wins || 0,
-                              losses: records.total?.losses || 0,
-                              ties: records.total?.ties || 0
+                              wins: teamRecord?.total?.wins || 0,
+                              losses: teamRecord?.total?.losses || 0,
+                              ties: teamRecord?.total?.ties || 0
                           },
-                          expectedWins: records.expectedWins,
-                          homeRecord: records.homeGames,
-                          awayRecord: records.awayGames,
-                          postseasonRecord: records.postseason
+                          expectedWins: teamRecord?.expectedWins,
+                          homeRecord: teamRecord?.homeGames,
+                          awayRecord: teamRecord?.awayGames,
+                          postseasonRecord: teamRecord?.postseason
                       };
                   } catch (error) {
                       console.error(`Error fetching records for ${team.school}:`, error);
