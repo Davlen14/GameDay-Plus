@@ -1392,19 +1392,90 @@ const BigTen = () => {
                             // Determine trophy icon and colors based on performance
                             const isChampion = index === 0; // First place team
                             const isOhioState = team.school?.toLowerCase().includes('ohio state');
-                            const hasHighWinPct = confWinPct >= 0.7; // 70% or higher
-                            const isAbove500 = confWinPct > 0.5; // Above .500
-                            const isPoorRecord = confWinPct < 0.4; // Poor record
+                            
+                            // Performance-based color coding for ranks and percentages
+                            const isGoodRecord = confWinPct >= 0.7; // 70% or higher - Green
+                            const isPoorRecord = confWinPct < 0.4; // Below 40% - Red
+                            const isNeutralRecord = confWinPct >= 0.4 && confWinPct < 0.7; // 40-70% - Neutral
+                            
+                            // Overall performance for additional context
+                            const isGoodOverall = overallWinPct >= 0.7;
+                            const isPoorOverall = overallWinPct < 0.4;
+                            const isNeutralOverall = overallWinPct >= 0.4 && overallWinPct < 0.7;
+                            
+                            // Modern gradient definitions
+                            const greenGradient = 'linear-gradient(135deg, #10B981, #059669, #10B981)'; // Good performance
+                            const redGradient = 'linear-gradient(135deg, #EF4444, #DC2626, #EF4444)'; // Poor performance
+                            const neutralGradient = 'linear-gradient(135deg, #6B7280, #4B5563, #6B7280)'; // Average performance
+                            const goldGradient = 'linear-gradient(135deg, #FFD700, #FFA500, #FFD700)'; // Ohio State special
+                            const blueGradient = 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)'; // Champion special
                             
                             // Trophy and gradient styles as React style objects
                             let trophyIconStyle = {};
-                            let numberStyle = {};
+                            let confPercentageStyle = {};
+                            let overallPercentageStyle = {};
                             let rankStyle = {};
                             let showTrophy = false;
                             
+                            // Rank styling based on conference performance
+                            if (isGoodRecord) {
+                              rankStyle = { background: greenGradient };
+                            } else if (isPoorRecord) {
+                              rankStyle = { background: redGradient };
+                            } else {
+                              rankStyle = { background: neutralGradient };
+                            }
+                            
+                            // Conference percentage styling
+                            if (isGoodRecord) {
+                              confPercentageStyle = { 
+                                background: greenGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                            } else if (isPoorRecord) {
+                              confPercentageStyle = { 
+                                background: redGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                            } else {
+                              confPercentageStyle = { 
+                                background: neutralGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                            }
+                            
+                            // Overall percentage styling
+                            if (isGoodOverall) {
+                              overallPercentageStyle = { 
+                                background: greenGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                            } else if (isPoorOverall) {
+                              overallPercentageStyle = { 
+                                background: redGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                            } else {
+                              overallPercentageStyle = { 
+                                background: neutralGradient, 
+                                WebkitBackgroundClip: 'text', 
+                                WebkitTextFillColor: 'transparent', 
+                                backgroundClip: 'text' 
+                              };
+                            }
+                            
+                            // Special trophy logic for Ohio State and Champion
                             if (isOhioState) {
-                              // Gold gradient for Ohio State
-                              const goldGradient = 'linear-gradient(135deg, #FFD700, #FFA500, #FFD700)';
                               trophyIconStyle = { 
                                 background: goldGradient, 
                                 WebkitBackgroundClip: 'text', 
@@ -1412,19 +1483,8 @@ const BigTen = () => {
                                 backgroundClip: 'text',
                                 filter: 'drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4))'
                               };
-                              numberStyle = { 
-                                background: goldGradient, 
-                                WebkitBackgroundClip: 'text', 
-                                WebkitTextFillColor: 'transparent', 
-                                backgroundClip: 'text' 
-                              };
-                              rankStyle = { background: goldGradient };
                               showTrophy = true;
                             } else if (isChampion) {
-                              // Blue gradient for champion - only trophy is blue, numbers are green
-                              const blueGradient = 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)';
-                              const greenGradient = 'linear-gradient(135deg, #10B981, #059669, #10B981)';
-                              
                               trophyIconStyle = { 
                                 background: blueGradient, 
                                 WebkitBackgroundClip: 'text', 
@@ -1432,20 +1492,7 @@ const BigTen = () => {
                                 backgroundClip: 'text',
                                 filter: 'drop-shadow(0 2px 4px rgba(0, 136, 206, 0.4))'
                               };
-                              numberStyle = { 
-                                background: greenGradient, 
-                                WebkitBackgroundClip: 'text', 
-                                WebkitTextFillColor: 'transparent', 
-                                backgroundClip: 'text' 
-                              };
-                              rankStyle = { background: greenGradient };
                               showTrophy = true;
-                            } else {
-                              // Default black for all other teams - no special styling
-                              numberStyle = { 
-                                color: '#374151' // Default gray color for numbers
-                              };
-                              rankStyle = { background: 'linear-gradient(135deg, #374151, #1F2937, #374151)' };
                             }
                             
                             return (
@@ -1485,32 +1532,32 @@ const BigTen = () => {
                                   </div>
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium">
-                                  <span style={numberStyle}>
+                                  <span className="text-gray-800">
                                     {(team.conference?.wins || 0)}-{(team.conference?.losses || 0)}{(team.conference?.ties || 0) > 0 ? `-${team.conference.ties}` : ''}
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-bold">
-                                  <span style={numberStyle}>
+                                  <span style={confPercentageStyle}>
                                     {confTotal > 0 ? (confWinPct * 100).toFixed(1) : '0.0'}%
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium">
-                                  <span style={numberStyle}>
+                                  <span className="text-gray-800">
                                     {(team.overall?.wins || 0)}-{(team.overall?.losses || 0)}{(team.overall?.ties || 0) > 0 ? `-${team.overall.ties}` : ''}
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-bold">
-                                  <span style={numberStyle}>
+                                  <span style={overallPercentageStyle}>
                                     {overallTotal > 0 ? (overallWinPct * 100).toFixed(1) : '0.0'}%
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium">
-                                  <span style={numberStyle}>
+                                  <span className="text-gray-800">
                                     {team.homeRecord?.wins || 0}-{team.homeRecord?.losses || 0}
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium">
-                                  <span style={numberStyle}>
+                                  <span className="text-gray-800">
                                     {team.awayRecord?.wins || 0}-{team.awayRecord?.losses || 0}
                                   </span>
                                 </td>
