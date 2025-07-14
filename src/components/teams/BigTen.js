@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { teamService } from '../../services/teamService';
 import { gameService } from '../../services/gameService';
 import { rankingsService } from '../../services/rankingsService';
-import newsService from '../../services/newsService';
+import { newsService } from '../../services/newsService';
 
 // Fix for marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -616,13 +616,13 @@ const BigTen = () => {
 
       // Fetch news using the working approach from LatestUpdates component
       try {
-          console.log("Fetching news with general fetchNews method...");
-          const newsData = await newsService.fetchNews();
+          console.log("Fetching news with general getLatestNews method...");
+          const newsData = await newsService.getLatestNews();
           
-          if (newsData && newsData.articles && newsData.articles.length > 0) {
-              console.log("Successfully fetched news articles:", newsData.articles.length);
+          if (newsData && newsData.length > 0) {
+              console.log("Successfully fetched news articles:", newsData.length);
               // Sort by published date (newest first) if publishedAt exists
-              const sortedArticles = [...newsData.articles].sort((a, b) => {
+              const sortedArticles = [...newsData].sort((a, b) => {
                   if (a.publishedAt && b.publishedAt) {
                       return new Date(b.publishedAt) - new Date(a.publishedAt);
                   }
