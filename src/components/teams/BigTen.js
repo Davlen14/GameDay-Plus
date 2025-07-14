@@ -794,35 +794,14 @@ const BigTen = () => {
           
           // Map Big Ten teams with their records
           const standingsData = bigTenTeams.map(team => {
-              // Find the record for this team - try multiple field variations
+              // Find the record for this team using the correct field from API
               const teamRecord = allRecords?.find(r => {
-                  // Check various possible field names for team identification
-                  const recordTeam = r.team || r.school || r.teamName || r.name;
-                  return recordTeam === team.school || 
-                         recordTeam === team.displayName ||
-                         recordTeam === team.abbreviation ||
-                         recordTeam === team.mascot;
+                  return r.team === team.school || 
+                         r.team === team.displayName ||
+                         r.team === team.abbreviation;
               }) || {};
               
               console.log(`Record for ${team.school}:`, teamRecord);
-              console.log(`Available fields in record:`, Object.keys(teamRecord));
-              
-              // Try to extract wins/losses from various possible field structures
-              const getRecordData = (record, type) => {
-                  // Try different possible structures for records data
-                  if (record[type]) return record[type];
-                  if (record[`${type}Games`]) return record[`${type}Games`];
-                  if (record[`${type}_games`]) return record[`${type}_games`];
-                  if (record.games && record.games[type]) return record.games[type];
-                  
-                  // For overall/total records, try these variations
-                  if (type === 'total' || type === 'overall') {
-                      if (record.wins !== undefined) return { wins: record.wins, losses: record.losses, ties: record.ties || 0 };
-                      if (record.totalWins !== undefined) return { wins: record.totalWins, losses: record.totalLosses, ties: record.totalTies || 0 };
-                  }
-                  
-                  return { wins: 0, losses: 0, ties: 0 };
-              };
               
               return {
                   id: team.id,
@@ -830,27 +809,39 @@ const BigTen = () => {
                   mascot: team.mascot,
                   logo: team.logos?.[0],
                   color: team.color,
-                  conference: getRecordData(teamRecord, 'conference'),
-                  overall: getRecordData(teamRecord, 'total') || getRecordData(teamRecord, 'overall'),
+                  conference: teamRecord.conferenceGames || { wins: 0, losses: 0, ties: 0 },
+                  overall: teamRecord.total || { wins: 0, losses: 0, ties: 0 },
                   expectedWins: teamRecord.expectedWins,
-                  homeRecord: getRecordData(teamRecord, 'home'),
-                  awayRecord: getRecordData(teamRecord, 'away'),
-                  postseasonRecord: teamRecord.postseason
+                  homeRecord: teamRecord.homeGames || { wins: 0, losses: 0, ties: 0 },
+                  awayRecord: teamRecord.awayGames || { wins: 0, losses: 0, ties: 0 },
+                  postseasonRecord: teamRecord.postseason || { wins: 0, losses: 0, ties: 0 }
               };
           });
           
-          // Sort by conference win percentage
+          // Sort by conference win percentage (most wins first)
           const sortedStandings = standingsData.sort((a, b) => {
-              const aWinPct = a.conference.wins / Math.max(1, (a.conference.wins + a.conference.losses + a.conference.ties));
-              const bWinPct = b.conference.wins / Math.max(1, (b.conference.wins + b.conference.losses + b.conference.ties));
+              const aConfTotal = a.conference.wins + a.conference.losses + (a.conference.ties || 0);
+              const bConfTotal = b.conference.wins + b.conference.losses + (b.conference.ties || 0);
               
-              if (bWinPct !== aWinPct) {
+              const aWinPct = aConfTotal > 0 ? a.conference.wins / aConfTotal : 0;
+              const bWinPct = bConfTotal > 0 ? b.conference.wins / bConfTotal : 0;
+              
+              // First sort by conference win percentage
+              if (Math.abs(bWinPct - aWinPct) > 0.001) {
                   return bWinPct - aWinPct;
               }
               
-              // If tie in conference, sort by overall record
-              const aOverallWinPct = a.overall.wins / Math.max(1, (a.overall.wins + a.overall.losses + a.overall.ties));
-              const bOverallWinPct = b.overall.wins / Math.max(1, (b.overall.wins + b.overall.losses + b.overall.ties));
+              // If tied in conference percentage, sort by most conference wins
+              if (b.conference.wins !== a.conference.wins) {
+                  return b.conference.wins - a.conference.wins;
+              }
+              
+              // If still tied, sort by overall win percentage
+              const aOverallTotal = a.overall.wins + a.overall.losses + (a.overall.ties || 0);
+              const bOverallTotal = b.overall.wins + b.overall.losses + (b.overall.ties || 0);
+              
+              const aOverallWinPct = aOverallTotal > 0 ? a.overall.wins / aOverallTotal : 0;
+              const bOverallWinPct = bOverallTotal > 0 ? b.overall.wins / bOverallTotal : 0;
               
               return bOverallWinPct - aOverallWinPct;
           });
@@ -927,11 +918,26 @@ const BigTen = () => {
               })
           );
           
-          // Sort and set the standings
+          // Sort and set the standings with better ranking algorithm
           const sortedFallback = fallbackStandings.sort((a, b) => {
-              const aWinPct = a.conference.wins / Math.max(1, (a.conference.wins + a.conference.losses));
-              const bWinPct = b.conference.wins / Math.max(1, (b.conference.wins + b.conference.losses));
-              return bWinPct - aWinPct;
+              const aConfTotal = a.conference.wins + a.conference.losses + (a.conference.ties || 0);
+              const bConfTotal = b.conference.wins + b.conference.losses + (b.conference.ties || 0);
+              
+              const aWinPct = aConfTotal > 0 ? a.conference.wins / aConfTotal : 0;
+              const bWinPct = bConfTotal > 0 ? b.conference.wins / bConfTotal : 0;
+              
+              // First sort by conference win percentage
+              if (Math.abs(bWinPct - aWinPct) > 0.001) {
+                  return bWinPct - aWinPct;
+              }
+              
+              // If tied, sort by most conference wins
+              if (b.conference.wins !== a.conference.wins) {
+                  return b.conference.wins - a.conference.wins;
+              }
+              
+              // If still tied, sort by overall wins
+              return b.overall.wins - a.overall.wins;
           });
           
           console.log("Fallback sorted standings:", sortedFallback);
@@ -1377,8 +1383,11 @@ const BigTen = () => {
                         </thead>
                         <tbody>
                           {standings.map((team, index) => {
-                            const confWinPct = team.conference.wins / Math.max(1, team.conference.wins + team.conference.losses + (team.conference.ties || 0));
-                            const overallWinPct = team.overall.wins / Math.max(1, team.overall.wins + team.overall.losses + (team.overall.ties || 0));
+                            const confTotal = (team.conference?.wins || 0) + (team.conference?.losses || 0) + (team.conference?.ties || 0);
+                            const overallTotal = (team.overall?.wins || 0) + (team.overall?.losses || 0) + (team.overall?.ties || 0);
+                            
+                            const confWinPct = confTotal > 0 ? (team.conference?.wins || 0) / confTotal : 0;
+                            const overallWinPct = overallTotal > 0 ? (team.overall?.wins || 0) / overallTotal : 0;
                             
                             return (
                               <tr key={team.id} className={`border-b border-gray-200 hover:bg-white/20 transition-colors ${index % 2 === 0 ? 'bg-white/10' : ''}`}>
@@ -1395,16 +1404,16 @@ const BigTen = () => {
                                   </div>
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {team.conference.wins}-{team.conference.losses}{team.conference.ties > 0 ? `-${team.conference.ties}` : ''}
+                                  {(team.conference?.wins || 0)}-{(team.conference?.losses || 0)}{(team.conference?.ties || 0) > 0 ? `-${team.conference.ties}` : ''}
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {(confWinPct * 100).toFixed(1)}%
+                                  {confTotal > 0 ? (confWinPct * 100).toFixed(1) : '0.0'}%
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {team.overall.wins}-{team.overall.losses}{team.overall.ties > 0 ? `-${team.overall.ties}` : ''}
+                                  {(team.overall?.wins || 0)}-{(team.overall?.losses || 0)}{(team.overall?.ties || 0) > 0 ? `-${team.overall.ties}` : ''}
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium text-gray-700">
-                                  {(overallWinPct * 100).toFixed(1)}%
+                                  {overallTotal > 0 ? (overallWinPct * 100).toFixed(1) : '0.0'}%
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium text-gray-700">
                                   {team.homeRecord?.wins || 0}-{team.homeRecord?.losses || 0}
