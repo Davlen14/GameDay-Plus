@@ -49,7 +49,7 @@ const MapControl = ({ teams, onTeamClick }) => {
             
             div.innerHTML = `
                 <div style="position: relative; z-index: 10;">
-                    <h4 style="margin: 0 0 12px 0; font-weight: bold; background: linear-gradient(135deg, #000000, #555555, #000000); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    <h4 style="margin: 0 0 12px 0; font-weight: bold; background: linear-gradient(135deg, #0088ce, #0066a3, #0088ce); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                         Big Ten Teams
                     </h4>
                     <p style="margin: 0; font-size: 12px; color: #666;">
@@ -94,6 +94,230 @@ const StarRating = ({ rating }) => {
     }
     
     return <div className="flex items-center space-x-1">{stars}</div>;
+};
+
+// Team Performance Card Component
+const TeamPerformanceCard = ({ team, rank, record, eloRating, talentRating, onTeamClick }) => {
+    return (
+        <div 
+            className="relative bg-white/30 backdrop-blur-xl rounded-xl border border-white/40 p-4 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)] cursor-pointer hover:bg-white/40 transition-all duration-300"
+            onClick={() => onTeamClick && onTeamClick(team.id)}
+        >
+            <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+            
+            <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                        {rank && (
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)' }}>
+                                {rank}
+                            </div>
+                        )}
+                        <div className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center overflow-hidden">
+                            <img 
+                                src={team.logos?.[0] || '/photos/ncaaf.png'} 
+                                alt={team.school}
+                                className="w-8 h-8 object-contain"
+                                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                            />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-800 text-sm">{team.school}</h4>
+                            <p className="text-xs text-gray-600">{team.abbreviation}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="text-right">
+                        <div className="text-sm font-bold text-gray-800">
+                            {record ? `${record.wins}-${record.losses}` : 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-500">Record</div>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div className="text-center">
+                        <div className="font-semibold text-gray-700">{eloRating?.toFixed(0) || 'N/A'}</div>
+                        <div className="text-gray-500">ELO Rating</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="font-semibold text-gray-700">{talentRating?.toFixed(1) || 'N/A'}</div>
+                        <div className="text-gray-500">Talent</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Recent Games Component
+const RecentGames = ({ games, teams, getTeamLogo, getTeamAbbreviation }) => {
+    const formatGameDate = (dateString) => {
+        if (!dateString) return 'TBD';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric'
+        });
+    };
+
+    const getGameStatus = (game) => {
+        if (game.completed) return 'Final';
+        if (game.start_date) {
+            const gameDate = new Date(game.start_date);
+            const now = new Date();
+            if (gameDate > now) return 'Upcoming';
+            return 'In Progress';
+        }
+        return 'Scheduled';
+    };
+
+    if (!games || games.length === 0) {
+        return (
+            <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center">
+                    <i className="fas fa-calendar-alt text-2xl text-gray-400" />
+                </div>
+                <p className="text-gray-600">No recent games found</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            {games.slice(0, 8).map((game, index) => (
+                <div key={index} className="relative bg-white/30 backdrop-blur-xl rounded-xl border border-white/40 p-4">
+                    <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                    
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-2">
+                                    <img 
+                                        src={getTeamLogo(game.away_id || game.awayId)} 
+                                        alt="Away Team"
+                                        className="w-6 h-6 object-contain"
+                                        onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                                    />
+                                    <span className="font-medium text-sm text-gray-800">
+                                        {getTeamAbbreviation(game.away_id || game.awayId, 'AWAY')}
+                                    </span>
+                                </div>
+                                
+                                <span className="text-gray-500 text-sm">@</span>
+                                
+                                <div className="flex items-center space-x-2">
+                                    <img 
+                                        src={getTeamLogo(game.home_id || game.homeId)} 
+                                        alt="Home Team"
+                                        className="w-6 h-6 object-contain"
+                                        onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                                    />
+                                    <span className="font-medium text-sm text-gray-800">
+                                        {getTeamAbbreviation(game.home_id || game.homeId, 'HOME')}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className="text-right">
+                                <div className="text-xs font-semibold text-gray-700">
+                                    {getGameStatus(game)}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                    {formatGameDate(game.start_date)}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {game.completed && (game.away_points !== undefined || game.home_points !== undefined) && (
+                            <div className="flex justify-center space-x-4 text-lg font-bold">
+                                <span className="text-gray-800">{game.away_points || 0}</span>
+                                <span className="text-gray-500">-</span>
+                                <span className="text-gray-800">{game.home_points || 0}</span>
+                            </div>
+                        )}
+                        
+                        {game.venue && (
+                            <div className="text-xs text-gray-500 text-center mt-2">
+                                <i className="fas fa-map-marker-alt mr-1" />
+                                {game.venue}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+// Conference News Component
+const ConferenceNews = ({ news }) => {
+    const formatNewsDate = (dateString) => {
+        if (!dateString) return 'Recently';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) return '1 day ago';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    if (!news || news.length === 0) {
+        return (
+            <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center">
+                    <i className="fas fa-newspaper text-2xl text-gray-400" />
+                </div>
+                <p className="text-gray-600">No recent news found</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            {news.slice(0, 6).map((article, index) => (
+                <div key={index} className="relative bg-white/30 backdrop-blur-xl rounded-xl border border-white/40 p-4">
+                    <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                    
+                    <div className="relative z-10">
+                        <div className="flex items-start space-x-4">
+                            {article.image && (
+                                <div className="flex-shrink-0">
+                                    <img 
+                                        src={article.image} 
+                                        alt={article.title}
+                                        className="w-16 h-16 object-cover rounded-lg"
+                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
+                                </div>
+                            )}
+                            
+                            <div className="flex-1 min-w-0">
+                                <h4 className="font-bold text-gray-800 text-sm mb-2 line-clamp-2">
+                                    {article.title}
+                                </h4>
+                                
+                                {article.description && (
+                                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                                        {article.description}
+                                    </p>
+                                )}
+                                
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-500">{article.source || 'Big Ten Network'}</span>
+                                    <span className="text-gray-400">{formatNewsDate(article.date)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
 };
 
 // Interactive Conference Map Component
@@ -625,11 +849,11 @@ const BigTen = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="relative">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent mx-auto" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent mx-auto" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)' }}></div>
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-300 border-t-transparent absolute top-0 left-1/2 transform -translate-x-1/2"></div>
             </div>
             <div className="mt-6 space-y-2">
-              <p className="text-xl font-bold" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              <p className="text-xl font-bold" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 Loading Big Ten Conference...
               </p>
               <p className="text-gray-600">Fetching conference data</p>
@@ -651,7 +875,7 @@ const BigTen = () => {
               <button 
                 onClick={loadBigTenData}
                 className="mt-4 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
-                style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}
+                style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)' }}
               >
                 Try Again
               </button>
@@ -667,16 +891,16 @@ const BigTen = () => {
       {/* Custom CSS Styles */}
       <style jsx>{`
         .gradient-bg {
-          background: linear-gradient(135deg, #000000, #555555, #000000);
+          background: linear-gradient(135deg, #0088ce, #0066a3, #0088ce);
         }
         .gradient-text {
-          background: linear-gradient(135deg, #000000, #555555, #000000);
+          background: linear-gradient(135deg, #0088ce, #0066a3, #0088ce);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
         .icon-gradient {
-          background: linear-gradient(135deg, #000000, #555555, #000000);
+          background: linear-gradient(135deg, #0088ce, #0066a3, #0088ce);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -750,10 +974,10 @@ const BigTen = () => {
 
       {/* Floating Orbs Background - Big Ten themed */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}></div>
-        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', animationDelay: '1s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', animationDelay: '2s' }}></div>
-        <div className="absolute bottom-20 right-1/3 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', animationDelay: '3s' }}></div>
+        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)' }}></div>
+        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', animationDelay: '1s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', animationDelay: '2s' }}></div>
+        <div className="absolute bottom-20 right-1/3 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', animationDelay: '3s' }}></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -768,30 +992,30 @@ const BigTen = () => {
               <div className="relative w-16 h-16 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_10px_30px_rgba(0,0,0,0.1)] flex items-center justify-center">
                 {/* Liquid glass highlight */}
                 <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/60 via-transparent to-transparent"></div>
-                <i className="fas fa-trophy text-3xl relative z-10 drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
+                <i className="fas fa-trophy text-3xl relative z-10 drop-shadow-lg" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}></i>
               </div>
               {/* Floating particles */}
-              <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}></div>
-              <div className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full opacity-40 animate-ping animation-delay-500" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}></div>
+              <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full opacity-60 animate-ping" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)' }}></div>
+              <div className="absolute -bottom-2 -left-2 w-2 h-2 rounded-full opacity-40 animate-ping animation-delay-500" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)' }}></div>
             </div>
           </div>
           
           {/* Enhanced Title with Liquid Glass Effect */}
           <div className="relative mb-8">
             <h1 className="text-6xl md:text-7xl font-black mb-6 relative">
-              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Big Ten</span>
+              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Big Ten</span>
               <br />
-              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Conference</span>
+              <span className="drop-shadow-2xl" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Conference</span>
               {/* Animated underline */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-1 rounded-full opacity-60 animate-pulse" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}></div>
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-1 rounded-full opacity-60 animate-pulse" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)' }}></div>
             </h1>
           </div>
           
           {/* Stats Badge with Liquid Glass */}
           <div className="inline-flex items-center space-x-4 px-8 py-4 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2),0_15px_35px_rgba(0,0,0,0.1)]">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}></div>
-              <span className="text-lg font-bold" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{teams.length} Teams</span>
+              <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)' }}></div>
+              <span className="text-lg font-bold" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{teams.length} Teams</span>
             </div>
             <div className="w-px h-6 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
             <span className="text-lg text-gray-700 font-medium">2024 Season</span>
@@ -802,7 +1026,7 @@ const BigTen = () => {
         <div className="relative mb-8">
           <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
             {/* Highlight overlay */}
-            <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            <div className="absolute inset-1 rounded-2xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
             
             <div className="relative z-10">
               <div className="flex flex-wrap items-center gap-4 justify-center">
@@ -818,7 +1042,7 @@ const BigTen = () => {
                   >
                     {/* Active gradient background */}
                     {selectedCategory === category && (
-                      <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)]" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)' }}></div>
+                      <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)]" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)' }}></div>
                     )}
                     
                     {/* Inactive glass background */}
@@ -844,7 +1068,7 @@ const BigTen = () => {
             {selectedCategory === 'Map' && (
               <div>
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold mb-4" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  <h2 className="text-2xl font-bold mb-4" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     Big Ten Conference Map
                   </h2>
                   <ConferenceMap 
@@ -860,7 +1084,7 @@ const BigTen = () => {
                   <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                   
                   <div className="relative z-10">
-                    <h3 className="text-lg font-bold mb-4" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    <h3 className="text-lg font-bold mb-4" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       Quick Navigation
                     </h3>
                     
@@ -908,7 +1132,7 @@ const BigTen = () => {
                 <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                 
                 <div className="relative z-10">
-                  <h2 className="text-2xl font-bold mb-6" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  <h2 className="text-2xl font-bold mb-6" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     Team Talent Rankings
                   </h2>
                   
@@ -925,7 +1149,7 @@ const BigTen = () => {
                 <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                 
                 <div className="relative z-10">
-                  <h2 className="text-2xl font-bold mb-6" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  <h2 className="text-2xl font-bold mb-6" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     Top Recruits
                   </h2>
                   
@@ -939,7 +1163,7 @@ const BigTen = () => {
                 <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                 
                 <div className="relative z-10">
-                  <h2 className="text-2xl font-bold mb-6" style={{ background: 'linear-gradient(135deg, #000000, #555555, #000000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  <h2 className="text-2xl font-bold mb-6" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     Conference Standings
                   </h2>
                   
