@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import teamService from '../../services/teamService';
-import gameService from '../../services/gameService';
-import rankingsService from '../../services/rankingsService';
+import { teamService } from '../../services/teamService';
+import { gameService } from '../../services/gameService';
+import { rankingsService } from '../../services/rankingsService';
 
 // Fix for marker icons
 delete L.Icon.Default.prototype._getIconUrl;
