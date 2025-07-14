@@ -557,9 +557,9 @@ const BigTen = () => {
   const [mapCenter, setMapCenter] = useState([41.0, -85.0]);
   const [mapZoom, setMapZoom] = useState(6);
 
-  // Big Ten team IDs with their approximate locations
+  // Big Ten team IDs - correct 18 teams
   const bigTenTeamIds = [
-    2, 130, 135, 158, 193, 213, 239, 253, 254, 269, 275, 294, 329, 331, 356, 371, 405, 419
+    130, 135, 158, 193, 213, 239, 253, 254, 269, 275, 294, 329, 331, 356, 371, 405, 419, 2
   ];
 
   // Big Ten team locations (you can adjust these coordinates)
@@ -595,11 +595,18 @@ const BigTen = () => {
     setErrorMessage(null);
 
     try {
-      // Load all teams first
+      // Load all teams first - ensuring we get exactly 18 Big Ten teams
       const allTeams = await teamService.getFBSTeams(true);
+      
+      // Filter for Big Ten teams only using the correct IDs
       const bigTenTeams = allTeams.filter(team => 
-        team.conference === 'Big Ten' || bigTenTeamIds.includes(team.id)
+        bigTenTeamIds.includes(team.id)
       );
+      
+      // Ensure we have exactly 18 teams
+      if (bigTenTeams.length !== 18) {
+        console.warn(`Expected 18 Big Ten teams, found ${bigTenTeams.length}`);
+      }
       
       // Add location data to teams
       const teamsWithLocations = bigTenTeams.map(team => ({
@@ -774,14 +781,67 @@ const BigTen = () => {
       ];
       setRecruits(mockRecruits);
 
-      // Enhanced mock talent ratings with more realistic data
-      const mockTalent = bigTenTeams.map((team, index) => ({
-        school: team.school,
-        talent: Math.random() * 150 + 850, // Range 850-1000
-        elo: Math.random() * 400 + 1600 // Range 1600-2000
-      })).sort((a, b) => b.talent - a.talent); // Sort by talent descending
+      // Big Ten specific talent ratings based on actual teams
+      const mockTalent = bigTenTeams.map((team, index) => {
+        // Assign realistic talent scores based on typical Big Ten hierarchy
+        let baseScore;
+        const teamName = team.school.toLowerCase();
+        
+        if (teamName.includes('ohio state') || teamName.includes('michigan')) {
+          baseScore = 950 + Math.random() * 40; // Top tier: 950-990
+        } else if (teamName.includes('penn state') || teamName.includes('wisconsin') || teamName.includes('oregon')) {
+          baseScore = 920 + Math.random() * 30; // Second tier: 920-950
+        } else if (teamName.includes('iowa') || teamName.includes('minnesota') || teamName.includes('nebraska') || teamName.includes('ucla') || teamName.includes('usc') || teamName.includes('washington')) {
+          baseScore = 890 + Math.random() * 30; // Third tier: 890-920
+        } else {
+          baseScore = 850 + Math.random() * 40; // Fourth tier: 850-890
+        }
+        
+        return {
+          school: team.school,
+          talent: Math.min(Math.max(baseScore, 850), 1000), // Keep within realistic bounds
+          elo: baseScore + Math.random() * 100 - 50 // ELO similar to talent but with some variance
+        };
+      }).sort((a, b) => b.talent - a.talent); // Sort by talent descending
       
       setTeamTalent(mockTalent);
+
+      // Generate realistic standings based on talent
+      const mockStandings = bigTenTeams.map((team, index) => {
+        const teamTalentData = mockTalent.find(t => t.school === team.school);
+        const talentScore = teamTalentData?.talent || 850;
+        
+        // Base wins on talent with some randomness
+        let baseWins;
+        if (talentScore >= 950) {
+          baseWins = 9 + Math.floor(Math.random() * 4); // 9-12 wins
+        } else if (talentScore >= 920) {
+          baseWins = 7 + Math.floor(Math.random() * 4); // 7-10 wins
+        } else if (talentScore >= 890) {
+          baseWins = 5 + Math.floor(Math.random() * 4); // 5-8 wins
+        } else {
+          baseWins = 2 + Math.floor(Math.random() * 5); // 2-6 wins
+        }
+        
+        const wins = Math.min(baseWins, 12);
+        const losses = 12 - wins;
+        const confWins = Math.floor(wins * 0.7); // Roughly 70% of wins are conference
+        const confLosses = 9 - confWins; // 9 conference games
+        
+        return {
+          team: team.school,
+          wins,
+          losses,
+          ties: 0,
+          confWins,
+          confLosses,
+          confTies: 0,
+          winPct: wins / (wins + losses),
+          confWinPct: confWins / (confWins + confLosses)
+        };
+      }).sort((a, b) => b.confWinPct - a.confWinPct || b.winPct - a.winPct);
+      
+      setStandings(mockStandings);
 
     } catch (error) {
       setErrorMessage(error.message);
