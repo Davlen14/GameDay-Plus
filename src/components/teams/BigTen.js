@@ -1398,7 +1398,7 @@ const BigTen = () => {
                             
                             // Trophy and gradient styles as React style objects
                             let trophyIconStyle = {};
-                            let textStyle = {};
+                            let numberStyle = {};
                             let rankStyle = {};
                             let showTrophy = false;
                             
@@ -1412,7 +1412,7 @@ const BigTen = () => {
                                 backgroundClip: 'text',
                                 filter: 'drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4))'
                               };
-                              textStyle = { 
+                              numberStyle = { 
                                 background: goldGradient, 
                                 WebkitBackgroundClip: 'text', 
                                 WebkitTextFillColor: 'transparent', 
@@ -1421,8 +1421,10 @@ const BigTen = () => {
                               rankStyle = { background: goldGradient };
                               showTrophy = true;
                             } else if (isChampion) {
-                              // Blue gradient for champion
+                              // Blue gradient for champion - only trophy is blue, numbers are green
                               const blueGradient = 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)';
+                              const greenGradient = 'linear-gradient(135deg, #10B981, #059669, #10B981)';
+                              
                               trophyIconStyle = { 
                                 background: blueGradient, 
                                 WebkitBackgroundClip: 'text', 
@@ -1430,52 +1432,20 @@ const BigTen = () => {
                                 backgroundClip: 'text',
                                 filter: 'drop-shadow(0 2px 4px rgba(0, 136, 206, 0.4))'
                               };
-                              textStyle = { 
-                                background: blueGradient, 
-                                WebkitBackgroundClip: 'text', 
-                                WebkitTextFillColor: 'transparent', 
-                                backgroundClip: 'text' 
-                              };
-                              rankStyle = { background: blueGradient };
-                              showTrophy = true;
-                            } else if (hasHighWinPct || isAbove500) {
-                              // Green gradient for good records
-                              const greenGradient = 'linear-gradient(135deg, #10B981, #059669, #10B981)';
-                              trophyIconStyle = { 
-                                background: greenGradient, 
-                                WebkitBackgroundClip: 'text', 
-                                WebkitTextFillColor: 'transparent', 
-                                backgroundClip: 'text',
-                                filter: 'drop-shadow(0 2px 4px rgba(16, 185, 129, 0.4))'
-                              };
-                              textStyle = { 
+                              numberStyle = { 
                                 background: greenGradient, 
                                 WebkitBackgroundClip: 'text', 
                                 WebkitTextFillColor: 'transparent', 
                                 backgroundClip: 'text' 
                               };
                               rankStyle = { background: greenGradient };
-                              showTrophy = hasHighWinPct; // Only show trophy for 70%+ win rate
-                            } else if (isPoorRecord) {
-                              // Red gradient for poor records
-                              const redGradient = 'linear-gradient(135deg, #EF4444, #DC2626, #EF4444)';
-                              textStyle = { 
-                                background: redGradient, 
-                                WebkitBackgroundClip: 'text', 
-                                WebkitTextFillColor: 'transparent', 
-                                backgroundClip: 'text' 
-                              };
-                              rankStyle = { background: redGradient };
+                              showTrophy = true;
                             } else {
-                              // Default black gradient for neutral
-                              const blackGradient = 'linear-gradient(135deg, #374151, #1F2937, #374151)';
-                              textStyle = { 
-                                background: blackGradient, 
-                                WebkitBackgroundClip: 'text', 
-                                WebkitTextFillColor: 'transparent', 
-                                backgroundClip: 'text' 
+                              // Default black for all other teams - no special styling
+                              numberStyle = { 
+                                color: '#374151' // Default gray color for numbers
                               };
-                              rankStyle = { background: blackGradient };
+                              rankStyle = { background: 'linear-gradient(135deg, #374151, #1F2937, #374151)' };
                             }
                             
                             return (
@@ -1508,40 +1478,39 @@ const BigTen = () => {
                                       onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                                     />
                                     <span 
-                                      className="font-semibold text-lg"
-                                      style={textStyle}
+                                      className="font-semibold text-lg text-gray-800"
                                     >
                                       {team.school}
                                     </span>
                                   </div>
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium">
-                                  <span style={textStyle}>
+                                  <span style={numberStyle}>
                                     {(team.conference?.wins || 0)}-{(team.conference?.losses || 0)}{(team.conference?.ties || 0) > 0 ? `-${team.conference.ties}` : ''}
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-bold">
-                                  <span style={textStyle}>
+                                  <span style={numberStyle}>
                                     {confTotal > 0 ? (confWinPct * 100).toFixed(1) : '0.0'}%
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium">
-                                  <span style={textStyle}>
+                                  <span style={numberStyle}>
                                     {(team.overall?.wins || 0)}-{(team.overall?.losses || 0)}{(team.overall?.ties || 0) > 0 ? `-${team.overall.ties}` : ''}
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-bold">
-                                  <span style={textStyle}>
+                                  <span style={numberStyle}>
                                     {overallTotal > 0 ? (overallWinPct * 100).toFixed(1) : '0.0'}%
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium">
-                                  <span style={textStyle}>
+                                  <span style={numberStyle}>
                                     {team.homeRecord?.wins || 0}-{team.homeRecord?.losses || 0}
                                   </span>
                                 </td>
                                 <td className="text-center py-3 px-4 font-medium">
-                                  <span style={textStyle}>
+                                  <span style={numberStyle}>
                                     {team.awayRecord?.wins || 0}-{team.awayRecord?.losses || 0}
                                   </span>
                                 </td>
