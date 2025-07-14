@@ -793,8 +793,12 @@ const BigTen = () => {
           
           // Map Big Ten teams with their records
           const standingsData = bigTenTeams.map(team => {
-              // Find the record for this team using teamId like in working version
-              const teamRecord = allRecords.find(r => r.teamId === team.id) || {};
+              // Find the record for this team using the "team" property from API response
+              const teamRecord = allRecords.find(r => 
+                  r.team === team.school || 
+                  r.team === team.displayName ||
+                  r.teamId === team.id
+              ) || {};
               console.log(`Record for ${team.school}:`, teamRecord);
               
               return {
