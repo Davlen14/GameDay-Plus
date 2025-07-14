@@ -5,7 +5,6 @@ import 'leaflet/dist/leaflet.css';
 import { teamService } from '../../services/teamService';
 import { gameService } from '../../services/gameService';
 import { rankingsService } from '../../services/rankingsService';
-import teamsService from '../../services/teamsService';
 import newsService from '../../services/newsService';
 
 // Fix for marker icons
@@ -573,7 +572,7 @@ const BigTen = () => {
       console.log("Starting data fetch process...");
       
       // Fetch teams using the proper service that filters by conference
-      const allTeams = await teamsService.getTeams();
+      const allTeams = await teamService.getTeams();
       const bigTenTeams = allTeams.filter(team => team.conference === "Big Ten");
       const teamsWithLocations = bigTenTeams.filter(team =>
           team.location && team.location.latitude && team.location.longitude
@@ -595,7 +594,7 @@ const BigTen = () => {
       // Fetch team talent data
       try {
           console.log("Fetching team talent data");
-          const talentData = await teamsService.getTeamTalent();
+          const talentData = await teamService.getTeamTalent();
           
           if (talentData && talentData.length > 0) {
               // Filter for Big Ten teams and sort by talent score (highest to lowest)
@@ -641,31 +640,35 @@ const BigTen = () => {
 
       // Fetch top recruits
       try {
-          const recruitsData = await teamsService.getAllRecruits();
+          const recruitsData = await teamService.getRecruitingRankings();
           if (recruitsData && recruitsData.length > 0) {
-              // Filter for Big Ten recruits and sort by stars/rating
+              // Filter for Big Ten recruits and sort by rank (lower rank is better)
               const bigTenRecruits = recruitsData
                   .filter(recruit => 
-                      recruit.committedTo && 
                       bigTenTeams.some(t => 
-                          t.school === recruit.committedTo || 
-                          t.mascot === recruit.committedTo
+                          t.school === recruit.team || 
+                          t.mascot === recruit.team
                       )
                   )
-                  .sort((a, b) => b.rating - a.rating)
+                  .sort((a, b) => a.rank - b.rank)
                   .slice(0, 20); // Show top 20 recruits
               
-              // Add team logo URLs to each recruit
-              const recruitsWithLogos = bigTenRecruits.map(recruit => {
-                  const team = bigTenTeams.find(t => 
-                      t.school === recruit.committedTo || 
-                      t.mascot === recruit.committedTo
-                  );
-                  return {
-                      ...recruit,
-                      teamLogo: team?.logos?.[0] || null
-                  };
-              });
+              // Transform recruiting rankings to look like individual recruits
+              const recruitsWithLogos = bigTenRecruits.map(recruit => ({
+                  name: `${recruit.team} Class`,
+                  team: recruit.team,
+                  position: 'CLASS',
+                  rating: 5 - (recruit.rank / 20), // Convert rank to star rating
+                  year: new Date().getFullYear(),
+                  school: 'Various High Schools',
+                  city: 'National',
+                  state: 'USA',
+                  height: '6-2',
+                  weight: '200',
+                  committedTo: recruit.team,
+                  rank: recruit.rank,
+                  points: recruit.points
+              }));
               
               setRecruits(recruitsWithLogos);
           }
@@ -678,7 +681,7 @@ const BigTen = () => {
       console.log("Fetching records for Big Ten teams...");
       
       try {
-          const allRecords = await teamsService.getTeamRecords(); // Get all records
+          const allRecords = await teamService.getTeamRecords(); // Get all records
           console.log("All records fetched:", allRecords);
           
           // Map Big Ten teams with their records
