@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle, faApple, faFacebook } from '@fortawesome/free-brands-svg-icons';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { teamService } from '../../services/teamService';
 import './LoginPage.css';
 
 const LoginPage = () => {
@@ -23,26 +24,33 @@ const LoginPage = () => {
   const [teamSearch, setTeamSearch] = useState('');
   const [signupStep, setSignupStep] = useState(1); // 1 = basic info, 2 = team selection
   const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
-  
-  // Enhanced FBS teams data with more teams and better logos
-  const fbsTeams = [
-    { id: 1, school: 'Alabama', mascot: 'Crimson Tide', conference: 'SEC', logo: '/team_logos/alabama.png', color: '#9E1B32', altColor: '#FFFFFF' },
-    { id: 2, school: 'Georgia', mascot: 'Bulldogs', conference: 'SEC', logo: '/team_logos/georgia.png', color: '#BA0C2F', altColor: '#000000' },
-    { id: 3, school: 'Ohio State', mascot: 'Buckeyes', conference: 'Big Ten', logo: '/team_logos/ohio-state.png', color: '#BB0000', altColor: '#FFFFFF' },
-    { id: 4, school: 'Michigan', mascot: 'Wolverines', conference: 'Big Ten', logo: '/team_logos/michigan.png', color: '#00274C', altColor: '#FFCB05' },
-    { id: 5, school: 'Texas', mascot: 'Longhorns', conference: 'Big 12', logo: '/team_logos/texas.png', color: '#BF5700', altColor: '#FFFFFF' },
-    { id: 6, school: 'Oklahoma', mascot: 'Sooners', conference: 'Big 12', logo: '/team_logos/oklahoma.png', color: '#841617', altColor: '#FDF5E6' },
-    { id: 7, school: 'Clemson', mascot: 'Tigers', conference: 'ACC', logo: '/team_logos/clemson.png', color: '#F56600', altColor: '#522D80' },
-    { id: 8, school: 'Florida State', mascot: 'Seminoles', conference: 'ACC', logo: '/team_logos/florida-state.png', color: '#782F40', altColor: '#CEB888' },
-    { id: 9, school: 'USC', mascot: 'Trojans', conference: 'Pac-12', logo: '/team_logos/usc.png', color: '#990000', altColor: '#FFCC00' },
-    { id: 10, school: 'Oregon', mascot: 'Ducks', conference: 'Pac-12', logo: '/team_logos/oregon.png', color: '#154734', altColor: '#FEE123' },
-    { id: 11, school: 'Notre Dame', mascot: 'Fighting Irish', conference: 'FBS Independents', logo: '/team_logos/notre-dame.png', color: '#0C2340', altColor: '#C99700' },
-    { id: 12, school: 'LSU', mascot: 'Tigers', conference: 'SEC', logo: '/team_logos/lsu.png', color: '#461D7C', altColor: '#FDD023' },
-    { id: 13, school: 'Florida', mascot: 'Gators', conference: 'SEC', logo: '/team_logos/florida.png', color: '#0021A5', altColor: '#FA4616' },
-    { id: 14, school: 'Penn State', mascot: 'Nittany Lions', conference: 'Big Ten', logo: '/team_logos/penn-state.png', color: '#041E42', altColor: '#FFFFFF' },
-    { id: 15, school: 'Miami', mascot: 'Hurricanes', conference: 'ACC', logo: '/team_logos/miami.png', color: '#F47321', altColor: '#005030' },
-    // Add more teams as needed
-  ];
+  const [fbsTeams, setFbsTeams] = useState([]);
+  const [teamsLoading, setTeamsLoading] = useState(false);
+
+  // Load real FBS teams data
+  useEffect(() => {
+    const loadTeams = async () => {
+      if (signupStep === 2 && fbsTeams.length === 0) {
+        setTeamsLoading(true);
+        try {
+          const realTeams = await teamService.getFBSTeams(true);
+          const filteredTeams = realTeams.filter(team => team.school);
+          setFbsTeams(filteredTeams);
+        } catch (error) {
+          console.error('Error loading teams:', error);
+          // Fallback to a few basic teams if API fails
+          setFbsTeams([
+            { id: 1, school: 'Alabama', mascot: 'Crimson Tide', conference: 'SEC', logos: ['/team_logos/alabama.png'], color: '#9E1B32', alternateColor: '#FFFFFF' },
+            { id: 2, school: 'Georgia', mascot: 'Bulldogs', conference: 'SEC', logos: ['/team_logos/georgia.png'], color: '#BA0C2F', alternateColor: '#000000' },
+            { id: 3, school: 'Ohio State', mascot: 'Buckeyes', conference: 'Big Ten', logos: ['/team_logos/ohio-state.png'], color: '#BB0000', alternateColor: '#FFFFFF' },
+          ]);
+        } finally {
+          setTeamsLoading(false);
+        }
+      }
+    };
+    loadTeams();
+  }, [signupStep, fbsTeams.length]);
 
   const handleSocialLogin = (provider) => {
     setIsLoading(true);
@@ -198,106 +206,151 @@ const LoginPage = () => {
                   </div>
                 </div>
 
-                {/* Team Slider */}
-                <div className="relative mb-8">
-                  {/* Main Team Display */}
-                  <div className="relative h-80 overflow-hidden rounded-2xl">
-                    <div 
-                      className="flex transition-transform duration-500 ease-in-out h-full"
-                      style={{ transform: `translateX(-${currentTeamIndex * 100}%)` }}
-                    >
-                      {fbsTeams.map((team, index) => (
-                        <div
-                          key={team.id}
-                          className="min-w-full h-full flex flex-col items-center justify-center p-8 relative"
-                          style={{
-                            background: `linear-gradient(135deg, ${team.color}15, ${team.altColor}10)`
-                          }}
-                        >
-                          {/* Team Logo */}
-                          <div className="w-32 h-32 mb-6 flex items-center justify-center">
-                            <img
-                              src={team.logo}
-                              alt={team.school}
-                              className="w-full h-full object-contain filter drop-shadow-2xl"
-                              onError={(e) => {
-                                e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" fill="${encodeURIComponent(team.color)}" rx="16"/><text x="64" y="70" font-family="Arial" font-size="20" fill="white" text-anchor="middle">${team.school.charAt(0)}</text></svg>`;
-                              }}
-                            />
-                          </div>
-                          
-                          {/* Team Info */}
-                          <h3 className="text-2xl font-bold text-gray-800 mb-2">{team.school}</h3>
-                          <p className="text-lg text-gray-600 mb-1">{team.mascot}</p>
-                          <p className="text-sm font-medium" style={{ color: team.color }}>{team.conference}</p>
-                          
-                          {/* Team Colors Bar */}
-                          <div 
-                            className="w-20 h-1 rounded-full mt-4"
-                            style={{
-                              background: `linear-gradient(90deg, ${team.color}, ${team.altColor})`
-                            }}
-                          />
-                        </div>
-                      ))}
+                {/* Loading State */}
+                {teamsLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-full bg-white/60 backdrop-blur-lg border border-white/40 flex items-center justify-center mx-auto mb-4">
+                        <div className="animate-spin rounded-full h-10 w-10 border-4 border-transparent border-t-red-600"></div>
+                      </div>
+                      <p className="text-gray-600">Loading teams...</p>
                     </div>
                   </div>
+                ) : fbsTeams.length > 0 ? (
+                  <>
+                    {/* Team Slider */}
+                    <div className="relative mb-8">
+                      {/* Main Team Display */}
+                      <div className="relative h-80 overflow-hidden rounded-2xl">
+                        <div 
+                          className="flex transition-transform duration-500 ease-in-out h-full"
+                          style={{ transform: `translateX(-${currentTeamIndex * 100}%)` }}
+                        >
+                          {fbsTeams.map((team, index) => {
+                            const teamLogo = team.logos?.[0];
+                            const teamColor = team.color || '#cc001c';
+                            const teamAltColor = team.alternateColor || '#ffffff';
+                            
+                            return (
+                              <div
+                                key={team.id}
+                                className="min-w-full h-full flex flex-col items-center justify-center p-8 relative"
+                                style={{
+                                  background: `linear-gradient(135deg, ${teamColor}15, ${teamAltColor}10)`
+                                }}
+                              >
+                                {/* Team Logo */}
+                                <div className="w-32 h-32 mb-6 flex items-center justify-center">
+                                  {teamLogo ? (
+                                    <img
+                                      src={teamLogo}
+                                      alt={team.school}
+                                      className="w-full h-full object-contain filter drop-shadow-2xl"
+                                      onError={(e) => {
+                                        e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" fill="${encodeURIComponent(teamColor)}" rx="16"/><text x="64" y="70" font-family="Arial" font-size="20" fill="white" text-anchor="middle">${team.school.charAt(0)}</text></svg>`;
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <i className="fas fa-university text-gray-400 text-6xl"></i>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Team Info */}
+                                <h3 className="text-2xl font-bold text-gray-800 mb-2">{team.school}</h3>
+                                <p className="text-lg text-gray-600 mb-1">{team.mascot}</p>
+                                <p className="text-sm font-medium" style={{ color: teamColor }}>{team.conference}</p>
+                                
+                                {/* Team Colors Bar */}
+                                <div 
+                                  className="w-20 h-1 rounded-full mt-4"
+                                  style={{
+                                    background: `linear-gradient(90deg, ${teamColor}, ${teamAltColor})`
+                                  }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
 
-                  {/* Navigation Arrows */}
-                  <button
-                    onClick={prevTeam}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/80 backdrop-blur-lg rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 flex items-center justify-center z-10"
-                  >
-                    <i className="fas fa-chevron-left text-gray-700"></i>
-                  </button>
-                  
-                  <button
-                    onClick={nextTeam}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/80 backdrop-blur-lg rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 flex items-center justify-center z-10"
-                  >
-                    <i className="fas fa-chevron-right text-gray-700"></i>
-                  </button>
-                </div>
+                      {/* Navigation Arrows */}
+                      <button
+                        onClick={prevTeam}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/80 backdrop-blur-lg rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 flex items-center justify-center z-10"
+                      >
+                        <i className="fas fa-chevron-left text-gray-700"></i>
+                      </button>
+                      
+                      <button
+                        onClick={nextTeam}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/80 backdrop-blur-lg rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 flex items-center justify-center z-10"
+                      >
+                        <i className="fas fa-chevron-right text-gray-700"></i>
+                      </button>
+                    </div>
 
-                {/* Team Dots Indicator */}
-                <div className="flex justify-center mb-8 space-x-2 overflow-x-auto px-4">
-                  {fbsTeams.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => goToTeam(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        index === currentTeamIndex 
-                          ? 'bg-gradient-to-r from-red-600 to-red-800 scale-125' 
-                          : 'bg-gray-300 hover:bg-gray-400'
-                      }`}
-                    />
-                  ))}
-                </div>
+                    {/* Team Dots Indicator */}
+                    <div className="flex justify-center mb-8 space-x-2 overflow-x-auto px-4 max-h-8">
+                      {fbsTeams.slice(0, Math.min(fbsTeams.length, 20)).map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => goToTeam(index)}
+                          className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                            index === currentTeamIndex 
+                              ? 'bg-gradient-to-r from-red-600 to-red-800 scale-125' 
+                              : 'bg-gray-300 hover:bg-gray-400'
+                          }`}
+                        />
+                      ))}
+                      {fbsTeams.length > 20 && (
+                        <span className="text-gray-500 text-sm ml-2">+{fbsTeams.length - 20} more</span>
+                      )}
+                    </div>
 
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  <button
-                    onClick={() => handleTeamSelect(fbsTeams[currentTeamIndex])}
-                    className="w-full h-12 gradient-bg text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group"
-                  >
-                    <span className="relative z-10">Choose {fbsTeams[currentTeamIndex].school}</span>
-                    <div className="absolute inset-0 -top-full group-hover:top-0 bg-gradient-to-b from-white/20 to-transparent transition-all duration-500"></div>
-                  </button>
-                  
-                  <button
-                    onClick={skipTeamSelection}
-                    className="w-full h-12 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 transition-all duration-300"
-                  >
-                    Skip for now
-                  </button>
-                  
-                  <button
-                    onClick={() => setSignupStep(1)}
-                    className="w-full text-gray-500 hover:text-gray-700 transition-colors text-sm"
-                  >
-                    ← Back to account details
-                  </button>
-                </div>
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => handleTeamSelect(fbsTeams[currentTeamIndex])}
+                        className="w-full h-12 gradient-bg text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group"
+                      >
+                        <span className="relative z-10">Choose {fbsTeams[currentTeamIndex]?.school}</span>
+                        <div className="absolute inset-0 -top-full group-hover:top-0 bg-gradient-to-b from-white/20 to-transparent transition-all duration-500"></div>
+                      </button>
+                      
+                      <button
+                        onClick={skipTeamSelection}
+                        className="w-full h-12 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 transition-all duration-300"
+                      >
+                        Skip for now
+                      </button>
+                      
+                      <button
+                        onClick={() => setSignupStep(1)}
+                        className="w-full text-gray-500 hover:text-gray-700 transition-colors text-sm"
+                      >
+                        ← Back to account details
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  /* Error State */
+                  <div className="h-80 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-full bg-white/60 backdrop-blur-lg border border-white/40 flex items-center justify-center mx-auto mb-4">
+                        <i className="fas fa-exclamation-triangle text-yellow-500 text-2xl"></i>
+                      </div>
+                      <p className="text-gray-600 mb-4">Unable to load teams</p>
+                      <button
+                        onClick={skipTeamSelection}
+                        className="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                      >
+                        Continue without team selection
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               /* Regular Sign In / Sign Up Form */
