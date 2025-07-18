@@ -269,7 +269,7 @@ const Header = () => {
               <button onClick={openLoginModal} className="login-button bg-transparent border-none cursor-pointer">
                 <span className="login-text">Login</span>
               </button>
-              <a href="#trial" className="px-6 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition duration-300 font-bold">Try for Free</a>
+              <button onClick={() => navigateTo('pricing')} className="px-6 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition duration-300 font-bold">Try for Free</button>
             </>
           )}
         </div>
@@ -464,7 +464,7 @@ const Header = () => {
               <button onClick={openLoginModal} className="login-button mx-4 bg-transparent border-none cursor-pointer w-full">
                 <span className="login-text">Login</span>
               </button>
-              <a href="#trial" className="block mx-4 px-6 py-2 gradient-bg text-white text-center rounded-lg hover:opacity-90 transition duration-300 font-bold">Try for Free</a>
+              <button onClick={() => navigateTo('pricing')} className="block mx-4 px-6 py-2 gradient-bg text-white text-center rounded-lg hover:opacity-90 transition duration-300 font-bold">Try for Free</button>
             </>
           )}
         </div>

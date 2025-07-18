@@ -16,6 +16,9 @@ import LoadingSpinner from './components/UI/LoadingSpinner';
 // Auth Components
 const LoginPage = React.lazy(() => import('./components/auth/LoginPage'));
 
+// Pricing Components
+const PricingPage = React.lazy(() => import('./components/pricing/PricingPage'));
+
 // Lazy load heavy components
 const HomePageView = React.lazy(() => import('./components/layout/HomePageView'));
 const AllTeams = React.lazy(() => import('./components/teams/AllTeams'));
