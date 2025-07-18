@@ -409,8 +409,9 @@ const TeamCard = ({ team, isSelected1, isSelected2, isSelected, onTeamClick, sel
     );
 };
 
-// Sidebar Team Navigator Component - 3 teams stacked
-const SidebarTeamNavigator = ({ teams, selectedTeam1, selectedTeam2, onTeamClick }) => {
+// Team Navigation Grid Component
+const TeamNavigationGrid = ({ teams, selectedTeam1, selectedTeam2, onTeamClick }) => {
+
     return (
         <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-6 mb-6">
             <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
@@ -421,89 +422,102 @@ const SidebarTeamNavigator = ({ teams, selectedTeam1, selectedTeam2, onTeamClick
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">Click teams to see distances and navigate the map</p>
                 
-                {/* 3 Teams stacked vertically */}
+                {/* Team Grid - 3 rows of 6 teams each */}
                 <div className="space-y-3">
-                    {teams.slice(0, 18).map((team, index) => {
-                        if (index % 6 !== 0) return null; // Show every 6th team for spacing
-                        
-                        const isSelected1 = selectedTeam1?.id === team.id;
-                        const isSelected2 = selectedTeam2?.id === team.id;
-                        const isSelected = isSelected1 || isSelected2;
-                        
-                        return (
-                            <div
-                                key={team.id}
-                                onClick={() => onTeamClick(team)}
-                                className={`relative cursor-pointer transform transition-all duration-300 hover:scale-105 ${
-                                    isSelected ? 'scale-105' : ''
-                                }`}
-                            >
-                                <div className={`relative bg-white/30 backdrop-blur-xl rounded-xl border ${
-                                    isSelected1 ? 'border-blue-500 bg-blue-100/40' : 
-                                    isSelected2 ? 'border-green-500 bg-green-100/40' : 
-                                    'border-white/40 hover:border-white/60'
-                                } p-3 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)] hover:shadow-lg transition-all duration-300`}>
-                                    
-                                    <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                                    
-                                    {isSelected && (
-                                        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg ${
-                                            isSelected1 ? 'bg-blue-500' : 'bg-green-500'
-                                        }`}>
-                                            {isSelected1 ? '1' : '2'}
-                                        </div>
-                                    )}
-                                    
-                                    <div className="relative z-10 flex items-center space-x-3">
-                                        <div className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center overflow-hidden">
-                                            <img 
-                                                src={team.logos?.[0] || '/photos/ncaaf.png'} 
-                                                alt={team.school}
-                                                className="w-8 h-8 object-contain"
-                                                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                                            />
-                                        </div>
-                                        
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-gray-800 text-sm leading-tight">
-                                                {team.school}
-                                            </h4>
-                                            <p className="text-xs text-gray-600">
-                                                {team.location?.city || team.location?.state || 'N/A'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {/* Row 1 */}
+                    <div className="grid grid-cols-6 gap-3">
+                        {teams.slice(0, 6).map((team) => {
+                            const isSelected1 = selectedTeam1?.id === team.id;
+                            const isSelected2 = selectedTeam2?.id === team.id;
+                            const isSelected = isSelected1 || isSelected2;
+                            
+                            return (
+                                <TeamCard 
+                                    key={team.id}
+                                    team={team}
+                                    isSelected1={isSelected1}
+                                    isSelected2={isSelected2}
+                                    isSelected={isSelected}
+                                    onTeamClick={onTeamClick}
+                                    selectedTeam1={selectedTeam1}
+                                    selectedTeam2={selectedTeam2}
+                                />
+                            );
+                        })}
+                    </div>
+                    
+                    {/* Row 2 */}
+                    <div className="grid grid-cols-6 gap-3">
+                        {teams.slice(6, 12).map((team) => {
+                            const isSelected1 = selectedTeam1?.id === team.id;
+                            const isSelected2 = selectedTeam2?.id === team.id;
+                            const isSelected = isSelected1 || isSelected2;
+                            
+                            return (
+                                <TeamCard 
+                                    key={team.id}
+                                    team={team}
+                                    isSelected1={isSelected1}
+                                    isSelected2={isSelected2}
+                                    isSelected={isSelected}
+                                    onTeamClick={onTeamClick}
+                                    selectedTeam1={selectedTeam1}
+                                    selectedTeam2={selectedTeam2}
+                                />
+                            );
+                        })}
+                    </div>
+                    
+                    {/* Row 3 */}
+                    <div className="grid grid-cols-6 gap-3">
+                        {teams.slice(12, 18).map((team) => {
+                            const isSelected1 = selectedTeam1?.id === team.id;
+                            const isSelected2 = selectedTeam2?.id === team.id;
+                            const isSelected = isSelected1 || isSelected2;
+                            
+                            return (
+                                <TeamCard 
+                                    key={team.id}
+                                    team={team}
+                                    isSelected1={isSelected1}
+                                    isSelected2={isSelected2}
+                                    isSelected={isSelected}
+                                    onTeamClick={onTeamClick}
+                                    selectedTeam1={selectedTeam1}
+                                    selectedTeam2={selectedTeam2}
+                                />
+                            );
+                        })}
+                    </div>
                 </div>
                 
                 {/* Selection Status */}
-                <div className="mt-4 space-y-2">
-                    {selectedTeam1 && (
-                        <div className="flex items-center space-x-2 px-3 py-2 bg-blue-100/50 backdrop-blur-sm rounded-lg border border-blue-200/50">
-                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                            <span className="text-sm font-medium text-blue-800">{selectedTeam1.school}</span>
-                        </div>
-                    )}
-                    
-                    {selectedTeam2 && (
-                        <div className="flex items-center space-x-2 px-3 py-2 bg-green-100/50 backdrop-blur-sm rounded-lg border border-green-200/50">
-                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                            <span className="text-sm font-medium text-green-800">{selectedTeam2.school}</span>
-                        </div>
-                    )}
+                <div className="mt-4 flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                        {selectedTeam1 && (
+                            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-100/50 backdrop-blur-sm rounded-lg border border-blue-200/50">
+                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <span className="text-sm font-medium text-blue-800">{selectedTeam1.school}</span>
+                            </div>
+                        )}
+                        
+                        {selectedTeam2 && (
+                            <div className="flex items-center space-x-2 px-3 py-1 bg-green-100/50 backdrop-blur-sm rounded-lg border border-green-200/50">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span className="text-sm font-medium text-green-800">{selectedTeam2.school}</span>
+                            </div>
+                        )}
+                    </div>
                     
                     {(selectedTeam1 || selectedTeam2) && (
                         <button
                             onClick={() => {
-                                onTeamClick(null);
+                                onTeamClick(null); // This will reset selections
                             }}
-                            className="w-full px-3 py-2 text-xs bg-white/40 backdrop-blur-sm border border-white/50 rounded-lg hover:bg-white/50 transition-all duration-300 text-gray-600 hover:text-gray-800"
+                            className="px-3 py-1 text-xs bg-white/40 backdrop-blur-sm border border-white/50 rounded-lg hover:bg-white/50 transition-all duration-300 text-gray-600 hover:text-gray-800"
                         >
                             <i className="fas fa-times mr-1"></i>
-                            Clear Selection
+                            Clear
                         </button>
                     )}
                 </div>
@@ -561,7 +575,7 @@ const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom, selectedTeam1, 
                 </div>
             )}
             
-            <div className="relative z-10 h-[600px]">
+            <div className="relative z-10 h-96">
                 <MapContainer 
                     center={mapCenter} 
                     zoom={mapZoom} 
@@ -1536,6 +1550,14 @@ const BigTen = () => {
                     Big Ten Conference Map
                   </h2>
                   
+                  {/* Team Navigation Grid Component */}
+                  <TeamNavigationGrid 
+                    teams={teams}
+                    selectedTeam1={selectedTeam1}
+                    selectedTeam2={selectedTeam2}
+                    onTeamClick={handleTeamNavClick}
+                  />
+                  
                   <ConferenceMap 
                     teams={teams}
                     onTeamClick={handleTeamClick}
@@ -1956,14 +1978,6 @@ const BigTen = () => {
 
           {/* Sidebar */}
           <div className="space-y-8">
-            {/* Team Navigator - Moved to sidebar */}
-            <SidebarTeamNavigator 
-              teams={teams}
-              selectedTeam1={selectedTeam1}
-              selectedTeam2={selectedTeam2}
-              onTeamClick={handleTeamNavClick}
-            />
-            
             {/* Conference Logo */}
             <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8 text-center">
               <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
