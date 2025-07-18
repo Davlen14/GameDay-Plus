@@ -387,6 +387,10 @@ const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
         });
     };
 
+    console.log('ConferenceMap rendering with:', { teams: teams.length, mapCenter, mapZoom });
+
+    console.log("ConferenceMap rendering with:", { teams: teams.length, mapCenter, mapZoom });
+    
     return (
         <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] overflow-hidden">
             <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
@@ -1339,6 +1343,14 @@ const ACC = () => {
                   <h2 className="text-2xl font-bold mb-4" style={{ background: 'linear-gradient(135deg, #002147, #FF6600, #002147)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     Atlantic Coast Conference Map
                   </h2>
+                  
+                  {/* Debug info */}
+                  <div className="mb-4 p-2 bg-gray-100 rounded text-sm">
+                    <p>Teams loaded: {teams.length}</p>
+                    <p>Map center: {mapCenter[0]}, {mapCenter[1]}</p>
+                    <p>Map zoom: {mapZoom}</p>
+                  </div>
+                  
                   <ConferenceMap 
                     teams={teams}
                     onTeamClick={handleTeamClick}
