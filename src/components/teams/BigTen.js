@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { teamService } from '../../services/teamService';
@@ -333,24 +333,218 @@ const ConferenceNews = ({ news }) => {
     );
 };
 
+// Team Card Component
+const TeamCard = ({ team, isSelected1, isSelected2, isSelected, onTeamClick, selectedTeam1, selectedTeam2 }) => {
+    return (
+        <div
+            onClick={() => onTeamClick(team)}
+            className={`relative cursor-pointer transform transition-all duration-300 hover:scale-105 group ${
+                isSelected ? 'scale-110' : ''
+            }`}
+        >
+            {/* Team Card */}
+            <div className={`relative bg-white/30 backdrop-blur-xl rounded-2xl border ${
+                isSelected1 ? 'border-blue-500 bg-blue-100/40' : 
+                isSelected2 ? 'border-green-500 bg-green-100/40' : 
+                'border-white/40 hover:border-white/60'
+            } p-4 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)] hover:shadow-lg transition-all duration-300`}>
+                
+                {/* Glass highlight */}
+                <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                
+                {/* Selection indicator */}
+                {isSelected && (
+                    <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg ${
+                        isSelected1 ? 'bg-blue-500' : 'bg-green-500'
+                    }`}>
+                        {isSelected1 ? '1' : '2'}
+                    </div>
+                )}
+                
+                <div className="relative z-10 text-center">
+                    {/* Team Logo */}
+                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center overflow-hidden">
+                        <img 
+                            src={team.logos?.[0] || '/photos/ncaaf.png'} 
+                            alt={team.school}
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                        />
+                    </div>
+                    
+                    {/* Team Name */}
+                    <h4 className="font-bold text-gray-800 text-xs leading-tight mb-1">
+                        {team.school}
+                    </h4>
+                    
+                    {/* Team Location */}
+                    <p className="text-xs text-gray-600 truncate">
+                        {team.location?.city || team.location?.state || 'N/A'}
+                    </p>
+                </div>
+                
+                {/* Hover effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+            </div>
+            
+            {/* Connection arrow to next selected team */}
+            {isSelected1 && selectedTeam2 && (
+                <div className="absolute top-1/2 -right-4 transform -translate-y-1/2 z-20">
+                    <div className="flex items-center">
+                        <div className="w-8 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 animate-pulse"></div>
+                        <i className="fas fa-chevron-right text-green-500 text-xs animate-bounce ml-1"></i>
+                    </div>
+                </div>
+            )}
+            
+            {isSelected2 && selectedTeam1 && (
+                <div className="absolute top-1/2 -left-4 transform -translate-y-1/2 z-20">
+                    <div className="flex items-center">
+                        <i className="fas fa-chevron-left text-blue-500 text-xs animate-bounce mr-1"></i>
+                        <div className="w-8 h-0.5 bg-gradient-to-l from-green-500 to-blue-500 animate-pulse"></div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Team Navigation Grid Component
+const TeamNavigationGrid = ({ teams, selectedTeam1, selectedTeam2, onTeamClick }) => {
+
+    return (
+        <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-6 mb-6">
+            <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            
+            <div className="relative z-10">
+                <h3 className="text-lg font-bold mb-4" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    Team Navigator
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">Click teams to see distances and navigate the map</p>
+                
+                {/* Team Grid - 3 rows of 6 teams each */}
+                <div className="space-y-3">
+                    {/* Row 1 */}
+                    <div className="grid grid-cols-6 gap-3">
+                        {teams.slice(0, 6).map((team) => {
+                            const isSelected1 = selectedTeam1?.id === team.id;
+                            const isSelected2 = selectedTeam2?.id === team.id;
+                            const isSelected = isSelected1 || isSelected2;
+                            
+                            return (
+                                <TeamCard 
+                                    key={team.id}
+                                    team={team}
+                                    isSelected1={isSelected1}
+                                    isSelected2={isSelected2}
+                                    isSelected={isSelected}
+                                    onTeamClick={onTeamClick}
+                                    selectedTeam1={selectedTeam1}
+                                    selectedTeam2={selectedTeam2}
+                                />
+                            );
+                        })}
+                    </div>
+                    
+                    {/* Row 2 */}
+                    <div className="grid grid-cols-6 gap-3">
+                        {teams.slice(6, 12).map((team) => {
+                            const isSelected1 = selectedTeam1?.id === team.id;
+                            const isSelected2 = selectedTeam2?.id === team.id;
+                            const isSelected = isSelected1 || isSelected2;
+                            
+                            return (
+                                <TeamCard 
+                                    key={team.id}
+                                    team={team}
+                                    isSelected1={isSelected1}
+                                    isSelected2={isSelected2}
+                                    isSelected={isSelected}
+                                    onTeamClick={onTeamClick}
+                                    selectedTeam1={selectedTeam1}
+                                    selectedTeam2={selectedTeam2}
+                                />
+                            );
+                        })}
+                    </div>
+                    
+                    {/* Row 3 */}
+                    <div className="grid grid-cols-6 gap-3">
+                        {teams.slice(12, 18).map((team) => {
+                            const isSelected1 = selectedTeam1?.id === team.id;
+                            const isSelected2 = selectedTeam2?.id === team.id;
+                            const isSelected = isSelected1 || isSelected2;
+                            
+                            return (
+                                <TeamCard 
+                                    key={team.id}
+                                    team={team}
+                                    isSelected1={isSelected1}
+                                    isSelected2={isSelected2}
+                                    isSelected={isSelected}
+                                    onTeamClick={onTeamClick}
+                                    selectedTeam1={selectedTeam1}
+                                    selectedTeam2={selectedTeam2}
+                                />
+                            );
+                        })}
+                    </div>
+                </div>
+                
+                {/* Selection Status */}
+                <div className="mt-4 flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                        {selectedTeam1 && (
+                            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-100/50 backdrop-blur-sm rounded-lg border border-blue-200/50">
+                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <span className="text-sm font-medium text-blue-800">{selectedTeam1.school}</span>
+                            </div>
+                        )}
+                        
+                        {selectedTeam2 && (
+                            <div className="flex items-center space-x-2 px-3 py-1 bg-green-100/50 backdrop-blur-sm rounded-lg border border-green-200/50">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span className="text-sm font-medium text-green-800">{selectedTeam2.school}</span>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {(selectedTeam1 || selectedTeam2) && (
+                        <button
+                            onClick={() => {
+                                onTeamClick(null); // This will reset selections
+                            }}
+                            className="px-3 py-1 text-xs bg-white/40 backdrop-blur-sm border border-white/50 rounded-lg hover:bg-white/50 transition-all duration-300 text-gray-600 hover:text-gray-800"
+                        >
+                            <i className="fas fa-times mr-1"></i>
+                            Clear
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Interactive Conference Map Component
-const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
+const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom, selectedTeam1, selectedTeam2, calculateDistance }) => {
     // Custom marker icon for Big Ten teams
-    const customMarkerIcon = (logoUrl) => {
+    const customMarkerIcon = (logoUrl, isSelected = false) => {
         return L.divIcon({
             html: `
                 <div style="
                     width: 40px;
                     height: 40px;
-                    background: rgba(255, 255, 255, 0.4);
+                    background: ${isSelected ? 'rgba(0, 136, 206, 0.8)' : 'rgba(255, 255, 255, 0.4)'};
                     backdrop-filter: blur(20px);
-                    border: 2px solid rgba(255, 255, 255, 0.6);
+                    border: 2px solid ${isSelected ? 'rgba(0, 136, 206, 1)' : 'rgba(255, 255, 255, 0.6)'};
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
                     transition: all 0.3s ease;
+                    transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'};
                 ">
                     <img src="${logoUrl}" style="width: 24px; height: 24px; object-fit: contain;" onerror="this.src='/photos/ncaaf.png'" />
                 </div>
@@ -362,9 +556,24 @@ const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
         });
     };
 
+    const distance = selectedTeam1 && selectedTeam2 ? calculateDistance(selectedTeam1, selectedTeam2) : null;
+
     return (
         <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] overflow-hidden">
             <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            
+            {/* Distance Display */}
+            {distance && (
+                <div className="absolute top-4 left-4 z-20 bg-white/80 backdrop-blur-xl rounded-xl border border-white/50 px-4 py-2 shadow-lg">
+                    <div className="flex items-center space-x-2">
+                        <i className="fas fa-route text-blue-600"></i>
+                        <span className="font-bold text-gray-800">{distance} miles</span>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                        {selectedTeam1.school} ↔ {selectedTeam2.school}
+                    </div>
+                </div>
+            )}
             
             <div className="relative z-10 h-96">
                 <MapContainer 
@@ -381,12 +590,29 @@ const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
                     <MapViewUpdater center={mapCenter} zoom={mapZoom} />
                     <MapControl teams={teams} onTeamClick={onTeamClick} />
                     
-                    {teams.map(team => (
-                        team.location && (
+                    {/* Distance Line */}
+                    {selectedTeam1 && selectedTeam2 && selectedTeam1.location && selectedTeam2.location && (
+                        <Polyline
+                            positions={[
+                                [selectedTeam1.location.latitude, selectedTeam1.location.longitude],
+                                [selectedTeam2.location.latitude, selectedTeam2.location.longitude]
+                            ]}
+                            pathOptions={{
+                                color: '#0088ce',
+                                weight: 4,
+                                opacity: 0.8,
+                                dashArray: '10, 10'
+                            }}
+                        />
+                    )}
+                    
+                    {teams.map(team => {
+                        const isSelected = selectedTeam1?.id === team.id || selectedTeam2?.id === team.id;
+                        return team.location && (
                             <Marker
                                 key={team.id}
                                 position={[team.location.latitude || 40.0, team.location.longitude || -85.0]}
-                                icon={customMarkerIcon(team.logos?.[0] || '/photos/ncaaf.png')}
+                                icon={customMarkerIcon(team.logos?.[0] || '/photos/ncaaf.png', isSelected)}
                                 eventHandlers={{
                                     click: () => onTeamClick && onTeamClick(team.id)
                                 }}
@@ -423,8 +649,8 @@ const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
                                     </div>
                                 </Popup>
                             </Marker>
-                        )
-                    ))}
+                        );
+                    })}
                 </MapContainer>
             </div>
         </div>
@@ -611,6 +837,8 @@ const BigTen = () => {
   const [selectedCategory, setSelectedCategory] = useState('Map');
   const [mapCenter, setMapCenter] = useState([41.0, -85.0]);
   const [mapZoom, setMapZoom] = useState(6);
+  const [selectedTeam1, setSelectedTeam1] = useState(null);
+  const [selectedTeam2, setSelectedTeam2] = useState(null);
 
   const categories = ['Map', 'Standings', 'Talent Rankings', 'Recent Games', 'Rankings', 'News', 'Recruiting'];
 
@@ -1033,6 +1261,56 @@ const BigTen = () => {
     return talent?.talent || null;
   };
 
+  // Calculate distance between two teams in miles
+  const calculateDistance = (team1, team2) => {
+    if (!team1?.location || !team2?.location) return null;
+    
+    const lat1 = team1.location.latitude;
+    const lon1 = team1.location.longitude;
+    const lat2 = team2.location.latitude;
+    const lon2 = team2.location.longitude;
+    
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return Math.round(R * c);
+  };
+
+  // Team navigation card click handler
+  const handleTeamNavClick = (team) => {
+    if (team === null) {
+      // Clear selection
+      setSelectedTeam1(null);
+      setSelectedTeam2(null);
+      setMapCenter([41.0, -85.0]);
+      setMapZoom(6);
+      return;
+    }
+
+    if (!selectedTeam1) {
+      setSelectedTeam1(team);
+      setMapCenter([team.location.latitude, team.location.longitude]);
+      setMapZoom(8);
+    } else if (!selectedTeam2) {
+      setSelectedTeam2(team);
+      // Center map between both teams
+      const centerLat = (selectedTeam1.location.latitude + team.location.latitude) / 2;
+      const centerLon = (selectedTeam1.location.longitude + team.location.longitude) / 2;
+      setMapCenter([centerLat, centerLon]);
+      setMapZoom(6);
+    } else {
+      // Reset and select new team
+      setSelectedTeam1(team);
+      setSelectedTeam2(null);
+      setMapCenter([team.location.latitude, team.location.longitude]);
+      setMapZoom(8);
+    }
+  };
+
   const handleTeamClick = (teamId) => {
     // Focus map on clicked team
     const team = teams.find(t => t.id === teamId);
@@ -1271,11 +1549,23 @@ const BigTen = () => {
                   <h2 className="text-2xl font-bold mb-4" style={{ background: 'linear-gradient(135deg, #0088ce, #0066a3, #0088ce)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                     Big Ten Conference Map
                   </h2>
+                  
+                  {/* Team Navigation Grid Component */}
+                  <TeamNavigationGrid 
+                    teams={teams}
+                    selectedTeam1={selectedTeam1}
+                    selectedTeam2={selectedTeam2}
+                    onTeamClick={handleTeamNavClick}
+                  />
+                  
                   <ConferenceMap 
                     teams={teams}
                     onTeamClick={handleTeamClick}
                     mapCenter={mapCenter}
                     mapZoom={mapZoom}
+                    selectedTeam1={selectedTeam1}
+                    selectedTeam2={selectedTeam2}
+                    calculateDistance={calculateDistance}
                   />
                 </div>
                 
@@ -1328,7 +1618,7 @@ const BigTen = () => {
             )}
 
             {selectedCategory === 'Talent Rankings' && (
-              <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
+              <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
                 <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
                 
                 <div className="relative z-10">
