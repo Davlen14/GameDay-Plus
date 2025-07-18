@@ -5,6 +5,27 @@ import { faChevronDown, faBars } from '@fortawesome/free-solid-svg-icons';
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdowns, setActiveDropdowns] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+
+  // Check login status on component mount and when localStorage changes
+  React.useEffect(() => {
+    const checkLoginStatus = () => {
+      const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const profile = localStorage.getItem('userProfile');
+      setIsLoggedIn(loggedIn);
+      if (loggedIn && profile) {
+        setUserProfile(JSON.parse(profile));
+      }
+    };
+
+    checkLoginStatus();
+    
+    // Listen for storage changes (in case user logs in/out in another tab)
+    window.addEventListener('storage', checkLoginStatus);
+    
+    return () => window.removeEventListener('storage', checkLoginStatus);
+  }, []);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -21,6 +42,29 @@ const Header = () => {
   const navigateTo = (page) => {
     window.location.hash = page;
     setMobileMenuOpen(false); // Close mobile menu after navigation
+  };
+
+  const openLoginModal = () => {
+    navigateTo('login');
+    setMobileMenuOpen(false); // Close mobile menu if open
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userProfile');
+    setIsLoggedIn(false);
+    setUserProfile(null);
+    navigateTo('home');
+  };
+
+  const openProfile = () => {
+    navigateTo('profile');
+    setMobileMenuOpen(false);
+  };
+
+  const openSettings = () => {
+    navigateTo('settings');
+    setMobileMenuOpen(false);
   };
 
   return (
@@ -187,10 +231,47 @@ const Header = () => {
 
         {/* Right Side Actions */}
         <div className="hidden lg:flex items-center space-x-4">
-          <div className="login-button">
-            <span className="login-text">Login</span>
-          </div>
-          <a href="#trial" className="px-6 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition duration-300 font-bold">Try for Free</a>
+          {isLoggedIn ? (
+            <>
+              {/* Profile Button with Avatar */}
+              <button 
+                onClick={openProfile} 
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition duration-300 bg-transparent border-none cursor-pointer"
+              >
+                {userProfile?.photo ? (
+                  <img src={userProfile.photo} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                    <i className="fas fa-user text-gray-600 text-sm"></i>
+                  </div>
+                )}
+                <span className="gradient-text font-medium">Profile</span>
+              </button>
+              
+              {/* Settings Button */}
+              <button 
+                onClick={openSettings}
+                className="px-6 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition duration-300 font-bold"
+              >
+                Settings
+              </button>
+              
+              {/* Logout Button */}
+              <button 
+                onClick={handleLogout}
+                className="text-gray-600 hover:text-red-600 transition duration-300 bg-transparent border-none cursor-pointer"
+              >
+                <i className="fas fa-sign-out-alt text-lg"></i>
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={openLoginModal} className="login-button bg-transparent border-none cursor-pointer">
+                <span className="login-text">Login</span>
+              </button>
+              <a href="#trial" className="px-6 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition duration-300 font-bold">Try for Free</a>
+            </>
+          )}
         </div>
         
         {/* Mobile Menu Button */}
@@ -361,10 +442,31 @@ const Header = () => {
 
         {/* Mobile Login/Signup */}
         <div className="border-t pt-4 mt-4 space-y-2">
-          <div className="login-button mx-4">
-            <span className="login-text">Login</span>
-          </div>
-          <a href="#trial" className="block mx-4 px-6 py-2 gradient-bg text-white text-center rounded-lg hover:opacity-90 transition duration-300 font-bold">Try for Free</a>
+          {isLoggedIn ? (
+            <>
+              <button onClick={openProfile} className="mx-4 bg-transparent border-none cursor-pointer w-full flex items-center justify-center space-x-2 py-2">
+                {userProfile?.photo ? (
+                  <img src={userProfile.photo} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
+                    <i className="fas fa-user text-gray-600 text-xs"></i>
+                  </div>
+                )}
+                <span className="gradient-text font-medium">Profile</span>
+              </button>
+              <button onClick={openSettings} className="block mx-4 px-6 py-2 gradient-bg text-white text-center rounded-lg hover:opacity-90 transition duration-300 font-bold w-full">Settings</button>
+              <button onClick={handleLogout} className="mx-4 text-red-600 hover:text-red-700 transition duration-300 bg-transparent border-none cursor-pointer w-full py-2">
+                <i className="fas fa-sign-out-alt mr-2"></i>Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={openLoginModal} className="login-button mx-4 bg-transparent border-none cursor-pointer w-full">
+                <span className="login-text">Login</span>
+              </button>
+              <a href="#trial" className="block mx-4 px-6 py-2 gradient-bg text-white text-center rounded-lg hover:opacity-90 transition duration-300 font-bold">Try for Free</a>
+            </>
+          )}
         </div>
       </div>
     </header>

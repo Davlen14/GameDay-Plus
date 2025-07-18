@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { teamService } from '../../services/teamService';
@@ -57,31 +57,6 @@ const MapControl = ({ teams, onTeamClick }) => {
                         Click markers to view team details
                     </p>
                 </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Debug information */}
-      <div className="hidden">
-        {/*
-        console.log("=== DEBUG INFO ===");
-        console.log("Teams:", teams.length);
-        console.log("TeamTalent:", teamTalent.length);
-        console.log("Rankings:", rankings.length);
-        console.log("News:", news.length);
-        console.log("Games:", games.length);
-        console.log("Standings:", standings.length);
-        if (standings.length > 0) {
-          console.log("Sample standing:", standings[0]);
-        }
-        console.log("==================");
-        */}
-      </div>
-    </div>
-  );
-};
-
-export default ACC;
             `;
             
             return div;
@@ -359,23 +334,24 @@ const ConferenceNews = ({ news }) => {
 };
 
 // Interactive Conference Map Component
-const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
+const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom, selectedTeam1, selectedTeam2, calculateDistance }) => {
     // Custom marker icon for ACC teams
-    const customMarkerIcon = (logoUrl) => {
+    const customMarkerIcon = (logoUrl, isSelected = false) => {
         return L.divIcon({
             html: `
                 <div style="
                     width: 40px;
                     height: 40px;
-                    background: rgba(255, 255, 255, 0.4);
+                    background: ${isSelected ? 'rgba(0, 33, 71, 0.8)' : 'rgba(255, 255, 255, 0.4)'};
                     backdrop-filter: blur(20px);
-                    border: 2px solid rgba(255, 255, 255, 0.6);
+                    border: 2px solid ${isSelected ? 'rgba(255, 102, 0, 1)' : 'rgba(255, 255, 255, 0.6)'};
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
                     transition: all 0.3s ease;
+                    transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'};
                 ">
                     <img src="${logoUrl}" style="width: 24px; height: 24px; object-fit: contain;" onerror="this.src='/photos/ncaaf.png'" />
                 </div>
@@ -387,13 +363,26 @@ const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
         });
     };
 
-    console.log('ConferenceMap rendering with:', { teams: teams.length, mapCenter, mapZoom });
+    const distance = selectedTeam1 && selectedTeam2 && calculateDistance ? calculateDistance(selectedTeam1, selectedTeam2) : null;
 
     console.log("ConferenceMap rendering with:", { teams: teams.length, mapCenter, mapZoom });
     
     return (
         <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] overflow-hidden">
             <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
+            
+            {/* Distance Display */}
+            {distance && (
+                <div className="absolute top-4 left-4 z-20 bg-white/80 backdrop-blur-xl rounded-xl border border-white/50 px-4 py-2 shadow-lg">
+                    <div className="flex items-center space-x-2">
+                        <i className="fas fa-route text-orange-600"></i>
+                        <span className="font-bold text-gray-800">{distance} miles</span>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                        {selectedTeam1.school} ↔ {selectedTeam2.school}
+                    </div>
+                </div>
+            )}
             
             <div className="relative z-10 h-[600px]">
                 <MapContainer 
@@ -410,12 +399,29 @@ const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
                     <MapViewUpdater center={mapCenter} zoom={mapZoom} />
                     <MapControl teams={teams} onTeamClick={onTeamClick} />
                     
-                    {teams.map(team => (
-                        team.location && (
+                    {/* Distance Line */}
+                    {selectedTeam1 && selectedTeam2 && selectedTeam1.location && selectedTeam2.location && (
+                        <Polyline
+                            positions={[
+                                [selectedTeam1.location.latitude, selectedTeam1.location.longitude],
+                                [selectedTeam2.location.latitude, selectedTeam2.location.longitude]
+                            ]}
+                            pathOptions={{
+                                color: '#FF6600',
+                                weight: 4,
+                                opacity: 0.8,
+                                dashArray: '10, 10'
+                            }}
+                        />
+                    )}
+                    
+                    {teams.map(team => {
+                        const isSelected = selectedTeam1?.id === team.id || selectedTeam2?.id === team.id;
+                        return team.location && (
                             <Marker
                                 key={team.id}
                                 position={[team.location.latitude || 36.0, team.location.longitude || -79.0]}
-                                icon={customMarkerIcon(team.logos?.[0] || '/photos/ncaaf.png')}
+                                icon={customMarkerIcon(team.logos?.[0] || '/photos/ncaaf.png', isSelected)}
                                 eventHandlers={{
                                     click: () => onTeamClick && onTeamClick(team.id)
                                 }}
@@ -453,7 +459,7 @@ const ConferenceMap = ({ teams, onTeamClick, mapCenter, mapZoom }) => {
                                 </Popup>
                             </Marker>
                         )
-                    ))}
+                    })}
                 </MapContainer>
             </div>
         </div>
@@ -644,7 +650,7 @@ const SidebarTeamNavigator = ({ teams, onTeamClick }) => {
                         return (
                             <div
                                 key={team.id}
-                                onClick={() => onTeamClick(team.id)}
+                                onClick={() => onTeamClick(team)}
                                 className="relative cursor-pointer transform transition-all duration-300 hover:scale-105"
                             >
                                 <div className="relative bg-white/30 backdrop-blur-xl rounded-xl border border-white/40 hover:border-white/60 p-3 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)] hover:shadow-lg transition-all duration-300">
@@ -697,6 +703,8 @@ const ACC = () => {
   const [mapCenter, setMapCenter] = useState([36.0, -79.0]); // Atlantic Coast for ACC
   const [mapZoom, setMapZoom] = useState(6);
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [selectedTeam1, setSelectedTeam1] = useState(null);
+  const [selectedTeam2, setSelectedTeam2] = useState(null);
 
   const categories = ['Map', 'Standings', 'Talent Rankings', 'Recent Games', 'Rankings', 'News', 'Recruiting'];
 
@@ -1105,6 +1113,55 @@ const ACC = () => {
     return talent?.talent || null;
   };
 
+  const calculateDistance = (team1, team2) => {
+    if (!team1?.location || !team2?.location) return null;
+    
+    const lat1 = team1.location.latitude;
+    const lon1 = team1.location.longitude;
+    const lat2 = team2.location.latitude;
+    const lon2 = team2.location.longitude;
+    
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return Math.round(R * c);
+  };
+
+  // Team navigation card click handler
+  const handleTeamNavClick = (team) => {
+    if (team === null) {
+      // Clear selection
+      setSelectedTeam1(null);
+      setSelectedTeam2(null);
+      setMapCenter([36.0, -79.0]);
+      setMapZoom(6);
+      return;
+    }
+
+    if (!selectedTeam1) {
+      setSelectedTeam1(team);
+      setMapCenter([team.location.latitude, team.location.longitude]);
+      setMapZoom(8);
+    } else if (!selectedTeam2) {
+      setSelectedTeam2(team);
+      // Center map between both teams
+      const centerLat = (selectedTeam1.location.latitude + team.location.latitude) / 2;
+      const centerLon = (selectedTeam1.location.longitude + team.location.longitude) / 2;
+      setMapCenter([centerLat, centerLon]);
+      setMapZoom(6);
+    } else {
+      // Reset and select new team
+      setSelectedTeam1(team);
+      setSelectedTeam2(null);
+      setMapCenter([team.location.latitude, team.location.longitude]);
+      setMapZoom(8);
+    }
+  };
+
   const handleTeamClick = (teamId) => {
     const team = teams.find(t => t.id === teamId);
     if (team && team.location) {
@@ -1356,6 +1413,9 @@ const ACC = () => {
                     onTeamClick={handleTeamClick}
                     mapCenter={mapCenter}
                     mapZoom={mapZoom}
+                    selectedTeam1={selectedTeam1}
+                    selectedTeam2={selectedTeam2}
+                    calculateDistance={calculateDistance}
                   />
                 </div>
                 
@@ -1760,7 +1820,7 @@ const ACC = () => {
             {/* Team Navigator - Added to sidebar */}
             <SidebarTeamNavigator 
               teams={teams}
-              onTeamClick={handleTeamClick}
+              onTeamClick={handleTeamNavClick}
             />
             
             {/* Conference Logo */}

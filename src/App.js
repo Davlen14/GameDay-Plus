@@ -1,4 +1,5 @@
 import React, { useEffect, useState, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -11,6 +12,9 @@ import Features from './components/layout/Features';
 import CTA from './components/layout/CTA';
 import Footer from './components/layout/Footer';
 import LoadingSpinner from './components/UI/LoadingSpinner';
+
+// Auth Components
+const LoginPage = React.lazy(() => import('./components/auth/LoginPage'));
 
 // Lazy load heavy components
 const HomePageView = React.lazy(() => import('./components/layout/HomePageView'));
@@ -354,6 +358,14 @@ function App() {
         return <APITester />;
       case 'graphql-demo':
         return <GraphQLDemo />;
+
+      // Auth route
+      case 'login':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <LoginPage />
+          </Suspense>
+        );
       
       default:
         return (
@@ -367,13 +379,22 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <Header />
-      <main className="pt-16">
-        {renderPage()}
-      </main>
-      <Footer />
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          {/* All routes with header/footer */}
+          <Route path="/*" element={
+            <>
+              <Header />
+              <main className="pt-16">
+                {renderPage()}
+              </main>
+              <Footer />
+            </>
+          } />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
