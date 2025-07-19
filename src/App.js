@@ -370,6 +370,14 @@ function App() {
           </Suspense>
         );
       
+      // Pricing route
+      case 'pricing':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <PricingPage />
+          </Suspense>
+        );
+      
       default:
         return (
           <>
