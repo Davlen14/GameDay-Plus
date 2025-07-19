@@ -165,6 +165,13 @@ const Header = () => {
               <a href="#coach-overview"><i className="fas fa-user-tie icon-gradient"></i> <span>Coach Overview</span></a>
               <a href="#player-grade"><i className="fas fa-star icon-gradient"></i> <span>Player Grade</span></a>
               <div className="sub-dropdown">
+                <a href="#stats"><i className="fas fa-chart-bar icon-gradient"></i> <span>Stats</span></a>
+                <div className="sub-dropdown-content">
+                  <a href="#player-stats"><i className="fas fa-running icon-gradient"></i> <span>Player Stats</span></a>
+                  <a href="#team-stats"><i className="fas fa-users icon-gradient"></i> <span>Team Stats</span></a>
+                </div>
+              </div>
+              <div className="sub-dropdown">
                 <a href="#gameday-gpt"><i className="fas fa-robot icon-gradient"></i> <span>GamedayGPT</span></a>
                 <div className="sub-dropdown-content">
                   <a href="#predict-outcomes"><i className="fas fa-crystal-ball icon-gradient"></i> <span>Predict Outcomes</span></a>
@@ -372,6 +379,15 @@ const Header = () => {
             <a href="#player-metrics" className="block text-gray-600 hover:gradient-text py-1 px-4">Player Metrics</a>
             <a href="#coach-overview" className="block text-gray-600 hover:gradient-text py-1 px-4">Coach Overview</a>
             <a href="#player-grade" className="block text-gray-600 hover:gradient-text py-1 px-4">Player Grade</a>
+            <div className={`mobile-sub-dropdown ${activeDropdowns.includes('stats-sub') ? 'active' : ''}`}>
+              <button onClick={() => toggleMobileDropdown('stats-sub')} className="mobile-sub-dropdown-toggle w-full text-left text-gray-600 hover:gradient-text py-1 px-4 flex items-center justify-between">
+                Stats <i className="fas fa-chevron-down text-xs icon-gradient"></i>
+              </button>
+              <div className="mobile-sub-dropdown-content px-4">
+                <a href="#player-stats" className="block text-gray-500 hover:gradient-text py-1 px-6">Player Stats</a>
+                <a href="#team-stats" className="block text-gray-500 hover:gradient-text py-1 px-6">Team Stats</a>
+              </div>
+            </div>
             <div className={`mobile-sub-dropdown ${activeDropdowns.includes('analytics-sub') ? 'active' : ''}`}>
               <button onClick={() => toggleMobileDropdown('analytics-sub')} className="mobile-sub-dropdown-toggle w-full text-left text-gray-600 hover:gradient-text py-1 px-4 flex items-center justify-between">
                 GamedayGPT <i className="fas fa-chevron-down text-xs icon-gradient"></i>
