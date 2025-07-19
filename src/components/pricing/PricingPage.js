@@ -170,8 +170,21 @@ const PricingPage = () => {
         }
       }
 
-      .feature-check {
-        color: var(--gameday-red);
+      /* Clean Header-Style Gradients */
+      .clean-gradient-red {
+        background: linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28));
+      }
+
+      .clean-gradient-silver {
+        background: linear-gradient(135deg, rgb(156,163,175), rgb(107,114,128), rgb(75,85,99), rgb(107,114,128), rgb(156,163,175));
+      }
+
+      .clean-gradient-green {
+        background: linear-gradient(135deg, rgb(16,185,129), rgb(5,150,105), rgb(4,120,87), rgb(5,150,105), rgb(16,185,129));
+      }
+
+      .clean-gradient-gold {
+        background: linear-gradient(135deg, rgb(245,158,11), rgb(217,119,6), rgb(180,83,9), rgb(217,119,6), rgb(245,158,11));
       }
 
       .floating-orb {
@@ -447,7 +460,7 @@ const PricingPage = () => {
             Our team is here to help you find the perfect plan for your needs. 
             Contact us for personalized recommendations.
           </p>
-          <button className="px-8 py-3 pricing-gradient text-white rounded-lg hover:opacity-90 transition-all duration-300 font-bold shadow-lg metallic-shine">
+          <button className="px-8 py-3 clean-gradient-red text-white rounded-lg hover:opacity-90 transition-all duration-300 font-bold shadow-lg">
             Contact Sales
           </button>
         </div>
@@ -507,12 +520,14 @@ const PricingCard = ({ tier, onSelect }) => {
         {/* CTA Button */}
         <button
           onClick={() => onSelect(tier)}
-          className={`w-full py-3 px-6 rounded-lg font-bold transition-all duration-300 metallic-shine mt-auto ${
+          className={`w-full py-3 px-6 rounded-lg font-bold transition-all duration-300 mt-auto text-white hover:opacity-90 shadow-lg ${
             tier.id === 'free'
-              ? 'silver-gradient text-white hover:opacity-90 shadow-lg'
+              ? 'clean-gradient-silver'
+              : tier.id === 'juco'
+              ? 'clean-gradient-green'
               : tier.popular
-              ? 'gold-gradient text-white hover:opacity-90 shadow-lg'
-              : `${tier.gradientClass} text-white hover:opacity-90 shadow-lg`
+              ? 'clean-gradient-gold'
+              : 'clean-gradient-red'
           }`}
         >
           {tier.id === 'free' ? 'Get Started Free' : `Choose ${tier.name}`}
