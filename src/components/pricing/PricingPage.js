@@ -21,17 +21,17 @@ const PricingPage = () => {
         --gameday-metallic: linear-gradient(135deg, #FF4444 0%, #CC001C 10%, #AA0015 20%, #880011 30%, #FF2222 40%, #CC001C 50%, #AA0015 60%, #880011 70%, #FF4444 80%, #CC001C 90%, #AA0015 100%);
         --gameday-chrome: linear-gradient(135deg, #FF6B6B 0%, #DC143C 15%, #B22222 30%, #8B0000 45%, #654321 60%, #8B0000 75%, #B22222 85%, #DC143C 95%, #FF6B6B 100%);
         
-        /* Gray Gradients */
-        --gray-metallic: linear-gradient(135deg, #6B7280 0%, #4B5563 10%, #374151 20%, #1F2937 30%, #6B7280 40%, #4B5563 50%, #374151 60%, #1F2937 70%, #6B7280 80%, #4B5563 90%, #374151 100%);
-        --gray-chrome: linear-gradient(135deg, #9CA3AF 0%, #6B7280 15%, #4B5563 30%, #374151 45%, #1F2937 60%, #374151 75%, #4B5563 85%, #6B7280 95%, #9CA3AF 100%);
+        /* Gray/Silver Gradients */
+        --silver-metallic: linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 10%, #9CA3AF 20%, #6B7280 30%, #E5E7EB 40%, #D1D5DB 50%, #9CA3AF 60%, #6B7280 70%, #E5E7EB 80%, #D1D5DB 90%, #9CA3AF 100%);
+        --silver-chrome: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 15%, #D1D5DB 30%, #9CA3AF 45%, #6B7280 60%, #9CA3AF 75%, #D1D5DB 85%, #E5E7EB 95%, #F3F4F6 100%);
         
-        /* Blue Gradients */
-        --blue-metallic: linear-gradient(135deg, #3B82F6 0%, #2563EB 10%, #1D4ED8 20%, #1E40AF 30%, #3B82F6 40%, #2563EB 50%, #1D4ED8 60%, #1E40AF 70%, #3B82F6 80%, #2563EB 90%, #1D4ED8 100%);
-        --blue-chrome: linear-gradient(135deg, #60A5FA 0%, #3B82F6 15%, #2563EB 30%, #1D4ED8 45%, #1E40AF 60%, #1D4ED8 75%, #2563EB 85%, #3B82F6 95%, #60A5FA 100%);
+        /* Green Gradients */
+        --green-metallic: linear-gradient(135deg, #10B981 0%, #059669 10%, #047857 20%, #065F46 30%, #10B981 40%, #059669 50%, #047857 60%, #065F46 70%, #10B981 80%, #059669 90%, #047857 100%);
+        --green-chrome: linear-gradient(135deg, #34D399 0%, #10B981 15%, #059669 30%, #047857 45%, #065F46 60%, #047857 75%, #059669 85%, #10B981 95%, #34D399 100%);
         
-        /* Purple Gradients */
-        --purple-metallic: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 10%, #6D28D9 20%, #5B21B6 30%, #8B5CF6 40%, #7C3AED 50%, #6D28D9 60%, #5B21B6 70%, #8B5CF6 80%, #7C3AED 90%, #6D28D9 100%);
-        --purple-chrome: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 15%, #7C3AED 30%, #6D28D9 45%, #5B21B6 60%, #6D28D9 75%, #7C3AED 85%, #8B5CF6 95%, #A78BFA 100%);
+        /* Gold Gradients */
+        --gold-metallic: linear-gradient(135deg, #F59E0B 0%, #D97706 10%, #B45309 20%, #92400E 30%, #F59E0B 40%, #D97706 50%, #B45309 60%, #92400E 70%, #F59E0B 80%, #D97706 90%, #B45309 100%);
+        --gold-chrome: linear-gradient(135deg, #FCD34D 0%, #F59E0B 15%, #D97706 30%, #B45309 45%, #92400E 60%, #B45309 75%, #D97706 85%, #F59E0B 95%, #FCD34D 100%);
       }
 
       body { 
@@ -48,26 +48,26 @@ const PricingPage = () => {
           inset 0 -1px 0 rgba(0, 0, 0, 0.2);
       }
 
-      .gray-gradient {
-        background: var(--gray-metallic);
+      .silver-gradient {
+        background: var(--silver-metallic);
         box-shadow: 
-          0 4px 15px rgba(107, 114, 128, 0.4),
+          0 4px 15px rgba(156, 163, 175, 0.4),
           inset 0 1px 0 rgba(255, 255, 255, 0.2),
           inset 0 -1px 0 rgba(0, 0, 0, 0.2);
       }
 
-      .blue-gradient {
-        background: var(--blue-metallic);
+      .green-gradient {
+        background: var(--green-metallic);
         box-shadow: 
-          0 4px 15px rgba(59, 130, 246, 0.4),
+          0 4px 15px rgba(16, 185, 129, 0.4),
           inset 0 1px 0 rgba(255, 255, 255, 0.2),
           inset 0 -1px 0 rgba(0, 0, 0, 0.2);
       }
 
-      .purple-gradient {
-        background: var(--purple-metallic);
+      .gold-gradient {
+        background: var(--gold-metallic);
         box-shadow: 
-          0 4px 15px rgba(139, 92, 246, 0.4),
+          0 4px 15px rgba(245, 158, 11, 0.4),
           inset 0 1px 0 rgba(255, 255, 255, 0.2),
           inset 0 -1px 0 rgba(0, 0, 0, 0.2);
       }
@@ -80,28 +80,28 @@ const PricingPage = () => {
         filter: drop-shadow(0 1px 2px rgba(220, 20, 60, 0.3));
       }
 
-      .gray-text-gradient {
-        background: var(--gray-chrome);
+      .silver-text-gradient {
+        background: var(--silver-chrome);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        filter: drop-shadow(0 1px 2px rgba(107, 114, 128, 0.3));
+        filter: drop-shadow(0 1px 2px rgba(156, 163, 175, 0.3));
       }
 
-      .blue-text-gradient {
-        background: var(--blue-chrome);
+      .green-text-gradient {
+        background: var(--green-chrome);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        filter: drop-shadow(0 1px 2px rgba(59, 130, 246, 0.3));
+        filter: drop-shadow(0 1px 2px rgba(16, 185, 129, 0.3));
       }
 
-      .purple-text-gradient {
-        background: var(--purple-chrome);
+      .gold-text-gradient {
+        background: var(--gold-chrome);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        filter: drop-shadow(0 1px 2px rgba(139, 92, 246, 0.3));
+        filter: drop-shadow(0 1px 2px rgba(245, 158, 11, 0.3));
       }
 
       .pricing-glass {
@@ -225,8 +225,8 @@ const PricingPage = () => {
       price: '$0',
       period: 'forever',
       icon: faStar,
-      gradientClass: 'gray-gradient',
-      textGradientClass: 'gray-text-gradient',
+      gradientClass: 'silver-gradient',
+      textGradientClass: 'silver-text-gradient',
       popular: false,
       features: [
         'Basic team stats',
@@ -245,13 +245,13 @@ const PricingPage = () => {
     },
     {
       id: 'juco',
-      name: 'JUCO Division 3',
+      name: 'Division 3',
       subtitle: 'Base Tier',
       price: '$9.99',
       period: '/month',
       icon: faRocket,
-      gradientClass: 'blue-gradient',
-      textGradientClass: 'blue-text-gradient',
+      gradientClass: 'green-gradient',
+      textGradientClass: 'green-text-gradient',
       popular: false,
       features: [
         'Everything in Free',
@@ -277,11 +277,11 @@ const PricingPage = () => {
       price: '$19.99',
       period: '/month',
       icon: faCrown,
-      gradientClass: 'purple-gradient',
-      textGradientClass: 'purple-text-gradient',
+      gradientClass: 'gold-gradient',
+      textGradientClass: 'gold-text-gradient',
       popular: true,
       features: [
-        'Everything in JUCO Division 3',
+        'Everything in Division 2',
         'AI-powered game predictions',
         'Advanced betting analytics',
         'Spread & over/under insights',
@@ -509,9 +509,9 @@ const PricingCard = ({ tier, onSelect }) => {
           onClick={() => onSelect(tier)}
           className={`w-full py-3 px-6 rounded-lg font-bold transition-all duration-300 metallic-shine ${
             tier.id === 'free'
-              ? 'gray-gradient text-white hover:opacity-90 shadow-lg'
+              ? 'silver-gradient text-white hover:opacity-90 shadow-lg'
               : tier.popular
-              ? 'purple-gradient text-white hover:opacity-90 shadow-lg'
+              ? 'gold-gradient text-white hover:opacity-90 shadow-lg'
               : `${tier.gradientClass} text-white hover:opacity-90 shadow-lg`
           }`}
         >
