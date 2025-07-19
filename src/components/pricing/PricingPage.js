@@ -225,8 +225,8 @@ const PricingPage = () => {
       price: '$0',
       period: 'forever',
       icon: faStar,
-      gradientClass: 'silver-gradient',
-      textGradientClass: 'silver-text-gradient',
+      gradientClass: 'green-gradient',
+      textGradientClass: 'green-text-gradient',
       popular: false,
       features: [
         'Basic team stats',
@@ -458,7 +458,7 @@ const PricingPage = () => {
 
 const PricingCard = ({ tier, onSelect }) => {
   return (
-    <div className={`relative tier-card rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl metallic-shine ${tier.popular ? 'ring-4 ring-purple-500 ring-opacity-50' : ''}`}>
+    <div className={`relative tier-card rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl metallic-shine flex flex-col h-full ${tier.popular ? 'ring-4 ring-yellow-500 ring-opacity-50' : ''}`}>
       {/* Popular Badge */}
       {tier.popular && (
         <div className="absolute top-0 left-0 right-0 popular-badge text-white text-center py-2 font-bold text-sm">
@@ -480,8 +480,8 @@ const PricingCard = ({ tier, onSelect }) => {
       </div>
 
       {/* Features */}
-      <div className="p-8">
-        <div className="space-y-4 mb-8">
+      <div className="p-8 flex-grow flex flex-col">
+        <div className="space-y-4 mb-8 flex-grow">
           {tier.features.map((feature, index) => (
             <div key={index} className="flex items-start space-x-3">
               <FontAwesomeIcon icon={faCheck} className="feature-check mt-0.5 flex-shrink-0" />
@@ -507,7 +507,7 @@ const PricingCard = ({ tier, onSelect }) => {
         {/* CTA Button */}
         <button
           onClick={() => onSelect(tier)}
-          className={`w-full py-3 px-6 rounded-lg font-bold transition-all duration-300 metallic-shine ${
+          className={`w-full py-3 px-6 rounded-lg font-bold transition-all duration-300 metallic-shine mt-auto ${
             tier.id === 'free'
               ? 'silver-gradient text-white hover:opacity-90 shadow-lg'
               : tier.popular
