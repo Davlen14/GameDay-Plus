@@ -47,6 +47,10 @@ const PredictOutcomes = React.lazy(() => import('./components/analytics/PredictO
 const AskQuestions = React.lazy(() => import('./components/analytics/AskQuestions'));
 const AIInsights = React.lazy(() => import('./components/analytics/AIInsights'));
 
+// Stats Components
+const PlayerStats = React.lazy(() => import('./components/stats/PlayerStats'));
+const TeamStats = React.lazy(() => import('./components/stats/TeamStats'));
+
 // Betting Components
 const BettingModels = React.lazy(() => import('./components/betting/BettingModels'));
 const SpreadAnalysis = React.lazy(() => import('./components/betting/SpreadAnalysis'));
@@ -277,6 +281,18 @@ function App() {
         return <CoachOverview />;
       case 'player-grade':
         return <PlayerGrade />;
+      case 'player-stats':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <PlayerStats />
+          </Suspense>
+        );
+      case 'team-stats':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <TeamStats />
+          </Suspense>
+        );
       case 'gameday-gpt':
         return <GamedayGPT />;
       case 'predict-outcomes':
