@@ -1,10 +1,4 @@
-// Advanced Analytics Components
-const Efficiency = React.lazy(() => import('./components/analytics/advanced/Efficiency'));
-const Explosiveness = React.lazy(() => import('./components/analytics/advanced/Explosiveness'));
-const Situational = React.lazy(() => import('./components/analytics/advanced/Situational'));
-const DriveAnalysis = React.lazy(() => import('./components/analytics/advanced/DriveAnalysis'));
-const PlayerImpact = React.lazy(() => import('./components/analytics/advanced/PlayerImpact'));
-const Heatmaps = React.lazy(() => import('./components/analytics/advanced/Heatmaps'));
+
 import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
@@ -19,6 +13,14 @@ import Features from './components/layout/Features';
 import CTA from './components/layout/CTA';
 import Footer from './components/layout/Footer';
 import LoadingSpinner from './components/UI/LoadingSpinner';
+
+// Advanced Analytics Components
+const Efficiency = React.lazy(() => import('./components/analytics/advanced/Efficiency'));
+const Explosiveness = React.lazy(() => import('./components/analytics/advanced/Explosiveness'));
+const Situational = React.lazy(() => import('./components/analytics/advanced/Situational'));
+const DriveAnalysis = React.lazy(() => import('./components/analytics/advanced/DriveAnalysis'));
+const PlayerImpact = React.lazy(() => import('./components/analytics/advanced/PlayerImpact'));
+const Heatmaps = React.lazy(() => import('./components/analytics/advanced/Heatmaps'));
 
 // Auth Components
 const LoginPage = React.lazy(() => import('./components/auth/LoginPage'));
