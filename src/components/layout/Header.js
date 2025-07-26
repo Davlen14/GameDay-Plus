@@ -165,6 +165,17 @@ const Header = () => {
               <a href="#coach-overview"><i className="fas fa-user-tie icon-gradient"></i> <span>Coach Overview</span></a>
               <a href="#player-grade"><i className="fas fa-star icon-gradient"></i> <span>Player Grade</span></a>
               <div className="sub-dropdown">
+                <a href="#"><i className="fas fa-flask icon-gradient"></i> <span>Advanced</span></a>
+                <div className="sub-dropdown-content">
+                  <a href="#efficiency"><i className="fas fa-tachometer-alt icon-gradient"></i> <span>Efficiency</span></a>
+                  <a href="#explosiveness"><i className="fas fa-bolt icon-gradient"></i> <span>Explosiveness</span></a>
+                  <a href="#situational"><i className="fas fa-layer-group icon-gradient"></i> <span>Situational</span></a>
+                  <a href="#drive-analysis"><i className="fas fa-road icon-gradient"></i> <span>Drive Analysis</span></a>
+                  <a href="#player-impact"><i className="fas fa-user-shield icon-gradient"></i> <span>Player Impact</span></a>
+                  <a href="#heatmaps"><i className="fas fa-thermometer-half icon-gradient"></i> <span>Heatmaps</span></a>
+                </div>
+              </div>
+              <div className="sub-dropdown">
                 <a href="#stats"><i className="fas fa-chart-bar icon-gradient"></i> <span>Stats</span></a>
                 <div className="sub-dropdown-content">
                   <a href="#player-stats"><i className="fas fa-running icon-gradient"></i> <span>Player Stats</span></a>

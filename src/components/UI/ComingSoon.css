@@ -1,0 +1,32 @@
+.coming-soon-bg {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px) saturate(1.2);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+  margin: 2rem auto;
+  max-width: 600px;
+}
+.coming-soon-content {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+.coming-soon-gradient {
+  background: linear-gradient(90deg, #ff003c 0%, #ff5e62 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  font-size: 2rem;
+  margin: 0.5rem 0;
+}
+.coming-soon-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+  color: #ff003c;
+  filter: drop-shadow(0 2px 8px #ff003c33);
+}

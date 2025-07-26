@@ -1,3 +1,10 @@
+// Advanced Analytics Components
+const Efficiency = React.lazy(() => import('./components/analytics/advanced/Efficiency'));
+const Explosiveness = React.lazy(() => import('./components/analytics/advanced/Explosiveness'));
+const Situational = React.lazy(() => import('./components/analytics/advanced/Situational'));
+const DriveAnalysis = React.lazy(() => import('./components/analytics/advanced/DriveAnalysis'));
+const PlayerImpact = React.lazy(() => import('./components/analytics/advanced/PlayerImpact'));
+const Heatmaps = React.lazy(() => import('./components/analytics/advanced/Heatmaps'));
 import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
@@ -281,6 +288,43 @@ function App() {
         return <CoachOverview />;
       case 'player-grade':
         return <PlayerGrade />;
+      // Advanced Analytics routes
+      case 'efficiency':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <Efficiency />
+          </Suspense>
+        );
+      case 'explosiveness':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <Explosiveness />
+          </Suspense>
+        );
+      case 'situational':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <Situational />
+          </Suspense>
+        );
+      case 'drive-analysis':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <DriveAnalysis />
+          </Suspense>
+        );
+      case 'player-impact':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <PlayerImpact />
+          </Suspense>
+        );
+      case 'heatmaps':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <Heatmaps />
+          </Suspense>
+        );
       case 'player-stats':
         return (
           <Suspense fallback={<PageLoader />}>
