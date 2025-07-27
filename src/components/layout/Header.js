@@ -89,6 +89,13 @@ const Header = () => {
             Home
           </button>
           
+          <button 
+            onClick={() => navigateTo('fanhub-central')} 
+            className="gradient-text hover:opacity-80 transition duration-300 font-extrabold bg-transparent border-none p-0 cursor-pointer"
+          >
+            FanHub
+          </button>
+          
           {/* Teams & Conferences Dropdown */}
           <div className="dropdown">
             <button className="dropdown-button gradient-text hover:opacity-80 transition duration-300">
@@ -233,15 +240,7 @@ const Header = () => {
             </div>
           </div>
 
-          {/* FanHub Single Button */}
-          <a
-            href="#fanhub-central"
-            className="gradient-text hover:opacity-80 transition duration-300 font-bold px-4 py-2 rounded-lg"
-            style={{ display: 'inline-flex', alignItems: 'center' }}
-          >
-            <i className="fas fa-users icon-gradient mr-2"></i>
-            FanHub
-          </a>
+
         </div>
 
         {/* Right Side Actions */}
@@ -304,6 +303,13 @@ const Header = () => {
           className="block gradient-text py-2 px-4 w-full text-left bg-transparent border-none cursor-pointer"
         >
           Home
+        </button>
+        
+        <button 
+          onClick={() => navigateTo('fanhub-central')} 
+          className="block gradient-text py-2 px-4 w-full text-left bg-transparent border-none cursor-pointer"
+        >
+          FanHub
         </button>
         
         {/* Mobile Teams & Conferences */}
@@ -450,14 +456,7 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile FanHub Single Button */}
-        <a
-          href="#fanhub-central"
-          className="block w-full text-left gradient-text py-2 px-4 flex items-center font-bold"
-        >
-          <i className="fas fa-users icon-gradient mr-2"></i>
-          FanHub
-        </a>
+
 
         {/* Mobile Login/Signup */}
         <div className="border-t pt-4 mt-4 space-y-2">
