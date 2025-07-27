@@ -1589,9 +1589,10 @@ const TopReturningPlayers2025 = () => {
                     onClick={() => setViewMode('detailed')}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                       viewMode === 'detailed' 
-                        ? 'bg-red-600 text-white shadow-lg' 
+                        ? 'text-white shadow-lg' 
                         : 'bg-white/30 text-gray-700 hover:bg-white/40'
                     }`}
+                    style={viewMode === 'detailed' ? { background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' } : {}}
                   >
                     <i className="fas fa-th-large mr-2"></i>Detailed
                   </button>
@@ -1599,24 +1600,25 @@ const TopReturningPlayers2025 = () => {
                     onClick={() => setViewMode('compact')}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                       viewMode === 'compact' 
-                        ? 'bg-red-600 text-white shadow-lg' 
+                        ? 'text-white shadow-lg' 
                         : 'bg-white/30 text-gray-700 hover:bg-white/40'
                     }`}
+                    style={viewMode === 'compact' ? { background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' } : {}}
                   >
                     <i className="fas fa-list mr-2"></i>Compact
                   </button>
                 </div>
               </div>
 
-              {/* Category Pills with Icons - Smaller for single row */}
-              <div className="flex flex-wrap items-center gap-2 mb-8">
+              {/* Category Pills with Icons - Wider for better spacing */}
+              <div className="flex flex-wrap items-center gap-3 mb-8">
                 {/* All Players Tab */}
                 <button
                   onClick={() => {
                     setSelectedCategory('All');
                     setSelectedPosition('All');
                   }}
-                  className={`relative px-4 py-2 rounded-xl font-bold text-sm transition-all duration-500 transform hover:scale-105 ${
+                  className={`relative px-6 py-3 rounded-xl font-bold text-sm transition-all duration-500 transform hover:scale-105 ${
                     selectedCategory === 'All'
                       ? 'text-white shadow-xl'
                       : 'text-gray-700 hover:text-white'
@@ -1632,8 +1634,8 @@ const TopReturningPlayers2025 = () => {
                   
                   <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
                   
-                  <span className="relative z-10 flex items-center gap-1">
-                    <i className="fas fa-users text-xs"></i>
+                  <span className="relative z-10 flex items-center gap-2">
+                    <i className="fas fa-users"></i>
                     All Players
                   </span>
                 </button>
@@ -1649,7 +1651,7 @@ const TopReturningPlayers2025 = () => {
                         setSelectedCategory(category);
                         setSelectedPosition('All');
                       }}
-                      className={`relative px-4 py-2 rounded-xl font-bold text-sm transition-all duration-500 transform hover:scale-105 ${
+                      className={`relative px-6 py-3 rounded-xl font-bold text-sm transition-all duration-500 transform hover:scale-105 ${
                         selectedCategory === category
                           ? 'text-white shadow-xl'
                           : 'text-gray-700 hover:text-white'
@@ -1665,8 +1667,8 @@ const TopReturningPlayers2025 = () => {
                       
                       <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
                       
-                      <span className="relative z-10 flex items-center gap-1">
-                        <i className={`fas ${style.icon} text-xs`}></i>
+                      <span className="relative z-10 flex items-center gap-2">
+                        <i className={`fas ${style.icon}`}></i>
                         {category === 'Top 25' && 'Elite (1-25)'}
                         {category === 'Star' && 'Star (26-50)'}
                         {category === 'Impact' && 'Impact (51-75)'}
