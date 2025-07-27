@@ -1,5 +1,3 @@
-const TopReturningPlayers2025 = React.lazy(() => import('./components/news/TopReturningPlayers2025'));
-
 import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
@@ -38,6 +36,7 @@ const SEC = React.lazy(() => import('./components/teams/SEC'));
 const BigTen = React.lazy(() => import('./components/teams/BigTen'));
 const ACC = React.lazy(() => import('./components/teams/ACC'));
 const Big12 = React.lazy(() => import('./components/teams/Big12'));
+const TopReturningPlayers2025 = React.lazy(() => import('./components/news/TopReturningPlayers2025'));
 const Pac12 = React.lazy(() => import('./components/teams/Pac12'));
 const AmericanAthletic = React.lazy(() => import('./components/teams/AmericanAthletic'));
 const ConferenceUSA = React.lazy(() => import('./components/teams/ConferenceUSA'));
