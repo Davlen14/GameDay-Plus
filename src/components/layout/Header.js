@@ -233,19 +233,15 @@ const Header = () => {
             </div>
           </div>
 
-          {/* FanHub Dropdown */}
-          <div className="dropdown">
-            <button className="dropdown-button gradient-text hover:opacity-80 transition duration-300">
-              FanHub <FontAwesomeIcon icon={faChevronDown} className="text-xs icon-gradient" />
-            </button>
-            <div className="dropdown-content">
-              <a href="#fan-forums"><i className="fas fa-comments icon-gradient"></i> <span>Fan Forums</span></a>
-              <a href="#predictions"><i className="fas fa-magic icon-gradient"></i> <span>Fan Predictions</span></a>
-              <a href="#polls"><i className="fas fa-poll icon-gradient"></i> <span>Polls & Voting</span></a>
-              <a href="#social-feed"><i className="fas fa-stream icon-gradient"></i> <span>Social Feed</span></a>
-              <a href="#fan-stats"><i className="fas fa-medal icon-gradient"></i> <span>Fan Stats</span></a>
-            </div>
-          </div>
+          {/* FanHub Single Button */}
+          <a
+            href="#fanhub-central"
+            className="gradient-text hover:opacity-80 transition duration-300 font-bold px-4 py-2 rounded-lg"
+            style={{ display: 'inline-flex', alignItems: 'center' }}
+          >
+            <i className="fas fa-users icon-gradient mr-2"></i>
+            FanHub
+          </a>
         </div>
 
         {/* Right Side Actions */}
@@ -454,19 +450,14 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile FanHub */}
-        <div className={`mobile-dropdown ${activeDropdowns.includes(5) ? 'active' : ''}`}>
-          <button onClick={() => toggleMobileDropdown(5)} className="mobile-dropdown-toggle w-full text-left gradient-text py-2 px-4 flex items-center justify-between">
-            FanHub <i className="fas fa-chevron-down text-xs icon-gradient"></i>
-          </button>
-          <div className="mobile-dropdown-content px-4">
-            <a href="#fan-forums" className="block text-gray-600 hover:gradient-text py-1 px-4">Fan Forums</a>
-            <a href="#predictions" className="block text-gray-600 hover:gradient-text py-1 px-4">Fan Predictions</a>
-            <a href="#polls" className="block text-gray-600 hover:gradient-text py-1 px-4">Polls & Voting</a>
-            <a href="#social-feed" className="block text-gray-600 hover:gradient-text py-1 px-4">Social Feed</a>
-            <a href="#fan-stats" className="block text-gray-600 hover:gradient-text py-1 px-4">Fan Stats</a>
-          </div>
-        </div>
+        {/* Mobile FanHub Single Button */}
+        <a
+          href="#fanhub-central"
+          className="block w-full text-left gradient-text py-2 px-4 flex items-center font-bold"
+        >
+          <i className="fas fa-users icon-gradient mr-2"></i>
+          FanHub
+        </a>
 
         {/* Mobile Login/Signup */}
         <div className="border-t pt-4 mt-4 space-y-2">

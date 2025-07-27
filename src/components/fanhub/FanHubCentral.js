@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import InteractiveForumPost from './InteractiveForumPost';
 import MainForumSection from './MainForumSection';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faLandmark, faMagic, faStream, faMedal, faUsers } from '@fortawesome/free-solid-svg-icons';
+
+const TheColosseum = lazy(() => import('./TheColosseum'));
+const FanProphecy = lazy(() => import('./FanProphecy'));
+const SocialFeed = lazy(() => import('./SocialFeed'));
+const FanStats = lazy(() => import('./FanStats'));
 
 const FanHubCentral = () => {
   // Professional gradient system matching other FanHub components
@@ -40,206 +47,10 @@ const FanHubCentral = () => {
     accuracy: 73.2
   });
 
-  const [recentActivity, setRecentActivity] = useState([
-    { 
-      id: 1, 
-      type: 'prediction', 
-      title: 'Correctly predicted Alabama vs Georgia', 
-      points: 150, 
-      time: '2 hours ago', 
-      icon: 'fa-crystal-ball',
-      photo: userPhotos[0], // Wedding.jpg
-      color: 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))',
-      shadowColor: 'rgba(34, 197, 94, 0.3)'
-    },
-    { 
-      id: 2, 
-      type: 'discussion', 
-      title: 'Started debate in Rivalry Corner', 
-      points: 25, 
-      time: '4 hours ago', 
-      icon: 'fa-comments',
-      photo: userPhotos[1], // Mclovin.jpg
-      color: 'linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235))',
-      shadowColor: 'rgba(59, 130, 246, 0.3)'
-    },
-    { 
-      id: 3, 
-      type: 'achievement', 
-      title: 'Unlocked "Prophet" badge', 
-      points: 500, 
-      time: '1 day ago', 
-      icon: 'fa-trophy',
-      photo: userPhotos[2], // Nick.jpg
-      color: 'linear-gradient(135deg, rgb(245, 158, 11), rgb(217, 119, 6))',
-      shadowColor: 'rgba(245, 158, 11, 0.3)'
-    },
-    { 
-      id: 4, 
-      type: 'prediction', 
-      title: 'Joined CFP Bracket Challenge', 
-      points: 0, 
-      time: '2 days ago', 
-      icon: 'fa-users',
-      photo: userPhotos[3], // NY.jpg
-      color: 'linear-gradient(135deg, rgb(147, 51, 234), rgb(126, 34, 206))',
-      shadowColor: 'rgba(147, 51, 234, 0.3)'
-    }
-  ]);
-
-  const [favoritePredictions, setFavoritePredictions] = useState([
-    { 
-      id: 1, 
-      title: 'Weekly Gauntlet', 
-      participants: 15847, 
-      prize: '500 Fan Points', 
-      timeLeft: '2d 14h', 
-      progress: 60,
-      color: 'linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235))',
-      shadowColor: 'rgba(59, 130, 246, 0.3)'
-    },
-    { 
-      id: 2, 
-      title: 'Upset Alert', 
-      participants: 8234, 
-      prize: '1000 Fan Points', 
-      timeLeft: '4d 22h', 
-      progress: 40,
-      color: 'linear-gradient(135deg, rgb(245, 158, 11), rgb(217, 119, 6))',
-      shadowColor: 'rgba(245, 158, 11, 0.3)'
-    },
-    { 
-      id: 3, 
-      title: 'Playoff Prophet', 
-      participants: 45678, 
-      prize: 'Season Champion Title', 
-      timeLeft: '1w 3d', 
-      progress: 80,
-      color: professionalGradients.red,
-      shadowColor: 'rgba(255, 46, 74, 0.3)'
-    }
-  ]);
-
-  const [hotDiscussions, setHotDiscussions] = useState([
-    { 
-      id: 1, 
-      title: 'Alabama vs Georgia: Who has the better defense?', 
-      section: 'Rivalry Corner', 
-      replies: 234, 
-      heat: 'fire',
-      photo: userPhotos[4], // SB.jpg
-      color: 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))',
-      shadowColor: 'rgba(239, 68, 68, 0.3)'
-    },
-    { 
-      id: 2, 
-      title: '5-star QB just entered the portal...', 
-      section: 'Recruiting Hub', 
-      replies: 189, 
-      heat: 'hot',
-      photo: userPhotos[5], // CLE.jpg
-      color: 'linear-gradient(135deg, rgb(245, 158, 11), rgb(217, 119, 6))',
-      shadowColor: 'rgba(245, 158, 11, 0.3)'
-    },
-    { 
-      id: 3, 
-      title: 'CFP rankings are out - thoughts?', 
-      section: 'Main Plaza', 
-      replies: 156, 
-      heat: 'trending',
-      photo: userPhotos[0], // Wedding.jpg (reusing for variety)
-      color: 'linear-gradient(135deg, rgb(34, 197, 94), rgb(22, 163, 74))',
-      shadowColor: 'rgba(34, 197, 94, 0.3)'
-    }
-  ]);
-
-  const [showInteractivePost, setShowInteractivePost] = useState(false);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [showMainForum, setShowMainForum] = useState(false);
-
-  return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9)' }}>
-      {/* Hero Header */}
-      <div 
-        className="relative overflow-hidden text-white"
-        style={{
-          background: 'linear-gradient(135deg, rgb(31, 41, 55), rgb(55, 65, 81), rgb(75, 85, 99))',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-        }}
-      >
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(135deg, rgba(255, 46, 74, 0.1), transparent, rgba(255, 46, 74, 0.1))'
-          }}
-        ></div>
-        <div className="relative w-full px-6 py-20" style={{ width: '97%', margin: '0 auto' }}>
-          <div className="text-center">
-            <h1 className="text-6xl font-extrabold mb-6">
-              <span 
-                style={{
-                  background: professionalGradients.red,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                }}
-              >
-                FANHUB CENTRAL
-              </span>
-            </h1>
-            <p 
-              className="text-xl max-w-3xl mx-auto mb-8"
-              style={{
-                color: 'rgba(229, 231, 235, 0.9)',
-                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-              }}
-            >
-              Your personal command center for all GAMEDAY+ fan activities
-            </p>
-            
-            {/* Enhanced Quick Stats Bar */}
-            <div className="flex justify-center items-center space-x-8 text-sm font-medium mb-6">
-              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span>Level {userStats.level}</span>
-              </div>
-              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                <i className="fas fa-trophy text-yellow-300"></i>
-                <span>{userStats.points.toLocaleString()} Points</span>
-              </div>
-              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                <i className="fas fa-fire text-orange-300"></i>
-                <span>{userStats.streak} Day Streak</span>
-              </div>
-              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                <i className="fas fa-bullseye text-blue-300"></i>
-                <span>{userStats.accuracy}% Accuracy</span>
-              </div>
-            </div>
-            
-            {/* Featured User Photo */}
-            <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white border-opacity-30 shadow-lg">
-                <img 
-                  src={userPhotos[Math.floor(Math.random() * userPhotos.length)]} 
-                  alt="Featured User" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                />
-                <div className="w-full h-full flex items-center justify-center text-white bg-red-500" style={{ display: 'none' }}>
-                  <i className="fas fa-user"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Dashboard */}
+  // Tab state and hash sync
+  // Dashboard tab content (restored)
+  function DashboardTab() {
+    return (
       <div className="w-full py-12" style={{ width: '97%', margin: '0 auto' }}>
         {/* Quick Access Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -292,7 +103,6 @@ const FanHubCentral = () => {
               </div>
             </div>
           </div>
-
           {/* Personal Stats */}
           <div className="rounded-lg overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-[1.02]"
                style={{ 
@@ -322,132 +132,73 @@ const FanHubCentral = () => {
             </div>
           </div>
         </div>
-
-        {/* Recent Activity */}
-        <div className="mb-12">
-          <div className="rounded-lg overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-[1.02]"
-               style={{ 
-                 background: professionalGradients.blue,
-                 border: 'none'
-               }}>
-            <div className="text-white p-6">
-              <h3 className="text-2xl font-bold mb-2">🎯 Recent Activity</h3>
-              <p className="text-blue-100">Your latest fan activities and achievements</p>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div 
-                    key={activity.id} 
-                    className="flex items-center space-x-4 p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer transform hover:shadow-lg"
-                    style={{ 
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      backdropFilter: 'blur(8px)'
-                    }}
-                    onClick={() => {
-                      if (activity.type === 'prediction' || activity.type === 'discussion') {
-                        setSelectedPost({
-                          title: activity.title,
-                          section: "The Colosseum - Recent Activity",
-                          replies: Math.floor(Math.random() * 100) + 20,
-                          photo: activity.photo,
-                          user: "@LiveFan"
-                        });
-                        setShowInteractivePost(true);
-                      }
-                    }}
-                  >
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white border-opacity-30 flex-shrink-0"
-                         style={{ background: activity.color }}>
-                      <img 
-                        src={activity.photo} 
-                        alt="User avatar" 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                      <div className="w-full h-full flex items-center justify-center text-white" style={{ display: 'none' }}>
-                        <i className={`fas ${activity.icon} text-sm`}></i>
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-white">{activity.title}</h4>
-                      <div className="flex items-center justify-between text-sm text-white text-opacity-80">
-                        <span>{activity.time}</span>
-                        <span className="text-green-300 font-bold">+{activity.points}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* You can add back Recent Activity, Hot Discussions, etc. here as needed */}
+      </div>
+    );
+  }
+  const tabList = [
+    { key: 'dashboard', label: 'Dashboard', icon: faUsers, component: DashboardTab },
+    { key: 'colosseum', label: 'The Colosseum', icon: faLandmark, component: TheColosseum },
+    { key: 'prophecy', label: 'Fan Prophecy', icon: faMagic, component: FanProphecy },
+    { key: 'social', label: 'Social Feed', icon: faStream, component: SocialFeed },
+    { key: 'stats', label: 'Fan Stats', icon: faMedal, component: FanStats },
+  ];
+  function getTabFromHash() {
+    const hash = window.location.hash;
+    const match = hash.match(/tab=([a-z]+)/);
+    return match ? match[1] : 'colosseum';
+  }
+  const [activeTab, setActiveTab] = useState(getTabFromHash());
+  useEffect(() => {
+    const onHashChange = () => setActiveTab(getTabFromHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+  const handleTabClick = (key) => {
+    window.location.hash = `fanhub-central?tab=${key}`;
+    setActiveTab(key);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden text-white" style={{ background: 'linear-gradient(135deg, rgb(31, 41, 55), rgb(55, 65, 81), rgb(75, 85, 99))', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)' }}>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(255, 46, 74, 0.1), transparent, rgba(255, 46, 74, 0.1))' }}></div>
+        <div className="relative w-full px-6 py-20" style={{ width: '97%', margin: '0 auto' }}>
+          <div className="text-center">
+            <h1 className="text-6xl font-extrabold mb-6">
+              <span style={{ background: professionalGradients.red, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>FANHUB CENTRAL</span>
+            </h1>
+            <p className="text-xl max-w-3xl mx-auto mb-8" style={{ color: 'rgba(229, 231, 235, 0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+              Your personal command center for all GAMEDAY+ fan activities
+            </p>
           </div>
-        </div>
-
-        {/* Hot Discussions */}
-        <div className="rounded-lg overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-[1.02]"
-             style={{ 
-               background: professionalGradients.orange,
-               border: 'none'
-             }}>
-          <div className="text-white p-6">
-            <h3 className="text-2xl font-bold mb-2">🔥 Hot Discussions</h3>
-            <p className="text-orange-100">Trending topics across The Colosseum</p>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {hotDiscussions.map((discussion) => (
-                <div 
-                  key={discussion.id} 
-                  className="p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer transform hover:shadow-lg"
-                  style={{ 
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(8px)'
-                  }}
-                  onClick={() => {
-                    setSelectedPost({
-                      title: discussion.title,
-                      section: `The Colosseum - ${discussion.section}`,
-                      replies: discussion.replies,
-                      photo: discussion.photo,
-                      user: `@${discussion.section.replace(' ', '')}Fan`
-                    });
-                    setShowInteractivePost(true);
-                  }}
-                >
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white border-opacity-30 flex-shrink-0">
-                      <img 
-                        src={discussion.photo} 
-                        alt="User avatar" 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                      <div className="w-full h-full flex items-center justify-center text-white bg-orange-500" style={{ display: 'none' }}>
-                        <i className="fas fa-user text-xs"></i>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {discussion.heat === 'fire' && <i className="fas fa-fire text-red-300"></i>}
-                      {discussion.heat === 'hot' && <i className="fas fa-flame text-orange-300"></i>}
-                      {discussion.heat === 'trending' && <i className="fas fa-trending-up text-blue-300"></i>}
-                    </div>
-                  </div>
-                  <h4 className="font-semibold text-white text-sm mb-2">{discussion.title}</h4>
-                  <div className="text-xs text-orange-200 mb-2">{discussion.section}</div>
-                  <div className="text-sm text-orange-100">{discussion.replies} replies</div>
-                </div>
-              ))}
-            </div>
+          {/* Tabbed Navigation */}
+          <div className="flex flex-wrap justify-center gap-4 mt-10 mb-2">
+            {tabList.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabClick(tab.key)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-base transition-all duration-300 focus:outline-none shadow-md hover:scale-105 ${activeTab === tab.key ? 'text-white' : 'text-gray-200 hover:text-white'}`}
+                style={activeTab === tab.key ? { background: professionalGradients.red, boxShadow: '0 4px 20px #cc001c44' } : { background: 'rgba(255,255,255,0.08)' }}
+              >
+                <FontAwesomeIcon icon={tab.icon} className="text-lg" />
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
-
+      {/* Tab Content */}
+      <div className="w-full max-w-6xl mx-auto py-8 px-2 md:px-8">
+        <Suspense fallback={<div className="flex justify-center items-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent"></div></div>}>
+          {tabList.map(tab => (
+            <div key={tab.key} style={{ display: activeTab === tab.key ? 'block' : 'none' }}>
+              <tab.component />
+            </div>
+          ))}
+        </Suspense>
+      </div>
       {/* Interactive Forum Modal */}
       {showInteractivePost && selectedPost && (
         <InteractiveForumPost 
@@ -458,7 +209,6 @@ const FanHubCentral = () => {
           }}
         />
       )}
-
       {/* Main Forum Section */}
       {showMainForum && (
         <MainForumSection 
@@ -466,6 +216,7 @@ const FanHubCentral = () => {
         />
       )}
     </div>
+// (Removed legacy dashboard code that was outside the component)
   );
 };
 
