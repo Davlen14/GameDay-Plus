@@ -213,7 +213,7 @@ const Header = () => {
               News & Media <FontAwesomeIcon icon={faChevronDown} className="text-xs icon-gradient" />
             </button>
             <div className="dropdown-content">
-              <a href="#top-returning-players-2025"><i className="fas fa-users icon-gradient"></i> <span>Top Returning Players 2025</span></a>
+              <a href="#top-returning-players-2025"><i className="fas fa-users icon-gradient"></i> <span>Top 100 Players 2025</span></a>
               <a href="#draft-news"><i className="fas fa-football-ball icon-gradient"></i> <span>Draft News</span></a>
               <a href="#latest-news"><i className="fas fa-newspaper icon-gradient"></i> <span>Latest News</span></a>
               <a href="#injury-reports"><i className="fas fa-hospital icon-gradient"></i> <span>Injury Reports</span></a>

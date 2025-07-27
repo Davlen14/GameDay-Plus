@@ -1548,9 +1548,7 @@ const TopReturningPlayers2025 = () => {
                 {selectedCategory !== 'Freshmen' && (
                   <div className="relative dropdown-container">
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      onClick={() => {
                         setShowPositionFilter(!showPositionFilter);
                       }}
                       className="relative flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 bg-white/30 backdrop-blur-xl border border-white/40 rounded-xl hover:bg-white/40 transition-all duration-300 font-semibold text-gray-700 shadow-[inset_0_1px_4px_rgba(255,255,255,0.2)] text-sm sm:text-base"
@@ -1569,9 +1567,7 @@ const TopReturningPlayers2025 = () => {
                           {positions.map(pos => (
                             <button
                               key={pos}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
+                              onClick={() => {
                                 setSelectedPosition(pos);
                                 setShowPositionFilter(false);
                               }}
