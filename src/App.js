@@ -1,3 +1,4 @@
+const TopReturningPlayers2025 = React.lazy(() => import('./components/news/TopReturningPlayers2025'));
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
