@@ -363,6 +363,12 @@ function App() {
       // News routes
       case 'latest-news':
         return <LatestNews />;
+      case 'top-returning-players-2025':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <TopReturningPlayers2025 />
+          </Suspense>
+        );
       case 'draft-news':
         return <DraftNews />;
       case 'injury-reports':
