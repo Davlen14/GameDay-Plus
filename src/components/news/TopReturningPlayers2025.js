@@ -9,6 +9,7 @@ const TopReturningPlayers2025 = () => {
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
   const [newsArticles, setNewsArticles] = useState([]);
   const [newsLoading, setNewsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('detailed'); // 'detailed' or 'compact'
 
   // Professional gradient system
   const gradients = {
@@ -1580,32 +1581,59 @@ const TopReturningPlayers2025 = () => {
             <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
             
             <div className="relative z-10">
-              {/* Category Pills with Icons */}
-              <div className="flex flex-wrap items-center gap-4 mb-8">
+              {/* View Mode Toggle */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-bold text-gray-700">View Mode:</span>
+                  <button
+                    onClick={() => setViewMode('detailed')}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                      viewMode === 'detailed' 
+                        ? 'bg-red-600 text-white shadow-lg' 
+                        : 'bg-white/30 text-gray-700 hover:bg-white/40'
+                    }`}
+                  >
+                    <i className="fas fa-th-large mr-2"></i>Detailed
+                  </button>
+                  <button
+                    onClick={() => setViewMode('compact')}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                      viewMode === 'compact' 
+                        ? 'bg-red-600 text-white shadow-lg' 
+                        : 'bg-white/30 text-gray-700 hover:bg-white/40'
+                    }`}
+                  >
+                    <i className="fas fa-list mr-2"></i>Compact
+                  </button>
+                </div>
+              </div>
+
+              {/* Category Pills with Icons - Smaller for single row */}
+              <div className="flex flex-wrap items-center gap-2 mb-8">
                 {/* All Players Tab */}
                 <button
                   onClick={() => {
                     setSelectedCategory('All');
                     setSelectedPosition('All');
                   }}
-                  className={`relative px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-bold text-base sm:text-lg transition-all duration-500 transform hover:scale-105 ${
+                  className={`relative px-4 py-2 rounded-xl font-bold text-sm transition-all duration-500 transform hover:scale-105 ${
                     selectedCategory === 'All'
-                      ? 'text-white shadow-2xl'
+                      ? 'text-white shadow-xl'
                       : 'text-gray-700 hover:text-white'
                   }`}
                 >
                   {selectedCategory === 'All' && (
-                    <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(204,0,28,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+                    <div className="absolute inset-0 rounded-xl shadow-[0_4px_20px_rgba(204,0,28,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
                   )}
                   
                   {selectedCategory !== 'All' && (
-                    <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
+                    <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-xl hover:bg-white/30 transition-all duration-300"></div>
                   )}
                   
-                  <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                  <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
                   
-                  <span className="relative z-10 flex items-center gap-2">
-                    <i className="fas fa-users"></i>
+                  <span className="relative z-10 flex items-center gap-1">
+                    <i className="fas fa-users text-xs"></i>
                     All Players
                   </span>
                 </button>
@@ -1621,29 +1649,29 @@ const TopReturningPlayers2025 = () => {
                         setSelectedCategory(category);
                         setSelectedPosition('All');
                       }}
-                      className={`relative px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-bold text-base sm:text-lg transition-all duration-500 transform hover:scale-105 ${
+                      className={`relative px-4 py-2 rounded-xl font-bold text-sm transition-all duration-500 transform hover:scale-105 ${
                         selectedCategory === category
-                          ? 'text-white shadow-2xl'
+                          ? 'text-white shadow-xl'
                           : 'text-gray-700 hover:text-white'
                       }`}
                     >
                       {selectedCategory === category && (
-                        <div className="absolute inset-0 rounded-2xl" style={{ background: style.gradient, boxShadow: `0 8px 32px ${style.shadowColor}` }}></div>
+                        <div className="absolute inset-0 rounded-xl" style={{ background: style.gradient, boxShadow: `0 4px 20px ${style.shadowColor}` }}></div>
                       )}
                       
                       {selectedCategory !== category && (
-                        <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
+                        <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-xl hover:bg-white/30 transition-all duration-300"></div>
                       )}
                       
-                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                      <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
                       
-                      <span className="relative z-10 flex items-center gap-2">
-                        <i className={`fas ${style.icon}`}></i>
-                        {category === 'Top 25' && 'Elite Tier (1-25)'}
-                        {category === 'Star' && 'Star Level (26-50)'}
-                        {category === 'Impact' && 'Impact Level (51-75)'}
-                        {category === 'Solid' && 'Solid Contributors (76-100)'}
-                        {category === 'Freshmen' && 'Incoming Freshmen'}
+                      <span className="relative z-10 flex items-center gap-1">
+                        <i className={`fas ${style.icon} text-xs`}></i>
+                        {category === 'Top 25' && 'Elite (1-25)'}
+                        {category === 'Star' && 'Star (26-50)'}
+                        {category === 'Impact' && 'Impact (51-75)'}
+                        {category === 'Solid' && 'Solid (76-100)'}
+                        {category === 'Freshmen' && 'Freshmen'}
                       </span>
                     </button>
                   );
@@ -1716,177 +1744,225 @@ const TopReturningPlayers2025 = () => {
           </div>
         </div>
 
-        {/* Players Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPlayers.map((player, index) => {
-            const categoryStyle = getCategoryStyle(player.category || 'Freshmen');
-            const positionGradient = getPositionGradient(player.position);
-            const starRating = getStarRating(player.rank);
-            
-            return (
-              <div key={`${player.name}-${index}`} className="flex flex-col h-full">
-                <div
-                  className="group relative overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)] flex-1 flex flex-col"
-                  style={{ animationDelay: `${index * 50}ms`, minHeight: '600px' }}
-                  onMouseEnter={() => setHoveredPlayer(player.name)}
-                  onMouseLeave={() => setHoveredPlayer(null)}
-                >
-                  <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-6 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70 h-full flex flex-col">
-                    <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
-                    
-                    <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: `linear-gradient(135deg, ${categoryStyle.shadowColor} 0%, ${categoryStyle.shadowColor} 50%, ${categoryStyle.shadowColor} 100%)` }}></div>
-                    
-                    <div className="relative z-10 flex flex-col h-full">
-                      {/* Player Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-4">
-                          {/* Rank Badge with Category Color */}
-                          <div className="relative">
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300" style={{ background: categoryStyle.gradient, boxShadow: `0 4px 20px ${categoryStyle.shadowColor}` }}>
-                              <span className="text-white text-lg font-black">
-                                {selectedCategory === 'Freshmen' ? player.rank : `#${player.rank}`}
-                              </span>
+        {/* Conditional Rendering Based on View Mode */}
+        {viewMode === 'detailed' ? (
+          /* Detailed View - Players Grid */
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredPlayers.map((player, index) => {
+              const categoryStyle = getCategoryStyle(player.category || 'Freshmen');
+              const positionGradient = getPositionGradient(player.position);
+              const starRating = getStarRating(player.rank);
+              
+              return (
+                <div key={`${player.name}-${index}`} className="flex flex-col h-full">
+                  <div
+                    className="group relative overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)] flex-1 flex flex-col"
+                    style={{ animationDelay: `${index * 50}ms`, minHeight: '600px' }}
+                    onMouseEnter={() => setHoveredPlayer(player.name)}
+                    onMouseLeave={() => setHoveredPlayer(null)}
+                  >
+                    <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-6 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70 h-full flex flex-col">
+                      <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
+                      
+                      <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: `linear-gradient(135deg, ${categoryStyle.shadowColor} 0%, ${categoryStyle.shadowColor} 50%, ${categoryStyle.shadowColor} 100%)` }}></div>
+                      
+                      <div className="relative z-10 flex flex-col h-full">
+                        {/* Player Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center space-x-4">
+                            {/* Rank Badge with Category Color */}
+                            <div className="relative">
+                              <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300" style={{ background: categoryStyle.gradient, boxShadow: `0 4px 20px ${categoryStyle.shadowColor}` }}>
+                                <span className="text-white text-lg font-black">
+                                  {selectedCategory === 'Freshmen' ? player.rank : `#${player.rank}`}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            {/* Team Logo */}
+                            <div className="relative w-14 h-14 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                              <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
+                              <img
+                                src={getTeamLogo(player.team)}
+                                alt={`${player.team} logo`}
+                                className="w-10 h-10 object-contain relative z-10 drop-shadow-xl"
+                                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                              />
                             </div>
                           </div>
                           
-                          {/* Team Logo */}
-                          <div className="relative w-14 h-14 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                            <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
-                            <img
-                              src={getTeamLogo(player.team)}
-                              alt={`${player.team} logo`}
-                              className="w-10 h-10 object-contain relative z-10 drop-shadow-xl"
-                              onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                            />
+                          {/* Position Badge with Position Color */}
+                          <div className="relative inline-flex items-center px-3 py-1 rounded-lg font-bold text-xs text-white backdrop-blur-xl border shadow-lg" style={{ background: positionGradient, borderColor: 'rgba(255,255,255,0.3)' }}>
+                            <div className="absolute inset-1 rounded-md bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                            <span className="relative z-10">{player.position}</span>
                           </div>
                         </div>
-                        
-                        {/* Position Badge with Position Color */}
-                        <div className="relative inline-flex items-center px-3 py-1 rounded-lg font-bold text-xs text-white backdrop-blur-xl border shadow-lg" style={{ background: positionGradient, borderColor: 'rgba(255,255,255,0.3)' }}>
-                          <div className="absolute inset-1 rounded-md bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                          <span className="relative z-10">{player.position}</span>
-                        </div>
-                      </div>
 
-                      {/* Player Info */}
-                      <div className="mb-4">
-                        <h3 className="text-xl font-black text-gray-900 mb-1 group-hover:text-red-700 transition-colors duration-300">
-                          {player.name}
-                        </h3>
-                        <div className="flex items-center space-x-2 text-sm">
-                          <span className="font-bold text-gray-700">{player.team}</span>
-                          {player.year && (
+                        {/* Player Info */}
+                        <div className="mb-4">
+                          <h3 className="text-xl font-black text-gray-900 mb-1 group-hover:text-red-700 transition-colors duration-300">
+                            {player.name}
+                          </h3>
+                          <div className="flex items-center space-x-2 text-sm">
+                            <span className="font-bold text-gray-700">{player.team}</span>
+                            {player.year && (
+                              <>
+                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-600">{player.year}</span>
+                              </>
+                            )}
+                          </div>
+                          
+                          {/* Star Rating */}
+                          {selectedCategory !== 'Freshmen' && (
+                            <div className="flex items-center mt-2">
+                              {[...Array(5)].map((_, i) => (
+                                <i 
+                                  key={i} 
+                                  className={`fas fa-star text-xs ${
+                                    i < Math.floor(starRating) 
+                                      ? 'text-yellow-500' 
+                                      : i === Math.floor(starRating) && starRating % 1 !== 0
+                                      ? 'text-yellow-500 opacity-50'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                              <span className="ml-2 text-xs text-gray-600 font-medium">({starRating})</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Stats/Info Section - Make this flex-grow to fill space */}
+                        <div className="space-y-3 flex-grow">
+                          {selectedCategory === 'Freshmen' ? (
                             <>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-gray-600">{player.year}</span>
+                              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                                <div className="text-xs font-bold text-gray-600 mb-1">Ranking</div>
+                                <div className="text-sm text-gray-800">{player.ranking}</div>
+                              </div>
+                              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                                <div className="text-xs font-bold text-gray-600 mb-1">Profile</div>
+                                <div className="text-sm text-gray-800">{player.profile}</div>
+                              </div>
+                              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                                <div className="text-xs font-bold text-gray-600 mb-1">Impact</div>
+                                <div className="text-sm text-gray-800">{player.impact}</div>
+                              </div>
+                              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                                <div className="text-xs font-bold text-gray-600 mb-1">Potential</div>
+                                <div className="text-sm font-bold text-gray-800">{player.potential}</div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                                <div className="text-xs font-bold text-gray-600 mb-1">2024 Stats</div>
+                                <div className="text-sm text-gray-800">{player.stats}</div>
+                              </div>
+                              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                                <div className="text-xs font-bold text-gray-600 mb-1">Why He's Special</div>
+                                <div className="text-sm text-gray-800">{player.whySpecial}</div>
+                              </div>
+                              <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                                <div className="text-xs font-bold text-gray-600 mb-1">2025 Outlook</div>
+                                <div className="text-sm font-bold text-gray-800">{player.outlook2025}</div>
+                              </div>
                             </>
                           )}
                         </div>
-                        
-                        {/* Star Rating */}
-                        {selectedCategory !== 'Freshmen' && (
-                          <div className="flex items-center mt-2">
-                            {[...Array(5)].map((_, i) => (
-                              <i 
-                                key={i} 
-                                className={`fas fa-star text-xs ${
-                                  i < Math.floor(starRating) 
-                                    ? 'text-yellow-500' 
-                                    : i === Math.floor(starRating) && starRating % 1 !== 0
-                                    ? 'text-yellow-500 opacity-50'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                            <span className="ml-2 text-xs text-gray-600 font-medium">({starRating})</span>
+
+                        {/* Award Indicators with Icons - Always at bottom */}
+                        {selectedCategory !== 'Freshmen' && player.rank <= 100 && (
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {player.outlook2025?.toLowerCase().includes('heisman') && (
+                              <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.gold, border: '1px solid rgba(255,255,255,0.3)' }}>
+                                <i className="fas fa-trophy mr-1"></i>
+                                Heisman Watch
+                              </div>
+                            )}
+                            {player.outlook2025?.toLowerCase().includes('all-american') && (
+                              <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.sapphire, border: '1px solid rgba(255,255,255,0.3)' }}>
+                                <i className="fas fa-trophy mr-1"></i>
+                                All-American
+                              </div>
+                            )}
+                            {(player.outlook2025?.toLowerCase().includes('breakout') || player.whySpecial?.toLowerCase().includes('explosive')) && (
+                              <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.fuchsia, border: '1px solid rgba(255,255,255,0.3)' }}>
+                                <i className="fas fa-rocket mr-1"></i>
+                                Breakout Star
+                              </div>
+                            )}
+                            {player.outlook2025?.toLowerCase().includes('draft') && (
+                              <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.coral, border: '1px solid rgba(255,255,255,0.3)' }}>
+                                <i className="fas fa-chart-line mr-1"></i>
+                                NFL Draft
+                              </div>
+                            )}
+                            {(player.whySpecial?.toLowerCase().includes('leader') || player.outlook2025?.toLowerCase().includes('leader')) && (
+                              <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.burgundy, border: '1px solid rgba(255,255,255,0.3)' }}>
+                                <i className="fas fa-users mr-1"></i>
+                                Team Leader
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-
-                      {/* Stats/Info Section - Make this flex-grow to fill space */}
-                      <div className="space-y-3 flex-grow">
-                        {selectedCategory === 'Freshmen' ? (
-                          <>
-                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                              <div className="text-xs font-bold text-gray-600 mb-1">Ranking</div>
-                              <div className="text-sm text-gray-800">{player.ranking}</div>
-                            </div>
-                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                              <div className="text-xs font-bold text-gray-600 mb-1">Profile</div>
-                              <div className="text-sm text-gray-800">{player.profile}</div>
-                            </div>
-                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                              <div className="text-xs font-bold text-gray-600 mb-1">Impact</div>
-                              <div className="text-sm text-gray-800">{player.impact}</div>
-                            </div>
-                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                              <div className="text-xs font-bold text-gray-600 mb-1">Potential</div>
-                              <div className="text-sm font-bold text-gray-800">{player.potential}</div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                              <div className="text-xs font-bold text-gray-600 mb-1">2024 Stats</div>
-                              <div className="text-sm text-gray-800">{player.stats}</div>
-                            </div>
-                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                              <div className="text-xs font-bold text-gray-600 mb-1">Why He's Special</div>
-                              <div className="text-sm text-gray-800">{player.whySpecial}</div>
-                            </div>
-                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                              <div className="text-xs font-bold text-gray-600 mb-1">2025 Outlook</div>
-                              <div className="text-sm font-bold text-gray-800">{player.outlook2025}</div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Award Indicators with Icons - Always at bottom */}
-                      {selectedCategory !== 'Freshmen' && player.rank <= 100 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {player.outlook2025?.toLowerCase().includes('heisman') && (
-                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.gold, border: '1px solid rgba(255,255,255,0.3)' }}>
-                              <i className="fas fa-trophy mr-1"></i>
-                              Heisman Watch
-                            </div>
-                          )}
-                          {player.outlook2025?.toLowerCase().includes('all-american') && (
-                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.sapphire, border: '1px solid rgba(255,255,255,0.3)' }}>
-                              <i className="fas fa-trophy mr-1"></i>
-                              All-American
-                            </div>
-                          )}
-                          {(player.outlook2025?.toLowerCase().includes('breakout') || player.whySpecial?.toLowerCase().includes('explosive')) && (
-                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.fuchsia, border: '1px solid rgba(255,255,255,0.3)' }}>
-                              <i className="fas fa-rocket mr-1"></i>
-                              Breakout Star
-                            </div>
-                          )}
-                          {player.outlook2025?.toLowerCase().includes('draft') && (
-                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.coral, border: '1px solid rgba(255,255,255,0.3)' }}>
-                              <i className="fas fa-chart-line mr-1"></i>
-                              NFL Draft
-                            </div>
-                          )}
-                          {(player.whySpecial?.toLowerCase().includes('leader') || player.outlook2025?.toLowerCase().includes('leader')) && (
-                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.burgundy, border: '1px solid rgba(255,255,255,0.3)' }}>
-                              <i className="fas fa-users mr-1"></i>
-                              Team Leader
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      
+                      {/* Hover effect overlay */}
+                      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     </div>
-                    
-                    {/* Hover effect overlay */}
-                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* Compact View - List Format */
+          <div className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-6">
+            <div className="space-y-2">
+              {filteredPlayers.map((player, index) => {
+                const categoryStyle = getCategoryStyle(player.category || 'Freshmen');
+                const positionGradient = getPositionGradient(player.position);
+                
+                return (
+                  <div 
+                    key={`${player.name}-${index}`}
+                    className="flex items-center space-x-4 p-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all duration-300"
+                  >
+                    {/* Rank */}
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: categoryStyle.gradient }}>
+                      <span className="text-white text-sm font-black">
+                        {selectedCategory === 'Freshmen' ? player.rank : player.rank}
+                      </span>
+                    </div>
+                    
+                    {/* Team Logo */}
+                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                      <img
+                        src={getTeamLogo(player.team)}
+                        alt={`${player.team} logo`}
+                        className="w-full h-full object-contain"
+                        onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                      />
+                    </div>
+                    
+                    {/* Player Name */}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-800 truncate">{player.name}</h4>
+                      <p className="text-sm text-gray-600">{player.team}</p>
+                    </div>
+                    
+                    {/* Position */}
+                    <div className="px-3 py-1 rounded-lg font-bold text-xs text-white flex-shrink-0" style={{ background: positionGradient }}>
+                      {player.position}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Analysis Section */}
         <div className="mt-16 space-y-8">
@@ -1904,33 +1980,34 @@ const TopReturningPlayers2025 = () => {
                   <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent mx-auto"></div>
                 </div>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-6">
                   {newsArticles.map((article, index) => (
                     <div 
                       key={article.id || index}
-                      className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4 hover:bg-white/30 transition-all duration-300 cursor-pointer"
+                      className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 overflow-hidden hover:bg-white/30 transition-all duration-300 cursor-pointer"
                       onClick={() => window.open(article.url, '_blank')}
                     >
-                      <div className="flex items-start space-x-4">
-                        {article.image && (
+                      {article.image && (
+                        <div className="relative h-64 overflow-hidden">
                           <img 
                             src={article.image} 
                             alt={article.title}
-                            className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
                           />
-                        )}
-                        <div className="flex-1">
-                          <h3 className="font-bold text-gray-800 mb-2 hover:text-red-700 transition-colors">
-                            {article.title}
-                          </h3>
-                          <p className="text-sm text-gray-600 line-clamp-2">{article.description}</p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs text-gray-500">{article.source?.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(article.publishedAt).toLocaleDateString()}
-                            </span>
-                          </div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                        </div>
+                      )}
+                      <div className="p-6">
+                        <h3 className="font-bold text-xl text-gray-800 mb-3 hover:text-red-700 transition-colors">
+                          {article.title}
+                        </h3>
+                        <p className="text-gray-600 line-clamp-2 mb-4">{article.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">{article.source?.name}</span>
+                          <span className="text-sm text-gray-500">
+                            {new Date(article.publishedAt).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
                     </div>
