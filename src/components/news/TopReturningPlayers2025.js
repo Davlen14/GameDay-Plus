@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { newsService } from '../../services';
 
 const TopReturningPlayers2025 = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -6,6 +7,8 @@ const TopReturningPlayers2025 = () => {
   const [searchText, setSearchText] = useState('');
   const [showPositionFilter, setShowPositionFilter] = useState(false);
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
+  const [newsArticles, setNewsArticles] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(true);
 
   // Professional gradient system
   const gradients = {
@@ -34,6 +37,25 @@ const TopReturningPlayers2025 = () => {
     coral: 'linear-gradient(135deg, rgb(252, 165, 165), rgb(248, 113, 113), rgb(239, 68, 68), rgb(248, 113, 113), rgb(252, 165, 165))',
     burgundy: 'linear-gradient(135deg, rgb(159, 18, 57), rgb(136, 19, 55), rgb(99, 7, 37), rgb(136, 19, 55), rgb(159, 18, 57))'
   };
+
+  // Fetch news function
+  const fetchNews = async () => {
+    try {
+      setNewsLoading(true);
+      const articles = await newsService.getLatestNews(5);
+      setNewsArticles(articles);
+    } catch (error) {
+      console.error('Error fetching news:', error);
+      setNewsArticles([]);
+    } finally {
+      setNewsLoading(false);
+    }
+  };
+
+  // Fetch news on component mount
+  useEffect(() => {
+    fetchNews();
+  }, []);
 
   // Get position gradient
   const getPositionGradient = (position) => {
@@ -1512,15 +1534,6 @@ const TopReturningPlayers2025 = () => {
         }
       `}</style>
 
-      {/* Enhanced Floating Orbs Background with more colors */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: gradients.gold }}></div>
-        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: gradients.emerald, animationDelay: '1s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: gradients.blue, animationDelay: '2s' }}></div>
-        <div className="absolute top-40 left-1/2 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: gradients.violet, animationDelay: '1.5s' }}></div>
-        <div className="absolute bottom-20 right-1/4 w-72 h-72 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: gradients.orange, animationDelay: '2.5s' }}></div>
-      </div>
-
       <div style={{ width: '98%', margin: '0 auto' }} className="relative z-10">
         {/* Enhanced Header */}
         <div className="text-center mb-20">
@@ -1711,163 +1724,164 @@ const TopReturningPlayers2025 = () => {
             const starRating = getStarRating(player.rank);
             
             return (
-              <div
-                key={`${player.name}-${index}`}
-                className="group relative overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]"
-                style={{ animationDelay: `${index * 50}ms` }}
-                onMouseEnter={() => setHoveredPlayer(player.name)}
-                onMouseLeave={() => setHoveredPlayer(null)}
-              >
-                <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-6 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70">
-                  <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
-                  
-                  <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: `linear-gradient(135deg, ${categoryStyle.shadowColor} 0%, ${categoryStyle.shadowColor} 50%, ${categoryStyle.shadowColor} 100%)` }}></div>
-                  
-                  <div className="relative z-10">
-                    {/* Player Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-4">
-                        {/* Rank Badge with Category Color */}
-                        <div className="relative">
-                          <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300" style={{ background: categoryStyle.gradient, boxShadow: `0 4px 20px ${categoryStyle.shadowColor}` }}>
-                            <span className="text-white text-lg font-black">
-                              {selectedCategory === 'Freshmen' ? player.rank : `#${player.rank}`}
-                            </span>
+              <div key={`${player.name}-${index}`} className="flex flex-col h-full">
+                <div
+                  className="group relative overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)] flex-1 flex flex-col"
+                  style={{ animationDelay: `${index * 50}ms`, minHeight: '600px' }}
+                  onMouseEnter={() => setHoveredPlayer(player.name)}
+                  onMouseLeave={() => setHoveredPlayer(null)}
+                >
+                  <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-6 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70 h-full flex flex-col">
+                    <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
+                    
+                    <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: `linear-gradient(135deg, ${categoryStyle.shadowColor} 0%, ${categoryStyle.shadowColor} 50%, ${categoryStyle.shadowColor} 100%)` }}></div>
+                    
+                    <div className="relative z-10 flex flex-col h-full">
+                      {/* Player Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                          {/* Rank Badge with Category Color */}
+                          <div className="relative">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300" style={{ background: categoryStyle.gradient, boxShadow: `0 4px 20px ${categoryStyle.shadowColor}` }}>
+                              <span className="text-white text-lg font-black">
+                                {selectedCategory === 'Freshmen' ? player.rank : `#${player.rank}`}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Team Logo */}
+                          <div className="relative w-14 h-14 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                            <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
+                            <img
+                              src={getTeamLogo(player.team)}
+                              alt={`${player.team} logo`}
+                              className="w-10 h-10 object-contain relative z-10 drop-shadow-xl"
+                              onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                            />
                           </div>
                         </div>
                         
-                        {/* Team Logo */}
-                        <div className="relative w-14 h-14 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                          <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
-                          <img
-                            src={getTeamLogo(player.team)}
-                            alt={`${player.team} logo`}
-                            className="w-10 h-10 object-contain relative z-10 drop-shadow-xl"
-                            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                          />
+                        {/* Position Badge with Position Color */}
+                        <div className="relative inline-flex items-center px-3 py-1 rounded-lg font-bold text-xs text-white backdrop-blur-xl border shadow-lg" style={{ background: positionGradient, borderColor: 'rgba(255,255,255,0.3)' }}>
+                          <div className="absolute inset-1 rounded-md bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                          <span className="relative z-10">{player.position}</span>
                         </div>
                       </div>
-                      
-                      {/* Position Badge with Position Color */}
-                      <div className="relative inline-flex items-center px-3 py-1 rounded-lg font-bold text-xs text-white backdrop-blur-xl border shadow-lg" style={{ background: positionGradient, borderColor: 'rgba(255,255,255,0.3)' }}>
-                        <div className="absolute inset-1 rounded-md bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                        <span className="relative z-10">{player.position}</span>
-                      </div>
-                    </div>
 
-                    {/* Player Info */}
-                    <div className="mb-4">
-                      <h3 className="text-xl font-black text-gray-900 mb-1 group-hover:text-red-700 transition-colors duration-300">
-                        {player.name}
-                      </h3>
-                      <div className="flex items-center space-x-2 text-sm">
-                        <span className="font-bold text-gray-700">{player.team}</span>
-                        {player.year && (
+                      {/* Player Info */}
+                      <div className="mb-4">
+                        <h3 className="text-xl font-black text-gray-900 mb-1 group-hover:text-red-700 transition-colors duration-300">
+                          {player.name}
+                        </h3>
+                        <div className="flex items-center space-x-2 text-sm">
+                          <span className="font-bold text-gray-700">{player.team}</span>
+                          {player.year && (
+                            <>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-600">{player.year}</span>
+                            </>
+                          )}
+                        </div>
+                        
+                        {/* Star Rating */}
+                        {selectedCategory !== 'Freshmen' && (
+                          <div className="flex items-center mt-2">
+                            {[...Array(5)].map((_, i) => (
+                              <i 
+                                key={i} 
+                                className={`fas fa-star text-xs ${
+                                  i < Math.floor(starRating) 
+                                    ? 'text-yellow-500' 
+                                    : i === Math.floor(starRating) && starRating % 1 !== 0
+                                    ? 'text-yellow-500 opacity-50'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                            <span className="ml-2 text-xs text-gray-600 font-medium">({starRating})</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Stats/Info Section - Make this flex-grow to fill space */}
+                      <div className="space-y-3 flex-grow">
+                        {selectedCategory === 'Freshmen' ? (
                           <>
-                            <span className="text-gray-400">•</span>
-                            <span className="text-gray-600">{player.year}</span>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                              <div className="text-xs font-bold text-gray-600 mb-1">Ranking</div>
+                              <div className="text-sm text-gray-800">{player.ranking}</div>
+                            </div>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                              <div className="text-xs font-bold text-gray-600 mb-1">Profile</div>
+                              <div className="text-sm text-gray-800">{player.profile}</div>
+                            </div>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                              <div className="text-xs font-bold text-gray-600 mb-1">Impact</div>
+                              <div className="text-sm text-gray-800">{player.impact}</div>
+                            </div>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                              <div className="text-xs font-bold text-gray-600 mb-1">Potential</div>
+                              <div className="text-sm font-bold text-gray-800">{player.potential}</div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                              <div className="text-xs font-bold text-gray-600 mb-1">2024 Stats</div>
+                              <div className="text-sm text-gray-800">{player.stats}</div>
+                            </div>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                              <div className="text-xs font-bold text-gray-600 mb-1">Why He's Special</div>
+                              <div className="text-sm text-gray-800">{player.whySpecial}</div>
+                            </div>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                              <div className="text-xs font-bold text-gray-600 mb-1">2025 Outlook</div>
+                              <div className="text-sm font-bold text-gray-800">{player.outlook2025}</div>
+                            </div>
                           </>
                         )}
                       </div>
-                      
-                      {/* Star Rating */}
-                      {selectedCategory !== 'Freshmen' && (
-                        <div className="flex items-center mt-2">
-                          {[...Array(5)].map((_, i) => (
-                            <i 
-                              key={i} 
-                              className={`fas fa-star text-xs ${
-                                i < Math.floor(starRating) 
-                                  ? 'text-yellow-500' 
-                                  : i === Math.floor(starRating) && starRating % 1 !== 0
-                                  ? 'text-yellow-500 opacity-50'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                          <span className="ml-2 text-xs text-gray-600 font-medium">({starRating})</span>
+
+                      {/* Award Indicators with Icons - Always at bottom */}
+                      {selectedCategory !== 'Freshmen' && player.rank <= 100 && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {player.outlook2025?.toLowerCase().includes('heisman') && (
+                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.gold, border: '1px solid rgba(255,255,255,0.3)' }}>
+                              <i className="fas fa-trophy mr-1"></i>
+                              Heisman Watch
+                            </div>
+                          )}
+                          {player.outlook2025?.toLowerCase().includes('all-american') && (
+                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.sapphire, border: '1px solid rgba(255,255,255,0.3)' }}>
+                              <i className="fas fa-trophy mr-1"></i>
+                              All-American
+                            </div>
+                          )}
+                          {(player.outlook2025?.toLowerCase().includes('breakout') || player.whySpecial?.toLowerCase().includes('explosive')) && (
+                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.fuchsia, border: '1px solid rgba(255,255,255,0.3)' }}>
+                              <i className="fas fa-rocket mr-1"></i>
+                              Breakout Star
+                            </div>
+                          )}
+                          {player.outlook2025?.toLowerCase().includes('draft') && (
+                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.coral, border: '1px solid rgba(255,255,255,0.3)' }}>
+                              <i className="fas fa-chart-line mr-1"></i>
+                              NFL Draft
+                            </div>
+                          )}
+                          {(player.whySpecial?.toLowerCase().includes('leader') || player.outlook2025?.toLowerCase().includes('leader')) && (
+                            <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.burgundy, border: '1px solid rgba(255,255,255,0.3)' }}>
+                              <i className="fas fa-users mr-1"></i>
+                              Team Leader
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-
-                    {/* Stats/Info Section */}
-                    <div className="space-y-3">
-                      {selectedCategory === 'Freshmen' ? (
-                        <>
-                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                            <div className="text-xs font-bold text-gray-600 mb-1">Ranking</div>
-                            <div className="text-sm text-gray-800">{player.ranking}</div>
-                          </div>
-                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                            <div className="text-xs font-bold text-gray-600 mb-1">Profile</div>
-                            <div className="text-sm text-gray-800">{player.profile}</div>
-                          </div>
-                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                            <div className="text-xs font-bold text-gray-600 mb-1">Impact</div>
-                            <div className="text-sm text-gray-800">{player.impact}</div>
-                          </div>
-                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                            <div className="text-xs font-bold text-gray-600 mb-1">Potential</div>
-                            <div className="text-sm font-bold text-gray-800">{player.potential}</div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                            <div className="text-xs font-bold text-gray-600 mb-1">2024 Stats</div>
-                            <div className="text-sm text-gray-800">{player.stats}</div>
-                          </div>
-                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                            <div className="text-xs font-bold text-gray-600 mb-1">Why He's Special</div>
-                            <div className="text-sm text-gray-800">{player.whySpecial}</div>
-                          </div>
-                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                            <div className="text-xs font-bold text-gray-600 mb-1">2025 Outlook</div>
-                            <div className="text-sm font-bold text-gray-800">{player.outlook2025}</div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Award Indicators with Icons */}
-                    {selectedCategory !== 'Freshmen' && player.rank <= 100 && (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {player.outlook2025?.toLowerCase().includes('heisman') && (
-                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.rose, border: '1px solid rgba(255,255,255,0.3)' }}>
-                            <i className="fas fa-fire mr-1"></i>
-                            Heisman Watch
-                          </div>
-                        )}
-                        {player.outlook2025?.toLowerCase().includes('all-american') && (
-                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.sapphire, border: '1px solid rgba(255,255,255,0.3)' }}>
-                            <i className="fas fa-trophy mr-1"></i>
-                            All-American
-                          </div>
-                        )}
-                        {(player.outlook2025?.toLowerCase().includes('breakout') || player.whySpecial?.toLowerCase().includes('explosive')) && (
-                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.fuchsia, border: '1px solid rgba(255,255,255,0.3)' }}>
-                            <i className="fas fa-rocket mr-1"></i>
-                            Breakout Star
-                          </div>
-                        )}
-                        {player.outlook2025?.toLowerCase().includes('draft') && (
-                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.coral, border: '1px solid rgba(255,255,255,0.3)' }}>
-                            <i className="fas fa-chart-line mr-1"></i>
-                            NFL Draft
-                          </div>
-                        )}
-                        {(player.whySpecial?.toLowerCase().includes('leader') || player.outlook2025?.toLowerCase().includes('leader')) && (
-                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.burgundy, border: '1px solid rgba(255,255,255,0.3)' }}>
-                            <i className="fas fa-users mr-1"></i>
-                            Team Leader
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    
+                    {/* Hover effect overlay */}
+                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                   </div>
-                  
-                  {/* Hover effect overlay */}
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 </div>
               </div>
             );
@@ -1876,37 +1890,53 @@ const TopReturningPlayers2025 = () => {
 
         {/* Analysis Section */}
         <div className="mt-16 space-y-8">
-          {/* Most Exciting Storylines */}
+          {/* Latest College Football News */}
           <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
             <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
             
             <div className="relative z-10">
               <h2 className="text-3xl font-black mb-6" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                Most Exciting Storylines
+                Latest College Football News
               </h2>
               
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                  <h3 className="font-bold text-gray-800 mb-2">1. Jeremiah Smith's Encore</h3>
-                  <p className="text-sm text-gray-600">Can he follow up historic freshman season?</p>
+              {newsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent mx-auto"></div>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                  <h3 className="font-bold text-gray-800 mb-2">2. Bryce Underwood's Debut</h3>
-                  <p className="text-sm text-gray-600">#1 recruit at hometown Michigan</p>
+              ) : (
+                <div className="grid gap-4">
+                  {newsArticles.map((article, index) => (
+                    <div 
+                      key={article.id || index}
+                      className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4 hover:bg-white/30 transition-all duration-300 cursor-pointer"
+                      onClick={() => window.open(article.url, '_blank')}
+                    >
+                      <div className="flex items-start space-x-4">
+                        {article.image && (
+                          <img 
+                            src={article.image} 
+                            alt={article.title}
+                            className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                          />
+                        )}
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-800 mb-2 hover:text-red-700 transition-colors">
+                            {article.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 line-clamp-2">{article.description}</p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs text-gray-500">{article.source?.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(article.publishedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                  <h3 className="font-bold text-gray-800 mb-2">3. Ohio State's Repeat Bid</h3>
-                  <p className="text-sm text-gray-600">Smith, Downs lead title defense</p>
-                </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                  <h3 className="font-bold text-gray-800 mb-2">4. SEC Quarterback Battles</h3>
-                  <p className="text-sm text-gray-600">Nussmeier, Sellers, Beck headlining</p>
-                </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                  <h3 className="font-bold text-gray-800 mb-2">5. Clemson's Resurgence</h3>
-                  <p className="text-sm text-gray-600">Klubnik, Parker, Woods leading charge</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -1928,9 +1958,19 @@ const TopReturningPlayers2025 = () => {
                   { name: "Anthony Hill Jr.", team: "LB, Texas", desc: "Complete linebacker package" }
                 ].map((player, index) => (
                   <div key={index} className="flex items-center justify-between bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                    <div>
-                      <h3 className="font-bold text-gray-800">{player.name}</h3>
-                      <p className="text-sm text-gray-600">{player.team}</p>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-white/40 backdrop-blur-xl border border-white/50 flex items-center justify-center">
+                        <img
+                          src={getTeamLogo(player.team.split(',')[1].trim())}
+                          alt={`${player.team} logo`}
+                          className="w-8 h-8 object-contain"
+                          onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                        />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-800">{player.name}</h3>
+                        <p className="text-sm text-gray-600">{player.team}</p>
+                      </div>
                     </div>
                     <p className="text-sm font-bold text-gray-700">{player.desc}</p>
                   </div>
@@ -1957,8 +1997,20 @@ const TopReturningPlayers2025 = () => {
                   { name: "Sammy Brown", team: "LB, Clemson", desc: "Defensive star emerging" }
                 ].map((player, index) => (
                   <div key={index} className="bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 p-4">
-                    <h3 className="font-bold text-gray-800 mb-1">{player.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{player.team}</p>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-white/40 backdrop-blur-xl border border-white/50 flex items-center justify-center">
+                        <img
+                          src={getTeamLogo(player.team.split(',')[1].trim())}
+                          alt={`${player.team} logo`}
+                          className="w-6 h-6 object-contain"
+                          onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                        />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-800">{player.name}</h3>
+                        <p className="text-sm text-gray-600">{player.team}</p>
+                      </div>
+                    </div>
                     <p className="text-xs font-bold text-gray-700">{player.desc}</p>
                   </div>
                 ))}
