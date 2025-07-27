@@ -1,11 +1,87 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
 const TopReturningPlayers2025 = () => {
-  const [selectedCategory, setSelectedCategory] = useState('Top 25');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedPosition, setSelectedPosition] = useState('All');
   const [searchText, setSearchText] = useState('');
   const [showPositionFilter, setShowPositionFilter] = useState(false);
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
+
+  // Professional gradient system
+  const gradients = {
+    // Category gradients
+    gold: 'linear-gradient(135deg, rgb(250, 204, 21), rgb(245, 158, 11), rgb(217, 119, 6), rgb(245, 158, 11), rgb(250, 204, 21))',
+    silver: 'linear-gradient(135deg, rgb(148, 163, 184), rgb(100, 116, 139), rgb(71, 85, 105), rgb(100, 116, 139), rgb(148, 163, 184))',
+    bronze: 'linear-gradient(135deg, rgb(180, 83, 9), rgb(154, 52, 18), rgb(120, 53, 15), rgb(154, 52, 18), rgb(180, 83, 9))',
+    blue: 'linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235), rgb(29, 78, 216), rgb(37, 99, 235), rgb(59, 130, 246))',
+    emerald: 'linear-gradient(135deg, rgb(16, 185, 129), rgb(5, 150, 105), rgb(4, 120, 87), rgb(5, 150, 105), rgb(16, 185, 129))',
+    
+    // Position gradients
+    violet: 'linear-gradient(135deg, rgb(167, 139, 250), rgb(139, 92, 246), rgb(109, 40, 217), rgb(139, 92, 246), rgb(167, 139, 250))',
+    skyBlue: 'linear-gradient(135deg, rgb(56, 189, 248), rgb(14, 165, 233), rgb(2, 132, 199), rgb(14, 165, 233), rgb(56, 189, 248))',
+    orange: 'linear-gradient(135deg, rgb(251, 146, 60), rgb(249, 115, 22), rgb(234, 88, 12), rgb(249, 115, 22), rgb(251, 146, 60))',
+    lime: 'linear-gradient(135deg, rgb(163, 230, 53), rgb(132, 204, 22), rgb(101, 163, 13), rgb(132, 204, 22), rgb(163, 230, 53))',
+    slate: 'linear-gradient(135deg, rgb(148, 163, 184), rgb(100, 116, 139), rgb(51, 65, 85), rgb(100, 116, 139), rgb(148, 163, 184))',
+    crimson: 'linear-gradient(135deg, rgb(220, 38, 38), rgb(185, 28, 28), rgb(153, 27, 27), rgb(185, 28, 28), rgb(220, 38, 38))',
+    amber: 'linear-gradient(135deg, rgb(252, 211, 77), rgb(251, 191, 36), rgb(245, 158, 11), rgb(251, 191, 36), rgb(252, 211, 77))',
+    navy: 'linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235), rgb(30, 58, 138), rgb(37, 99, 235), rgb(59, 130, 246))',
+    cyan: 'linear-gradient(135deg, rgb(103, 232, 249), rgb(34, 211, 238), rgb(6, 182, 212), rgb(34, 211, 238), rgb(103, 232, 249))',
+    
+    // Achievement gradients
+    rose: 'linear-gradient(135deg, rgb(251, 207, 232), rgb(244, 114, 182), rgb(236, 72, 153), rgb(244, 114, 182), rgb(251, 207, 232))',
+    sapphire: 'linear-gradient(135deg, rgb(37, 99, 235), rgb(29, 78, 216), rgb(30, 64, 175), rgb(29, 78, 216), rgb(37, 99, 235))',
+    fuchsia: 'linear-gradient(135deg, rgb(232, 121, 249), rgb(217, 70, 239), rgb(192, 38, 211), rgb(217, 70, 239), rgb(232, 121, 249))',
+    coral: 'linear-gradient(135deg, rgb(252, 165, 165), rgb(248, 113, 113), rgb(239, 68, 68), rgb(248, 113, 113), rgb(252, 165, 165))',
+    burgundy: 'linear-gradient(135deg, rgb(159, 18, 57), rgb(136, 19, 55), rgb(99, 7, 37), rgb(136, 19, 55), rgb(159, 18, 57))'
+  };
+
+  // Get position gradient
+  const getPositionGradient = (position) => {
+    const positionGradients = {
+      'QB': gradients.violet,
+      'RB': gradients.skyBlue,
+      'WR': gradients.orange,
+      'TE': gradients.lime,
+      'OL': gradients.slate,
+      'OT': gradients.slate,
+      'C': gradients.slate,
+      'DL': gradients.crimson,
+      'DT': gradients.crimson,
+      'DE': gradients.crimson,
+      'EDGE': gradients.crimson,
+      'LB': gradients.amber,
+      'OLB': gradients.amber,
+      'CB': gradients.navy,
+      'S': gradients.navy,
+      'K': gradients.cyan,
+      'P': gradients.cyan,
+      'DI': gradients.crimson
+    };
+    return positionGradients[position] || gradients.slate;
+  };
+
+  // Get category gradient and icon
+  const getCategoryStyle = (category) => {
+    const categoryStyles = {
+      'Elite': { gradient: gradients.gold, icon: 'fa-crown', shadowColor: 'rgba(250, 204, 21, 0.3)' },
+      'Star': { gradient: gradients.silver, icon: 'fa-star', shadowColor: 'rgba(148, 163, 184, 0.3)' },
+      'Impact': { gradient: gradients.bronze, icon: 'fa-bolt', shadowColor: 'rgba(180, 83, 9, 0.3)' },
+      'Solid': { gradient: gradients.blue, icon: 'fa-shield-alt', shadowColor: 'rgba(59, 130, 246, 0.3)' },
+      'Freshmen': { gradient: gradients.emerald, icon: 'fa-seedling', shadowColor: 'rgba(16, 185, 129, 0.3)' }
+    };
+    return categoryStyles[category] || { gradient: gradients.blue, icon: 'fa-users', shadowColor: 'rgba(59, 130, 246, 0.3)' };
+  };
+
+  // Get star rating based on rank
+  const getStarRating = (rank) => {
+    if (rank <= 5) return 5;
+    if (rank <= 15) return 4.5;
+    if (rank <= 25) return 4;
+    if (rank <= 40) return 3.5;
+    if (rank <= 60) return 3;
+    if (rank <= 80) return 2.5;
+    return 2;
+  };
 
   // Player data with team logos
   const getTeamLogo = (team) => {
@@ -1381,6 +1457,7 @@ const TopReturningPlayers2025 = () => {
   // Filter players based on search and position
   const filteredPlayers = useMemo(() => {
     let filtered = selectedCategory === 'Freshmen' ? incomingFreshmen : 
+                  selectedCategory === 'All' ? allPlayers :
                   selectedCategory === 'Top 25' ? allPlayers.filter(p => p.rank <= 25) :
                   selectedCategory === 'Star' ? allPlayers.filter(p => p.rank >= 26 && p.rank <= 50) :
                   selectedCategory === 'Impact' ? allPlayers.filter(p => p.rank >= 51 && p.rank <= 75) :
@@ -1435,14 +1512,16 @@ const TopReturningPlayers2025 = () => {
         }
       `}</style>
 
-      {/* Floating Orbs Background */}
+      {/* Enhanced Floating Orbs Background with more colors */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '1s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', animationDelay: '2s' }}></div>
+        <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5 blur-3xl animate-pulse" style={{ background: gradients.gold }}></div>
+        <div className="absolute top-60 right-20 w-48 h-48 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: gradients.emerald, animationDelay: '1s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-80 h-80 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: gradients.blue, animationDelay: '2s' }}></div>
+        <div className="absolute top-40 left-1/2 w-56 h-56 rounded-full opacity-3 blur-2xl animate-pulse" style={{ background: gradients.violet, animationDelay: '1.5s' }}></div>
+        <div className="absolute bottom-20 right-1/4 w-72 h-72 rounded-full opacity-4 blur-3xl animate-pulse" style={{ background: gradients.orange, animationDelay: '2.5s' }}></div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div style={{ width: '98%', margin: '0 auto' }} className="relative z-10">
         {/* Enhanced Header */}
         <div className="text-center mb-20">
           <div className="flex items-center justify-center mb-8 relative">
@@ -1488,40 +1567,74 @@ const TopReturningPlayers2025 = () => {
             <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
             
             <div className="relative z-10">
-              {/* Category Pills */}
+              {/* Category Pills with Icons */}
               <div className="flex flex-wrap items-center gap-4 mb-8">
-                {['Top 25', 'Star', 'Impact', 'Solid', 'Freshmen'].map(category => (
-                  <button
-                    key={category}
-                    onClick={() => {
-                      setSelectedCategory(category);
-                      setSelectedPosition('All');
-                    }}
-                    className={`relative px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-bold text-base sm:text-lg transition-all duration-500 transform hover:scale-105 ${
-                      selectedCategory === category
-                        ? 'text-white shadow-2xl'
-                        : 'text-gray-700 hover:text-white'
-                    }`}
-                  >
-                    {selectedCategory === category && (
-                      <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(204,0,28,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
-                    )}
-                    
-                    {selectedCategory !== category && (
-                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
-                    )}
-                    
-                    <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                    
-                    <span className="relative z-10">
-                      {category === 'Top 25' && 'Elite Tier (1-25)'}
-                      {category === 'Star' && 'Star Level (26-50)'}
-                      {category === 'Impact' && 'Impact Level (51-75)'}
-                      {category === 'Solid' && 'Solid Contributors (76-100)'}
-                      {category === 'Freshmen' && 'Incoming Freshmen'}
-                    </span>
-                  </button>
-                ))}
+                {/* All Players Tab */}
+                <button
+                  onClick={() => {
+                    setSelectedCategory('All');
+                    setSelectedPosition('All');
+                  }}
+                  className={`relative px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-bold text-base sm:text-lg transition-all duration-500 transform hover:scale-105 ${
+                    selectedCategory === 'All'
+                      ? 'text-white shadow-2xl'
+                      : 'text-gray-700 hover:text-white'
+                  }`}
+                >
+                  {selectedCategory === 'All' && (
+                    <div className="absolute inset-0 rounded-2xl shadow-[0_8px_32px_rgba(204,0,28,0.3)]" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}></div>
+                  )}
+                  
+                  {selectedCategory !== 'All' && (
+                    <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
+                  )}
+                  
+                  <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                  
+                  <span className="relative z-10 flex items-center gap-2">
+                    <i className="fas fa-users"></i>
+                    All Players
+                  </span>
+                </button>
+
+                {['Top 25', 'Star', 'Impact', 'Solid', 'Freshmen'].map(category => {
+                  const categoryKey = category === 'Top 25' ? 'Elite' : category;
+                  const style = getCategoryStyle(categoryKey);
+                  
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => {
+                        setSelectedCategory(category);
+                        setSelectedPosition('All');
+                      }}
+                      className={`relative px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-bold text-base sm:text-lg transition-all duration-500 transform hover:scale-105 ${
+                        selectedCategory === category
+                          ? 'text-white shadow-2xl'
+                          : 'text-gray-700 hover:text-white'
+                      }`}
+                    >
+                      {selectedCategory === category && (
+                        <div className="absolute inset-0 rounded-2xl" style={{ background: style.gradient, boxShadow: `0 8px 32px ${style.shadowColor}` }}></div>
+                      )}
+                      
+                      {selectedCategory !== category && (
+                        <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl hover:bg-white/30 transition-all duration-300"></div>
+                      )}
+                      
+                      <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                      
+                      <span className="relative z-10 flex items-center gap-2">
+                        <i className={`fas ${style.icon}`}></i>
+                        {category === 'Top 25' && 'Elite Tier (1-25)'}
+                        {category === 'Star' && 'Star Level (26-50)'}
+                        {category === 'Impact' && 'Impact Level (51-75)'}
+                        {category === 'Solid' && 'Solid Contributors (76-100)'}
+                        {category === 'Freshmen' && 'Incoming Freshmen'}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Search and Position Filter */}
@@ -1592,136 +1705,173 @@ const TopReturningPlayers2025 = () => {
 
         {/* Players Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPlayers.map((player, index) => (
-            <div
-              key={`${player.name}-${index}`}
-              className="group relative overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]"
-              style={{ animationDelay: `${index * 50}ms` }}
-              onMouseEnter={() => setHoveredPlayer(player.name)}
-              onMouseLeave={() => setHoveredPlayer(null)}
-            >
-              <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-6 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70">
-                <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
-                
-                <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(220,38,38,0.1) 0%, rgba(185,28,28,0.1) 50%, rgba(153,27,27,0.1) 100%)' }}></div>
-                
-                <div className="relative z-10">
-                  {/* Player Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-4">
-                      {/* Rank Badge */}
-                      <div className="relative">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(220,38,38,0.4)] group-hover:shadow-[0_6px_25px_rgba(220,38,38,0.5)] transition-shadow duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' }}>
-                          <span className="text-white text-lg font-black">
-                            {selectedCategory === 'Freshmen' ? player.rank : `#${player.rank}`}
-                          </span>
+          {filteredPlayers.map((player, index) => {
+            const categoryStyle = getCategoryStyle(player.category || 'Freshmen');
+            const positionGradient = getPositionGradient(player.position);
+            const starRating = getStarRating(player.rank);
+            
+            return (
+              <div
+                key={`${player.name}-${index}`}
+                className="group relative overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]"
+                style={{ animationDelay: `${index * 50}ms` }}
+                onMouseEnter={() => setHoveredPlayer(player.name)}
+                onMouseLeave={() => setHoveredPlayer(null)}
+              >
+                <div className="relative bg-white/50 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)] p-6 transition-all duration-500 group-hover:bg-white/60 group-hover:border-white/70">
+                  <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/40 via-white/10 to-transparent pointer-events-none"></div>
+                  
+                  <div className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: `linear-gradient(135deg, ${categoryStyle.shadowColor} 0%, ${categoryStyle.shadowColor} 50%, ${categoryStyle.shadowColor} 100%)` }}></div>
+                  
+                  <div className="relative z-10">
+                    {/* Player Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        {/* Rank Badge with Category Color */}
+                        <div className="relative">
+                          <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300" style={{ background: categoryStyle.gradient, boxShadow: `0 4px 20px ${categoryStyle.shadowColor}` }}>
+                            <span className="text-white text-lg font-black">
+                              {selectedCategory === 'Freshmen' ? player.rank : `#${player.rank}`}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Team Logo */}
+                        <div className="relative w-14 h-14 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                          <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
+                          <img
+                            src={getTeamLogo(player.team)}
+                            alt={`${player.team} logo`}
+                            className="w-10 h-10 object-contain relative z-10 drop-shadow-xl"
+                            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                          />
                         </div>
                       </div>
                       
-                      {/* Team Logo */}
-                      <div className="relative w-14 h-14 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                        <div className="absolute inset-1 rounded-xl bg-gradient-to-br from-white/40 via-transparent to-transparent"></div>
-                        <img
-                          src={getTeamLogo(player.team)}
-                          alt={`${player.team} logo`}
-                          className="w-10 h-10 object-contain relative z-10 drop-shadow-xl"
-                          onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-                        />
+                      {/* Position Badge with Position Color */}
+                      <div className="relative inline-flex items-center px-3 py-1 rounded-lg font-bold text-xs text-white backdrop-blur-xl border shadow-lg" style={{ background: positionGradient, borderColor: 'rgba(255,255,255,0.3)' }}>
+                        <div className="absolute inset-1 rounded-md bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                        <span className="relative z-10">{player.position}</span>
                       </div>
                     </div>
-                    
-                    {/* Position Badge */}
-                    <div className="relative inline-flex items-center px-3 py-1 rounded-lg font-bold text-xs backdrop-blur-xl border shadow-lg bg-white/20 border-white/30 text-gray-700">
-                      <div className="absolute inset-1 rounded-md bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
-                      <span className="relative z-10">{player.position}</span>
-                    </div>
-                  </div>
 
-                  {/* Player Info */}
-                  <div className="mb-4">
-                    <h3 className="text-xl font-black text-gray-900 mb-1 group-hover:text-red-700 transition-colors duration-300">
-                      {player.name}
-                    </h3>
-                    <div className="flex items-center space-x-2 text-sm">
-                      <span className="font-bold text-gray-700">{player.team}</span>
-                      {player.year && (
+                    {/* Player Info */}
+                    <div className="mb-4">
+                      <h3 className="text-xl font-black text-gray-900 mb-1 group-hover:text-red-700 transition-colors duration-300">
+                        {player.name}
+                      </h3>
+                      <div className="flex items-center space-x-2 text-sm">
+                        <span className="font-bold text-gray-700">{player.team}</span>
+                        {player.year && (
+                          <>
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-600">{player.year}</span>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Star Rating */}
+                      {selectedCategory !== 'Freshmen' && (
+                        <div className="flex items-center mt-2">
+                          {[...Array(5)].map((_, i) => (
+                            <i 
+                              key={i} 
+                              className={`fas fa-star text-xs ${
+                                i < Math.floor(starRating) 
+                                  ? 'text-yellow-500' 
+                                  : i === Math.floor(starRating) && starRating % 1 !== 0
+                                  ? 'text-yellow-500 opacity-50'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="ml-2 text-xs text-gray-600 font-medium">({starRating})</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Stats/Info Section */}
+                    <div className="space-y-3">
+                      {selectedCategory === 'Freshmen' ? (
                         <>
-                          <span className="text-gray-400">•</span>
-                          <span className="text-gray-600">{player.year}</span>
+                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                            <div className="text-xs font-bold text-gray-600 mb-1">Ranking</div>
+                            <div className="text-sm text-gray-800">{player.ranking}</div>
+                          </div>
+                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                            <div className="text-xs font-bold text-gray-600 mb-1">Profile</div>
+                            <div className="text-sm text-gray-800">{player.profile}</div>
+                          </div>
+                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                            <div className="text-xs font-bold text-gray-600 mb-1">Impact</div>
+                            <div className="text-sm text-gray-800">{player.impact}</div>
+                          </div>
+                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                            <div className="text-xs font-bold text-gray-600 mb-1">Potential</div>
+                            <div className="text-sm font-bold text-gray-800">{player.potential}</div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                            <div className="text-xs font-bold text-gray-600 mb-1">2024 Stats</div>
+                            <div className="text-sm text-gray-800">{player.stats}</div>
+                          </div>
+                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                            <div className="text-xs font-bold text-gray-600 mb-1">Why He's Special</div>
+                            <div className="text-sm text-gray-800">{player.whySpecial}</div>
+                          </div>
+                          <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+                            <div className="text-xs font-bold text-gray-600 mb-1">2025 Outlook</div>
+                            <div className="text-sm font-bold text-gray-800">{player.outlook2025}</div>
+                          </div>
                         </>
                       )}
                     </div>
-                  </div>
 
-                  {/* Stats/Info Section */}
-                  <div className="space-y-3">
-                    {selectedCategory === 'Freshmen' ? (
-                      <>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                          <div className="text-xs font-bold text-gray-600 mb-1">Ranking</div>
-                          <div className="text-sm text-gray-800">{player.ranking}</div>
-                        </div>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                          <div className="text-xs font-bold text-gray-600 mb-1">Profile</div>
-                          <div className="text-sm text-gray-800">{player.profile}</div>
-                        </div>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                          <div className="text-xs font-bold text-gray-600 mb-1">Impact</div>
-                          <div className="text-sm text-gray-800">{player.impact}</div>
-                        </div>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                          <div className="text-xs font-bold text-gray-600 mb-1">Potential</div>
-                          <div className="text-sm font-bold text-gray-800">{player.potential}</div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                          <div className="text-xs font-bold text-gray-600 mb-1">2024 Stats</div>
-                          <div className="text-sm text-gray-800">{player.stats}</div>
-                        </div>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                          <div className="text-xs font-bold text-gray-600 mb-1">Why He's Special</div>
-                          <div className="text-sm text-gray-800">{player.whySpecial}</div>
-                        </div>
-                        <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
-                          <div className="text-xs font-bold text-gray-600 mb-1">2025 Outlook</div>
-                          <div className="text-sm font-bold text-gray-800">{player.outlook2025}</div>
-                        </div>
-                      </>
+                    {/* Award Indicators with Icons */}
+                    {selectedCategory !== 'Freshmen' && player.rank <= 100 && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {player.outlook2025?.toLowerCase().includes('heisman') && (
+                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.rose, border: '1px solid rgba(255,255,255,0.3)' }}>
+                            <i className="fas fa-fire mr-1"></i>
+                            Heisman Watch
+                          </div>
+                        )}
+                        {player.outlook2025?.toLowerCase().includes('all-american') && (
+                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.sapphire, border: '1px solid rgba(255,255,255,0.3)' }}>
+                            <i className="fas fa-trophy mr-1"></i>
+                            All-American
+                          </div>
+                        )}
+                        {(player.outlook2025?.toLowerCase().includes('breakout') || player.whySpecial?.toLowerCase().includes('explosive')) && (
+                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.fuchsia, border: '1px solid rgba(255,255,255,0.3)' }}>
+                            <i className="fas fa-rocket mr-1"></i>
+                            Breakout Star
+                          </div>
+                        )}
+                        {player.outlook2025?.toLowerCase().includes('draft') && (
+                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.coral, border: '1px solid rgba(255,255,255,0.3)' }}>
+                            <i className="fas fa-chart-line mr-1"></i>
+                            NFL Draft
+                          </div>
+                        )}
+                        {(player.whySpecial?.toLowerCase().includes('leader') || player.outlook2025?.toLowerCase().includes('leader')) && (
+                          <div className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full text-white" style={{ background: gradients.burgundy, border: '1px solid rgba(255,255,255,0.3)' }}>
+                            <i className="fas fa-users mr-1"></i>
+                            Team Leader
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-
-                  {/* Award Indicators */}
-                  {!selectedCategory === 'Freshmen' && player.rank <= 25 && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {player.outlook2025.toLowerCase().includes('heisman') && (
-                        <div className="inline-block text-xs bg-yellow-500/20 backdrop-blur-sm text-yellow-700 font-bold px-3 py-1 rounded-full border border-yellow-400/30">
-                          <i className="fas fa-trophy mr-1"></i>
-                          Heisman Watch
-                        </div>
-                      )}
-                      {player.outlook2025.toLowerCase().includes('all-american') && (
-                        <div className="inline-block text-xs bg-blue-500/20 backdrop-blur-sm text-blue-700 font-bold px-3 py-1 rounded-full border border-blue-400/30">
-                          <i className="fas fa-star mr-1"></i>
-                          All-American
-                        </div>
-                      )}
-                      {player.outlook2025.toLowerCase().includes('draft') && (
-                        <div className="inline-block text-xs bg-purple-500/20 backdrop-blur-sm text-purple-700 font-bold px-3 py-1 rounded-full border border-purple-400/30">
-                          <i className="fas fa-chart-line mr-1"></i>
-                          NFL Draft
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  
+                  {/* Hover effect overlay */}
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 </div>
-                
-                {/* Hover effect overlay */}
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Analysis Section */}
