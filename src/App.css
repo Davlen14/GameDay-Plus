@@ -137,10 +137,7 @@
 .metallic-3d-logo-container {
   perspective: 1200px;
   transform-style: preserve-3d;
-  padding: 8px;
-  /* Remove any circular background */
-  background: none !important;
-  border-radius: 0 !important;
+  /* Remove default padding and background since they're applied inline */
 }
 
 /* Enhanced version for featured logos - Maximum Premium with Natural Colors */

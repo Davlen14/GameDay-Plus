@@ -98,6 +98,7 @@ const FanStats = React.lazy(() => import('./components/fanhub/FanStats'));
 const Schedule = React.lazy(() => import('./components/games/Schedule'));
 const Schedule2024Recap = React.lazy(() => import('./components/games/Schedule2024Recap'));
 const GamePredictor = React.lazy(() => import('./components/games/GamePredictor'));
+const GamePredictorAdvanced = React.lazy(() => import('./components/games/GamePredictorAdvanced'));
 const LiveGames = React.lazy(() => import('./components/games/LiveGames'));
 const GameDetailView = React.lazy(() => import('./components/games/GameDetailView'));
 
@@ -418,7 +419,17 @@ function App() {
       case 'schedule-2024-recap':
         return <Schedule2024Recap />;
       case 'game-predictor':
-        return <GamePredictor />;
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <GamePredictorAdvanced />
+          </Suspense>
+        );
+      case 'game-predictor-original':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <GamePredictor />
+          </Suspense>
+        );
       case 'live-games':
         return <LiveGames />;
       case 'game-detail':

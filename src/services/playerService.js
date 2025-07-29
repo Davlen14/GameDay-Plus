@@ -2,6 +2,14 @@ import { fetchCollegeFootballData } from './core';
 
 // Player-related API functions using College Football Data API
 export const playerService = {
+  // GET /roster - Get team roster data
+  getRoster: async (team = null, year = null) => {
+    const params = {};
+    if (team) params.team = team;
+    if (year) params.year = year;
+    return await fetchCollegeFootballData('/roster', params);
+  },
+
   // GET /player/search - Search for players (lists top 100 results)
   searchPlayers: async (searchTerm, year = null, team = null, position = null) => {
     const params = { searchTerm };

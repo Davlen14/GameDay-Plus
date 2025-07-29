@@ -2,11 +2,20 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { teamService } from '../../services/teamService';
 import ADVScheduleTab from './ADVScheduleTab';
 import TeamAnalytics from './TeamAnalytics';
+import RosterTab from './RosterTab';
+import OverviewTab from './OverviewTab';
+import HistoryTab from './HistoryTab';
+import MatchupsTab from './MatchupsTab';
+import MediaTab from './MediaTab';
+import ProjectionsTab from './ProjectionsTab';
+import FacilitiesTab from './FacilitiesTab';
+import CultureTab from './CultureTab';
+import WeatherPerformanceTab from './WeatherPerformanceTab';
 
 const TeamDetailView = () => {
   const [team, setTeam] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(4); // Start with Schedule like SwiftUI
+  const [activeTab, setActiveTab] = useState(0); // Start with Overview
   const [isFavorite, setIsFavorite] = useState(false);
   const [animateGalaxy, setAnimateGalaxy] = useState(false);
   const [animateCards, setAnimateCards] = useState(false);
@@ -54,14 +63,16 @@ const TeamDetailView = () => {
 
   const tabs = [
     { id: 0, label: 'OVERVIEW', icon: 'fa-home' },
-    { id: 1, label: 'ANALYTICS', icon: 'fa-chart-line' },
-    { id: 2, label: 'HISTORY', icon: 'fa-trophy' },
-    { id: 3, label: 'MATCHUPS', icon: 'fa-vs' },
-    { id: 4, label: 'SCHEDULE', icon: 'fa-calendar' },
-    { id: 5, label: 'MEDIA', icon: 'fa-play-circle' },
-    { id: 6, label: 'PROJECTIONS', icon: 'fa-chart-bar' },
-    { id: 7, label: 'FACILITIES', icon: 'fa-building' },
-    { id: 8, label: 'CULTURE', icon: 'fa-users' },
+    { id: 1, label: 'ROSTER', icon: 'fa-users' },
+    { id: 2, label: 'ANALYTICS', icon: 'fa-chart-line' },
+    { id: 3, label: 'WEATHER', icon: 'fa-cloud-sun' },
+    { id: 4, label: 'HISTORY', icon: 'fa-trophy' },
+    { id: 5, label: 'MATCHUPS', icon: 'fa-vs' },
+    { id: 6, label: 'SCHEDULE', icon: 'fa-calendar' },
+    { id: 7, label: 'MEDIA', icon: 'fa-play-circle' },
+    { id: 8, label: 'PROJECTIONS', icon: 'fa-chart-bar' },
+    { id: 9, label: 'FACILITIES', icon: 'fa-building' },
+    { id: 10, label: 'CULTURE', icon: 'fa-users' },
   ];
 
   useEffect(() => {
@@ -170,7 +181,7 @@ const TeamDetailView = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent bg-gradient-to-r from-red-500 to-red-600 mx-auto"></div>
@@ -187,7 +198,7 @@ const TeamDetailView = () => {
 
   if (!team) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <i className="fas fa-exclamation-triangle text-7xl text-gray-300 mb-8"></i>
           <h3 className="text-3xl font-bold text-gray-700 mb-6">Team Not Found</h3>
@@ -216,7 +227,7 @@ const TeamDetailView = () => {
   const teamColorRgb = `${teamRgb.r}, ${teamRgb.g}, ${teamRgb.b}`;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       {/* HD Galaxy Header - Enhanced Crisp Version */}
       <div 
         className="relative overflow-hidden"
@@ -431,19 +442,18 @@ const TeamDetailView = () => {
             }}
           />
 
-          {/* HD Shimmer Overlay */}
+          {/* Subtle sparkle overlay */}
           <div 
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(45deg, 
+              background: `linear-gradient(145deg, 
                 transparent 0%, 
-                rgba(255,255,255,0.1) 20%,
-                transparent 40%, 
-                rgba(255,255,255,0.05) 60%,
-                transparent 80%,
-                rgba(255,255,255,0.08) 100%)`,
-              transform: animateGalaxy ? 'translateX(100%)' : 'translateX(-100%)',
-              transition: 'transform 8s ease-in-out infinite',
+                rgba(255,255,255,0.03) 30%,
+                transparent 50%, 
+                rgba(255,255,255,0.02) 70%,
+                transparent 100%)`,
+              opacity: animateGalaxy ? 0.6 : 0.3,
+              transition: 'opacity 4s ease-in-out infinite',
               animationDirection: 'alternate',
             }}
           />
@@ -451,9 +461,9 @@ const TeamDetailView = () => {
 
         {/* Header Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 pt-6">
-          {/* Team Logo with Premium Effects - EXTRA LARGE SIZE */}
+          {/* Team Logo - Clear with hover effect */}
           <div 
-            className="mb-5 metallic-3d-logo-container"
+            className="mb-5 cursor-pointer transition-transform duration-300 hover:scale-110"
             style={{
               transform: animateCards ? 'scale(1.0)' : 'scale(0.8)',
               opacity: animateCards ? 1 : 0,
@@ -464,7 +474,10 @@ const TeamDetailView = () => {
               <img
                 src={secureTeamLogo}
                 alt={team.school}
-                className="w-72 h-72 metallic-3d-logo-enhanced object-contain"
+                className="w-72 h-72 object-contain drop-shadow-2xl transition-transform duration-300 hover:scale-105"
+                style={{
+                  filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3)) drop-shadow(0 5px 10px rgba(0,0,0,0.2))',
+                }}
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextElementSibling.style.display = 'flex';
@@ -472,7 +485,7 @@ const TeamDetailView = () => {
               />
             ) : null}
             <div 
-              className="w-72 h-72 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30"
+              className="w-72 h-72 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30 transition-transform duration-300 hover:scale-105"
               style={{ display: secureTeamLogo ? 'none' : 'flex' }}
             >
               <i className="fas fa-university text-white text-8xl filter drop-shadow-lg"></i>
@@ -541,96 +554,75 @@ const TeamDetailView = () => {
         />
       </div>
 
-      {/* HD Shiny Tab Selection - Centered */}
-      <div className="bg-white sticky top-0 z-40 border-b border-gray-200 shadow-lg backdrop-blur-sm">
+      {/* Metallic Tab Selection with Team Colors - NO GAPS */}
+      <div className="bg-gray-100 sticky top-0 z-40 shadow-lg backdrop-blur-sm">
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex justify-center items-center gap-2 px-4 py-3 min-w-max mx-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-shrink-0 px-4 py-3 text-xs font-bold rounded transition-all duration-300 transform hover:scale-105 ${
+                className={`relative flex items-center gap-2 px-6 py-3 rounded-lg font-bold text-xs transition-all duration-500 transform hover:scale-105 whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'text-white shadow-lg'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'text-white shadow-2xl'
+                    : 'text-gray-700 hover:text-gray-900'
                 }`}
-                style={activeTab === tab.id ? {
-                  background: `linear-gradient(135deg, 
-                    ${primaryColor} 0%, 
-                    rgba(${teamColorRgb}, 0.9) 50%, 
-                    ${primaryColor} 100%)`,
-                  boxShadow: `
-                    0 4px 12px rgba(${teamColorRgb}, 0.4),
-                    0 2px 6px rgba(${teamColorRgb}, 0.3),
-                    inset 0 1px 0 rgba(255,255,255,0.3),
-                    inset 0 -1px 0 rgba(0,0,0,0.1)
-                  `,
-                  fontFamily: 'Orbitron, sans-serif',
-                  filter: 'brightness(1.05) contrast(1.1)',
-                } : {
-                  background: `linear-gradient(135deg, 
-                    rgba(243,244,246,1) 0%, 
-                    rgba(249,250,251,1) 50%, 
-                    rgba(243,244,246,1) 100%)`,
-                  border: '1px solid rgba(209,213,219,0.5)',
-                  boxShadow: `
-                    0 2px 4px rgba(0,0,0,0.05),
-                    inset 0 1px 0 rgba(255,255,255,0.8),
-                    inset 0 -1px 0 rgba(0,0,0,0.05)
-                  `,
-                  fontFamily: 'Orbitron, sans-serif',
-                }}
+                style={{ fontFamily: 'Orbitron, sans-serif' }}
               >
-                {tab.label}
+                {/* Active solid team color background */}
+                {activeTab === tab.id && (
+                  <div 
+                    className="absolute inset-0 rounded-lg"
+                    style={{
+                      backgroundColor: primaryColor,
+                      boxShadow: `0 4px 16px rgba(${teamColorRgb}, 0.25), 0 2px 8px rgba(${teamColorRgb}, 0.15)`,
+                      opacity: 0.95
+                    }}
+                  ></div>
+                )}
+                
+                {/* Inactive glass background */}
+                {activeTab !== tab.id && (
+                  <div className="absolute inset-0 bg-white/20 backdrop-blur-xl border border-white/30 rounded-lg hover:bg-white/30 transition-all duration-300"></div>
+                )}
+                
+                {/* Subtle glass highlight overlay */}
+                <div className="absolute inset-1 rounded-md bg-gradient-to-br from-white/15 via-transparent to-white/5 pointer-events-none"></div>
+                
+                <span className="relative z-10">{tab.label}</span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="px-4 py-8 max-w-6xl mx-auto">
-        {activeTab === 4 ? (
-          <ADVScheduleTab team={team} primaryTeamColor={primaryColor} />
-        ) : activeTab === 1 ? (
-          <TeamAnalytics team={team} />
-        ) : (
-          <div className="text-center py-20">
-            <div className="mb-8">
-              <div 
-                className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
-                style={{ 
-                  background: `linear-gradient(135deg, rgba(${teamColorRgb}, 0.15) 0%, rgba(${teamColorRgb}, 0.05) 100%)`,
-                  border: `2px solid rgba(${teamColorRgb}, 0.2)`
-                }}
-              >
-                <i 
-                  className="fas fa-hammer text-3xl font-bold filter drop-shadow-sm"
-                  style={{ color: primaryColor }}
-                ></i>
-              </div>
-              
-              <h2 
-                className="text-xl font-black mb-3"
-                style={{ 
-                  fontFamily: 'Orbitron, sans-serif',
-                  color: primaryColor,
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                }}
-              >
-                COMING SOON
-              </h2>
-              
-              <p className="text-sm font-medium text-gray-600 mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                In Development
-              </p>
-              
-              <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
-                {`We're working hard to bring you comprehensive ${tabs.find(t => t.id === activeTab)?.label.toLowerCase()} data for ${team.school}. Stay tuned for an amazing experience!`}
-              </p>
-            </div>
-          </div>
-        )}
+      {/* Content Area - 97% width - NO GAP */}
+      <div className="bg-gray-50">
+        <div className="px-2 py-8 mx-auto" style={{ width: '97%' }}>
+          {activeTab === 0 ? (
+            <OverviewTab team={team} primaryTeamColor={primaryColor} />
+          ) : activeTab === 1 ? (
+            <RosterTab team={team} primaryTeamColor={primaryColor} />
+          ) : activeTab === 2 ? (
+            <TeamAnalytics team={team} />
+          ) : activeTab === 3 ? (
+            <WeatherPerformanceTab team={team} primaryTeamColor={primaryColor} />
+          ) : activeTab === 4 ? (
+            <HistoryTab team={team} primaryTeamColor={primaryColor} />
+          ) : activeTab === 5 ? (
+            <MatchupsTab team={team} primaryTeamColor={primaryColor} />
+          ) : activeTab === 6 ? (
+            <ADVScheduleTab team={team} primaryTeamColor={primaryColor} />
+          ) : activeTab === 7 ? (
+            <MediaTab team={team} primaryTeamColor={primaryColor} />
+          ) : activeTab === 8 ? (
+            <ProjectionsTab team={team} primaryTeamColor={primaryColor} />
+          ) : activeTab === 9 ? (
+            <FacilitiesTab team={team} primaryTeamColor={primaryColor} />
+          ) : activeTab === 10 ? (
+            <CultureTab team={team} primaryTeamColor={primaryColor} />
+          ) : null}
+        </div>
       </div>
     </div>
   );
