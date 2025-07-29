@@ -196,10 +196,21 @@ const WeatherPerformanceTab = () => {
       </Box>
     );
   }
-  
+
   if (error) {
     return (
       <Alert severity="error">{error}</Alert>
+    );
+  }
+
+  // Defensive: If no games or no processed data, show a message
+  if (!processedGames || processedGames.length === 0) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h6" color="text.secondary">
+          No weather performance data available for this team.
+        </Typography>
+      </Box>
     );
   }
   
@@ -260,22 +271,26 @@ const WeatherPerformanceTab = () => {
               <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Win Rate by Weather Condition</Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={formatChartData(weatherPerformance)}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="category" />
-                      <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
-                      <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
-                      <Bar dataKey="winRate" name="Win Rate">
-                        {formatChartData(weatherPerformance).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={weatherColors[entry.category] || COLORS[index % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {Array.isArray(formatChartData(weatherPerformance)) && formatChartData(weatherPerformance).length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart
+                        data={formatChartData(weatherPerformance)}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="category" />
+                        <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
+                        <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
+                        <Bar dataKey="winRate" name="Win Rate">
+                          {formatChartData(weatherPerformance).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={weatherColors[entry.category] || COLORS[index % COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">No weather chart data available.</Typography>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -414,22 +429,26 @@ const WeatherPerformanceTab = () => {
               <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Win Rate by Time of Day</Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={formatChartData(timePerformance)}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="category" />
-                      <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
-                      <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
-                      <Bar dataKey="winRate" name="Win Rate">
-                        {formatChartData(timePerformance).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={timeColors[entry.category] || COLORS[index % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {Array.isArray(formatChartData(timePerformance)) && formatChartData(timePerformance).length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart
+                        data={formatChartData(timePerformance)}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="category" />
+                        <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
+                        <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
+                        <Bar dataKey="winRate" name="Win Rate">
+                          {formatChartData(timePerformance).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={timeColors[entry.category] || COLORS[index % COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">No time-of-day chart data available.</Typography>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -604,24 +623,28 @@ const WeatherPerformanceTab = () => {
               <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Win Rate: Home vs Away</Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={[
-                        { location: 'Home', winRate: homeAwayPerformance.home.win_rate },
-                        { location: 'Away', winRate: homeAwayPerformance.away.win_rate }
-                      ]}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="location" />
-                      <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
-                      <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
-                      <Bar dataKey="winRate" name="Win Rate">
-                        <Cell fill="#4CAF50" />
-                        <Cell fill="#2196F3" />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {(homeAwayPerformance.home && homeAwayPerformance.away) ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart
+                        data={[
+                          { location: 'Home', winRate: homeAwayPerformance.home.win_rate },
+                          { location: 'Away', winRate: homeAwayPerformance.away.win_rate }
+                        ]}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="location" />
+                        <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
+                        <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
+                        <Bar dataKey="winRate" name="Win Rate">
+                          <Cell fill="#4CAF50" />
+                          <Cell fill="#2196F3" />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">No home/away chart data available.</Typography>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
