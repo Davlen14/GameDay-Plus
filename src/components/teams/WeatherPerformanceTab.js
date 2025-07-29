@@ -50,6 +50,8 @@ const WeatherPerformanceTab = () => {
   const { teamId } = useParams();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0); // 0-100
+  const [debugLog, setDebugLog] = useState([]); // array of debug messages
   const [teamData, setTeamData] = useState(null);
   const [processedGames, setProcessedGames] = useState([]);
   const [weatherPerformance, setWeatherPerformance] = useState({});
@@ -88,39 +90,50 @@ const WeatherPerformanceTab = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+        setProgress(0);
+        setDebugLog([]);
         // Using teamId directly instead of getTeamById
+        setDebugLog(log => [...log, 'Initializing team data...']);
         const team = { school: teamId };
         setTeamData(team);
-        
+        setProgress(5);
+        setDebugLog(log => [...log, 'Fetching games for last 10 years...']);
         // Fetch all games for last 10 years
         const currentYear = new Date().getFullYear();
         const startYear = currentYear - 10;
-        
         let allGames = [];
         for (let year = startYear; year <= currentYear; year++) {
-          // Regular season
-        const regularGames = await teamService.getTeamGames(team.school, year, 'regular');
+          setDebugLog(log => [...log, `Fetching regular season games for ${year}...`]);
+          const regularGames = await teamService.getTeamGames(team.school, year, 'regular');
           allGames = [...allGames, ...regularGames];
-          
-          // Postseason
-        const postseasonGames = await teamService.getTeamGames(team.school, year, 'postseason');
+          setProgress(p => Math.min(p + 2, 20));
+          setDebugLog(log => [...log, `Fetching postseason games for ${year}...`]);
+          const postseasonGames = await teamService.getTeamGames(team.school, year, 'postseason');
           allGames = [...allGames, ...postseasonGames];
+          setProgress(p => Math.min(p + 2, 30));
         }
-        
+        setDebugLog(log => [...log, `Fetched ${allGames.length} games.`]);
+        setProgress(35);
         // Fetch weather data for each game
+        setDebugLog(log => [...log, 'Fetching weather data for each game...']);
         const weatherData = {};
+        let weatherCount = 0;
         for (const game of allGames) {
           if (game.id) {
             const weather = await teamService.getGameWeather(game.id);
             if (weather) {
               weatherData[game.id] = weather;
             }
+            weatherCount++;
+            if (weatherCount % 10 === 0) setProgress(p => Math.min(p + 2, 50));
           }
         }
-        
+        setDebugLog(log => [...log, `Fetched weather for ${weatherCount} games.`]);
+        setProgress(55);
         // Fetch team stats for each game
+        setDebugLog(log => [...log, 'Fetching team stats for each game...']);
         const teamStats = [];
+        let statsCount = 0;
         for (const game of allGames) {
           if (game.id) {
             const stats = await teamService.getTeamStats(game.id);
@@ -133,36 +146,47 @@ const WeatherPerformanceTab = () => {
                 });
               }
             }
+            statsCount++;
+            if (statsCount % 10 === 0) setProgress(p => Math.min(p + 2, 70));
           }
         }
-        
+        setDebugLog(log => [...log, `Fetched stats for ${statsCount} games.`]);
+        setProgress(75);
         // Process the data
+        setDebugLog(log => [...log, 'Processing games data...']);
         const processed = processGamesData(allGames, weatherData, teamStats, team.school);
         setProcessedGames(processed);
-        
+        setProgress(80);
         // Analyze the data
+        setDebugLog(log => [...log, 'Analyzing weather performance...']);
         const weatherAnalysis = analyzeWeatherPerformance(processed);
         setWeatherPerformance(weatherAnalysis);
-        
+        setProgress(82);
+        setDebugLog(log => [...log, 'Analyzing time performance...']);
         const timeAnalysis = analyzeTimePerformance(processed);
         setTimePerformance(timeAnalysis);
-        
+        setProgress(84);
+        setDebugLog(log => [...log, 'Analyzing offensive strategy...']);
         const strategyAnalysis = analyzeWeatherStrategy(processed);
         setWeatherStrategy(strategyAnalysis);
-        
+        setProgress(86);
+        setDebugLog(log => [...log, 'Analyzing home/away performance...']);
         const locationAnalysis = analyzeHomeAwayPerformance(processed);
         setHomeAwayPerformance(locationAnalysis);
-        
+        setProgress(88);
+        setDebugLog(log => [...log, 'Analyzing day of week performance...']);
         const dayAnalysis = analyzeDayOfWeekPerformance(processed);
         setDayOfWeekPerformance(dayAnalysis);
-        
+        setProgress(90);
+        setDebugLog(log => [...log, 'Creating weather/time heatmap data...']);
         const heatmap = createWeatherTimeHeatmapData(processed);
         setHeatmapData(heatmap);
-        
+        setProgress(92);
+        setDebugLog(log => [...log, 'Analyzing extreme weather...']);
         const extremeAnalysis = analyzeExtremeWeather(processed);
         setExtremeWeather(extremeAnalysis);
-        
-        // Generate insights
+        setProgress(95);
+        setDebugLog(log => [...log, 'Generating insights...']);
         const generatedInsights = generateInsights(
           processed, 
           weatherAnalysis, 
@@ -170,15 +194,16 @@ const WeatherPerformanceTab = () => {
           locationAnalysis
         );
         setInsights(generatedInsights);
-        
+        setProgress(100);
+        setDebugLog(log => [...log, 'Done!']);
       } catch (err) {
         console.error("Error fetching weather performance data:", err);
         setError("Failed to load weather performance data. Please try again later.");
+        setDebugLog(log => [...log, `Error: ${err.message || err}`]);
       } finally {
         setLoading(false);
       }
     };
-    
     fetchData();
   }, [teamId]);
   
@@ -188,11 +213,28 @@ const WeatherPerformanceTab = () => {
   
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <CircularProgress />
-        <Typography variant="h6" sx={{ ml: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
           Loading Weather Analysis...
         </Typography>
+        <Box sx={{ width: '80%', mb: 2 }}>
+          <Paper elevation={2} sx={{ p: 2 }}>
+            <Typography variant="body2" sx={{ mb: 1 }}>Progress: {progress}%</Typography>
+            <Box sx={{ width: '100%', height: 16, bgcolor: '#eee', borderRadius: 8, overflow: 'hidden' }}>
+              <Box sx={{ width: `${progress}%`, height: '100%', bgcolor: theme.palette.primary.main, transition: 'width 0.3s' }} />
+            </Box>
+          </Paper>
+        </Box>
+        <Box sx={{ width: '80%', maxHeight: 180, overflowY: 'auto', mt: 2 }}>
+          <Paper elevation={1} sx={{ p: 2, bgcolor: '#fafafa' }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Debugger Log:</Typography>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {debugLog.map((msg, idx) => (
+                <li key={idx} style={{ fontSize: '0.95rem', color: '#333', marginBottom: 2 }}>{msg}</li>
+              ))}
+            </ul>
+          </Paper>
+        </Box>
       </Box>
     );
   }
