@@ -1,49 +1,40 @@
-// Centralized weather data service for WeatherPerformanceTab
-// Provides wrappers for all weather-related endpoints
-import axios from 'axios';
+import { fetchCollegeFootballData } from './core';
 
-const BASE_URL = '/api';
+// Weather and environmental data for games
+export const weatherService = {
+  // Mock weather service since College Football Data API doesn't provide weather
+  // In a real implementation, this would integrate with a weather API
+  getGameWeather: async (gameId, venue = null, date = null) => {
+    try {
+      // This is a mock implementation
+      // In reality, you'd integrate with OpenWeatherMap, WeatherAPI, etc.
+      return {
+        gameId,
+        venue,
+        date,
+        temperature: Math.floor(Math.random() * 40) + 40, // 40-80°F
+        humidity: Math.floor(Math.random() * 40) + 40, // 40-80%
+        windSpeed: Math.floor(Math.random() * 15) + 5, // 5-20 mph
+        precipitation: Math.random() > 0.8 ? Math.random() * 0.5 : 0, // 20% chance of rain
+        isIndoors: venue && venue.toLowerCase().includes('dome'),
+        description: 'Clear skies'
+      };
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      return null;
+    }
+  },
 
-export const getTeamGames = async (teamId, years) => {
-  // Fetch games for a team over a range of years
-  try {
-    const response = await axios.get(`${BASE_URL}/team/${teamId}/games`, {
-      params: { years }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
+  // Get historical weather patterns for a venue
+  getVenueWeatherHistory: async (venue, month) => {
+    // Mock implementation
+    return {
+      venue,
+      month,
+      avgTemperature: 65,
+      avgHumidity: 60,
+      avgWindSpeed: 8,
+      precipitationChance: 0.3
+    };
   }
 };
-
-export const getGameWeather = async (gameId) => {
-  // Fetch weather data for a specific game
-  try {
-    const response = await axios.get(`${BASE_URL}/game/${gameId}/weather`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getTeamStats = async (teamId, gameIds) => {
-  // Fetch stats for a team for a set of games
-  try {
-    const response = await axios.get(`${BASE_URL}/team/${teamId}/stats`, {
-      params: { gameIds }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-// Add any additional weather-related endpoints here
-
-const weatherService = {
-  getTeamGames,
-  getGameWeather,
-  getTeamStats
-};
-
-export default weatherService;
