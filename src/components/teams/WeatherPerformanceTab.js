@@ -104,11 +104,23 @@ const WeatherPerformanceTab = () => {
         let allGames = [];
         for (let year = startYear; year <= currentYear; year++) {
           setDebugLog(log => [...log, `Fetching regular season games for ${year}...`]);
-          const regularGames = await teamService.getTeamGames(team.school, year, 'regular');
+          let regularGames = [];
+          try {
+            regularGames = await teamService.getTeamGames(team.school, year, 'regular');
+            setDebugLog(log => [...log, `Fetched ${regularGames.length} regular games for ${year}.`]);
+          } catch (err) {
+            setDebugLog(log => [...log, `Error fetching regular games for ${year}: ${err.message || err}`]);
+          }
           allGames = [...allGames, ...regularGames];
           setProgress(p => Math.min(p + 2, 20));
           setDebugLog(log => [...log, `Fetching postseason games for ${year}...`]);
-          const postseasonGames = await teamService.getTeamGames(team.school, year, 'postseason');
+          let postseasonGames = [];
+          try {
+            postseasonGames = await teamService.getTeamGames(team.school, year, 'postseason');
+            setDebugLog(log => [...log, `Fetched ${postseasonGames.length} postseason games for ${year}.`]);
+          } catch (err) {
+            setDebugLog(log => [...log, `Error fetching postseason games for ${year}: ${err.message || err}`]);
+          }
           allGames = [...allGames, ...postseasonGames];
           setProgress(p => Math.min(p + 2, 30));
         }
