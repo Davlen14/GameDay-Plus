@@ -45,13 +45,97 @@ import {
   formatChartData
 } from '../../utils/weatherCalculations';
 
+// Mock data definitions
+const MOCK_DATA = {
+  weatherPerformance: {
+    Freezing: {
+      win_rate: 0.55,
+      avg_points_for: 24.2,
+      avg_points_against: 20.1,
+      avg_point_diff: 4.1,
+      avg_total_yards: 350.5,
+      avg_pass_yards: 180.2,
+      avg_rush_yards: 170.3,
+      avg_turnovers: 1.2,
+      games_played: 12
+    },
+    Cold: {
+      win_rate: 0.60,
+      avg_points_for: 27.5,
+      avg_points_against: 19.8,
+      avg_point_diff: 7.7,
+      avg_total_yards: 370.1,
+      avg_pass_yards: 200.4,
+      avg_rush_yards: 169.7,
+      avg_turnovers: 1.0,
+      games_played: 18
+    },
+    Moderate: {
+      win_rate: 0.65,
+      avg_points_for: 30.3,
+      avg_points_against: 21.2,
+      avg_point_diff: 9.1,
+      avg_total_yards: 390.2,
+      avg_pass_yards: 210.5,
+      avg_rush_yards: 179.7,
+      avg_turnovers: 0.9,
+      games_played: 22
+    },
+    Warm: {
+      win_rate: 0.50,
+      avg_points_for: 22.1,
+      avg_points_against: 23.5,
+      avg_point_diff: -1.4,
+      avg_total_yards: 340.0,
+      avg_pass_yards: 170.0,
+      avg_rush_yards: 170.0,
+      avg_turnovers: 1.5,
+      games_played: 10
+    }
+  },
+  timePerformance: {
+    Morning: { win_rate: 0.60, pointsFor: 28, pointsAgainst: 20, pointDiff: 8, gamesPlayed: 10 },
+    'Early Afternoon': { win_rate: 0.62, pointsFor: 29, pointsAgainst: 21, pointDiff: 8, gamesPlayed: 15 },
+    'Late Afternoon': { win_rate: 0.58, pointsFor: 27, pointsAgainst: 22, pointDiff: 5, gamesPlayed: 12 },
+    Night: { win_rate: 0.65, pointsFor: 31, pointsAgainst: 19, pointDiff: 12, gamesPlayed: 25 }
+  },
+  weatherStrategy: {
+    Freezing: { pass_ratio: 0.45, avg_turnovers: 1.2, avg_passing_yards: 180, avg_rushing_yards: 170 },
+    Cold: { pass_ratio: 0.50, avg_turnovers: 1.0, avg_passing_yards: 200, avg_rushing_yards: 170 },
+    Moderate: { pass_ratio: 0.55, avg_turnovers: 0.9, avg_passing_yards: 210, avg_rushing_yards: 180 },
+    Warm: { pass_ratio: 0.40, avg_turnovers: 1.5, avg_passing_yards: 170, avg_rushing_yards: 170 }
+  },
+  homeAwayPerformance: {
+    home: { win_rate: 0.65, avg_points_for: 30, avg_points_against: 20 },
+    away: { win_rate: 0.55, avg_points_for: 25, avg_points_against: 23 }
+  },
+  extremeWeather: {
+    extremeCold: { count: 12, winRate: 0.55, avgScore: 24.2, avgOpponentScore: 20.1 },
+    extremeHot: { count: 10, winRate: 0.50, avgScore: 22.1, avgOpponentScore: 23.5 },
+    highWind: { count: 8, winRate: 0.52, avgScore: 23.0, avgOpponentScore: 22.0 },
+    precipitation: { count: 15, winRate: 0.58, avgScore: 26.0, avgOpponentScore: 21.0 }
+  },
+  insights: [
+    "Team performs best in moderate weather conditions (65% win rate)",
+    "Night games show highest win rate at 65%",
+    "Home field advantage is significant with 10% higher win rate",
+    "Passing efficiency increases in moderate/cold weather conditions"
+  ],
+  processedGames: [
+    { weather_category: 'Freezing', is_home: true, won: true },
+    { weather_category: 'Cold', is_home: false, won: false },
+    { weather_category: 'Moderate', is_home: true, won: true },
+    { weather_category: 'Warm', is_home: false, won: false }
+  ]
+};
+
 const WeatherPerformanceTab = () => {
   const theme = useTheme();
   const { teamId } = useParams();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState(0); // 0-100
-  const [debugLog, setDebugLog] = useState([]); // array of debug messages
+  const [progress, setProgress] = useState(0);
+  const [debugLog, setDebugLog] = useState([]);
   const [teamData, setTeamData] = useState(null);
   const [processedGames, setProcessedGames] = useState([]);
   const [weatherPerformance, setWeatherPerformance] = useState({});
@@ -63,6 +147,7 @@ const WeatherPerformanceTab = () => {
   const [extremeWeather, setExtremeWeather] = useState({});
   const [insights, setInsights] = useState([]);
   const [error, setError] = useState(null);
+  const [isUsingMockData, setIsUsingMockData] = useState(false);
   
   // Chart colors
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -85,6 +170,19 @@ const WeatherPerformanceTab = () => {
     return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj) ?? def;
   };
 
+  // Function to load mock data
+  const loadMockData = () => {
+    setTeamData({ school: teamId });
+    setProcessedGames(MOCK_DATA.processedGames);
+    setWeatherPerformance(MOCK_DATA.weatherPerformance);
+    setTimePerformance(MOCK_DATA.timePerformance);
+    setWeatherStrategy(MOCK_DATA.weatherStrategy);
+    setHomeAwayPerformance(MOCK_DATA.homeAwayPerformance);
+    setExtremeWeather(MOCK_DATA.extremeWeather);
+    setInsights(MOCK_DATA.insights);
+    setIsUsingMockData(true);
+  };
+
   // Fetch team data and process
   useEffect(() => {
     const fetchData = async () => {
@@ -92,16 +190,17 @@ const WeatherPerformanceTab = () => {
         setLoading(true);
         setProgress(0);
         setDebugLog([]);
-        // Using teamId directly instead of getTeamById
         setDebugLog(log => [...log, 'Initializing team data...']);
         const team = { school: teamId };
         setTeamData(team);
         setProgress(5);
         setDebugLog(log => [...log, 'Fetching games for last 10 years...']);
+        
         // Fetch all games for last 10 years
         const currentYear = new Date().getFullYear();
         const startYear = currentYear - 10;
         let allGames = [];
+        
         for (let year = startYear; year <= currentYear; year++) {
           setDebugLog(log => [...log, `Fetching regular season games for ${year}...`]);
           let regularGames = [];
@@ -113,6 +212,7 @@ const WeatherPerformanceTab = () => {
           }
           allGames = [...allGames, ...regularGames];
           setProgress(p => Math.min(p + 2, 20));
+          
           setDebugLog(log => [...log, `Fetching postseason games for ${year}...`]);
           let postseasonGames = [];
           try {
@@ -124,8 +224,15 @@ const WeatherPerformanceTab = () => {
           allGames = [...allGames, ...postseasonGames];
           setProgress(p => Math.min(p + 2, 30));
         }
+        
+        // Check if we have any games
+        if (allGames.length === 0) {
+          throw new Error("No games found for analysis");
+        }
+        
         setDebugLog(log => [...log, `Fetched ${allGames.length} games.`]);
         setProgress(35);
+        
         // Fetch weather data for each game
         setDebugLog(log => [...log, 'Fetching weather data for each game...']);
         const weatherData = {};
@@ -142,6 +249,7 @@ const WeatherPerformanceTab = () => {
         }
         setDebugLog(log => [...log, `Fetched weather for ${weatherCount} games.`]);
         setProgress(55);
+        
         // Fetch team stats for each game
         setDebugLog(log => [...log, 'Fetching team stats for each game...']);
         const teamStats = [];
@@ -164,40 +272,54 @@ const WeatherPerformanceTab = () => {
         }
         setDebugLog(log => [...log, `Fetched stats for ${statsCount} games.`]);
         setProgress(75);
+        
         // Process the data
         setDebugLog(log => [...log, 'Processing games data...']);
         const processed = processGamesData(allGames, weatherData, teamStats, team.school);
+        
+        if (!processed || processed.length === 0) {
+          throw new Error("Unable to process game data");
+        }
+        
         setProcessedGames(processed);
         setProgress(80);
+        
         // Analyze the data
         setDebugLog(log => [...log, 'Analyzing weather performance...']);
         const weatherAnalysis = analyzeWeatherPerformance(processed);
         setWeatherPerformance(weatherAnalysis);
         setProgress(82);
+        
         setDebugLog(log => [...log, 'Analyzing time performance...']);
         const timeAnalysis = analyzeTimePerformance(processed);
         setTimePerformance(timeAnalysis);
         setProgress(84);
+        
         setDebugLog(log => [...log, 'Analyzing offensive strategy...']);
         const strategyAnalysis = analyzeWeatherStrategy(processed);
         setWeatherStrategy(strategyAnalysis);
         setProgress(86);
+        
         setDebugLog(log => [...log, 'Analyzing home/away performance...']);
         const locationAnalysis = analyzeHomeAwayPerformance(processed);
         setHomeAwayPerformance(locationAnalysis);
         setProgress(88);
+        
         setDebugLog(log => [...log, 'Analyzing day of week performance...']);
         const dayAnalysis = analyzeDayOfWeekPerformance(processed);
         setDayOfWeekPerformance(dayAnalysis);
         setProgress(90);
+        
         setDebugLog(log => [...log, 'Creating weather/time heatmap data...']);
         const heatmap = createWeatherTimeHeatmapData(processed);
         setHeatmapData(heatmap);
         setProgress(92);
+        
         setDebugLog(log => [...log, 'Analyzing extreme weather...']);
         const extremeAnalysis = analyzeExtremeWeather(processed);
         setExtremeWeather(extremeAnalysis);
         setProgress(95);
+        
         setDebugLog(log => [...log, 'Generating insights...']);
         const generatedInsights = generateInsights(
           processed, 
@@ -208,14 +330,19 @@ const WeatherPerformanceTab = () => {
         setInsights(generatedInsights);
         setProgress(100);
         setDebugLog(log => [...log, 'Done!']);
+        setIsUsingMockData(false);
+        
       } catch (err) {
         console.error("Error fetching weather performance data:", err);
-        setError("Failed to load weather performance data. Please try again later.");
+        setError("Failed to load weather performance data due to ongoing development. Showing prototype UI with mock data.");
         setDebugLog(log => [...log, `Error: ${err.message || err}`]);
+        // Load mock data on error
+        loadMockData();
       } finally {
         setLoading(false);
       }
     };
+    
     fetchData();
   }, [teamId]);
   
@@ -239,7 +366,7 @@ const WeatherPerformanceTab = () => {
         </Box>
         <Box sx={{ width: '80%', maxHeight: 180, overflowY: 'auto', mt: 2 }}>
           <Paper elevation={1} sx={{ p: 2, bgcolor: '#fafafa' }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Debugger Log:</Typography>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Debug Log:</Typography>
             <ul style={{ margin: 0, paddingLeft: 18 }}>
               {debugLog.map((msg, idx) => (
                 <li key={idx} style={{ fontSize: '0.95rem', color: '#333', marginBottom: 2 }}>{msg}</li>
@@ -251,25 +378,16 @@ const WeatherPerformanceTab = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Alert severity="error">{error}</Alert>
-    );
-  }
-
-  // Defensive: If no games or no processed data, show a message
-  if (!processedGames || processedGames.length === 0) {
-    return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="h6" color="text.secondary">
-          No weather performance data available for this team.
-        </Typography>
-      </Box>
-    );
-  }
-  
+  // Main render
   return (
     <Box sx={{ py: 3 }}>
+      {/* Show error message if using mock data */}
+      {(error || isUsingMockData) && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          {error || "Failed to load real data due to ongoing development. Showing prototype UI with mock data."}
+        </Alert>
+      )}
+      
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
         {teamData?.school} Weather Performance Analysis
       </Typography>
@@ -281,6 +399,7 @@ const WeatherPerformanceTab = () => {
         </Stack>
         <Typography variant="body1" paragraph>
           Analyzing how {teamData?.school} performs under different weather conditions based on {processedGames.length} games over the past 10 years.
+          {isUsingMockData && <Typography component="span" sx={{ fontStyle: 'italic', color: 'text.secondary' }}> (Mock Data)</Typography>}
         </Typography>
         
         <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -325,34 +444,6 @@ const WeatherPerformanceTab = () => {
               <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Win Rate by Weather Condition</Typography>
-                  {Array.isArray(formatChartData(weatherPerformance)) && formatChartData(weatherPerformance).length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart
-                        data={formatChartData(weatherPerformance)}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="category" />
-                        <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
-                        <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
-                        <Bar dataKey="winRate" name="Win Rate">
-                          {formatChartData(weatherPerformance).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={weatherColors[entry.category] || COLORS[index % COLORS.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">No weather chart data available.</Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>Scoring by Weather Condition</Typography>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart
                       data={formatChartData(weatherPerformance)}
@@ -360,33 +451,13 @@ const WeatherPerformanceTab = () => {
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="category" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="pointsFor" name="Points For" fill="#4CAF50" />
-                      <Bar dataKey="pointsAgainst" name="Points Against" fill="#F44336" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>Passing vs Rushing Yards by Weather</Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={formatChartData(weatherPerformance)}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="category" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="passYards" name="Passing Yards" fill="#2196F3" />
-                      <Bar dataKey="rushYards" name="Rushing Yards" fill="#FF9800" />
+                      <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
+                      <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
+                      <Bar dataKey="winRate" name="Win Rate">
+                        {formatChartData(weatherPerformance).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={weatherColors[entry.category] || COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -483,26 +554,22 @@ const WeatherPerformanceTab = () => {
               <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Win Rate by Time of Day</Typography>
-                  {Array.isArray(formatChartData(timePerformance)) && formatChartData(timePerformance).length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart
-                        data={formatChartData(timePerformance)}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="category" />
-                        <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
-                        <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
-                        <Bar dataKey="winRate" name="Win Rate">
-                          {formatChartData(timePerformance).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={timeColors[entry.category] || COLORS[index % COLORS.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">No time-of-day chart data available.</Typography>
-                  )}
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={formatChartData(timePerformance)}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="category" />
+                      <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
+                      <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
+                      <Bar dataKey="winRate" name="Win Rate">
+                        {formatChartData(timePerformance).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={timeColors[entry.category] || COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
             </Grid>
@@ -677,28 +744,24 @@ const WeatherPerformanceTab = () => {
               <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Win Rate: Home vs Away</Typography>
-                  {(homeAwayPerformance.home && homeAwayPerformance.away) ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart
-                        data={[
-                          { location: 'Home', winRate: homeAwayPerformance.home.win_rate },
-                          { location: 'Away', winRate: homeAwayPerformance.away.win_rate }
-                        ]}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="location" />
-                        <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
-                        <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
-                        <Bar dataKey="winRate" name="Win Rate">
-                          <Cell fill="#4CAF50" />
-                          <Cell fill="#2196F3" />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">No home/away chart data available.</Typography>
-                  )}
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={[
+                        { location: 'Home', winRate: homeAwayPerformance.home.win_rate },
+                        { location: 'Away', winRate: homeAwayPerformance.away.win_rate }
+                      ]}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="location" />
+                      <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
+                      <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
+                      <Bar dataKey="winRate" name="Win Rate">
+                        <Cell fill="#4CAF50" />
+                        <Cell fill="#2196F3" />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
             </Grid>
@@ -826,6 +889,7 @@ const WeatherPerformanceTab = () => {
                 </CardContent>
               </Card>
             </Grid>
+            
             {/* Extreme Heat */}
             <Grid item xs={12} md={6} lg={3}>
               <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
@@ -847,6 +911,7 @@ const WeatherPerformanceTab = () => {
                 </CardContent>
               </Card>
             </Grid>
+            
             {/* High Wind */}
             <Grid item xs={12} md={6} lg={3}>
               <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
@@ -868,6 +933,7 @@ const WeatherPerformanceTab = () => {
                 </CardContent>
               </Card>
             </Grid>
+            
             {/* Precipitation */}
             <Grid item xs={12} md={6} lg={3}>
               <Card elevation={3} sx={{ height: '100%', borderRadius: 2 }}>
@@ -889,6 +955,7 @@ const WeatherPerformanceTab = () => {
                 </CardContent>
               </Card>
             </Grid>
+            
             {/* Comparison Chart */}
             <Grid item xs={12}>
               <Card elevation={3} sx={{ borderRadius: 2 }}>
@@ -941,6 +1008,7 @@ const WeatherPerformanceTab = () => {
         <Typography variant="h6" gutterBottom>Key Weather Performance Takeaways</Typography>
         <Typography variant="body1" paragraph>
           This analysis shows how {teamData?.school}'s performance varies under different weather conditions and times of day. The data covers {processedGames.length} games over the past 10 years, providing insights into optimal playing conditions and potential areas for improvement.
+          {isUsingMockData && <Typography component="span" sx={{ fontStyle: 'italic', color: 'text.secondary' }}> (Based on Mock Data)</Typography>}
         </Typography>
         <Grid container spacing={2} sx={{ mt: 1 }}>
           {Object.keys(weatherPerformance).length > 0 && (
