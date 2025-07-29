@@ -184,29 +184,46 @@ const WeatherPerformanceTab = () => {
   const [isUsingMockData, setIsUsingMockData] = useState(false);
   const [animateStats, setAnimateStats] = useState(false);
   
-  // Modern gradient colors
+  // Weather-appropriate colors
+  const weatherColors = {
+    'Freezing': '#60A5FA', // Ice blue
+    'Cold': '#3B82F6', // Cold blue
+    'Moderate': '#10B981', // Pleasant green
+    'Warm': '#F59E0B' // Warm orange/yellow
+  };
+
   const weatherGradients = {
-    'Freezing': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'Cold': 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
-    'Moderate': 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-    'Warm': 'linear-gradient(135deg, #ee9ca7 0%, #ffdde1 100%)'
+    'Freezing': 'linear-gradient(135deg, #60A5FA 0%, #2563EB 100%)', // Ice blue gradient
+    'Cold': 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)', // Cold blue gradient
+    'Moderate': 'linear-gradient(135deg, #10B981 0%, #059669 100%)', // Pleasant green gradient
+    'Warm': 'linear-gradient(135deg, #F59E0B 0%, #DC2626 100%)' // Warm to hot gradient
   };
   
   const timeGradients = {
-    'Morning': 'linear-gradient(135deg, #f2994a 0%, #f2c94c 100%)',
-    'Early Afternoon': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    'Late Afternoon': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    'Night': 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
+    'Morning': 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)', // Morning yellow
+    'Early Afternoon': 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)', // Afternoon orange
+    'Late Afternoon': 'linear-gradient(135deg, #FB923C 0%, #DC2626 100%)', // Late afternoon red-orange
+    'Night': 'linear-gradient(135deg, #4B5563 0%, #1F2937 100%)' // Night dark
   };
 
-  // Weather icons mapping
-  const getWeatherIcon = (weather) => {
+  // Get team color (default to red if not available)
+  const getTeamColor = () => {
+    return teamData?.color || '#DC2626';
+  };
+
+  const teamGradient = () => {
+    const color = getTeamColor();
+    return `linear-gradient(135deg, ${color} 0%, ${color}CC 100%)`;
+  };
+
+  // Weather icons mapping with colors
+  const getWeatherIcon = (weather, size = 'w-6 h-6') => {
     switch(weather) {
-      case 'Freezing': return <Snowflake className="w-6 h-6" />;
-      case 'Cold': return <CloudSnow className="w-6 h-6" />;
-      case 'Moderate': return <Cloud className="w-6 h-6" />;
-      case 'Warm': return <Sun className="w-6 h-6" />;
-      default: return <Cloud className="w-6 h-6" />;
+      case 'Freezing': return <Snowflake className={`${size} text-blue-400`} />;
+      case 'Cold': return <CloudSnow className={`${size} text-blue-500`} />;
+      case 'Moderate': return <Cloud className={`${size} text-green-500`} />;
+      case 'Warm': return <Sun className={`${size} text-orange-500`} />;
+      default: return <Cloud className={`${size} text-gray-500`} />;
     }
   };
 
@@ -217,7 +234,7 @@ const WeatherPerformanceTab = () => {
 
   // Function to load mock data
   const loadMockData = () => {
-    setTeamData({ school: teamId });
+    setTeamData({ school: teamId, color: '#DC2626' }); // Default red color
     setProcessedGames(MOCK_DATA.processedGames);
     setWeatherPerformance(MOCK_DATA.weatherPerformance);
     setTimePerformance(MOCK_DATA.timePerformance);
@@ -275,10 +292,7 @@ const WeatherPerformanceTab = () => {
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start justify-between mb-4">
-        <div 
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg"
-          style={{ background: gradient }}
-        >
+        <div className="text-3xl">
           {icon}
         </div>
         <div className="text-right">
@@ -335,15 +349,20 @@ const WeatherPerformanceTab = () => {
     const getColor = (value) => {
       if (!value) return '#f0f0f0';
       const intensity = value;
-      if (intensity >= 0.7) return '#22c55e';
-      if (intensity >= 0.6) return '#3b82f6';
-      if (intensity >= 0.5) return '#f59e0b';
-      return '#ef4444';
+      if (intensity >= 0.7) return '#10B981'; // Green for excellent
+      if (intensity >= 0.6) return '#3B82F6'; // Blue for good
+      if (intensity >= 0.5) return '#F59E0B'; // Orange for average
+      return '#EF4444'; // Red for poor
     };
 
     return (
       <GlassCard className="p-8">
-        <h3 className="text-2xl font-black mb-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+        <h3 className="text-2xl font-black mb-6" style={{ 
+          fontFamily: 'Orbitron, sans-serif',
+          background: teamGradient(),
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
           Performance Heatmap
         </h3>
         <div className="grid grid-cols-5 gap-2">
@@ -419,13 +438,6 @@ const WeatherPerformanceTab = () => {
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
           
-          .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-          }
-          
           .loading-spinner {
             animation: spin 2s linear infinite;
           }
@@ -447,12 +459,12 @@ const WeatherPerformanceTab = () => {
         
         <div className="text-center">
           <div className="relative mb-8">
-            <div className="absolute inset-0 w-32 h-32 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 blur-2xl opacity-50 mx-auto pulse-animation"></div>
+            <div className="absolute inset-0 w-32 h-32 rounded-full bg-gradient-to-r from-blue-400 to-orange-400 blur-2xl opacity-50 mx-auto pulse-animation"></div>
             <div className="relative w-24 h-24 rounded-full bg-white/60 backdrop-blur-sm border border-white/50 shadow-[inset_0_2px_6px_rgba(255,255,255,0.4)] flex items-center justify-center mx-auto">
-              <CloudLightning className="w-12 h-12 text-purple-600 loading-spinner" />
+              <CloudLightning className="w-12 h-12 text-blue-600 loading-spinner" />
             </div>
           </div>
-          <h3 className="text-3xl font-black gradient-text mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          <h3 className="text-3xl font-black text-gray-800 mb-4" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             Loading Weather Analysis
           </h3>
           <p className="text-gray-600 font-light" style={{ fontFamily: 'Orbitron, sans-serif' }}>
@@ -468,17 +480,6 @@ const WeatherPerformanceTab = () => {
     <div className="min-h-screen p-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
-        
-        .gradient-text {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        
-        .weather-gradient {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
         
         .custom-tab {
           font-family: 'Orbitron', sans-serif !important;
@@ -544,11 +545,15 @@ const WeatherPerformanceTab = () => {
       {/* Header Section */}
       <div className={`text-center mb-12 transition-all duration-500 ${animateStats ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
         <div className="flex items-center justify-center space-x-4 mb-6">
-          <CloudLightning className="w-12 h-12 text-purple-600" />
-          <h1 className="text-5xl font-black gradient-text">
+          <CloudLightning className="w-12 h-12" style={{ color: getTeamColor() }} />
+          <h1 className="text-5xl font-black bg-clip-text text-transparent" style={{ 
+            background: teamGradient(),
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
             Weather Performance Analysis
           </h1>
-          <CloudLightning className="w-12 h-12 text-purple-600" />
+          <CloudLightning className="w-12 h-12" style={{ color: getTeamColor() }} />
         </div>
         <p className="text-xl text-gray-600 font-light max-w-3xl mx-auto">
           Analyzing {teamData?.school}'s performance across different weather conditions 
@@ -559,7 +564,7 @@ const WeatherPerformanceTab = () => {
       {/* Key Insights Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <StatCard
-          icon={<Thermometer />}
+          icon={<Thermometer className="text-green-500" />}
           title="Best Weather"
           value="Moderate"
           subtitle="65% Win Rate"
@@ -567,7 +572,7 @@ const WeatherPerformanceTab = () => {
           delay={100}
         />
         <StatCard
-          icon={<Timer />}
+          icon={<Timer className="text-gray-700" />}
           title="Best Time"
           value="Night"
           subtitle="65% Win Rate"
@@ -575,19 +580,19 @@ const WeatherPerformanceTab = () => {
           delay={200}
         />
         <StatCard
-          icon={<Home />}
+          icon={<Home style={{ color: getTeamColor() }} />}
           title="Home Advantage"
           value="+10%"
           subtitle="Win Rate Boost"
-          gradient="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+          gradient={teamGradient()}
           delay={300}
         />
         <StatCard
-          icon={<Activity />}
+          icon={<Activity className="text-blue-500" />}
           title="Total Games"
           value={processedGames.length}
           subtitle="Analyzed"
-          gradient="linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+          gradient="linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)"
           delay={400}
         />
       </div>
@@ -595,10 +600,12 @@ const WeatherPerformanceTab = () => {
       {/* Insights Section */}
       <GlassCard className="p-8 mb-12">
         <div className="flex items-center space-x-4 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-          <h2 className="text-3xl font-black gradient-text">Key Insights</h2>
+          <TrendingUp className="text-3xl" style={{ color: getTeamColor() }} />
+          <h2 className="text-3xl font-black bg-clip-text text-transparent" style={{ 
+            background: teamGradient(),
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>Key Insights</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {insights.map((insight, index) => (
@@ -607,7 +614,7 @@ const WeatherPerformanceTab = () => {
               className="flex items-start space-x-3 p-4 rounded-2xl bg-white/30 backdrop-blur-sm border border-white/40 transform hover:scale-105 transition-all duration-300"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-2 flex-shrink-0"></div>
+              <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: getTeamColor() }}></div>
               <p className="text-gray-700 font-medium">{insight}</p>
             </div>
           ))}
@@ -629,12 +636,12 @@ const WeatherPerformanceTab = () => {
               fontSize: '1rem',
               color: 'rgba(0,0,0,0.6)',
               '&.Mui-selected': {
-                color: '#7c3aed',
+                color: getTeamColor(),
                 fontWeight: 700
               }
             },
             '& .MuiTabs-indicator': {
-              backgroundColor: '#7c3aed',
+              backgroundColor: getTeamColor(),
               height: 3,
               borderRadius: '3px 3px 0 0'
             }
@@ -656,7 +663,12 @@ const WeatherPerformanceTab = () => {
           <div className="space-y-8">
             {/* Win Rate by Weather */}
             <GlassCard className="p-8">
-              <h3 className="text-2xl font-black mb-6 gradient-text">Win Rate by Weather Condition</h3>
+              <h3 className="text-2xl font-black mb-6" style={{ 
+                fontFamily: 'Orbitron, sans-serif',
+                background: teamGradient(),
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>Win Rate by Weather Condition</h3>
               <div className="h-96 chart-animation">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
@@ -664,10 +676,12 @@ const WeatherPerformanceTab = () => {
                     margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                   >
                     <defs>
-                      <linearGradient id="colorWinRate" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1}/>
-                      </linearGradient>
+                      {Object.keys(weatherColors).map((weather) => (
+                        <linearGradient key={weather} id={`color${weather}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={weatherColors[weather]} stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor={weatherColors[weather]} stopOpacity={0.1}/>
+                        </linearGradient>
+                      ))}
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
                     <XAxis 
@@ -686,9 +700,9 @@ const WeatherPerformanceTab = () => {
                     <Area 
                       type="monotone" 
                       dataKey="winRate" 
-                      stroke="#8884d8" 
-                      fillOpacity={1} 
-                      fill="url(#colorWinRate)"
+                      stroke={getTeamColor()} 
+                      fill={getTeamColor()}
+                      fillOpacity={0.3}
                       strokeWidth={3}
                       name="Win Rate"
                     />
@@ -701,7 +715,12 @@ const WeatherPerformanceTab = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Points Analysis */}
               <GlassCard className="p-8">
-                <h3 className="text-2xl font-black mb-6 gradient-text">Scoring by Weather</h3>
+                <h3 className="text-2xl font-black mb-6" style={{ 
+                  fontFamily: 'Orbitron, sans-serif',
+                  background: teamGradient(),
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Scoring by Weather</h3>
                 <div className="h-80 chart-animation">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart
@@ -718,9 +737,13 @@ const WeatherPerformanceTab = () => {
                       <YAxis tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ fontFamily: 'Orbitron' }} />
-                      <Bar dataKey="pointsFor" fill="#22c55e" name="Points For" radius={[8, 8, 0, 0]} />
-                      <Bar dataKey="pointsAgainst" fill="#ef4444" name="Points Against" radius={[8, 8, 0, 0]} />
-                      <Line type="monotone" dataKey="differential" stroke="#3b82f6" strokeWidth={3} name="Differential" />
+                      <Bar dataKey="pointsFor" name="Points For" radius={[8, 8, 0, 0]}>
+                        {Object.keys(weatherPerformance).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={weatherColors[entry]} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="pointsAgainst" fill="#6B7280" name="Points Against" radius={[8, 8, 0, 0]} />
+                      <Line type="monotone" dataKey="differential" stroke={getTeamColor()} strokeWidth={3} name="Differential" />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
@@ -728,7 +751,12 @@ const WeatherPerformanceTab = () => {
 
               {/* Yards Analysis */}
               <GlassCard className="p-8">
-                <h3 className="text-2xl font-black mb-6 gradient-text">Yardage by Weather</h3>
+                <h3 className="text-2xl font-black mb-6" style={{ 
+                  fontFamily: 'Orbitron, sans-serif',
+                  background: teamGradient(),
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Yardage by Weather</h3>
                 <div className="h-80 chart-animation">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={Object.keys(weatherPerformance).map(key => ({
@@ -740,9 +768,9 @@ const WeatherPerformanceTab = () => {
                       <PolarGrid stroke="rgba(0,0,0,0.1)" />
                       <PolarAngleAxis dataKey="category" tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontFamily: 'Orbitron', fontSize: 10 }} />
-                      <Radar name="Total Yards" dataKey="totalYards" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} strokeWidth={2} />
-                      <Radar name="Pass Yards" dataKey="passYards" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.3} strokeWidth={2} />
-                      <Radar name="Rush Yards" dataKey="rushYards" stroke="#ffc658" fill="#ffc658" fillOpacity={0.3} strokeWidth={2} />
+                      <Radar name="Total Yards" dataKey="totalYards" stroke={getTeamColor()} fill={getTeamColor()} fillOpacity={0.3} strokeWidth={2} />
+                      <Radar name="Pass Yards" dataKey="passYards" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} strokeWidth={2} />
+                      <Radar name="Rush Yards" dataKey="rushYards" stroke="#10B981" fill="#10B981" fillOpacity={0.3} strokeWidth={2} />
                       <Legend wrapperStyle={{ fontFamily: 'Orbitron' }} />
                       <Tooltip content={<CustomTooltip />} />
                     </RadarChart>
@@ -753,7 +781,12 @@ const WeatherPerformanceTab = () => {
 
             {/* Detailed Stats Table */}
             <GlassCard className="p-8 overflow-hidden">
-              <h3 className="text-2xl font-black mb-6 gradient-text">Detailed Performance Metrics</h3>
+              <h3 className="text-2xl font-black mb-6" style={{ 
+                fontFamily: 'Orbitron, sans-serif',
+                background: teamGradient(),
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>Detailed Performance Metrics</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -782,7 +815,7 @@ const WeatherPerformanceTab = () => {
                           </td>
                           <td className="px-4 py-4 text-right" style={{ fontFamily: 'Orbitron' }}>{data.games_played}</td>
                           <td className="px-4 py-4 text-right font-bold" style={{ fontFamily: 'Orbitron' }}>
-                            <span className={`px-2 py-1 rounded-lg text-white ${data.win_rate >= 0.6 ? 'bg-green-500' : data.win_rate >= 0.5 ? 'bg-blue-500' : 'bg-red-500'}`}>
+                            <span className={`px-2 py-1 rounded-lg text-white`} style={{ backgroundColor: weatherColors[category] }}>
                               {(data.win_rate * 100).toFixed(1)}%
                             </span>
                           </td>
@@ -808,30 +841,23 @@ const WeatherPerformanceTab = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Win Rate by Time */}
               <GlassCard className="p-8">
-                <h3 className="text-2xl font-black mb-6 gradient-text">Win Rate by Time of Day</h3>
+                <h3 className="text-2xl font-black mb-6" style={{ 
+                  fontFamily: 'Orbitron, sans-serif',
+                  background: teamGradient(),
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Win Rate by Time of Day</h3>
                 <div className="h-80 chart-animation">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={formatChartData(timePerformance)}
                       margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                     >
-                      <defs>
-                        {Object.keys(timeGradients).map((time, index) => (
-                          <linearGradient key={time} id={`gradient-${time}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={timeGradients[time].split(' ')[2].slice(0, -1)} stopOpacity={1} />
-                            <stop offset="100%" stopColor={timeGradients[time].split(' ')[5].slice(0, -1)} stopOpacity={0.8} />
-                          </linearGradient>
-                        ))}
-                      </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
                       <XAxis dataKey="category" tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="winRate" name="Win Rate" radius={[12, 12, 0, 0]}>
-                        {formatChartData(timePerformance).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={`url(#gradient-${entry.category})`} />
-                        ))}
-                      </Bar>
+                      <Bar dataKey="winRate" name="Win Rate" fill={getTeamColor()} radius={[12, 12, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -839,7 +865,12 @@ const WeatherPerformanceTab = () => {
 
               {/* Scoring by Time */}
               <GlassCard className="p-8">
-                <h3 className="text-2xl font-black mb-6 gradient-text">Scoring Performance</h3>
+                <h3 className="text-2xl font-black mb-6" style={{ 
+                  fontFamily: 'Orbitron, sans-serif',
+                  background: teamGradient(),
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Scoring Performance</h3>
                 <div className="h-80 chart-animation">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
@@ -851,9 +882,9 @@ const WeatherPerformanceTab = () => {
                       <YAxis tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ fontFamily: 'Orbitron' }} />
-                      <Line type="monotone" dataKey="pointsFor" stroke="#22c55e" strokeWidth={3} name="Points For" dot={{ r: 6 }} />
-                      <Line type="monotone" dataKey="pointsAgainst" stroke="#ef4444" strokeWidth={3} name="Points Against" dot={{ r: 6 }} />
-                      <Line type="monotone" dataKey="pointDiff" stroke="#3b82f6" strokeWidth={3} name="Differential" strokeDasharray="5 5" dot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="pointsFor" stroke="#10B981" strokeWidth={3} name="Points For" dot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="pointsAgainst" stroke="#EF4444" strokeWidth={3} name="Points Against" dot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="pointDiff" stroke={getTeamColor()} strokeWidth={3} name="Differential" strokeDasharray="5 5" dot={{ r: 6 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -862,7 +893,12 @@ const WeatherPerformanceTab = () => {
 
             {/* Time Distribution */}
             <GlassCard className="p-8">
-              <h3 className="text-2xl font-black mb-6 gradient-text">Game Distribution by Time</h3>
+              <h3 className="text-2xl font-black mb-6" style={{ 
+                fontFamily: 'Orbitron, sans-serif',
+                background: teamGradient(),
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>Game Distribution by Time</h3>
               <div className="h-96 chart-animation">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -877,9 +913,10 @@ const WeatherPerformanceTab = () => {
                       nameKey="category"
                       label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                     >
-                      {formatChartData(timePerformance).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={Object.values(timeGradients)[index % Object.values(timeGradients).length].split(' ')[2].slice(0, -1)} />
-                      ))}
+                      {formatChartData(timePerformance).map((entry, index) => {
+                        const colors = ['#FCD34D', '#F59E0B', '#FB923C', '#4B5563'];
+                        return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                      })}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
                   </PieChart>
@@ -895,7 +932,12 @@ const WeatherPerformanceTab = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Pass/Run Ratio */}
               <GlassCard className="p-8">
-                <h3 className="text-2xl font-black mb-6 gradient-text">Offensive Balance by Weather</h3>
+                <h3 className="text-2xl font-black mb-6" style={{ 
+                  fontFamily: 'Orbitron, sans-serif',
+                  background: teamGradient(),
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Offensive Balance by Weather</h3>
                 <div className="h-80 chart-animation">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -912,8 +954,8 @@ const WeatherPerformanceTab = () => {
                       <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <Tooltip content={<CustomTooltip />} formatter={(value) => `${value.toFixed(1)}%`} />
                       <Legend wrapperStyle={{ fontFamily: 'Orbitron' }} />
-                      <Bar dataKey="passRatio" name="Pass %" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                      <Bar dataKey="rushRatio" name="Rush %" stackId="a" fill="#22c55e" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="passRatio" name="Pass %" stackId="a" fill="#3B82F6" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="rushRatio" name="Rush %" stackId="a" fill="#10B981" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -921,7 +963,12 @@ const WeatherPerformanceTab = () => {
 
               {/* Turnovers by Weather */}
               <GlassCard className="p-8">
-                <h3 className="text-2xl font-black mb-6 gradient-text">Ball Security Analysis</h3>
+                <h3 className="text-2xl font-black mb-6" style={{ 
+                  fontFamily: 'Orbitron, sans-serif',
+                  background: teamGradient(),
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Ball Security Analysis</h3>
                 <div className="h-80 chart-animation">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
@@ -933,15 +980,15 @@ const WeatherPerformanceTab = () => {
                     >
                       <defs>
                         <linearGradient id="colorTurnovers" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
+                          <stop offset="5%" stopColor="#EF4444" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#EF4444" stopOpacity={0.1}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
                       <XAxis dataKey="category" tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <YAxis tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Area type="monotone" dataKey="turnovers" stroke="#ef4444" fillOpacity={1} fill="url(#colorTurnovers)" strokeWidth={3} name="Avg Turnovers" />
+                      <Area type="monotone" dataKey="turnovers" stroke="#EF4444" fillOpacity={1} fill="url(#colorTurnovers)" strokeWidth={3} name="Avg Turnovers" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -950,7 +997,12 @@ const WeatherPerformanceTab = () => {
 
             {/* Strategy Radar */}
             <GlassCard className="p-8">
-              <h3 className="text-2xl font-black mb-6 gradient-text">Comprehensive Strategy Overview</h3>
+              <h3 className="text-2xl font-black mb-6" style={{ 
+                fontFamily: 'Orbitron, sans-serif',
+                background: teamGradient(),
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>Comprehensive Strategy Overview</h3>
               <div className="h-96 chart-animation">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={
@@ -965,10 +1017,10 @@ const WeatherPerformanceTab = () => {
                     <PolarGrid stroke="rgba(0,0,0,0.1)" />
                     <PolarAngleAxis dataKey="category" tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                     <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontFamily: 'Orbitron', fontSize: 10 }} />
-                    <Radar name="Passing Yards" dataKey="passingYards" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} strokeWidth={2} />
-                    <Radar name="Rushing Yards" dataKey="rushingYards" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} strokeWidth={2} />
-                    <Radar name="Turnovers (x50)" dataKey="turnovers" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} strokeWidth={2} />
-                    <Radar name="Pass Ratio (x200)" dataKey="passRatio" stroke="#a855f7" fill="#a855f7" fillOpacity={0.3} strokeWidth={2} />
+                    <Radar name="Passing Yards" dataKey="passingYards" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} strokeWidth={2} />
+                    <Radar name="Rushing Yards" dataKey="rushingYards" stroke="#10B981" fill="#10B981" fillOpacity={0.3} strokeWidth={2} />
+                    <Radar name="Turnovers (x50)" dataKey="turnovers" stroke="#EF4444" fill="#EF4444" fillOpacity={0.3} strokeWidth={2} />
+                    <Radar name="Pass Ratio (x200)" dataKey="passRatio" stroke={getTeamColor()} fill={getTeamColor()} fillOpacity={0.3} strokeWidth={2} />
                     <Legend wrapperStyle={{ fontFamily: 'Orbitron' }} />
                     <Tooltip content={<CustomTooltip />} />
                   </RadarChart>
@@ -984,7 +1036,12 @@ const WeatherPerformanceTab = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Win Rate Comparison */}
               <GlassCard className="p-8">
-                <h3 className="text-2xl font-black mb-6 gradient-text">Win Rate Comparison</h3>
+                <h3 className="text-2xl font-black mb-6" style={{ 
+                  fontFamily: 'Orbitron, sans-serif',
+                  background: teamGradient(),
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Win Rate Comparison</h3>
                 <div className="h-80 chart-animation">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -999,8 +1056,8 @@ const WeatherPerformanceTab = () => {
                       <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <Tooltip content={<CustomTooltip />} formatter={(value) => `${(value * 100).toFixed(1)}%`} />
                       <Bar dataKey="winRate" name="Win Rate" radius={[12, 12, 0, 0]}>
-                        <Cell fill="#22c55e" />
-                        <Cell fill="#3b82f6" />
+                        <Cell fill={getTeamColor()} />
+                        <Cell fill="#6B7280" />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -1009,7 +1066,12 @@ const WeatherPerformanceTab = () => {
 
               {/* Scoring Comparison */}
               <GlassCard className="p-8 lg:col-span-2">
-                <h3 className="text-2xl font-black mb-6 gradient-text">Scoring Analysis</h3>
+                <h3 className="text-2xl font-black mb-6" style={{ 
+                  fontFamily: 'Orbitron, sans-serif',
+                  background: teamGradient(),
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Scoring Analysis</h3>
                 <div className="h-80 chart-animation">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart
@@ -1034,9 +1096,9 @@ const WeatherPerformanceTab = () => {
                       <YAxis tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ fontFamily: 'Orbitron' }} />
-                      <Bar dataKey="pointsFor" fill="#22c55e" name="Points For" radius={[8, 8, 0, 0]} />
-                      <Bar dataKey="pointsAgainst" fill="#ef4444" name="Points Against" radius={[8, 8, 0, 0]} />
-                      <Line type="monotone" dataKey="differential" stroke="#3b82f6" strokeWidth={3} name="Differential" />
+                      <Bar dataKey="pointsFor" fill="#10B981" name="Points For" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="pointsAgainst" fill="#EF4444" name="Points Against" radius={[8, 8, 0, 0]} />
+                      <Line type="monotone" dataKey="differential" stroke={getTeamColor()} strokeWidth={3} name="Differential" />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
@@ -1045,7 +1107,12 @@ const WeatherPerformanceTab = () => {
 
             {/* Weather Performance by Location */}
             <GlassCard className="p-8">
-              <h3 className="text-2xl font-black mb-6 gradient-text">Weather Performance by Location</h3>
+              <h3 className="text-2xl font-black mb-6" style={{ 
+                fontFamily: 'Orbitron, sans-serif',
+                background: teamGradient(),
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>Weather Performance by Location</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {Object.keys(weatherPerformance).map((weather, index) => {
                   const homeGamesInWeather = processedGames.filter(
@@ -1068,8 +1135,7 @@ const WeatherPerformanceTab = () => {
                       key={index}
                       className="bg-white/30 backdrop-blur-sm rounded-2xl border border-white/40 p-6"
                       style={{ 
-                        borderTop: `4px solid transparent`,
-                        borderImage: `${weatherGradients[weather]} 1`
+                        borderTop: `4px solid ${weatherColors[weather]}`
                       }}
                     >
                       <div className="flex items-center justify-between mb-4">
@@ -1079,13 +1145,13 @@ const WeatherPerformanceTab = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Home</span>
-                          <span className="font-bold text-green-600">
+                          <span className="font-bold" style={{ color: getTeamColor() }}>
                             {homeGamesInWeather.length > 0 ? `${(homeWinRate * 100).toFixed(1)}%` : 'N/A'}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Away</span>
-                          <span className="font-bold text-blue-600">
+                          <span className="font-bold text-gray-600">
                             {awayGamesInWeather.length > 0 ? `${(awayWinRate * 100).toFixed(1)}%` : 'N/A'}
                           </span>
                         </div>
@@ -1105,8 +1171,8 @@ const WeatherPerformanceTab = () => {
               {/* Extreme Cold Card */}
               <GlassCard className="p-6 transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
-                  <Snowflake className="w-8 h-8 text-blue-600" />
-                  <span className="text-2xl font-black text-blue-600">{safe(extremeWeather, ['extremeCold', 'count'], 0)}</span>
+                  <Snowflake className="w-8 h-8 text-blue-400" />
+                  <span className="text-2xl font-black text-blue-400">{safe(extremeWeather, ['extremeCold', 'count'], 0)}</span>
                 </div>
                 <h4 className="text-lg font-bold mb-2">Extreme Cold</h4>
                 <p className="text-sm text-gray-600 mb-3">Games below 32°F</p>
@@ -1125,8 +1191,8 @@ const WeatherPerformanceTab = () => {
               {/* Extreme Heat Card */}
               <GlassCard className="p-6 transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
-                  <Sun className="w-8 h-8 text-orange-600" />
-                  <span className="text-2xl font-black text-orange-600">{safe(extremeWeather, ['extremeHot', 'count'], 0)}</span>
+                  <Sun className="w-8 h-8 text-orange-500" />
+                  <span className="text-2xl font-black text-orange-500">{safe(extremeWeather, ['extremeHot', 'count'], 0)}</span>
                 </div>
                 <h4 className="text-lg font-bold mb-2">Extreme Heat</h4>
                 <p className="text-sm text-gray-600 mb-3">Games above 85°F</p>
@@ -1145,8 +1211,8 @@ const WeatherPerformanceTab = () => {
               {/* High Wind Card */}
               <GlassCard className="p-6 transform hover:scale-105 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
-                  <Wind className="w-8 h-8 text-purple-600" />
-                  <span className="text-2xl font-black text-purple-600">{safe(extremeWeather, ['highWind', 'count'], 0)}</span>
+                  <Wind className="w-8 h-8 text-gray-500" />
+                  <span className="text-2xl font-black text-gray-500">{safe(extremeWeather, ['highWind', 'count'], 0)}</span>
                 </div>
                 <h4 className="text-lg font-bold mb-2">High Wind</h4>
                 <p className="text-sm text-gray-600 mb-3">20+ mph winds</p>
@@ -1185,7 +1251,12 @@ const WeatherPerformanceTab = () => {
 
             {/* Extreme Weather Comparison Chart */}
             <GlassCard className="p-8">
-              <h3 className="text-2xl font-black mb-6 gradient-text">Extreme Weather Performance Comparison</h3>
+              <h3 className="text-2xl font-black mb-6" style={{ 
+                fontFamily: 'Orbitron, sans-serif',
+                background: teamGradient(),
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>Extreme Weather Performance Comparison</h3>
               <div className="h-96 chart-animation">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
@@ -1223,9 +1294,9 @@ const WeatherPerformanceTab = () => {
                     <YAxis yAxisId="right" orientation="right" tick={{ fontFamily: 'Orbitron', fontSize: 12 }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontFamily: 'Orbitron' }} />
-                    <Bar yAxisId="left" dataKey="winRate" name="Win Rate" fill="#22c55e" radius={[8, 8, 0, 0]} />
-                    <Bar yAxisId="right" dataKey="gamesPlayed" name="Games" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-                    <Line yAxisId="right" type="monotone" dataKey="avgScore" stroke="#f59e0b" strokeWidth={3} name="Avg Score" dot={{ r: 6 }} />
+                    <Bar yAxisId="left" dataKey="winRate" name="Win Rate" fill={getTeamColor()} radius={[8, 8, 0, 0]} />
+                    <Bar yAxisId="right" dataKey="gamesPlayed" name="Games" fill="#6B7280" radius={[8, 8, 0, 0]} />
+                    <Line yAxisId="right" type="monotone" dataKey="avgScore" stroke="#F59E0B" strokeWidth={3} name="Avg Score" dot={{ r: 6 }} />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -1240,7 +1311,12 @@ const WeatherPerformanceTab = () => {
             
             {/* 3D Scatter Plot for Weather Conditions */}
             <GlassCard className="p-8">
-              <h3 className="text-2xl font-black mb-6 gradient-text">Weather Conditions Scatter Analysis</h3>
+              <h3 className="text-2xl font-black mb-6" style={{ 
+                fontFamily: 'Orbitron, sans-serif',
+                background: teamGradient(),
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>Weather Conditions Scatter Analysis</h3>
               <div className="h-96 chart-animation">
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -1274,7 +1350,7 @@ const WeatherPerformanceTab = () => {
                       fill="#8884d8"
                     >
                       {processedGames.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.won ? '#22c55e' : '#ef4444'} />
+                        <Cell key={`cell-${index}`} fill={entry.won ? getTeamColor() : '#6B7280'} />
                       ))}
                     </Scatter>
                   </ScatterChart>
@@ -1282,11 +1358,11 @@ const WeatherPerformanceTab = () => {
               </div>
               <div className="flex items-center justify-center mt-4 space-x-6">
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: getTeamColor() }}></div>
                   <span className="text-sm text-gray-600">Win</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                  <div className="w-4 h-4 rounded-full bg-gray-500"></div>
                   <span className="text-sm text-gray-600">Loss</span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1301,8 +1377,12 @@ const WeatherPerformanceTab = () => {
       {/* Footer */}
       <GlassCard className="p-8 mt-12">
         <div className="flex items-center space-x-4 mb-6">
-          <Activity className="w-8 h-8 text-purple-600" />
-          <h3 className="text-2xl font-black gradient-text">Analysis Summary</h3>
+          <Activity className="w-8 h-8" style={{ color: getTeamColor() }} />
+          <h3 className="text-2xl font-black bg-clip-text text-transparent" style={{ 
+            background: teamGradient(),
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>Analysis Summary</h3>
         </div>
         <div className="prose prose-lg max-w-none">
           <p className="text-gray-700 leading-relaxed">
