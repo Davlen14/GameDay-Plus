@@ -6,7 +6,8 @@ import {
   Season2024Tab,
   WeatherTab,
   ImpactPlayersTab,
-  AdvancedTab
+  AdvancedTab,
+  ATSTab
 } from './tabs';
 import { gameService } from '../../services/gameService';
 
@@ -29,7 +30,8 @@ const CompareTeamsView = () => {
     "2024 Season", 
     "Weather", 
     "Impact Players", 
-    "Advanced"
+    "Advanced",
+    "ATS Analysis"
   ];
 
   useEffect(() => {
@@ -323,6 +325,7 @@ const CompareTeamsView = () => {
           {selectedTab === 4 && <WeatherTab team1={team1} team2={team2} />}
           {selectedTab === 5 && <ImpactPlayersTab team1={team1} team2={team2} />}
           {selectedTab === 6 && <AdvancedTab team1={team1} team2={team2} />}
+          {selectedTab === 7 && <ATSTab team1={team1} team2={team2} team1Records={team1Records} team2Records={team2Records} />}
         </div>
       </div>
     </div>

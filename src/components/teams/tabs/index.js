@@ -6,3 +6,4 @@ export { default as Season2024Tab } from './Season2024Tab';
 export { default as WeatherTab } from './WeatherTab';
 export { default as ImpactPlayersTab } from './ImpactPlayersTab';
 export { default as AdvancedTab } from './AdvancedTab';
+export { default as ATSTab } from './ATSTab';
