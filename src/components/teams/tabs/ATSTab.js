@@ -120,6 +120,7 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     let totalMargin = 0;
     let totalGames = 0;
     let totalROI = 0;
+    const yearlyStats = {};
 
     games.forEach(game => {
       const gameLines = lines.filter(line => line.gameId === game.id);
@@ -144,20 +145,30 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
 
       const actualMargin = teamScore - opponentScore;
       const atsMargin = actualMargin - spread;
+      const year = game.season || new Date(game.start_date).getFullYear();
+
+      // Initialize yearly stats
+      if (!yearlyStats[year]) {
+        yearlyStats[year] = { wins: 0, losses: 0, pushes: 0, games: 0 };
+      }
 
       totalGames++;
+      yearlyStats[year].games++;
       totalSpread += Math.abs(spread);
       totalMargin += atsMargin;
 
       // Determine ATS result
       if (Math.abs(atsMargin) < 0.5) {
         metrics.overallRecord.pushes++;
+        yearlyStats[year].pushes++;
       } else if (atsMargin > 0) {
         metrics.overallRecord.wins++;
-        totalROI += 100; // Assuming standard -110 odds
+        yearlyStats[year].wins++;
+        totalROI += 90.91; // Standard -110 odds payout
       } else {
         metrics.overallRecord.losses++;
-        totalROI -= 110;
+        yearlyStats[year].losses++;
+        totalROI -= 100;
       }
 
       // Situational analysis
@@ -222,7 +233,7 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
         spread: spread,
         result: `${teamScore}-${opponentScore}`,
         margin: atsMargin,
-        year: game.season
+        year: year
       };
 
       if (atsMargin > 14) {
@@ -237,7 +248,18 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     metrics.winPercentage = totalAtsGames > 0 ? (metrics.overallRecord.wins / totalAtsGames) * 100 : 0;
     metrics.avgSpread = totalGames > 0 ? totalSpread / totalGames : 0;
     metrics.avgMargin = totalGames > 0 ? totalMargin / totalGames : 0;
-    metrics.roi = totalGames > 0 ? (totalROI / (totalGames * 110)) * 100 : 0;
+    metrics.roi = totalGames > 0 ? (totalROI / (totalGames * 100)) * 100 : 0;
+
+    // Process yearly data
+    metrics.yearlyData = Object.keys(yearlyStats).map(year => {
+      const stats = yearlyStats[year];
+      const atsGames = stats.wins + stats.losses;
+      return {
+        year: parseInt(year),
+        ...stats,
+        winPercentage: atsGames > 0 ? (stats.wins / atsGames) * 100 : 0
+      };
+    }).sort((a, b) => a.year - b.year);
 
     // Sort best/worst performances
     metrics.bestWorst.bestCovers.sort((a, b) => b.margin - a.margin).splice(5);
@@ -394,7 +416,33 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
 
   // Chart data
   const yearlyChartData = useMemo(() => {
-    if (!atsData.team1.yearlyData.length) return null;
+    // Always return a basic structure to prevent crashes
+    if (!atsData.team1.yearlyData || atsData.team1.yearlyData.length === 0) {
+      // Return fallback data structure
+      return {
+        labels: analysisYears,
+        datasets: [
+          {
+            label: team1?.school || 'Team 1',
+            data: analysisYears.map(() => 0),
+            borderColor: getTeamColor(team1),
+            backgroundColor: getTeamColor(team1, 0.1),
+            tension: 0.4,
+            pointBackgroundColor: getTeamColor(team1),
+            pointBorderWidth: 2,
+          },
+          {
+            label: team2?.school || 'Team 2',
+            data: analysisYears.map(() => 0),
+            borderColor: getTeamColor(team2),
+            backgroundColor: getTeamColor(team2, 0.1),
+            tension: 0.4,
+            pointBackgroundColor: getTeamColor(team2),
+            pointBorderWidth: 2,
+          }
+        ]
+      };
+    }
 
     return {
       labels: analysisYears,
@@ -431,13 +479,28 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     const categories = ['Small (0-3)', 'Medium (3.5-7)', 'Large (7.5-14)', 'Huge (14+)'];
     const categoryKeys = ['small', 'medium', 'large', 'huge'];
 
+    // Ensure we have the situational data structure
+    const team1Situational = atsData.team1.situational?.spreadSizes || {
+      small: { wins: 0, losses: 0, pushes: 0 },
+      medium: { wins: 0, losses: 0, pushes: 0 },
+      large: { wins: 0, losses: 0, pushes: 0 },
+      huge: { wins: 0, losses: 0, pushes: 0 }
+    };
+
+    const team2Situational = atsData.team2.situational?.spreadSizes || {
+      small: { wins: 0, losses: 0, pushes: 0 },
+      medium: { wins: 0, losses: 0, pushes: 0 },
+      large: { wins: 0, losses: 0, pushes: 0 },
+      huge: { wins: 0, losses: 0, pushes: 0 }
+    };
+
     return {
       labels: categories,
       datasets: [
         {
           label: `${team1?.school || 'Team 1'} ATS Win %`,
           data: categoryKeys.map(key => {
-            const data = atsData.team1.situational.spreadSizes[key];
+            const data = team1Situational[key];
             const total = data.wins + data.losses;
             return total > 0 ? (data.wins / total) * 100 : 0;
           }),
@@ -448,7 +511,7 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
         {
           label: `${team2?.school || 'Team 2'} ATS Win %`,
           data: categoryKeys.map(key => {
-            const data = atsData.team2.situational.spreadSizes[key];
+            const data = team2Situational[key];
             const total = data.wins + data.losses;
             return total > 0 ? (data.wins / total) * 100 : 0;
           }),
