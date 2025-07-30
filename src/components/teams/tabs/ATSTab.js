@@ -20,27 +20,35 @@ ChartJS.register(
 );
 
 const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
+  // IMMEDIATE DEBUG LOG
+  console.log('🚀 ATSTab component loaded!', { team1: team1?.school, team2: team2?.school });
+
+  // Create initial state with proper structure
+  const createInitialTeamData = () => ({
+    overallRecord: { wins: 0, losses: 0, pushes: 0 },
+    winPercentage: 0,
+    avgSpread: 0,
+    avgMargin: 0,
+    roi: 0,
+    situational: {
+      home: { wins: 0, losses: 0, pushes: 0 },
+      away: { wins: 0, losses: 0, pushes: 0 },
+      favorite: { wins: 0, losses: 0, pushes: 0 },
+      underdog: { wins: 0, losses: 0, pushes: 0 },
+      spreadSizes: {
+        small: { wins: 0, losses: 0, pushes: 0 },
+        medium: { wins: 0, losses: 0, pushes: 0 },
+        large: { wins: 0, losses: 0, pushes: 0 },
+        huge: { wins: 0, losses: 0, pushes: 0 }
+      }
+    },
+    yearlyData: [],
+    bestWorst: { bestCovers: [], worstBeats: [] }
+  });
+
   const [atsData, setAtsData] = useState({
-    team1: {
-      overallRecord: { wins: 0, losses: 0, pushes: 0 },
-      winPercentage: 0,
-      avgSpread: 0,
-      avgMargin: 0,
-      roi: 0,
-      situational: {},
-      yearlyData: [],
-      bestWorst: { bestCovers: [], worstBeats: [] }
-    },
-    team2: {
-      overallRecord: { wins: 0, losses: 0, pushes: 0 },
-      winPercentage: 0,
-      avgSpread: 0,
-      avgMargin: 0,
-      roi: 0,
-      situational: {},
-      yearlyData: [],
-      bestWorst: { bestCovers: [], worstBeats: [] }
-    },
+    team1: createInitialTeamData(),
+    team2: createInitialTeamData(),
     headToHead: []
   });
   
@@ -330,11 +338,13 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     return { games: allGames, lines: allLines };
   };
 
-  // Load ATS data
+    // Load ATS data
   useEffect(() => {
     const loadATSData = async () => {
+      // Early return if teams are not provided
       if (!team1?.school || !team2?.school) {
         setLoading(false);
+        setError('Please select two teams to compare');
         return;
       }
 
@@ -358,6 +368,7 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
             console.log('📦 Using cached ATS data');
             setAtsData(parsed.data);
             setLoading(false);
+            setTimeout(() => setAnimateCards(true), 300);
             return;
           }
         }
@@ -412,7 +423,7 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     };
 
     loadATSData();
-  }, [team1?.school, team2?.school, selectedTimeframe, analysisYears, calculateATSMetrics, team1Records, team2Records]);
+  }, [team1?.school, team2?.school, selectedTimeframe, analysisYears.join(','), team1Records.length, team2Records.length]);
 
   // Chart data
   const yearlyChartData = useMemo(() => {
@@ -635,416 +646,42 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     );
   }
 
+  // Add debug logging
+  console.log('🎯 ATSTab rendering with:', { 
+    team1: team1?.school, 
+    team2: team2?.school, 
+    loading, 
+    error, 
+    atsDataKeys: Object.keys(atsData),
+    yearlyChartData: yearlyChartData ? 'generated' : 'null'
+  });
+
+  // Simple check for teams
+  if (!team1 || !team2) {
+    return (
+      <div className="relative z-10 space-y-8">
+        <div className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">ATS Analysis</h2>
+          <p className="text-gray-600">Please select two teams to compare their against-the-spread performance.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // TEMPORARY: Simple return for debugging
   return (
     <div className="relative z-10 space-y-8">
-      {/* Timeframe Selector */}
-      <div className="flex justify-center mb-8">
-        <div className="bg-white/40 backdrop-blur-2xl rounded-2xl border border-white/50 p-2">
-          {['3years', '5years', '10years'].map((timeframe) => (
-            <button
-              key={timeframe}
-              onClick={() => setSelectedTimeframe(timeframe)}
-              className={`px-6 py-2 rounded-xl font-medium transition-all duration-300 ${
-                selectedTimeframe === timeframe
-                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-white/30'
-              }`}
-            >
-              Last {timeframe.replace('years', '')} Years
-            </button>
-          ))}
+      <div className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 p-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">ATS Analysis - Debug Mode</h2>
+        <div className="space-y-2">
+          <p className="text-gray-700">Team 1: {team1?.school || 'Not Selected'}</p>
+          <p className="text-gray-700">Team 2: {team2?.school || 'Not Selected'}</p>
+          <p className="text-gray-700">Loading: {loading ? 'Yes' : 'No'}</p>
+          <p className="text-gray-700">Error: {error || 'None'}</p>
+          <p className="text-gray-700">Animation: {animateCards ? 'Active' : 'Inactive'}</p>
         </div>
       </div>
-
-      {/* Header Summary Cards */}
-      <motion.div 
-        className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
-        transition={{ duration: 0.6 }}
-      >
-        {/* Team 1 ATS Summary */}
-        <ATSSummaryCard 
-          team={team1} 
-          atsData={atsData.team1} 
-          teamColor={getTeamColor(team1)}
-          isAnimated={animateCards}
-        />
-        
-        {/* Team 2 ATS Summary */}
-        <ATSSummaryCard 
-          team={team2} 
-          atsData={atsData.team2} 
-          teamColor={getTeamColor(team2)}
-          isAnimated={animateCards}
-        />
-      </motion.div>
-
-      {/* Year-by-Year Performance Chart */}
-      {yearlyChartData && (
-        <motion.div 
-          className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-          <div className="relative z-10">
-            <h3 className="text-2xl font-black gradient-text mb-6 text-center">
-              Year-by-Year ATS Performance
-            </h3>
-            <div className="h-80">
-              <Line 
-                data={yearlyChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'top',
-                      labels: { color: '#374151', font: { weight: 'bold' } }
-                    },
-                    tooltip: {
-                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                      titleColor: '#374151',
-                      bodyColor: '#374151',
-                      borderColor: '#e5e7eb',
-                      borderWidth: 1,
-                      cornerRadius: 12,
-                      displayColors: true,
-                      callbacks: {
-                        label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`
-                      }
-                    }
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      max: 100,
-                      grid: { color: 'rgba(0,0,0,0.1)' },
-                      ticks: { 
-                        color: '#6b7280',
-                        callback: (value) => `${value}%`
-                      }
-                    },
-                    x: {
-                      grid: { color: 'rgba(0,0,0,0.1)' },
-                      ticks: { color: '#6b7280' }
-                    }
-                  }
-                }}
-              />
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Situational Analysis Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        {/* Spread Size Performance */}
-        <motion.div 
-          className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-          <div className="relative z-10">
-            <h3 className="text-xl font-black gradient-text mb-6 text-center">
-              ATS Performance by Spread Size
-            </h3>
-            <div className="h-64">
-              <Bar 
-                data={spreadCategoryChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'top',
-                      labels: { color: '#374151', font: { size: 12, weight: 'bold' } }
-                    },
-                    tooltip: {
-                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                      titleColor: '#374151',
-                      bodyColor: '#374151',
-                      callbacks: {
-                        label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`
-                      }
-                    }
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      max: 100,
-                      ticks: { 
-                        color: '#6b7280',
-                        callback: (value) => `${value}%`
-                      }
-                    },
-                    x: { ticks: { color: '#6b7280' } }
-                  }
-                }}
-              />
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Radar Chart - Situational Performance */}
-        <motion.div 
-          className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-          <div className="relative z-10">
-            <h3 className="text-xl font-black gradient-text mb-6 text-center">
-              Situational ATS Analysis
-            </h3>
-            <div className="h-64">
-              <Radar 
-                data={radarChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'top',
-                      labels: { color: '#374151', font: { size: 12, weight: 'bold' } }
-                    }
-                  },
-                  scales: {
-                    r: {
-                      beginAtZero: true,
-                      max: 100,
-                      ticks: {
-                        color: '#6b7280',
-                        callback: (value) => `${value}%`
-                      },
-                      grid: { color: 'rgba(0,0,0,0.1)' },
-                      pointLabels: { color: '#374151', font: { weight: 'bold' } }
-                    }
-                  }
-                }}
-              />
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Detailed Analysis Tables */}
-      <motion.div 
-        className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
-      >
-        {/* Best Covers */}
-        <div className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
-          <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-          <div className="relative z-10">
-            <h3 className="text-xl font-black gradient-text mb-6">Best ATS Covers</h3>
-            <div className="space-y-4">
-              {atsData.team1.bestWorst.bestCovers.slice(0, 3).map((cover, index) => (
-                <div key={index} className="bg-white/20 rounded-2xl p-4 border border-white/30">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-bold text-gray-800">vs {cover.opponent}</p>
-                      <p className="text-sm text-gray-600">{new Date(cover.date).toLocaleDateString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">+{cover.margin.toFixed(1)}</p>
-                      <p className="text-sm text-gray-600">Spread: {cover.spread}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Head-to-Head ATS */}
-        <div className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8">
-          <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-          <div className="relative z-10">
-            <h3 className="text-xl font-black gradient-text mb-6">Head-to-Head ATS</h3>
-            {atsData.headToHead.length > 0 ? (
-              <div className="space-y-4">
-                {atsData.headToHead.slice(-3).map((game, index) => (
-                  <div key={index} className="bg-white/20 rounded-2xl p-4 border border-white/30">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-bold text-gray-800">{game.season}</p>
-                        <p className="text-sm text-gray-600">
-                          {game.home_team} vs {game.away_team}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-gray-800">
-                          {game.home_points}-{game.away_points}
-                        </p>
-                        <p className="text-sm text-gray-600">Week {game.week}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-600">
-                <i className="fas fa-info-circle text-2xl mb-2"></i>
-                <p>No recent head-to-head games found</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Debug Information (Development) */}
-      {process.env.NODE_ENV === 'development' && (
-        <motion.div 
-          className="bg-gray-100/80 backdrop-blur-xl rounded-2xl border border-gray-200 p-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: animateCards ? 1 : 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-        >
-          <h4 className="font-bold text-gray-800 mb-3">🐛 Debug Information</h4>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
-            <div>
-              <p className="text-gray-600">Games Analyzed</p>
-              <p className="font-bold">{debugData.totalGamesAnalyzed}</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Lines Found</p>
-              <p className="font-bold">{debugData.linesFound}</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Estimated Lines</p>
-              <p className="font-bold">{debugData.estimatedLines}</p>
-            </div>
-            <div>
-              <p className="text-gray-600">API Calls</p>
-              <p className="font-bold">{debugData.apiCalls}</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Team1 Records</p>
-              <p className="font-bold">{debugData.team1RecordsUsed}</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Team2 Records</p>
-              <p className="font-bold">{debugData.team2RecordsUsed}</p>
-            </div>
-          </div>
-          <div className="mt-3 text-sm">
-            <p className="text-gray-600">
-              Data Source: <span className="font-bold text-blue-600">{debugData.dataSource}</span>
-            </p>
-          </div>
-          {debugData.lastUpdated && (
-            <p className="text-xs text-gray-500 mt-2">
-              Last updated: {debugData.lastUpdated}
-            </p>
-          )}
-        </motion.div>
-      )}
     </div>
-  );
-};
-
-// ATS Summary Card Component
-const ATSSummaryCard = ({ team, atsData, teamColor, isAnimated }) => {
-  const formatRecord = (record) => {
-    return `${record.wins}-${record.losses}${record.pushes > 0 ? `-${record.pushes}` : ''}`;
-  };
-
-  const getRoiColor = (roi) => {
-    if (roi > 10) return 'text-green-600';
-    if (roi > 0) return 'text-green-500';
-    if (roi > -10) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  return (
-    <motion.div 
-      className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3),0_20px_40px_rgba(0,0,0,0.1)] p-8"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: isAnimated ? 1 : 0, scale: isAnimated ? 1 : 0.95 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="absolute inset-1 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none"></div>
-      
-      <div className="relative z-10">
-        {/* Team Header */}
-        <div className="flex items-center mb-6">
-          <div className="w-16 h-16 mr-4">
-            {team?.logos?.[0] ? (
-              <img 
-                src={team.logos[0]} 
-                alt={team.school}
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <div className="w-full h-full rounded-2xl bg-white/60 flex items-center justify-center">
-                <i className="fas fa-university text-gray-400 text-2xl"></i>
-              </div>
-            )}
-          </div>
-          <div>
-            <h3 className="text-xl font-black text-gray-800">{team?.school}</h3>
-            <p className="text-sm text-gray-600">ATS Performance</p>
-          </div>
-        </div>
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="text-center p-4 bg-white/20 rounded-2xl border border-white/30">
-            <p className="text-2xl font-black" style={{ color: teamColor }}>
-              {formatRecord(atsData.overallRecord)}
-            </p>
-            <p className="text-sm text-gray-600">ATS Record</p>
-          </div>
-          <div className="text-center p-4 bg-white/20 rounded-2xl border border-white/30">
-            <p className="text-2xl font-black" style={{ color: teamColor }}>
-              {atsData.winPercentage.toFixed(1)}%
-            </p>
-            <p className="text-sm text-gray-600">ATS Win %</p>
-          </div>
-        </div>
-
-        {/* Additional Metrics */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Average Spread:</span>
-            <span className="font-bold text-gray-800">{atsData.avgSpread.toFixed(1)}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">ATS Margin:</span>
-            <span className="font-bold text-gray-800">
-              {atsData.avgMargin > 0 ? '+' : ''}{atsData.avgMargin.toFixed(1)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700">Theoretical ROI:</span>
-            <span className={`font-bold ${getRoiColor(atsData.roi)}`}>
-              {atsData.roi > 0 ? '+' : ''}{atsData.roi.toFixed(1)}%
-            </span>
-          </div>
-        </div>
-
-        {/* Progress Bar for Win Percentage */}
-        <div className="mt-6">
-          <div className="w-full bg-white/30 rounded-full h-3">
-            <div 
-              className="h-3 rounded-full transition-all duration-700"
-              style={{ 
-                width: `${atsData.winPercentage}%`,
-                background: `linear-gradient(90deg, ${teamColor}, ${teamColor}88)`
-              }}
-            ></div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
   );
 };
 
