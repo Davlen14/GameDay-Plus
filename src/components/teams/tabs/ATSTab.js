@@ -668,19 +668,408 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     );
   }
 
-  // TEMPORARY: Simple return for debugging
   return (
     <div className="relative z-10 space-y-8">
-      <div className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 p-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">ATS Analysis - Debug Mode</h2>
-        <div className="space-y-2">
-          <p className="text-gray-700">Team 1: {team1?.school || 'Not Selected'}</p>
-          <p className="text-gray-700">Team 2: {team2?.school || 'Not Selected'}</p>
-          <p className="text-gray-700">Loading: {loading ? 'Yes' : 'No'}</p>
-          <p className="text-gray-700">Error: {error || 'None'}</p>
-          <p className="text-gray-700">Animation: {animateCards ? 'Active' : 'Inactive'}</p>
+      {/* Header with timeframe selection */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] p-8"
+      >
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Against The Spread Analysis</h2>
+            <p className="text-gray-600">Betting performance comparison over time</p>
+          </div>
+          
+          <div className="flex gap-2 mt-4 lg:mt-0">
+            {['3years', '5years', '10years'].map((timeframe) => (
+              <button
+                key={timeframe}
+                onClick={() => setSelectedTimeframe(timeframe)}
+                className={`px-4 py-2 rounded-xl transition-all duration-300 ${
+                  selectedTimeframe === timeframe
+                    ? 'bg-red-600 text-white shadow-lg'
+                    : 'bg-white/50 text-gray-700 hover:bg-white/70'
+                }`}
+              >
+                {timeframe === '3years' ? '3 Years' : timeframe === '5years' ? '5 Years' : '10 Years'}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Quick stats overview */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="text-center p-4 bg-white/30 rounded-2xl">
+            <h3 className="text-sm font-medium text-gray-600 mb-1">{team1?.school} ATS</h3>
+            <p className="text-2xl font-bold" style={{ color: getTeamColor(team1) }}>
+              {atsData.team1.winPercentage.toFixed(1)}%
+            </p>
+            <p className="text-xs text-gray-500">
+              {atsData.team1.overallRecord.wins}-{atsData.team1.overallRecord.losses}-{atsData.team1.overallRecord.pushes}
+            </p>
+          </div>
+          
+          <div className="text-center p-4 bg-white/30 rounded-2xl">
+            <h3 className="text-sm font-medium text-gray-600 mb-1">{team2?.school} ATS</h3>
+            <p className="text-2xl font-bold" style={{ color: getTeamColor(team2) }}>
+              {atsData.team2.winPercentage.toFixed(1)}%
+            </p>
+            <p className="text-xs text-gray-500">
+              {atsData.team2.overallRecord.wins}-{atsData.team2.overallRecord.losses}-{atsData.team2.overallRecord.pushes}
+            </p>
+          </div>
+
+          <div className="text-center p-4 bg-white/30 rounded-2xl">
+            <h3 className="text-sm font-medium text-gray-600 mb-1">{team1?.school} ROI</h3>
+            <p className={`text-2xl font-bold ${
+              atsData.team1.roi >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {atsData.team1.roi > 0 ? '+' : ''}{atsData.team1.roi.toFixed(1)}%
+            </p>
+          </div>
+
+          <div className="text-center p-4 bg-white/30 rounded-2xl">
+            <h3 className="text-sm font-medium text-gray-600 mb-1">{team2?.school} ROI</h3>
+            <p className={`text-2xl font-bold ${
+              atsData.team2.roi >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {atsData.team2.roi > 0 ? '+' : ''}{atsData.team2.roi.toFixed(1)}%
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        {/* Yearly Performance Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] p-8"
+        >
+          <h3 className="text-xl font-bold text-gray-800 mb-6">ATS Win % by Year</h3>
+          <div className="h-80">
+            <Line 
+              data={yearlyChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      usePointStyle: true,
+                      padding: 20,
+                      font: { size: 12, weight: '500' }
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#374151',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    cornerRadius: 12,
+                    displayColors: true,
+                    callbacks: {
+                      label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                  },
+                  y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(0,0,0,0.1)' },
+                    ticks: {
+                      font: { size: 11 },
+                      callback: (value) => `${value}%`
+                    }
+                  }
+                },
+                elements: {
+                  point: {
+                    radius: 4,
+                    hoverRadius: 6
+                  }
+                }
+              }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Situational Performance Radar */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] p-8"
+        >
+          <h3 className="text-xl font-bold text-gray-800 mb-6">Situational ATS Performance</h3>
+          <div className="h-80">
+            <Radar 
+              data={radarChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      usePointStyle: true,
+                      padding: 20,
+                      font: { size: 12, weight: '500' }
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#374151',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    cornerRadius: 12,
+                    callbacks: {
+                      label: (context) => `${context.dataset.label}: ${context.parsed.r.toFixed(1)}%`
+                    }
+                  }
+                },
+                scales: {
+                  r: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(0,0,0,0.1)' },
+                    pointLabels: {
+                      font: { size: 11, weight: '500' }
+                    },
+                    ticks: {
+                      display: false
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Spread Size Performance */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] p-8"
+        >
+          <h3 className="text-xl font-bold text-gray-800 mb-6">Performance by Spread Size</h3>
+          <div className="h-80">
+            <Bar 
+              data={spreadCategoryChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      usePointStyle: true,
+                      padding: 20,
+                      font: { size: 12, weight: '500' }
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#374151',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    cornerRadius: 12,
+                    callbacks: {
+                      label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                  },
+                  y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(0,0,0,0.1)' },
+                    ticks: {
+                      font: { size: 11 },
+                      callback: (value) => `${value}%`
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Home vs Away Performance */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] p-8"
+        >
+          <h3 className="text-xl font-bold text-gray-800 mb-6">Home vs Away ATS Performance</h3>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Team 1 */}
+            <div>
+              <h4 className="text-lg font-semibold mb-4" style={{ color: getTeamColor(team1) }}>
+                {team1?.school}
+              </h4>
+              <div className="h-48">
+                <Pie 
+                  data={{
+                    labels: ['Home Wins', 'Home Losses', 'Away Wins', 'Away Losses'],
+                    datasets: [{
+                      data: [
+                        atsData.team1.situational.home.wins,
+                        atsData.team1.situational.home.losses,
+                        atsData.team1.situational.away.wins,
+                        atsData.team1.situational.away.losses
+                      ],
+                      backgroundColor: [
+                        getTeamColor(team1, 0.8),
+                        getTeamColor(team1, 0.4),
+                        getTeamColor(team1, 0.6),
+                        getTeamColor(team1, 0.2)
+                      ],
+                      borderColor: getTeamColor(team1),
+                      borderWidth: 2
+                    }]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          font: { size: 10 },
+                          padding: 10
+                        }
+                      },
+                      tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#374151',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        cornerRadius: 12
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Team 2 */}
+            <div>
+              <h4 className="text-lg font-semibold mb-4" style={{ color: getTeamColor(team2) }}>
+                {team2?.school}
+              </h4>
+              <div className="h-48">
+                <Pie 
+                  data={{
+                    labels: ['Home Wins', 'Home Losses', 'Away Wins', 'Away Losses'],
+                    datasets: [{
+                      data: [
+                        atsData.team2.situational.home.wins,
+                        atsData.team2.situational.home.losses,
+                        atsData.team2.situational.away.wins,
+                        atsData.team2.situational.away.losses
+                      ],
+                      backgroundColor: [
+                        getTeamColor(team2, 0.8),
+                        getTeamColor(team2, 0.4),
+                        getTeamColor(team2, 0.6),
+                        getTeamColor(team2, 0.2)
+                      ],
+                      borderColor: getTeamColor(team2),
+                      borderWidth: 2
+                    }]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          font: { size: 10 },
+                          padding: 10
+                        }
+                      },
+                      tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#374151',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        cornerRadius: 12
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
+
+      {/* Debug Panel (collapsible) */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: animateCards ? 1 : 0, y: animateCards ? 0 : 20 }}
+        transition={{ duration: 0.6, delay: 0.6 }}
+        className="bg-gray-800/20 backdrop-blur-xl rounded-2xl border border-gray-600/30 p-6"
+      >
+        <details className="group">
+          <summary className="flex items-center justify-between cursor-pointer text-gray-700 font-medium mb-4 group-open:mb-6">
+            <span>Debug Information</span>
+            <i className="fas fa-chevron-down transition-transform group-open:rotate-180"></i>
+          </summary>
+          
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="bg-white/20 rounded-lg p-3">
+              <h4 className="font-semibold text-gray-800 mb-2">Data Analysis</h4>
+              <p className="text-gray-600">Games: {debugData.totalGamesAnalyzed}</p>
+              <p className="text-gray-600">Lines: {debugData.linesFound}</p>
+              <p className="text-gray-600">Estimated: {debugData.estimatedLines}</p>
+            </div>
+            
+            <div className="bg-white/20 rounded-lg p-3">
+              <h4 className="font-semibold text-gray-800 mb-2">API Usage</h4>
+              <p className="text-gray-600">Calls: {debugData.apiCalls}</p>
+              <p className="text-gray-600">Source: {debugData.dataSource}</p>
+              <p className="text-gray-600">Updated: {debugData.lastUpdated}</p>
+            </div>
+            
+            <div className="bg-white/20 rounded-lg p-3">
+              <h4 className="font-semibold text-gray-800 mb-2">Records Used</h4>
+              <p className="text-gray-600">{team1?.school}: {debugData.team1RecordsUsed}</p>
+              <p className="text-gray-600">{team2?.school}: {debugData.team2RecordsUsed}</p>
+            </div>
+            
+            <div className="bg-white/20 rounded-lg p-3">
+              <h4 className="font-semibold text-gray-800 mb-2">Analysis Period</h4>
+              <p className="text-gray-600">Years: {analysisYears.length}</p>
+              <p className="text-gray-600">Range: {Math.min(...analysisYears)}-{Math.max(...analysisYears)}</p>
+            </div>
+          </div>
+        </details>
+      </motion.div>
     </div>
   );
 };
