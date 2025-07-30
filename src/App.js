@@ -421,13 +421,13 @@ function App() {
       case 'game-predictor':
         return (
           <Suspense fallback={<PageLoader />}>
-            <GamePredictorAdvanced />
+            <GamePredictor />
           </Suspense>
         );
-      case 'game-predictor-original':
+      case 'game-predictor-advanced':
         return (
           <Suspense fallback={<PageLoader />}>
-            <GamePredictor />
+            <GamePredictorAdvanced />
           </Suspense>
         );
       case 'live-games':
