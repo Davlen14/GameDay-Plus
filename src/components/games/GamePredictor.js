@@ -177,27 +177,6 @@ const GamePredictor = () => {
                 away: Math.abs(prediction.score.away - actualScore.away)
               };
 
-              // Calculate win probability based on predicted score difference if not provided
-              let winProbability = prediction.winProbability;
-              if (!winProbability || (winProbability.home === 50 && winProbability.away === 50)) {
-                const scoreDiff = prediction.score.home - prediction.score.away;
-                const absScoreDiff = Math.abs(scoreDiff);
-                
-                // Convert score difference to win probability using sigmoid function
-                // Larger score differences = higher confidence
-                const confidence = 1 / (1 + Math.exp(-absScoreDiff / 7)); // 7 is scaling factor
-                const winnerProb = 50 + (confidence * 40); // Scale to 50-90% range
-                const loserProb = 100 - winnerProb;
-                
-                if (scoreDiff > 0) {
-                  // Home team favored
-                  winProbability = { home: winnerProb, away: loserProb };
-                } else {
-                  // Away team favored
-                  winProbability = { home: loserProb, away: winnerProb };
-                }
-              }
-
               gamePredictions.push({
                 gameId: game.id,
                 homeTeam: homeTeam,
@@ -227,27 +206,6 @@ const GamePredictor = () => {
                 awayTeamId, 
                 predictionOptions
               );
-
-              // Calculate win probability based on predicted score difference if not provided
-              let winProbability = prediction.winProbability;
-              if (!winProbability || (winProbability.home === 50 && winProbability.away === 50)) {
-                const scoreDiff = prediction.score.home - prediction.score.away;
-                const absScoreDiff = Math.abs(scoreDiff);
-                
-                // Convert score difference to win probability using sigmoid function
-                // Larger score differences = higher confidence
-                const confidence = 1 / (1 + Math.exp(-absScoreDiff / 7)); // 7 is scaling factor
-                const winnerProb = 50 + (confidence * 40); // Scale to 50-90% range
-                const loserProb = 100 - winnerProb;
-                
-                if (scoreDiff > 0) {
-                  // Home team favored
-                  winProbability = { home: winnerProb, away: loserProb };
-                } else {
-                  // Away team favored
-                  winProbability = { home: loserProb, away: winnerProb };
-                }
-              }
 
               gamePredictions.push({
                 gameId: game.id,
@@ -627,6 +585,49 @@ const WeeklyPredictionCard = ({ prediction }) => {
   const awayTeamColor = awayTeam?.color || '#dc2626'; // red
   const homeTeamColor = homeTeam?.color || '#2563eb'; // blue
 
+  // Calculate win probability based on predicted score difference if missing or 50/50
+  let calculatedWinProbability = winProbability;
+  if (!winProbability || (winProbability.home === 50 && winProbability.away === 50)) {
+    const scoreDiff = predictedScore.home - predictedScore.away;
+    const absScoreDiff = Math.abs(scoreDiff);
+    
+    // Sigmoid function to convert score difference to win probability
+    // The function: 1 / (1 + e^(-x/k)) where k is a scaling factor
+    // k=7 means a 7-point difference gives ~73% win probability
+    // k=10 means a 10-point difference gives ~73% win probability
+    const k = 7; // Adjust this to change how score difference maps to probability
+    
+    // Calculate base probability using sigmoid
+    const sigmoidValue = 1 / (1 + Math.exp(-absScoreDiff / k));
+    
+    // Scale from 0.5-1 range to 50-95 range (we don't want to show 100% probability)
+    const scaledProbability = 50 + (sigmoidValue - 0.5) * 90;
+    
+    // Cap at 95% to avoid overconfidence
+    const winnerProb = Math.min(scaledProbability, 95);
+    const loserProb = 100 - winnerProb;
+    
+    if (scoreDiff > 0) {
+      // Home team favored
+      calculatedWinProbability = { 
+        home: winnerProb, 
+        away: loserProb 
+      };
+    } else if (scoreDiff < 0) {
+      // Away team favored
+      calculatedWinProbability = { 
+        home: loserProb, 
+        away: winnerProb 
+      };
+    } else {
+      // Even game - give slight edge to home team (home field advantage)
+      calculatedWinProbability = { 
+        home: 52.5, 
+        away: 47.5 
+      };
+    }
+  }
+
   return (
     <div className="bg-white/30 backdrop-blur-lg border border-white/40 rounded-2xl shadow-2xl p-8 hover:shadow-3xl hover:bg-white/40 transition-all duration-300 transform hover:-translate-y-2">
       {/* Enhanced Teams Header with ELO Ratings */}
@@ -737,10 +738,11 @@ const WeeklyPredictionCard = ({ prediction }) => {
             </div>
             <div className="text-xs text-green-600 mt-1 font-medium">Official Result</div>
           </div>
-          <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">                  <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
-                    <i className="fas fa-brain text-blue-600"></i>
-                    <span>GAMEDAY+ Prediction</span>
-                  </div>
+          <div className="text-center bg-white/30 backdrop-blur-lg rounded-xl p-4 border border-white/40 shadow-lg">
+            <div className="text-xs text-gray-600 mb-2 font-medium flex items-center justify-center space-x-1">
+              <i className="fas fa-brain text-blue-600"></i>
+              <span>GAMEDAY+ Prediction</span>
+            </div>
             <div className="font-bold text-gray-800 text-xl">
               {predictedScore.away.toFixed(0)} - {predictedScore.home.toFixed(0)}
             </div>
@@ -787,7 +789,8 @@ const WeeklyPredictionCard = ({ prediction }) => {
             />
             <span className="font-medium">{awayTeam?.school || 'Away Team'}</span>
           </div>
-          <div className="text-xs text-gray-600 font-medium">                  {isCompleted ? 'Pre-Game Win Probability (GAMEDAY+ Model)' : 'Win Probability'}
+          <div className="text-xs text-gray-600 font-medium">
+            {isCompleted ? 'Pre-Game Win Probability (GAMEDAY+ Model)' : 'Win Probability'}
           </div>
           <div className="flex items-center space-x-2">
             <span className="font-medium">{homeTeam?.school || 'Home Team'}</span>
@@ -804,7 +807,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
           <div 
             className="absolute left-0 top-0 h-6 rounded-l-full transition-all duration-700 ease-out"
             style={{ 
-              width: `${winProbability.away}%`,
+              width: `${calculatedWinProbability.away}%`,
               background: `linear-gradient(90deg, ${awayTeamColor}, ${awayTeamColor}dd)`,
               boxShadow: `inset 0 1px 3px rgba(255,255,255,0.2), 0 0 10px ${awayTeamColor}40`
             }}
@@ -812,7 +815,7 @@ const WeeklyPredictionCard = ({ prediction }) => {
           <div 
             className="absolute right-0 top-0 h-6 rounded-r-full transition-all duration-700 ease-out"
             style={{ 
-              width: `${winProbability.home}%`,
+              width: `${calculatedWinProbability.home}%`,
               background: `linear-gradient(90deg, ${homeTeamColor}dd, ${homeTeamColor})`,
               boxShadow: `inset 0 1px 3px rgba(255,255,255,0.2), 0 0 10px ${homeTeamColor}40`
             }}
@@ -823,8 +826,8 @@ const WeeklyPredictionCard = ({ prediction }) => {
         </div>
         
         <div className="flex justify-between text-sm text-gray-800 mt-3 font-medium">
-          <span>{winProbability.away.toFixed(1)}%</span>
-          <span>{winProbability.home.toFixed(1)}%</span>
+          <span>{calculatedWinProbability.away.toFixed(1)}%</span>
+          <span>{calculatedWinProbability.home.toFixed(1)}%</span>
         </div>
       </div>
 
@@ -1005,22 +1008,23 @@ const MatchupPredictorInterface = ({
           </div>
         </div>
 
-        <div className="text-center mt-8">            <button
-              onClick={onPredict}
-              disabled={!homeTeam || !awayTeam || isLoading}
-              className="gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {isLoading ? (
-                <>
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                  Generating Prediction...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-brain mr-2"></i>
-                  Generate GAMEDAY+ Prediction
-                </>
-              )}
+        <div className="text-center mt-8">
+          <button
+            onClick={onPredict}
+            disabled={!homeTeam || !awayTeam || isLoading}
+            className="gradient-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            {isLoading ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Generating Prediction...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-brain mr-2"></i>
+                Generate GAMEDAY+ Prediction
+              </>
+            )}
           </button>
         </div>
       </div>
