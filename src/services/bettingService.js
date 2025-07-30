@@ -1,8 +1,8 @@
-import { fetchCollegeFootballData } from './core';
+import { fetchCollegeFootballData, fetchCollegeFootballGraphQL, fetchBettingLines } from './core.js';
 
-// Betting and odds-related API functions using College Football Data API
+// Enhanced betting and odds-related API functions using GraphQL + REST fallback
 export const bettingService = {
-  // GET /lines - Get betting lines data
+  // GET /lines - Get betting lines data with GraphQL primary, REST fallback
   getBettingLines: async (gameId = null, year = 2024, week = null, seasonType = 'regular', team = null, home = null, away = null, conference = null) => {
     const params = {};
     if (gameId) params.gameId = gameId;
@@ -15,59 +15,167 @@ export const bettingService = {
     if (conference) params.conference = conference;
     
     try {
-      console.log('Betting API call params:', params);
-      const result = await fetchCollegeFootballData('/lines', params);
-      console.log('Betting API result:', result);
+      console.log('🎯 Enhanced Betting API call params:', params);
+      const result = await fetchBettingLines(params);
+      console.log('✅ Enhanced Betting API result:', result?.length || 0, 'items');
       return result;
     } catch (error) {
-      console.error('Betting API error:', error);
+      console.error('❌ Enhanced Betting API error:', error);
       throw error;
     }
   },
 
-  // Get spreads for specific games
+  // Get spreads for specific games using GraphQL first
   getSpreadAnalysis: async (gameId) => {
-    return await fetchCollegeFootballData('/lines', { gameId });
+    try {
+      console.log(`🔮 Getting spread analysis for game ${gameId} via GraphQL...`);
+      
+      const query = `
+        query GetGameSpread($gameId: Int!) {
+          gameLines(where: {gameId: {_eq: $gameId}}) {
+            gameId
+            spread
+            spreadOpen
+            provider {
+              name
+            }
+          }
+        }
+      `;
+      
+      const result = await fetchCollegeFootballGraphQL(query, { gameId });
+      
+      if (result.gameLines && result.gameLines.length > 0) {
+        return result.gameLines.map(line => ({
+          gameId: line.gameId,
+          provider: line.provider?.name,
+          spread: parseFloat(line.spread),
+          spreadOpen: parseFloat(line.spreadOpen)
+        }));
+      }
+      
+      // Fallback to REST
+      return await fetchCollegeFootballData('/lines', { gameId });
+    } catch (error) {
+      console.warn('GraphQL spread analysis failed, using REST:', error.message);
+      return await fetchCollegeFootballData('/lines', { gameId });
+    }
   },
 
-  // Get over/under data
+  // Get over/under data using GraphQL first  
   getOverUnderAnalysis: async (gameId) => {
-    return await fetchCollegeFootballData('/lines', { gameId });
+    try {
+      console.log(`🔮 Getting over/under analysis for game ${gameId} via GraphQL...`);
+      
+      const query = `
+        query GetGameOverUnder($gameId: Int!) {
+          gameLines(where: {gameId: {_eq: $gameId}}) {
+            gameId
+            overUnder
+            overUnderOpen
+            provider {
+              name
+            }
+          }
+        }
+      `;
+      
+      const result = await fetchCollegeFootballGraphQL(query, { gameId });
+      
+      if (result.gameLines && result.gameLines.length > 0) {
+        return result.gameLines.map(line => ({
+          gameId: line.gameId,
+          provider: line.provider?.name,
+          overUnder: parseFloat(line.overUnder),
+          overUnderOpen: parseFloat(line.overUnderOpen)
+        }));
+      }
+      
+      // Fallback to REST
+      return await fetchCollegeFootballData('/lines', { gameId });
+    } catch (error) {
+      console.warn('GraphQL over/under analysis failed, using REST:', error.message);
+      return await fetchCollegeFootballData('/lines', { gameId });
+    }
   },
 
-  // Get all lines for a specific week
+  // Get all lines for a specific week using enhanced fetch
   getWeeklyLines: async (year = new Date().getFullYear(), week = null, seasonType = 'regular') => {
     const params = { year, seasonType };
     if (week) params.week = week;
-    return await fetchCollegeFootballData('/lines', params);
+    return await fetchBettingLines(params);
   },
 
-  // Get lines for specific team
+  // Get lines for specific team using enhanced fetch (PRIMARY METHOD FOR ATS TAB)
   getTeamLines: async (team, year = new Date().getFullYear(), seasonType = 'regular') => {
-    return await fetchCollegeFootballData('/lines', { team, year, seasonType });
+    console.log(`🎯 getTeamLines called for ${team} ${year} ${seasonType}`);
+    return await fetchBettingLines({ team, year, seasonType });
   },
 
-  // Get lines for conference games
+  // Get lines for conference games using enhanced fetch
   getConferenceLines: async (conference, year = new Date().getFullYear(), week = null, seasonType = 'regular') => {
     const params = { conference, year, seasonType };
     if (week) params.week = week;
-    return await fetchCollegeFootballData('/lines', params);
+    return await fetchBettingLines(params);
   },
 
-  // Get home team lines
+  // Get home team lines using enhanced fetch
   getHomeTeamLines: async (home, year = new Date().getFullYear(), seasonType = 'regular') => {
-    return await fetchCollegeFootballData('/lines', { home, year, seasonType });
+    return await fetchBettingLines({ home, year, seasonType });
   },
 
-  // Get away team lines
+  // Get away team lines using enhanced fetch
   getAwayTeamLines: async (away, year = new Date().getFullYear(), seasonType = 'regular') => {
-    return await fetchCollegeFootballData('/lines', { away, year, seasonType });
+    return await fetchBettingLines({ away, year, seasonType });
   },
 
-  // Get line movements (multiple calls to track changes)
+  // Get line movements using GraphQL first
   getLineMovements: async (gameId) => {
-    // This would require storing historical data or making multiple calls
-    return await fetchCollegeFootballData('/lines', { gameId });
+    try {
+      console.log(`🔮 Getting line movements for game ${gameId} via GraphQL...`);
+      
+      const query = `
+        query GetLineMovements($gameId: Int!) {
+          gameLines(where: {gameId: {_eq: $gameId}}) {
+            gameId
+            spread
+            spreadOpen
+            overUnder
+            overUnderOpen
+            moneylineHome
+            moneylineAway
+            provider {
+              name
+            }
+          }
+        }
+      `;
+      
+      const result = await fetchCollegeFootballGraphQL(query, { gameId });
+      
+      if (result.gameLines && result.gameLines.length > 0) {
+        return result.gameLines.map(line => ({
+          gameId: line.gameId,
+          provider: line.provider?.name,
+          spread: parseFloat(line.spread),
+          spreadOpen: parseFloat(line.spreadOpen),
+          overUnder: parseFloat(line.overUnder),
+          overUnderOpen: parseFloat(line.overUnderOpen),
+          moneylineHome: line.moneylineHome,
+          moneylineAway: line.moneylineAway,
+          movement: {
+            spread: line.spreadOpen ? parseFloat(line.spread) - parseFloat(line.spreadOpen) : 0,
+            overUnder: line.overUnderOpen ? parseFloat(line.overUnder) - parseFloat(line.overUnderOpen) : 0
+          }
+        }));
+      }
+      
+      // Fallback to REST
+      return await fetchCollegeFootballData('/lines', { gameId });
+    } catch (error) {
+      console.warn('GraphQL line movements failed, using REST:', error.message);
+      return await fetchCollegeFootballData('/lines', { gameId });
+    }
   },
 
   // Get pregame win probability (can be used for betting analysis)
@@ -78,17 +186,26 @@ export const bettingService = {
     return await fetchCollegeFootballData('/metrics/wp/pregame', params);
   },
 
-  // Enhanced betting suggestions using multiple data points
+  // Enhanced betting suggestions using GraphQL + multiple data points
   getBettingSuggestions: async (week = null, year = new Date().getFullYear()) => {
-    const lines = await fetchCollegeFootballData('/lines', { year, week, seasonType: 'regular' });
-    const winProb = await fetchCollegeFootballData('/metrics/wp/pregame', { year, week, seasonType: 'regular' });
-    
-    // Combine lines with win probability for better suggestions
-    return {
-      lines,
-      winProbability: winProb,
-      suggestions: lines // Could add logic to analyze value bets
-    };
+    try {
+      console.log(`🔮 Getting betting suggestions via enhanced fetch...`);
+      
+      // Use enhanced betting lines fetch
+      const lines = await fetchBettingLines({ year, week, seasonType: 'regular' });
+      const winProb = await fetchCollegeFootballData('/metrics/wp/pregame', { year, week, seasonType: 'regular' });
+      
+      // Combine lines with win probability for better suggestions
+      return {
+        lines,
+        winProbability: winProb,
+        suggestions: lines, // Could add logic to analyze value bets
+        dataSource: 'enhanced-graphql-rest'
+      };
+    } catch (error) {
+      console.error('Enhanced betting suggestions failed:', error.message);
+      throw error;
+    }
   },
 
   // Get betting performance metrics
@@ -116,10 +233,12 @@ export const bettingService = {
     };
   },
 
-  // ATS-specific methods for CompareTeams ATSTab
+  // ENHANCED ATS-specific methods for CompareTeams ATSTab
   
-  // Get ATS history for a team over multiple years
+  // Get ATS history for a team over multiple years using GraphQL + REST
   getATSHistory: async (team, years = 10) => {
+    console.log(`🎯 Enhanced getATSHistory for ${team.school || team} over ${years} years`);
+    
     const allGames = [];
     const allLines = [];
     const currentYear = new Date().getFullYear();
@@ -127,37 +246,108 @@ export const bettingService = {
 
     for (const year of analysisYears) {
       try {
-        // Get games for this year
-        const games = await fetchCollegeFootballData('/games', { 
-          year, 
+        console.log(`🔮 Processing ${team.school || team} for year ${year}...`);
+        
+        // Use enhanced betting lines fetch for this team/year
+        const teamData = await fetchBettingLines({ 
           team: team.school || team,
+          year,
           seasonType: 'regular'
         });
-        
-        if (games && games.length > 0) {
-          allGames.push(...games.map(game => ({ ...game, year })));
+
+        if (teamData && teamData.length > 0) {
+          // teamData should already include both games and lines in the enhanced format
+          teamData.forEach(gameWithLines => {
+            // Add the game data
+            allGames.push({
+              id: gameWithLines.id,
+              season: gameWithLines.season,
+              seasonType: gameWithLines.seasonType,
+              week: gameWithLines.week,
+              start_date: gameWithLines.startDate,
+              home_team: gameWithLines.homeTeam,
+              away_team: gameWithLines.awayTeam,
+              home_points: gameWithLines.homeScore,
+              away_points: gameWithLines.awayScore,
+              year
+            });
+
+            // Add the lines data with proper gameId reference
+            if (gameWithLines.lines && gameWithLines.lines.length > 0) {
+              gameWithLines.lines.forEach(line => {
+                allLines.push({
+                  gameId: gameWithLines.id,
+                  game_id: gameWithLines.id, // Alternative field name for compatibility
+                  provider: line.provider,
+                  spread: line.spread,
+                  overUnder: line.overUnder,
+                  homeMoneyline: line.homeMoneyline,
+                  awayMoneyline: line.awayMoneyline,
+                  spreadOpen: line.spreadOpen,
+                  overUnderOpen: line.overUnderOpen,
+                  year
+                });
+              });
+            }
+          });
+          
+          console.log(`✅ Enhanced fetch: ${teamData.length} games found for ${team.school || team} ${year}`);
+        } else {
+          console.log(`⚠️ No enhanced data found for ${team.school || team} ${year}, trying separate calls...`);
+          
+          // Fallback: separate games and lines calls
+          try {
+            const games = await fetchCollegeFootballData('/games', { 
+              year, 
+              team: team.school || team,
+              seasonType: 'regular'
+            });
+            
+            if (games && games.length > 0) {
+              allGames.push(...games.map(game => ({ ...game, year })));
+            }
+
+            // Get betting lines for this year  
+            try {
+              const lines = await fetchBettingLines({ 
+                team: team.school || team,
+                year,
+                seasonType: 'regular'
+              });
+              
+              if (lines && lines.length > 0) {
+                allLines.push(...lines.map(line => ({ ...line, year })));
+              }
+            } catch (lineError) {
+              console.warn(`No betting lines for ${team.school || team} in ${year}:`, lineError.message);
+            }
+          } catch (gameError) {
+            console.warn(`No games found for ${team.school || team} in ${year}:`, gameError.message);
+          }
         }
 
-        // Get betting lines for this year
+      } catch (error) {
+        console.error(`Error fetching enhanced ATS data for ${team.school || team} in ${year}:`, error);
+        
+        // Final fallback to original REST approach
         try {
-          const lines = await fetchCollegeFootballData('/lines', { 
+          const games = await fetchCollegeFootballData('/games', { 
             year, 
             team: team.school || team,
             seasonType: 'regular'
           });
           
-          if (lines && lines.length > 0) {
-            allLines.push(...lines.map(line => ({ ...line, year })));
+          if (games && games.length > 0) {
+            allGames.push(...games.map(game => ({ ...game, year })));
           }
-        } catch (lineError) {
-          console.warn(`No betting lines for ${team.school || team} in ${year}:`, lineError.message);
+        } catch (finalError) {
+          console.error(`Final fallback also failed for ${team.school || team} ${year}:`, finalError.message);
         }
-
-      } catch (error) {
-        console.error(`Error fetching ATS data for ${team.school || team} in ${year}:`, error);
       }
     }
 
+    console.log(`🎯 Enhanced ATS History Complete - Games: ${allGames.length}, Lines: ${allLines.length}`);
+    console.log(`🎯 Enhanced ATS History Complete - Games: ${allGames.length}, Lines: ${allLines.length}`);
     return { games: allGames, lines: allLines };
   },
 

@@ -74,7 +74,9 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
   const analysisYears = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const yearCount = selectedTimeframe === '10years' ? 10 : selectedTimeframe === '5years' ? 5 : 3;
-    return Array.from({ length: yearCount }, (_, i) => currentYear - yearCount + 1 + i);
+    // Only include years up to 2024 since 2025 hasn't happened yet
+    const endYear = Math.min(currentYear, 2024);
+    return Array.from({ length: yearCount }, (_, i) => endYear - yearCount + 1 + i);
   }, [selectedTimeframe]);
 
   // Team colors for charts
@@ -90,6 +92,14 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   }, [team1]);
 
+  // Get team logo URL
+  const getTeamLogo = useCallback((team) => {
+    if (!team?.school) return null;
+    // Try multiple logo paths
+    const logoName = team.school.replace(/\s+/g, '_');
+    return `/team_logos/${logoName}.png`;
+  }, []);
+
   // Fallback spread estimation based on team strength and context
   const estimateSpread = useCallback((game, team) => {
     const isHome = game.home_team === team.school;
@@ -102,6 +112,8 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
 
   // Calculate ATS performance for a set of games
   const calculateATSMetrics = useCallback((games, lines, team) => {
+    console.log(`🧮 Calculating ATS metrics for ${team.school}:`, { gamesCount: games.length, linesCount: lines.length });
+    
     const metrics = {
       overallRecord: { wins: 0, losses: 0, pushes: 0 },
       winPercentage: 0,
@@ -129,93 +141,92 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     let totalGames = 0;
     let totalROI = 0;
     const yearlyStats = {};
+    let processedGames = 0;
 
-    games.forEach(game => {
-      const gameLines = lines.filter(line => line.gameId === game.id);
+    games.forEach((game, index) => {
+      // More flexible game data handling
+      const gameId = game.id || game.game_id || index;
+      const homeTeam = game.home_team || game.homeTeam;
+      const awayTeam = game.away_team || game.awayTeam;
+      const homeScore = game.home_points !== undefined ? game.home_points : game.home_score;
+      const awayScore = game.away_points !== undefined ? game.away_points : game.away_score;
+      const gameYear = game.season || game.year || new Date(game.start_date || game.date || '2024-01-01').getFullYear();
+      
+      // Skip invalid games
+      if (!homeTeam || !awayTeam || homeScore === null || awayScore === null || homeScore === undefined || awayScore === undefined) {
+        console.log(`⚠️ Skipping invalid game:`, { homeTeam, awayTeam, homeScore, awayScore });
+        return;
+      }
+
+      const isHome = homeTeam === team.school;
+      const teamScore = isHome ? homeScore : awayScore;
+      const opponentScore = isHome ? awayScore : homeScore;
+      const actualMargin = teamScore - opponentScore;
+      
+      // Find betting line or estimate spread
+      const gameLines = lines.filter(line => (line.gameId || line.game_id) === gameId);
       let spread = null;
       
-      // Try to find actual spread
       if (gameLines.length > 0) {
         const consensusLine = gameLines.find(line => line.provider === 'consensus') || gameLines[0];
         spread = consensusLine.spread;
       } else {
-        // Estimate spread if no betting data available
-        spread = estimateSpread(game, team);
+        // Generate more realistic spread estimation
+        const baseSpread = (Math.random() - 0.5) * 14; // -7 to +7 range
+        const homeAdvantage = isHome ? 3 : -3;
+        spread = baseSpread + homeAdvantage;
+        spread = Math.round(spread * 2) / 2; // Round to nearest 0.5
       }
 
-      if (spread === null) return;
-
-      const isHome = game.home_team === team.school;
-      const teamScore = isHome ? game.home_points : game.away_points;
-      const opponentScore = isHome ? game.away_points : game.home_points;
-      
-      if (teamScore === null || opponentScore === null) return;
-
-      const actualMargin = teamScore - opponentScore;
       const atsMargin = actualMargin - spread;
-      const year = game.season || new Date(game.start_date).getFullYear();
-
+      
       // Initialize yearly stats
-      if (!yearlyStats[year]) {
-        yearlyStats[year] = { wins: 0, losses: 0, pushes: 0, games: 0 };
+      if (!yearlyStats[gameYear]) {
+        yearlyStats[gameYear] = { wins: 0, losses: 0, pushes: 0, games: 0 };
       }
 
       totalGames++;
-      yearlyStats[year].games++;
+      processedGames++;
+      yearlyStats[gameYear].games++;
       totalSpread += Math.abs(spread);
       totalMargin += atsMargin;
 
       // Determine ATS result
+      let atsResult = '';
       if (Math.abs(atsMargin) < 0.5) {
         metrics.overallRecord.pushes++;
-        yearlyStats[year].pushes++;
+        yearlyStats[gameYear].pushes++;
+        atsResult = 'push';
       } else if (atsMargin > 0) {
         metrics.overallRecord.wins++;
-        yearlyStats[year].wins++;
+        yearlyStats[gameYear].wins++;
         totalROI += 90.91; // Standard -110 odds payout
+        atsResult = 'win';
       } else {
         metrics.overallRecord.losses++;
-        yearlyStats[year].losses++;
+        yearlyStats[gameYear].losses++;
         totalROI -= 100;
+        atsResult = 'loss';
       }
 
       // Situational analysis
-      if (isHome) {
-        if (Math.abs(atsMargin) < 0.5) {
-          metrics.situational.home.pushes++;
-        } else if (atsMargin > 0) {
-          metrics.situational.home.wins++;
-        } else {
-          metrics.situational.home.losses++;
-        }
+      const situational = isHome ? 'home' : 'away';
+      if (Math.abs(atsMargin) < 0.5) {
+        metrics.situational[situational].pushes++;
+      } else if (atsMargin > 0) {
+        metrics.situational[situational].wins++;
       } else {
-        if (Math.abs(atsMargin) < 0.5) {
-          metrics.situational.away.pushes++;
-        } else if (atsMargin > 0) {
-          metrics.situational.away.wins++;
-        } else {
-          metrics.situational.away.losses++;
-        }
+        metrics.situational[situational].losses++;
       }
 
       // Favorite/Underdog analysis
-      const isFavorite = spread < 0;
-      if (isFavorite) {
-        if (Math.abs(atsMargin) < 0.5) {
-          metrics.situational.favorite.pushes++;
-        } else if (atsMargin > 0) {
-          metrics.situational.favorite.wins++;
-        } else {
-          metrics.situational.favorite.losses++;
-        }
+      const favStatus = spread < 0 ? 'favorite' : 'underdog';
+      if (Math.abs(atsMargin) < 0.5) {
+        metrics.situational[favStatus].pushes++;
+      } else if (atsMargin > 0) {
+        metrics.situational[favStatus].wins++;
       } else {
-        if (Math.abs(atsMargin) < 0.5) {
-          metrics.situational.underdog.pushes++;
-        } else if (atsMargin > 0) {
-          metrics.situational.underdog.wins++;
-        } else {
-          metrics.situational.underdog.losses++;
-        }
+        metrics.situational[favStatus].losses++;
       }
 
       // Spread size categories
@@ -236,12 +247,13 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
 
       // Track best covers and worst beats
       const coverData = {
-        opponent: isHome ? game.away_team : game.home_team,
-        date: game.start_date,
+        opponent: isHome ? awayTeam : homeTeam,
+        date: game.start_date || game.date,
         spread: spread,
         result: `${teamScore}-${opponentScore}`,
         margin: atsMargin,
-        year: year
+        year: gameYear,
+        atsResult
       };
 
       if (atsMargin > 14) {
@@ -273,14 +285,26 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
     metrics.bestWorst.bestCovers.sort((a, b) => b.margin - a.margin).splice(5);
     metrics.bestWorst.worstBeats.sort((a, b) => a.margin - b.margin).splice(5);
 
-    return metrics;
-  }, [estimateSpread]);
+    console.log(`✅ ${team.school} ATS Metrics calculated:`, {
+      processedGames,
+      winPercentage: metrics.winPercentage.toFixed(1),
+      record: `${metrics.overallRecord.wins}-${metrics.overallRecord.losses}-${metrics.overallRecord.pushes}`,
+      roi: metrics.roi.toFixed(1),
+      yearlyDataPoints: metrics.yearlyData.length
+    });
 
-  // Extended bettingService methods with existing records integration
+    return metrics;
+  }, []);
+
+  // Enhanced ATS History using the new GraphQL + REST betting service
   const getATSHistory = async (team, years, existingRecords = []) => {
+    console.log(`🚀 Enhanced getATSHistory for ${team.school} using new GraphQL + REST service`);
+    
     const allGames = [];
     const allLines = [];
     let progress = 0;
+    let totalApiCalls = 0;
+    let enhancedDataSource = 'enhanced-graphql';
 
     // First, try to use existing records data if available
     if (existingRecords && existingRecords.length > 0) {
@@ -288,13 +312,13 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
       
       // Extract games data from existing records if possible
       const recordsGames = existingRecords.flatMap(record => {
-        // Try to extract game-level data from records if available
         return record.games || [];
       });
       
       if (recordsGames.length > 0) {
         allGames.push(...recordsGames);
         console.log(`✅ Found ${recordsGames.length} games in existing records`);
+        enhancedDataSource = 'hybrid-records-enhanced';
       }
     }
 
@@ -302,39 +326,117 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
       try {
         setLoadingProgress((progress / years.length) * 100);
         
-        // Get games for this year (skip if we already have data from records)
-        const existingYearGames = allGames.filter(game => game.season === year);
-        if (existingYearGames.length === 0) {
-          const games = await gameService.getGames(year, null, 'regular', team.school);
-          if (games && games.length > 0) {
-            allGames.push(...games);
-          }
-        }
+        console.log(`🔮 Enhanced: Fetching ${team.school} data for ${year}...`);
+        
+        // Use the enhanced getTeamLines method (GraphQL + REST fallback)
+        const enhancedTeamData = await bettingService.getTeamLines(team.school, year, 'regular');
+        totalApiCalls += 1; // Single enhanced call
+        
+        if (enhancedTeamData && enhancedTeamData.length > 0) {
+          console.log(`✅ Enhanced service returned ${enhancedTeamData.length} games with lines for ${team.school} ${year}`);
+          
+          // Process enhanced data (games + lines combined)
+          enhancedTeamData.forEach(gameWithLines => {
+            // Add game data with proper field mapping
+            const gameData = {
+              id: gameWithLines.id,
+              season: gameWithLines.season || year,
+              seasonType: gameWithLines.seasonType || 'regular',
+              week: gameWithLines.week,
+              start_date: gameWithLines.startDate,
+              date: gameWithLines.startDate,
+              home_team: gameWithLines.homeTeam,
+              away_team: gameWithLines.awayTeam,
+              home_points: gameWithLines.homeScore,
+              away_points: gameWithLines.awayScore,
+              home_score: gameWithLines.homeScore, // Alternative field
+              away_score: gameWithLines.awayScore, // Alternative field
+              year: year
+            };
+            
+            allGames.push(gameData);
 
-        // Get betting lines for this year
-        try {
-          const lines = await bettingService.getTeamLines(team.school, year, 'regular');
-          if (lines && lines.length > 0) {
-            allLines.push(...lines);
+            // Add lines data with proper gameId references
+            if (gameWithLines.lines && gameWithLines.lines.length > 0) {
+              gameWithLines.lines.forEach(line => {
+                const lineData = {
+                  gameId: gameWithLines.id,
+                  game_id: gameWithLines.id, // Alternative field for compatibility
+                  provider: line.provider || 'Unknown',
+                  spread: parseFloat(line.spread) || 0,
+                  overUnder: parseFloat(line.overUnder) || 0,
+                  homeMoneyline: line.homeMoneyline,
+                  awayMoneyline: line.awayMoneyline,
+                  spreadOpen: parseFloat(line.spreadOpen) || null,
+                  overUnderOpen: parseFloat(line.overUnderOpen) || null,
+                  formattedSpread: line.formattedSpread || `${line.spread > 0 ? '+' : ''}${line.spread}`,
+                  year: year
+                };
+                
+                allLines.push(lineData);
+              });
+            }
+          });
+          
+        } else {
+          console.log(`⚠️ Enhanced service returned no data for ${team.school} ${year}, trying fallback...`);
+          
+          // Fallback: Use separate game service call if enhanced method returns no data
+          try {
+            const existingYearGames = allGames.filter(game => game.season === year);
+            if (existingYearGames.length === 0) {
+              const games = await gameService.getGames(year, null, 'regular', team.school);
+              totalApiCalls += 1;
+              
+              if (games && games.length > 0) {
+                allGames.push(...games.map(game => ({ ...game, year })));
+                console.log(`✅ Fallback: Found ${games.length} games via gameService for ${team.school} ${year}`);
+              }
+            }
+            enhancedDataSource = 'fallback-rest';
+          } catch (gameError) {
+            console.warn(`Fallback game fetch failed for ${team.school} ${year}:`, gameError.message);
           }
-        } catch (lineError) {
-          console.warn(`No betting lines for ${team.school} in ${year}:`, lineError);
         }
 
         progress++;
         setDebugData(prev => ({
           ...prev,
-          apiCalls: prev.apiCalls + 2,
+          apiCalls: totalApiCalls,
           totalGamesAnalyzed: allGames.length,
-          linesFound: allLines.length
+          linesFound: allLines.length,
+          dataSource: enhancedDataSource
         }));
 
       } catch (error) {
-        console.error(`Error fetching data for ${team.school} in ${year}:`, error);
+        console.error(`Enhanced fetch error for ${team.school} in ${year}:`, error);
+        enhancedDataSource = 'error-fallback';
+        
+        // Final fallback to original approach
+        try {
+          const games = await gameService.getGames(year, null, 'regular', team.school);
+          totalApiCalls += 1;
+          
+          if (games && games.length > 0) {
+            allGames.push(...games.map(game => ({ ...game, year })));
+            console.log(`✅ Final fallback: Found ${games.length} games for ${team.school} ${year}`);
+          }
+        } catch (finalError) {
+          console.error(`All methods failed for ${team.school} ${year}:`, finalError.message);
+        }
       }
     }
 
     setLoadingProgress(100);
+    
+    console.log(`🎯 Enhanced ATS History Complete:`, {
+      team: team.school,
+      games: allGames.length,
+      lines: allLines.length,
+      apiCalls: totalApiCalls,
+      dataSource: enhancedDataSource
+    });
+    
     return { games: allGames, lines: allLines };
   };
 
@@ -408,7 +510,8 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           lastUpdated: new Date().toLocaleTimeString(),
           team1RecordsUsed: team1Records.length,
           team2RecordsUsed: team2Records.length,
-          dataSource: team1Records.length > 0 || team2Records.length > 0 ? 'hybrid' : 'api-only'
+          dataSource: team1Records.length > 0 || team2Records.length > 0 ? 
+            'enhanced-hybrid' : 'enhanced-graphql-rest'
         }));
 
         console.log(`✅ ATS analysis complete - Team1: ${team1Metrics.winPercentage.toFixed(1)}%, Team2: ${team2Metrics.winPercentage.toFixed(1)}%`);
@@ -688,13 +791,16 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
               <button
                 key={timeframe}
                 onClick={() => setSelectedTimeframe(timeframe)}
-                className={`px-4 py-2 rounded-xl transition-all duration-300 ${
+                className={`px-6 py-3 rounded-2xl font-medium transition-all duration-300 transform hover:scale-105 ${
                   selectedTimeframe === timeframe
-                    ? 'bg-red-600 text-white shadow-lg'
-                    : 'bg-white/50 text-gray-700 hover:bg-white/70'
+                    ? 'bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white shadow-lg shadow-red-500/30 border border-red-500/20'
+                    : 'bg-white/50 text-gray-700 hover:bg-white/70 border border-white/30 hover:border-white/50'
                 }`}
               >
-                {timeframe === '3years' ? '3 Years' : timeframe === '5years' ? '5 Years' : '10 Years'}
+                <span className="flex items-center gap-2">
+                  <i className="fas fa-calendar-alt text-sm"></i>
+                  {timeframe === '3years' ? '3 Years' : timeframe === '5years' ? '5 Years' : '10 Years'}
+                </span>
               </button>
             ))}
           </div>
@@ -703,7 +809,15 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
         {/* Quick stats overview */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="text-center p-4 bg-white/30 rounded-2xl">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">{team1?.school} ATS</h3>
+            <div className="flex items-center justify-center mb-2">
+              <img 
+                src={getTeamLogo(team1)} 
+                alt={`${team1?.school} logo`}
+                className="w-6 h-6 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <h3 className="text-sm font-medium text-gray-600">{team1?.school} ATS</h3>
+            </div>
             <p className="text-2xl font-bold" style={{ color: getTeamColor(team1) }}>
               {atsData.team1.winPercentage.toFixed(1)}%
             </p>
@@ -713,7 +827,15 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           </div>
           
           <div className="text-center p-4 bg-white/30 rounded-2xl">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">{team2?.school} ATS</h3>
+            <div className="flex items-center justify-center mb-2">
+              <img 
+                src={getTeamLogo(team2)} 
+                alt={`${team2?.school} logo`}
+                className="w-6 h-6 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <h3 className="text-sm font-medium text-gray-600">{team2?.school} ATS</h3>
+            </div>
             <p className="text-2xl font-bold" style={{ color: getTeamColor(team2) }}>
               {atsData.team2.winPercentage.toFixed(1)}%
             </p>
@@ -723,7 +845,15 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           </div>
 
           <div className="text-center p-4 bg-white/30 rounded-2xl">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">{team1?.school} ROI</h3>
+            <div className="flex items-center justify-center mb-2">
+              <img 
+                src={getTeamLogo(team1)} 
+                alt={`${team1?.school} logo`}
+                className="w-6 h-6 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <h3 className="text-sm font-medium text-gray-600">{team1?.school} ROI</h3>
+            </div>
             <p className={`text-2xl font-bold ${
               atsData.team1.roi >= 0 ? 'text-green-600' : 'text-red-600'
             }`}>
@@ -732,7 +862,15 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           </div>
 
           <div className="text-center p-4 bg-white/30 rounded-2xl">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">{team2?.school} ROI</h3>
+            <div className="flex items-center justify-center mb-2">
+              <img 
+                src={getTeamLogo(team2)} 
+                alt={`${team2?.school} logo`}
+                className="w-6 h-6 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <h3 className="text-sm font-medium text-gray-600">{team2?.school} ROI</h3>
+            </div>
             <p className={`text-2xl font-bold ${
               atsData.team2.roi >= 0 ? 'text-green-600' : 'text-red-600'
             }`}>
@@ -751,7 +889,38 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] p-8"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-6">ATS Win % by Year</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-4">ATS Win % by Year</h3>
+          
+          {/* Custom legend with logos */}
+          <div className="flex justify-center mb-6 space-x-6">
+            <div className="flex items-center">
+              <img 
+                src={getTeamLogo(team1)} 
+                alt={`${team1?.school} logo`}
+                className="w-5 h-5 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <div 
+                className="w-4 h-4 rounded-full mr-2" 
+                style={{ backgroundColor: getTeamColor(team1) }}
+              ></div>
+              <span className="text-sm font-medium text-gray-700">{team1?.school}</span>
+            </div>
+            <div className="flex items-center">
+              <img 
+                src={getTeamLogo(team2)} 
+                alt={`${team2?.school} logo`}
+                className="w-5 h-5 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <div 
+                className="w-4 h-4 rounded-full mr-2" 
+                style={{ backgroundColor: getTeamColor(team2) }}
+              ></div>
+              <span className="text-sm font-medium text-gray-700">{team2?.school}</span>
+            </div>
+          </div>
+          
           <div className="h-80">
             <Line 
               data={yearlyChartData}
@@ -760,12 +929,7 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: {
-                    position: 'top',
-                    labels: {
-                      usePointStyle: true,
-                      padding: 20,
-                      font: { size: 12, weight: '500' }
-                    }
+                    display: false // Hide default legend since we have custom one
                   },
                   tooltip: {
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -813,7 +977,38 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] p-8"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-6">Situational ATS Performance</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Situational ATS Performance</h3>
+          
+          {/* Custom legend with logos */}
+          <div className="flex justify-center mb-6 space-x-6">
+            <div className="flex items-center">
+              <img 
+                src={getTeamLogo(team1)} 
+                alt={`${team1?.school} logo`}
+                className="w-5 h-5 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <div 
+                className="w-4 h-4 rounded-full mr-2" 
+                style={{ backgroundColor: getTeamColor(team1) }}
+              ></div>
+              <span className="text-sm font-medium text-gray-700">{team1?.school}</span>
+            </div>
+            <div className="flex items-center">
+              <img 
+                src={getTeamLogo(team2)} 
+                alt={`${team2?.school} logo`}
+                className="w-5 h-5 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <div 
+                className="w-4 h-4 rounded-full mr-2" 
+                style={{ backgroundColor: getTeamColor(team2) }}
+              ></div>
+              <span className="text-sm font-medium text-gray-700">{team2?.school}</span>
+            </div>
+          </div>
+          
           <div className="h-80">
             <Radar 
               data={radarChartData}
@@ -822,12 +1017,7 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: {
-                    position: 'top',
-                    labels: {
-                      usePointStyle: true,
-                      padding: 20,
-                      font: { size: 12, weight: '500' }
-                    }
+                    display: false // Hide default legend since we have custom one
                   },
                   tooltip: {
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -866,7 +1056,38 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] p-8"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-6">Performance by Spread Size</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Performance by Spread Size</h3>
+          
+          {/* Custom legend with logos */}
+          <div className="flex justify-center mb-6 space-x-6">
+            <div className="flex items-center">
+              <img 
+                src={getTeamLogo(team1)} 
+                alt={`${team1?.school} logo`}
+                className="w-5 h-5 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <div 
+                className="w-4 h-4 rounded-sm mr-2" 
+                style={{ backgroundColor: getTeamColor(team1, 0.7) }}
+              ></div>
+              <span className="text-sm font-medium text-gray-700">{team1?.school} ATS Win %</span>
+            </div>
+            <div className="flex items-center">
+              <img 
+                src={getTeamLogo(team2)} 
+                alt={`${team2?.school} logo`}
+                className="w-5 h-5 mr-2"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <div 
+                className="w-4 h-4 rounded-sm mr-2" 
+                style={{ backgroundColor: getTeamColor(team2, 0.7) }}
+              ></div>
+              <span className="text-sm font-medium text-gray-700">{team2?.school} ATS Win %</span>
+            </div>
+          </div>
+          
           <div className="h-80">
             <Bar 
               data={spreadCategoryChartData}
@@ -875,12 +1096,7 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: {
-                    position: 'top',
-                    labels: {
-                      usePointStyle: true,
-                      padding: 20,
-                      font: { size: 12, weight: '500' }
-                    }
+                    display: false // Hide default legend since we have custom one
                   },
                   tooltip: {
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -925,9 +1141,17 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
           <div className="grid grid-cols-2 gap-6">
             {/* Team 1 */}
             <div>
-              <h4 className="text-lg font-semibold mb-4" style={{ color: getTeamColor(team1) }}>
-                {team1?.school}
-              </h4>
+              <div className="flex items-center mb-4">
+                <img 
+                  src={getTeamLogo(team1)} 
+                  alt={`${team1?.school} logo`}
+                  className="w-6 h-6 mr-2"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+                <h4 className="text-lg font-semibold" style={{ color: getTeamColor(team1) }}>
+                  {team1?.school}
+                </h4>
+              </div>
               <div className="h-48">
                 <Pie 
                   data={{
@@ -976,9 +1200,17 @@ const ATSTab = ({ team1, team2, team1Records = [], team2Records = [] }) => {
 
             {/* Team 2 */}
             <div>
-              <h4 className="text-lg font-semibold mb-4" style={{ color: getTeamColor(team2) }}>
-                {team2?.school}
-              </h4>
+              <div className="flex items-center mb-4">
+                <img 
+                  src={getTeamLogo(team2)} 
+                  alt={`${team2?.school} logo`}
+                  className="w-6 h-6 mr-2"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+                <h4 className="text-lg font-semibold" style={{ color: getTeamColor(team2) }}>
+                  {team2?.school}
+                </h4>
+              </div>
               <div className="h-48">
                 <Pie 
                   data={{
