@@ -177,6 +177,27 @@ const GamePredictor = () => {
                 away: Math.abs(prediction.score.away - actualScore.away)
               };
 
+              // Calculate win probability based on predicted score difference if not provided
+              let winProbability = prediction.winProbability;
+              if (!winProbability || (winProbability.home === 50 && winProbability.away === 50)) {
+                const scoreDiff = prediction.score.home - prediction.score.away;
+                const absScoreDiff = Math.abs(scoreDiff);
+                
+                // Convert score difference to win probability using sigmoid function
+                // Larger score differences = higher confidence
+                const confidence = 1 / (1 + Math.exp(-absScoreDiff / 7)); // 7 is scaling factor
+                const winnerProb = 50 + (confidence * 40); // Scale to 50-90% range
+                const loserProb = 100 - winnerProb;
+                
+                if (scoreDiff > 0) {
+                  // Home team favored
+                  winProbability = { home: winnerProb, away: loserProb };
+                } else {
+                  // Away team favored
+                  winProbability = { home: loserProb, away: winnerProb };
+                }
+              }
+
               gamePredictions.push({
                 gameId: game.id,
                 homeTeam: homeTeam,
@@ -206,6 +227,27 @@ const GamePredictor = () => {
                 awayTeamId, 
                 predictionOptions
               );
+
+              // Calculate win probability based on predicted score difference if not provided
+              let winProbability = prediction.winProbability;
+              if (!winProbability || (winProbability.home === 50 && winProbability.away === 50)) {
+                const scoreDiff = prediction.score.home - prediction.score.away;
+                const absScoreDiff = Math.abs(scoreDiff);
+                
+                // Convert score difference to win probability using sigmoid function
+                // Larger score differences = higher confidence
+                const confidence = 1 / (1 + Math.exp(-absScoreDiff / 7)); // 7 is scaling factor
+                const winnerProb = 50 + (confidence * 40); // Scale to 50-90% range
+                const loserProb = 100 - winnerProb;
+                
+                if (scoreDiff > 0) {
+                  // Home team favored
+                  winProbability = { home: winnerProb, away: loserProb };
+                } else {
+                  // Away team favored
+                  winProbability = { home: loserProb, away: winnerProb };
+                }
+              }
 
               gamePredictions.push({
                 gameId: game.id,
@@ -1005,6 +1047,33 @@ const MatchupPredictionResults = ({ prediction }) => {
   const headToHead = prediction.headToHead || [];
   const confidence = prediction.confidence || 0.7;
 
+  // Calculate win probability based on predicted score difference if not provided or defaulting to 50/50
+  let winProbability = pred.winProbability;
+  if (!winProbability || (winProbability.home === 50 && winProbability.away === 50)) {
+    const scoreDiff = (pred.score?.home || 0) - (pred.score?.away || 0);
+    const absScoreDiff = Math.abs(scoreDiff);
+    
+    // Convert score difference to win probability using sigmoid function
+    // Larger score differences = higher confidence
+    const confidenceCalc = 1 / (1 + Math.exp(-absScoreDiff / 7)); // 7 is scaling factor
+    const winnerProb = 50 + (confidenceCalc * 40); // Scale to 50-90% range
+    const loserProb = 100 - winnerProb;
+    
+    if (scoreDiff > 0) {
+      // Home team favored
+      winProbability = { home: winnerProb, away: loserProb };
+    } else if (scoreDiff < 0) {
+      // Away team favored
+      winProbability = { home: loserProb, away: winnerProb };
+    } else {
+      // Even game, slightly favor home team (home field advantage)
+      winProbability = { home: 52, away: 48 };
+    }
+  }
+
+  // Update pred object with calculated win probability
+  pred.winProbability = winProbability;
+
   // Debug team analyses
   console.log('Team Analyses:', analysis.teamAnalysis);
 
@@ -1083,16 +1152,16 @@ const MatchupPredictionResults = ({ prediction }) => {
           <div className="relative bg-gray-200 rounded-full h-4">
             <div 
               className="absolute left-0 top-0 h-4 bg-red-500 rounded-l-full"
-              style={{ width: `${pred.winProbability?.away || 50}%` }}
+              style={{ width: `${pred.winProbability?.away || 48}%` }}
             ></div>
             <div 
               className="absolute right-0 top-0 h-4 bg-blue-500 rounded-r-full"
-              style={{ width: `${pred.winProbability?.home || 50}%` }}
+              style={{ width: `${pred.winProbability?.home || 52}%` }}
             ></div>
           </div>
           <div className="flex justify-between text-sm text-gray-600 mt-2">
-            <span>{(pred.winProbability?.away || 50).toFixed(1)}%</span>
-            <span>{(pred.winProbability?.home || 50).toFixed(1)}%</span>
+            <span>{(pred.winProbability?.away || 48).toFixed(1)}%</span>
+            <span>{(pred.winProbability?.home || 52).toFixed(1)}%</span>
           </div>
         </div>
 
