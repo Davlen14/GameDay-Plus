@@ -53,7 +53,19 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
                 src={getTeamLogo(awayTeamId)} 
                 alt={awayTeam}
                 className="w-4 h-4 object-contain"
-                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                onError={(e) => { 
+                  // Multi-step fallback for better logo coverage
+                  if (e.target.src.includes('/team_logos/')) {
+                    // If local logo failed, try the dark version
+                    const currentSrc = e.target.src;
+                    if (!currentSrc.includes('_dark.png')) {
+                      e.target.src = currentSrc.replace('.png', '_dark.png');
+                      return;
+                    }
+                  }
+                  // Final fallback
+                  e.target.src = '/photos/ncaaf.png'; 
+                }}
               />
             </div>
             <span className="text-sm font-bold text-gray-800">{awayPct}%</span>
@@ -78,7 +90,19 @@ const WinProbabilityChart = ({ homeTeam, awayTeam, homeProb, awayProb, homeTeamI
                 src={getTeamLogo(homeTeamId)} 
                 alt={homeTeam}
                 className="w-4 h-4 object-contain"
-                onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                onError={(e) => { 
+                  // Multi-step fallback for better logo coverage
+                  if (e.target.src.includes('/team_logos/')) {
+                    // If local logo failed, try the dark version
+                    const currentSrc = e.target.src;
+                    if (!currentSrc.includes('_dark.png')) {
+                      e.target.src = currentSrc.replace('.png', '_dark.png');
+                      return;
+                    }
+                  }
+                  // Final fallback
+                  e.target.src = '/photos/ncaaf.png'; 
+                }}
               />
             </div>
           </div>
@@ -295,7 +319,7 @@ const Schedule = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [searchText, setSearchText] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Top 25');
+  const [selectedCategory, setSelectedCategory] = useState('All Games');
   
   // UI state - removed animateShine to improve performance
   const [showWeekPicker, setShowWeekPicker] = useState(false);
@@ -313,8 +337,9 @@ const Schedule = () => {
   const [gameMedia, setGameMedia] = useState(new Map());
   const [gameWeather, setGameWeather] = useState(new Map());
 
-  // Conference data matching your app structure
+  // Conference data matching your app structure - including both FBS and FCS
   const conferences = [
+    // FBS Conferences
     { name: 'ACC', logo: 'ACC' },
     { name: 'American Athletic', logo: 'American Athletic' },
     { name: 'Big 12', logo: 'Big 12' },
@@ -325,7 +350,22 @@ const Schedule = () => {
     { name: 'Mountain West', logo: 'Mountain West' },
     { name: 'Pac-12', logo: 'Pac-12' },
     { name: 'SEC', logo: 'SEC' },
-    { name: 'Sun Belt', logo: 'SBC' }
+    { name: 'Sun Belt', logo: 'SBC' },
+    // FCS Conferences
+    { name: 'Big Sky', logo: 'Big Sky' },
+    { name: 'Big South', logo: 'Big South' },
+    { name: 'CAA', logo: 'CAA' },
+    { name: 'Ivy League', logo: 'Ivy League' },
+    { name: 'MEAC', logo: 'MEAC' },
+    { name: 'Missouri Valley', logo: 'Missouri Valley' },
+    { name: 'Northeast', logo: 'Northeast' },
+    { name: 'Ohio Valley', logo: 'Ohio Valley' },
+    { name: 'Patriot League', logo: 'Patriot League' },
+    { name: 'Pioneer', logo: 'Pioneer' },
+    { name: 'Southern', logo: 'Southern' },
+    { name: 'Southland', logo: 'Southland' },
+    { name: 'SWAC', logo: 'SWAC' },
+    { name: 'WAC', logo: 'WAC' }
   ];
 
   useEffect(() => {
@@ -371,10 +411,10 @@ const Schedule = () => {
     setErrorMessage(null);
 
     try {
-      // Load teams if not cached
+      // Load teams if not cached - including both FBS and FCS teams
       let loadedTeams = teams;
       if (loadedTeams.length === 0) {
-        loadedTeams = await teamService.getFBSTeams(true);
+        loadedTeams = await teamService.getAllTeams(true);
         setTeams(loadedTeams);
       }
 
@@ -449,7 +489,7 @@ const Schedule = () => {
       );
     }
 
-    // Category filtering (Top 25 vs FBS)
+    // Category filtering (Top 25 vs FBS vs All Games)
     if (selectedCategory === 'Top 25') {
       const rankedSchools = new Set(rankings.map(rank => rank.school.toLowerCase()));
       filtered = filtered.filter(game => {
@@ -458,7 +498,17 @@ const Schedule = () => {
         return (homeTeam && rankedSchools.has(homeTeam.school.toLowerCase())) ||
                (awayTeam && rankedSchools.has(awayTeam.school.toLowerCase()));
       });
+    } else if (selectedCategory === 'FBS') {
+      // Filter to only FBS teams
+      const fbsTeamIds = new Set(
+        teams.filter(team => team.classification === 'fbs').map(team => team.id)
+      );
+      filtered = filtered.filter(game => 
+        fbsTeamIds.has(game.home_id || game.homeId) ||
+        fbsTeamIds.has(game.away_id || game.awayId)
+      );
     }
+    // "All Games" category shows everything, no additional filtering needed
 
     // Search filter
     if (searchText.trim()) {
@@ -490,7 +540,31 @@ const Schedule = () => {
 
   const getTeamLogo = (teamId) => {
     const team = teams.find(t => t.id === teamId);
-    return team?.logos?.[0] || '/photos/ncaaf.png';
+    
+    // First try to use the official logo from the API
+    if (team?.logos?.[0]) {
+      return team.logos[0];
+    }
+    
+    // If no API logo, try to match by school name to local logos
+    if (team?.school) {
+      // Normalize team name to match logo file naming convention
+      const normalizedName = team.school
+        .replace(/&/g, '_')
+        .replace(/\s+/g, '_')
+        .replace(/[()]/g, '')
+        .replace(/-/g, '_')
+        .replace(/'/g, '')
+        .replace(/\./g, '')
+        .trim();
+      
+      // Try the normalized name
+      const logoPath = `/team_logos/${normalizedName}.png`;
+      return logoPath;
+    }
+    
+    // Ultimate fallback to generic college football logo
+    return '/photos/ncaaf.png';
   };
 
   const getTeamAbbreviation = (teamId, fallback) => {
@@ -671,7 +745,7 @@ const Schedule = () => {
             <div className="relative z-10">
               {/* Category Pills with Liquid Glass */}
               <div className="flex flex-wrap items-center gap-4 mb-8">
-                {['Top 25', 'FBS'].map(category => (
+                {['Top 25', 'FBS', 'All Games'].map(category => (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
@@ -1010,7 +1084,19 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                     src={getTeamLogo(awayTeamId)}
                     alt={`${awayTeam} logo`}
                     className="w-12 h-12 object-contain relative z-10 drop-shadow-xl"
-                    onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                    onError={(e) => { 
+                      // Multi-step fallback for better logo coverage
+                      if (e.target.src.includes('/team_logos/')) {
+                        // If local logo failed, try the dark version
+                        const currentSrc = e.target.src;
+                        if (!currentSrc.includes('_dark.png')) {
+                          e.target.src = currentSrc.replace('.png', '_dark.png');
+                          return;
+                        }
+                      }
+                      // Final fallback
+                      e.target.src = '/photos/ncaaf.png'; 
+                    }}
                   />
                 </div>
                 
@@ -1094,7 +1180,19 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                     src={getTeamLogo(homeTeamId)}
                     alt={`${homeTeam} logo`}
                     className="w-12 h-12 object-contain relative z-10 drop-shadow-xl"
-                    onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+                    onError={(e) => { 
+                      // Multi-step fallback for better logo coverage
+                      if (e.target.src.includes('/team_logos/')) {
+                        // If local logo failed, try the dark version
+                        const currentSrc = e.target.src;
+                        if (!currentSrc.includes('_dark.png')) {
+                          e.target.src = currentSrc.replace('.png', '_dark.png');
+                          return;
+                        }
+                      }
+                      // Final fallback
+                      e.target.src = '/photos/ncaaf.png'; 
+                    }}
                   />
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ComparisonAnalyzer from '../../../services/comparisonAnalyzer';
-import advancedStatsService from '../../../services/advancedStatsService';
+import { advancedStatsService } from '../../../services/advancedStatsService';
+import FootballKnowledgeTab from './FootballKnowledgeTab';
 
 const AdvancedTab = ({ team1, team2 }) => {
   const [selectedCategory, setSelectedCategory] = useState('summary');
@@ -10,6 +11,7 @@ const AdvancedTab = ({ team1, team2 }) => {
   const [animateCards, setAnimateCards] = useState(false);
   const [team1Stats, setTeam1Stats] = useState(null);
   const [team2Stats, setTeam2Stats] = useState(null);
+  const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
 
   // Modern red gradient (consistent with other tabs)
   const modernRedGradient = 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))';
@@ -74,52 +76,14 @@ const AdvancedTab = ({ team1, team2 }) => {
 
   const loadMockData = async () => {
     try {
-      // Mock data structure that matches ComparisonAnalyzer expectations
-      const mockStats1 = {
-        offense: {
-          ppa: 0.15,
-          successRate: 0.42,
-          explosiveness: 1.3,
-          passingPlays: { rate: 0.58, successRate: 0.45 },
-          rushingPlays: { rate: 0.42, successRate: 0.38 },
-          fieldPosition: { averageStart: 28.5 },
-          pointsPerOpportunity: 5.2,
-          standardDowns: { successRate: 0.48 },
-          passingDowns: { successRate: 0.32 }
-        },
-        defense: {
-          ppa: -0.08,
-          successRate: 0.38,
-          havoc: { total: 0.19, frontSeven: 0.12, secondary: 0.07 },
-          stuffRate: 0.22,
-          lineYards: 2.1,
-          secondLevelYards: 1.8,
-          openFieldYards: 3.2
-        }
-      };
+      console.log('🔄 Loading realistic mock data based on team quality...');
+      
+      // Use the service's realistic mock data generation instead of generic data
+      const mockStats1 = advancedStatsService.generateMockAdvancedStats(team1.school);
+      const mockStats2 = advancedStatsService.generateMockAdvancedStats(team2.school);
 
-      const mockStats2 = {
-        offense: {
-          ppa: 0.08,
-          successRate: 0.39,
-          explosiveness: 1.1,
-          passingPlays: { rate: 0.52, successRate: 0.41 },
-          rushingPlays: { rate: 0.48, successRate: 0.42 },
-          fieldPosition: { averageStart: 26.8 },
-          pointsPerOpportunity: 4.8,
-          standardDowns: { successRate: 0.44 },
-          passingDowns: { successRate: 0.29 }
-        },
-        defense: {
-          ppa: 0.02,
-          successRate: 0.42,
-          havoc: { total: 0.15, frontSeven: 0.09, secondary: 0.06 },
-          stuffRate: 0.18,
-          lineYards: 2.4,
-          secondLevelYards: 2.1,
-          openFieldYards: 3.8
-        }
-      };
+      console.log(`📊 Mock stats for ${team1.school}:`, mockStats1);
+      console.log(`📊 Mock stats for ${team2.school}:`, mockStats2);
 
       setTeam1Stats(mockStats1);
       setTeam2Stats(mockStats2);
@@ -129,7 +93,7 @@ const AdvancedTab = ({ team1, team2 }) => {
       const analysisResult = analyzer.performAnalysis();
       
       setAnalysis(analysisResult);
-      console.log('✅ Mock analysis complete:', analysisResult);
+      console.log('✅ Mock analysis complete with realistic data:', analysisResult);
     } catch (mockError) {
       console.error('❌ Error with mock data:', mockError);
       setError('Failed to load even mock data');
@@ -255,7 +219,7 @@ const AdvancedTab = ({ team1, team2 }) => {
   );
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-6 relative">
       <style>{`
         .gradient-text {
           background: ${modernRedGradient};
@@ -263,7 +227,57 @@ const AdvancedTab = ({ team1, team2 }) => {
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
+        
+        .knowledge-button-pulse {
+          animation: knowledge-pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes knowledge-pulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 25px 50px -12px rgba(204, 0, 28, 0.3);
+          }
+          50% {
+            transform: scale(1.1);
+            box-shadow: 0 25px 50px -12px rgba(204, 0, 28, 0.6);
+          }
+        }
       `}</style>
+
+      {/* Floating Help Button */}
+      <button
+        onClick={() => setShowKnowledgeModal(true)}
+        className="fixed bottom-8 right-8 w-14 h-14 rounded-full text-white shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 z-50 flex items-center justify-center knowledge-button-pulse"
+        style={{ background: modernRedGradient }}
+        title="Learn about these metrics"
+      >
+        <i className="fas fa-graduation-cap text-xl"></i>
+      </button>
+
+      {/* Knowledge Modal */}
+      {showKnowledgeModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl relative w-full">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold gradient-text">
+                <i className="fas fa-graduation-cap mr-2 gradient-text"></i>Football Knowledge Center
+              </h2>
+              <button
+                onClick={() => setShowKnowledgeModal(false)}
+                className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center"
+              >
+                <i className="fas fa-times text-gray-600"></i>
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="overflow-y-auto max-h-[calc(90vh-100px)]">
+              <FootballKnowledgeTab />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header Section */}
       <div className="text-center mb-8">
@@ -311,14 +325,232 @@ const AdvancedTab = ({ team1, team2 }) => {
   );
 };
 
-// Enhanced Comparison Summary with glassmorphism styling
+// Enhanced Comparison Summary with glassmorphism styling and DEBUG TOOLS
 const ComparisonSummary = ({ analysis, team1, team2 }) => {
   const modernRedGradient = 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))';
+  const [debugMode, setDebugMode] = useState(false);
+  const [apiTestResults, setApiTestResults] = useState({});
+  const [testing, setTesting] = useState(false);
   
   const getTeamColor = (team) => team?.color || '#dc2626';
+
+  // Debug API endpoint testing
+  const testAPIEndpoint = async (endpointName, apiCall) => {
+    setTesting(true);
+    try {
+      console.log(`🧪 Testing ${endpointName}...`);
+      const startTime = Date.now();
+      const result = await apiCall();
+      const endTime = Date.now();
+      
+      setApiTestResults(prev => ({
+        ...prev,
+        [endpointName]: {
+          status: 'success',
+          data: result,
+          responseTime: endTime - startTime,
+          timestamp: new Date().toLocaleTimeString()
+        }
+      }));
+      
+      console.log(`✅ ${endpointName} success:`, result);
+    } catch (error) {
+      setApiTestResults(prev => ({
+        ...prev,
+        [endpointName]: {
+          status: 'error',
+          error: error.message,
+          timestamp: new Date().toLocaleTimeString()
+        }
+      }));
+      
+      console.error(`❌ ${endpointName} failed:`, error);
+    }
+    setTesting(false);
+  };
+
+  const testAllEndpoints = async () => {
+    if (!team1?.school || !team2?.school) {
+      alert('Please select two teams first!');
+      return;
+    }
+
+    const endpoints = [
+      {
+        name: 'Team PPA - Ohio State',
+        call: () => advancedStatsService.getTeamPPA(2024, team1.school)
+      },
+      {
+        name: 'Team PPA - Purdue',
+        call: () => advancedStatsService.getTeamPPA(2024, team2.school)
+      },
+      {
+        name: 'Advanced Stats - Ohio State',
+        call: () => advancedStatsService.getAdvancedTeamStats(2024, team1.school)
+      },
+      {
+        name: 'Advanced Stats - Purdue',
+        call: () => advancedStatsService.getAdvancedTeamStats(2024, team2.school)
+      },
+      {
+        name: 'Season Stats - Ohio State',
+        call: () => advancedStatsService.getSeasonStats(2024, team1.school)
+      },
+      {
+        name: 'Season Stats - Purdue',
+        call: () => advancedStatsService.getSeasonStats(2024, team2.school)
+      },
+      {
+        name: 'Combined Stats - Ohio State',
+        call: () => advancedStatsService.fetchTeamAdvancedStats(team1.school, 2024)
+      },
+      {
+        name: 'Combined Stats - Purdue',
+        call: () => advancedStatsService.fetchTeamAdvancedStats(team2.school, 2024)
+      }
+    ];
+
+    for (const endpoint of endpoints) {
+      await testAPIEndpoint(endpoint.name, endpoint.call);
+      // Small delay between calls
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  };
   
   return (
     <div className="space-y-8">
+      {/* DEBUG PANEL */}
+      <div className="bg-red-50 border-2 border-red-200 rounded-3xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-red-800 flex items-center">
+            🐛 DEBUG MODE - Advanced Stats Analysis
+          </h3>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setDebugMode(!debugMode)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                debugMode ? 'bg-red-600 text-white' : 'bg-red-200 text-red-800'
+              }`}
+            >
+              {debugMode ? 'Hide Debug' : 'Show Debug'}
+            </button>
+            <button
+              onClick={testAllEndpoints}
+              disabled={testing}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+            >
+              {testing ? 'Testing...' : '🧪 Test All APIs'}
+            </button>
+          </div>
+        </div>
+
+        {debugMode && (
+          <div className="space-y-4">
+            {/* Current Analysis Debug */}
+            <div className="bg-white rounded-lg p-4">
+              <h4 className="font-bold text-gray-800 mb-2">📊 Current Analysis Data:</h4>
+              <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto max-h-40">
+                {JSON.stringify(analysis, null, 2)}
+              </pre>
+            </div>
+
+            {/* Teams Debug */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-lg p-4">
+                <h4 className="font-bold text-gray-800 mb-2">🏈 {team1?.school} Data:</h4>
+                <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto max-h-32">
+                  {JSON.stringify(analysis?.team1Stats, null, 2)}
+                </pre>
+              </div>
+              <div className="bg-white rounded-lg p-4">
+                <h4 className="font-bold text-gray-800 mb-2">🏈 {team2?.school} Data:</h4>
+                <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto max-h-32">
+                  {JSON.stringify(analysis?.team2Stats, null, 2)}
+                </pre>
+              </div>
+            </div>
+
+            {/* API Test Results */}
+            {Object.keys(apiTestResults).length > 0 && (
+              <div className="bg-white rounded-lg p-4">
+                <h4 className="font-bold text-gray-800 mb-2">🔗 API Test Results:</h4>
+                <div className="space-y-2 max-h-60 overflow-auto">
+                  {Object.entries(apiTestResults).map(([endpoint, result]) => (
+                    <div key={endpoint} className={`p-2 rounded text-sm ${
+                      result.status === 'success' ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'
+                    }`}>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{endpoint}</span>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          result.status === 'success' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                        }`}>
+                          {result.status === 'success' ? `✅ ${result.responseTime}ms` : '❌ Failed'}
+                        </span>
+                      </div>
+                      {result.status === 'error' && (
+                        <div className="text-red-600 text-xs mt-1">{result.error}</div>
+                      )}
+                      {result.status === 'success' && result.data && (
+                        <details className="mt-1">
+                          <summary className="cursor-pointer text-xs text-gray-600">View Data</summary>
+                          <pre className="text-xs bg-gray-50 p-2 rounded mt-1 overflow-auto max-h-20">
+                            {JSON.stringify(result.data, null, 2)}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Individual Endpoint Test Buttons */}
+            <div className="bg-white rounded-lg p-4">
+              <h4 className="font-bold text-gray-800 mb-2">🎯 Individual API Tests:</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <button
+                  onClick={() => testAPIEndpoint('PPA Test', () => advancedStatsService.getTeamPPA(2024, team1.school))}
+                  className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                >
+                  Test PPA
+                </button>
+                <button
+                  onClick={() => testAPIEndpoint('Advanced Test', () => advancedStatsService.getAdvancedTeamStats(2024, team1.school))}
+                  className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                >
+                  Test Advanced
+                </button>
+                <button
+                  onClick={() => testAPIEndpoint('Season Test', () => advancedStatsService.getSeasonStats(2024, team1.school))}
+                  className="px-3 py-1 bg-purple-500 text-white text-sm rounded hover:bg-purple-600"
+                >
+                  Test Season
+                </button>
+                <button
+                  onClick={() => testAPIEndpoint('Mock Test', () => advancedStatsService.generateMockAdvancedStats(team1.school))}
+                  className="px-3 py-1 bg-orange-500 text-white text-sm rounded hover:bg-orange-600"
+                >
+                  Test Mock
+                </button>
+              </div>
+            </div>
+
+            {/* Analysis Debug Info */}
+            <div className="bg-white rounded-lg p-4">
+              <h4 className="font-bold text-gray-800 mb-2">📈 Analysis Calculation Debug:</h4>
+              <div className="space-y-2 text-sm">
+                <div>Overall Advantage: <span className="font-mono">{analysis?.overallAdvantage || 'N/A'}</span></div>
+                <div>Matchup Type: <span className="font-mono">{analysis?.matchupType || 'N/A'}</span></div>
+                <div>Team 1 Styles: <span className="font-mono">{JSON.stringify(analysis?.team1Styles || [])}</span></div>
+                <div>Team 2 Styles: <span className="font-mono">{JSON.stringify(analysis?.team2Styles || [])}</span></div>
+                <div>Has Team1 Stats: <span className="font-mono">{analysis?.team1Stats ? 'YES' : 'NO'}</span></div>
+                <div>Has Team2 Stats: <span className="font-mono">{analysis?.team2Stats ? 'YES' : 'NO'}</span></div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Overall Matchup Analysis */}
       <div className="bg-white/40 backdrop-blur-2xl rounded-3xl border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.3)] p-8">
         <div className="text-center mb-8">
@@ -331,11 +563,33 @@ const ComparisonSummary = ({ analysis, team1, team2 }) => {
               }}>
             {team1.school} vs {team2.school}
           </h2>
-          <p className="text-xl font-semibold text-gray-700">
-            {analysis?.overallAdvantage < -0.2 ? `${team1.school} Advantage` :
-             analysis?.overallAdvantage > 0.2 ? `${team2.school} Advantage` : 
-             'Even Statistical Matchup'}
-          </p>
+          
+          {/* Enhanced summary with logos and green text */}
+          <div className="flex items-center justify-center space-x-4">
+            {/* Show team1 logo if they have advantage */}
+            {analysis?.overallAdvantage < -0.2 && team1?.logos?.[0] && (
+              <img src={team1.logos[0]} alt={team1.school} className="w-8 h-8 object-contain" />
+            )}
+            
+            <p className="text-xl font-semibold text-green-600">
+              {analysis?.overallAdvantage < -0.2 ? `${team1.school} Advantage` :
+               analysis?.overallAdvantage > 0.2 ? `${team2.school} Advantage` : 
+               'Even Statistical Matchup'}
+            </p>
+            
+            {/* Show team2 logo if they have advantage */}
+            {analysis?.overallAdvantage > 0.2 && team2?.logos?.[0] && (
+              <img src={team2.logos[0]} alt={team2.school} className="w-8 h-8 object-contain" />
+            )}
+          </div>
+          
+          {/* Debug advantage calculation */}
+          {debugMode && (
+            <div className="mt-2 text-sm text-gray-600">
+              Raw Advantage: {analysis?.overallAdvantage || 'undefined'} | 
+              Threshold: {analysis?.overallAdvantage < -0.2 ? 'Team1 Strong' : analysis?.overallAdvantage > 0.2 ? 'Team2 Strong' : 'Even'}
+            </div>
+          )}
         </div>
 
         {/* Advantage Visualization */}
@@ -465,14 +719,52 @@ const ComparisonSummary = ({ analysis, team1, team2 }) => {
             }}>
           Key Statistical Matchups
         </h3>
+        
+        {/* Debug Values */}
+        {debugMode && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h4 className="font-bold text-yellow-800 mb-2">🔍 Raw Statistical Values:</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <strong>{team1.school} Offense:</strong>
+                <div>Success Rate: {analysis?.team1Stats?.offense?.successRate || 'undefined'}</div>
+                <div>Explosiveness: {analysis?.team1Stats?.offense?.explosiveness || 'undefined'}</div>
+                <div>PPA: {analysis?.team1Stats?.offense?.ppa || 'undefined'}</div>
+              </div>
+              <div>
+                <strong>{team2.school} Offense:</strong>
+                <div>Success Rate: {analysis?.team2Stats?.offense?.successRate || 'undefined'}</div>
+                <div>Explosiveness: {analysis?.team2Stats?.offense?.explosiveness || 'undefined'}</div>
+                <div>PPA: {analysis?.team2Stats?.offense?.ppa || 'undefined'}</div>
+              </div>
+              <div>
+                <strong>{team1.school} Defense:</strong>
+                <div>Success Rate: {analysis?.team1Stats?.defense?.successRate || 'undefined'}</div>
+                <div>PPA: {analysis?.team1Stats?.defense?.ppa || 'undefined'}</div>
+              </div>
+              <div>
+                <strong>{team2.school} Defense:</strong>
+                <div>Success Rate: {analysis?.team2Stats?.defense?.successRate || 'undefined'}</div>
+                <div>PPA: {analysis?.team2Stats?.defense?.ppa || 'undefined'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Offensive Efficiency */}
           <div className="text-center p-4 bg-white/30 rounded-2xl">
             <i className="fas fa-chart-line text-3xl mb-3 gradient-text"></i>
             <h4 className="font-bold text-gray-800 mb-2">Offensive Efficiency</h4>
             <div className="space-y-2 text-sm">
-              <div>{team1.school}: {(analysis?.team1Stats?.offense?.successRate * 100 || 0).toFixed(1)}%</div>
-              <div>{team2.school}: {(analysis?.team2Stats?.offense?.successRate * 100 || 0).toFixed(1)}%</div>
+              <div className={`${debugMode ? 'font-mono' : ''}`}>
+                {team1.school}: {(analysis?.team1Stats?.offense?.successRate * 100 || 0).toFixed(1)}%
+                {debugMode && <span className="text-xs text-gray-500 ml-2">({analysis?.team1Stats?.offense?.successRate || 'null'})</span>}
+              </div>
+              <div className={`${debugMode ? 'font-mono' : ''}`}>
+                {team2.school}: {(analysis?.team2Stats?.offense?.successRate * 100 || 0).toFixed(1)}%
+                {debugMode && <span className="text-xs text-gray-500 ml-2">({analysis?.team2Stats?.offense?.successRate || 'null'})</span>}
+              </div>
             </div>
           </div>
           
@@ -481,8 +773,14 @@ const ComparisonSummary = ({ analysis, team1, team2 }) => {
             <i className="fas fa-shield-alt text-3xl mb-3 gradient-text"></i>
             <h4 className="font-bold text-gray-800 mb-2">Defensive Strength</h4>
             <div className="space-y-2 text-sm">
-              <div>{team1.school}: {((1 - (analysis?.team1Stats?.defense?.successRate || 0)) * 100).toFixed(1)}%</div>
-              <div>{team2.school}: {((1 - (analysis?.team2Stats?.defense?.successRate || 0)) * 100).toFixed(1)}%</div>
+              <div className={`${debugMode ? 'font-mono' : ''}`}>
+                {team1.school}: {((1 - (analysis?.team1Stats?.defense?.successRate || 0)) * 100).toFixed(1)}%
+                {debugMode && <span className="text-xs text-gray-500 ml-2">({analysis?.team1Stats?.defense?.successRate || 'null'})</span>}
+              </div>
+              <div className={`${debugMode ? 'font-mono' : ''}`}>
+                {team2.school}: {((1 - (analysis?.team2Stats?.defense?.successRate || 0)) * 100).toFixed(1)}%
+                {debugMode && <span className="text-xs text-gray-500 ml-2">({analysis?.team2Stats?.defense?.successRate || 'null'})</span>}
+              </div>
             </div>
           </div>
           
@@ -491,8 +789,14 @@ const ComparisonSummary = ({ analysis, team1, team2 }) => {
             <i className="fas fa-bolt text-3xl mb-3 gradient-text"></i>
             <h4 className="font-bold text-gray-800 mb-2">Explosiveness</h4>
             <div className="space-y-2 text-sm">
-              <div>{team1.school}: {(analysis?.team1Stats?.offense?.explosiveness || 0).toFixed(2)}</div>
-              <div>{team2.school}: {(analysis?.team2Stats?.offense?.explosiveness || 0).toFixed(2)}</div>
+              <div className={`${debugMode ? 'font-mono' : ''}`}>
+                {team1.school}: {(analysis?.team1Stats?.offense?.explosiveness || 0).toFixed(2)}
+                {debugMode && <span className="text-xs text-gray-500 ml-2">({analysis?.team1Stats?.offense?.explosiveness || 'null'})</span>}
+              </div>
+              <div className={`${debugMode ? 'font-mono' : ''}`}>
+                {team2.school}: {(analysis?.team2Stats?.offense?.explosiveness || 0).toFixed(2)}
+                {debugMode && <span className="text-xs text-gray-500 ml-2">({analysis?.team2Stats?.offense?.explosiveness || 'null'})</span>}
+              </div>
             </div>
           </div>
         </div>
@@ -517,12 +821,35 @@ const ComparisonSummary = ({ analysis, team1, team2 }) => {
               <i className="fas fa-chart-bar mr-2 gradient-text"></i>
               Matchup Overview
             </h4>
-            <p className="text-gray-700 leading-relaxed">
+            <div className="text-green-600 leading-relaxed font-medium">
               {(() => {
                 const analyzer = new ComparisonAnalyzer(team1, team2, analysis?.team1Stats, analysis?.team2Stats);
-                return analyzer.matchupAnalysis1(analysis?.matchupType);
+                const analysisText = analyzer.matchupAnalysis1(analysis?.matchupType);
+                
+                // Replace team names with team name + logo
+                let formattedText = analysisText;
+                if (team1?.school && team1?.logos?.[0]) {
+                  const team1Regex = new RegExp(team1.school, 'g');
+                  formattedText = formattedText.replace(team1Regex, 
+                    `<span class="inline-flex items-center gap-1">
+                      <img src="${team1.logos[0]}" alt="${team1.school}" class="w-4 h-4 object-contain inline" />
+                      ${team1.school}
+                    </span>`
+                  );
+                }
+                if (team2?.school && team2?.logos?.[0]) {
+                  const team2Regex = new RegExp(team2.school, 'g');
+                  formattedText = formattedText.replace(team2Regex, 
+                    `<span class="inline-flex items-center gap-1">
+                      <img src="${team2.logos[0]}" alt="${team2.school}" class="w-4 h-4 object-contain inline" />
+                      ${team2.school}
+                    </span>`
+                  );
+                }
+                
+                return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
               })()}
-            </p>
+            </div>
           </div>
 
           {/* Deep Dive Analysis */}
@@ -531,12 +858,35 @@ const ComparisonSummary = ({ analysis, team1, team2 }) => {
               <i className="fas fa-search mr-2 gradient-text"></i>
               Deep Dive Analysis
             </h4>
-            <p className="text-gray-700 leading-relaxed">
+            <div className="text-green-600 leading-relaxed font-medium">
               {(() => {
                 const analyzer = new ComparisonAnalyzer(team1, team2, analysis?.team1Stats, analysis?.team2Stats);
-                return analyzer.matchupAnalysis2(analysis?.matchupType);
+                const analysisText = analyzer.matchupAnalysis2(analysis?.matchupType);
+                
+                // Replace team names with team name + logo
+                let formattedText = analysisText;
+                if (team1?.school && team1?.logos?.[0]) {
+                  const team1Regex = new RegExp(team1.school, 'g');
+                  formattedText = formattedText.replace(team1Regex, 
+                    `<span class="inline-flex items-center gap-1">
+                      <img src="${team1.logos[0]}" alt="${team1.school}" class="w-4 h-4 object-contain inline" />
+                      ${team1.school}
+                    </span>`
+                  );
+                }
+                if (team2?.school && team2?.logos?.[0]) {
+                  const team2Regex = new RegExp(team2.school, 'g');
+                  formattedText = formattedText.replace(team2Regex, 
+                    `<span class="inline-flex items-center gap-1">
+                      <img src="${team2.logos[0]}" alt="${team2.school}" class="w-4 h-4 object-contain inline" />
+                      ${team2.school}
+                    </span>`
+                  );
+                }
+                
+                return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
               })()}
-            </p>
+            </div>
           </div>
 
           {/* Technical Analysis */}
@@ -545,12 +895,35 @@ const ComparisonSummary = ({ analysis, team1, team2 }) => {
               <i className="fas fa-calculator mr-2 gradient-text"></i>
               Technical Statistical Analysis
             </h4>
-            <p className="text-gray-700 leading-relaxed">
+            <div className="text-green-600 leading-relaxed font-medium">
               {(() => {
                 const analyzer = new ComparisonAnalyzer(team1, team2, analysis?.team1Stats, analysis?.team2Stats);
-                return analyzer.matchupAnalysis3(analysis?.matchupType);
+                const analysisText = analyzer.matchupAnalysis3(analysis?.matchupType);
+                
+                // Replace team names with team name + logo
+                let formattedText = analysisText;
+                if (team1?.school && team1?.logos?.[0]) {
+                  const team1Regex = new RegExp(team1.school, 'g');
+                  formattedText = formattedText.replace(team1Regex, 
+                    `<span class="inline-flex items-center gap-1">
+                      <img src="${team1.logos[0]}" alt="${team1.school}" class="w-4 h-4 object-contain inline" />
+                      ${team1.school}
+                    </span>`
+                  );
+                }
+                if (team2?.school && team2?.logos?.[0]) {
+                  const team2Regex = new RegExp(team2.school, 'g');
+                  formattedText = formattedText.replace(team2Regex, 
+                    `<span class="inline-flex items-center gap-1">
+                      <img src="${team2.logos[0]}" alt="${team2.school}" class="w-4 h-4 object-contain inline" />
+                      ${team2.school}
+                    </span>`
+                  );
+                }
+                
+                return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
               })()}
-            </p>
+            </div>
           </div>
         </div>
       </div>
@@ -785,12 +1158,35 @@ const OffenseComparison = ({ team1Stats, team2Stats, team1, team2 }) => {
           Detailed Offensive Analysis
         </h4>
         <div className="bg-white/30 rounded-2xl p-6">
-          <p className="text-gray-700 leading-relaxed">
+          <div className="text-green-600 leading-relaxed font-medium">
             {(() => {
               const analyzer = new ComparisonAnalyzer(team1, team2, team1Stats, team2Stats);
-              return analyzer.offensiveAnalysis();
+              const analysisText = analyzer.offensiveAnalysis();
+              
+              // Replace team names with team name + logo
+              let formattedText = analysisText;
+              if (team1?.school && team1?.logos?.[0]) {
+                const team1Regex = new RegExp(team1.school, 'g');
+                formattedText = formattedText.replace(team1Regex, 
+                  `<span class="inline-flex items-center gap-1">
+                    <img src="${team1.logos[0]}" alt="${team1.school}" class="w-4 h-4 object-contain inline" />
+                    ${team1.school}
+                  </span>`
+                );
+              }
+              if (team2?.school && team2?.logos?.[0]) {
+                const team2Regex = new RegExp(team2.school, 'g');
+                formattedText = formattedText.replace(team2Regex, 
+                  `<span class="inline-flex items-center gap-1">
+                    <img src="${team2.logos[0]}" alt="${team2.school}" class="w-4 h-4 object-contain inline" />
+                    ${team2.school}
+                  </span>`
+                );
+              }
+              
+              return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
             })()}
-          </p>
+          </div>
         </div>
       </div>
     </div>
@@ -1066,12 +1462,35 @@ const DefenseComparison = ({ team1Stats, team2Stats, team1, team2 }) => {
           Detailed Defensive Analysis
         </h4>
         <div className="bg-white/30 rounded-2xl p-6">
-          <p className="text-gray-700 leading-relaxed">
+          <div className="text-green-600 leading-relaxed font-medium">
             {(() => {
               const analyzer = new ComparisonAnalyzer(team1, team2, team1Stats, team2Stats);
-              return analyzer.defensiveAnalysis();
+              const analysisText = analyzer.defensiveAnalysis();
+              
+              // Replace team names with team name + logo
+              let formattedText = analysisText;
+              if (team1?.school && team1?.logos?.[0]) {
+                const team1Regex = new RegExp(team1.school, 'g');
+                formattedText = formattedText.replace(team1Regex, 
+                  `<span class="inline-flex items-center gap-1">
+                    <img src="${team1.logos[0]}" alt="${team1.school}" class="w-4 h-4 object-contain inline" />
+                    ${team1.school}
+                  </span>`
+                );
+              }
+              if (team2?.school && team2?.logos?.[0]) {
+                const team2Regex = new RegExp(team2.school, 'g');
+                formattedText = formattedText.replace(team2Regex, 
+                  `<span class="inline-flex items-center gap-1">
+                    <img src="${team2.logos[0]}" alt="${team2.school}" class="w-4 h-4 object-contain inline" />
+                    ${team2.school}
+                  </span>`
+                );
+              }
+              
+              return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
             })()}
-          </p>
+          </div>
         </div>
       </div>
     </div>
@@ -1229,12 +1648,35 @@ const FieldPositionView = ({ team1Stats, team2Stats, team1, team2 }) => {
           Detailed Field Position Analysis
         </h4>
         <div className="bg-white/30 rounded-2xl p-6">
-          <p className="text-gray-700 leading-relaxed">
+          <div className="text-green-600 leading-relaxed font-medium">
             {(() => {
               const analyzer = new ComparisonAnalyzer(team1, team2, team1Stats, team2Stats);
-              return analyzer.fieldPositionAnalysis();
+              const analysisText = analyzer.fieldPositionAnalysis();
+              
+              // Replace team names with team name + logo
+              let formattedText = analysisText;
+              if (team1?.school && team1?.logos?.[0]) {
+                const team1Regex = new RegExp(team1.school, 'g');
+                formattedText = formattedText.replace(team1Regex, 
+                  `<span class="inline-flex items-center gap-1">
+                    <img src="${team1.logos[0]}" alt="${team1.school}" class="w-4 h-4 object-contain inline" />
+                    ${team1.school}
+                  </span>`
+                );
+              }
+              if (team2?.school && team2?.logos?.[0]) {
+                const team2Regex = new RegExp(team2.school, 'g');
+                formattedText = formattedText.replace(team2Regex, 
+                  `<span class="inline-flex items-center gap-1">
+                    <img src="${team2.logos[0]}" alt="${team2.school}" class="w-4 h-4 object-contain inline" />
+                    ${team2.school}
+                  </span>`
+                );
+              }
+              
+              return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
             })()}
-          </p>
+          </div>
         </div>
       </div>
     </div>
@@ -1457,12 +1899,35 @@ const SituationalView = ({ team1Stats, team2Stats, team1, team2 }) => {
           Detailed Situational Analysis
         </h4>
         <div className="bg-white/30 rounded-2xl p-6">
-          <p className="text-gray-700 leading-relaxed">
+          <div className="text-green-600 leading-relaxed font-medium">
             {(() => {
               const analyzer = new ComparisonAnalyzer(team1, team2, team1Stats, team2Stats);
-              return analyzer.situationalAnalysis();
+              const analysisText = analyzer.situationalAnalysis();
+              
+              // Replace team names with team name + logo
+              let formattedText = analysisText;
+              if (team1?.school && team1?.logos?.[0]) {
+                const team1Regex = new RegExp(team1.school, 'g');
+                formattedText = formattedText.replace(team1Regex, 
+                  `<span class="inline-flex items-center gap-1">
+                    <img src="${team1.logos[0]}" alt="${team1.school}" class="w-4 h-4 object-contain inline" />
+                    ${team1.school}
+                  </span>`
+                );
+              }
+              if (team2?.school && team2?.logos?.[0]) {
+                const team2Regex = new RegExp(team2.school, 'g');
+                formattedText = formattedText.replace(team2Regex, 
+                  `<span class="inline-flex items-center gap-1">
+                    <img src="${team2.logos[0]}" alt="${team2.school}" class="w-4 h-4 object-contain inline" />
+                    ${team2.school}
+                  </span>`
+                );
+              }
+              
+              return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
             })()}
-          </p>
+          </div>
         </div>
       </div>
     </div>
