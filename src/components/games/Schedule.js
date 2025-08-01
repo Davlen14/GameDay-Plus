@@ -251,6 +251,41 @@ const MediaIcon = ({ outlet, mediaType }) => {
   return <i className={`${getNetworkIcon()} ${getNetworkColor()} text-lg ${getNetworkGlow()}`} />;
 };
 
+const BettingLines = ({ homeTeam, awayTeam }) => {
+  // For now, displaying -3 for all games as requested
+  const spread = -3;
+  
+  const sportsbooks = [
+    { name: 'DraftKings', logo: '/SportsbookLogos/Draftking.svg' },
+    { name: 'ESPN Bet', logo: '/SportsbookLogos/espnbet.svg' },
+    { name: 'Caesars', logo: '/SportsbookLogos/caesar.svg' }
+  ];
+
+  return (
+    <div className="bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 p-3">
+      <div className="flex flex-col">
+        <div className="flex items-start mb-2">
+          <i className="fas fa-chart-line text-green-600 text-xl drop-shadow-lg mr-2" />
+          <div className="text-xs font-bold text-gray-600">Betting Lines</div>
+        </div>
+        <div className="flex items-center space-x-3">
+          {sportsbooks.map((sportsbook, index) => (
+            <div key={sportsbook.name} className="flex items-center space-x-1">
+              <img 
+                src={sportsbook.logo} 
+                alt={sportsbook.name}
+                className="w-7 h-7 object-contain"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <span className="text-xs font-bold text-gray-700">{spread}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Schedule = () => {
   // Core state management
   const [selectedWeek, setSelectedWeek] = useState(1);
@@ -1093,6 +1128,12 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
 
           {/* Second Row: Enhanced Game Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            
+            {/* Betting Lines */}
+            <BettingLines 
+              homeTeam={getTeamAbbreviation(homeTeamId, homeTeam)}
+              awayTeam={getTeamAbbreviation(awayTeamId, awayTeam)}
+            />
             
             {/* Media Coverage */}
             {(tvOutlet || streamingOutlet) && (

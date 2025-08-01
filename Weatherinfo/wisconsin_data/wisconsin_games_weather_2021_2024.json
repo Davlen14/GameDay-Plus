@@ -1,0 +1,1 @@
+{"errors":[{"message":"Error in $: Failed reading: unescaped control character. Expecting object value","extensions":{"path":"$","code":"invalid-json"}}]}
