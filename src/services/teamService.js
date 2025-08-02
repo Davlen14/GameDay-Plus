@@ -450,5 +450,216 @@ export const teamService = {
   // Helper method to get teams (for backward compatibility)
   getTeams: async () => {
     return await teamService.getAllTeams();
+  },
+
+  // ========== OVERVIEW TAB SPECIFIC FUNCTIONS ==========
+  
+  // Get comprehensive team overview data for the Overview Tab
+  getTeamOverviewData: async (teamName, year = new Date().getFullYear()) => {
+    try {
+      console.log(`🏈 [OVERVIEW] Loading comprehensive data for ${teamName} (${year})`);
+      
+      // Fetch all necessary data concurrently for better performance
+      const [
+        basicInfo,
+        records,
+        rankings,
+        coachInfo,
+        recruitingInfo,
+        advancedStats
+      ] = await Promise.all([
+        teamService.getTeamByName(teamName),
+        teamService.getTeamRecords(teamName, year),
+        teamService.getCurrentRankings(teamName, year),
+        teamService.getCoachInfo(teamName, year),
+        teamService.getRecruitingRankings(year, teamName),
+        teamService.getAdvancedTeamStats(year, teamName)
+      ]);
+
+      // Use stadium information from basicInfo.location (no need for separate venues call)
+      const stadium = basicInfo?.location || {};
+
+      const overviewData = {
+        basicInfo: basicInfo || {},
+        records: records?.[0] || {},
+        rankings: rankings || {},
+        coach: coachInfo?.[0] || {},
+        recruiting: recruitingInfo?.[0] || {},
+        stadium: stadium || {},
+        advancedStats: advancedStats?.[0] || {}
+      };
+
+      console.log(`✅ [OVERVIEW] Successfully loaded data for ${teamName}`);
+      return overviewData;
+    } catch (error) {
+      console.error(`❌ [OVERVIEW] Error loading data for ${teamName}:`, error);
+      throw error;
+    }
+  },
+
+  // Get team records for a specific year
+  getTeamRecords: async (teamName, year = new Date().getFullYear()) => {
+    try {
+      return await fetchCollegeFootballData('/records', { 
+        year, 
+        team: teamName 
+      });
+    } catch (error) {
+      console.error('Error loading team records:', error);
+      return [];
+    }
+  },
+
+  // Get current rankings for a team across all polls
+  getCurrentRankings: async (teamName, year = new Date().getFullYear()) => {
+    try {
+      // Get the latest week's rankings
+      const rankings = await fetchCollegeFootballData('/rankings', { 
+        year, 
+        seasonType: 'regular' 
+      });
+      
+      if (!rankings || rankings.length === 0) return {};
+
+      // Find the most recent week with rankings
+      const latestWeek = Math.max(...rankings.map(r => r.week));
+      const latestRankings = rankings.filter(r => r.week === latestWeek);
+
+      // Extract rankings for this team from each poll
+      const teamRankings = {};
+      latestRankings.forEach(ranking => {
+        const teamRank = ranking.ranks?.find(rank => 
+          rank.school.toLowerCase() === teamName.toLowerCase()
+        );
+        
+        if (teamRank) {
+          const pollName = ranking.poll.toLowerCase();
+          if (pollName.includes('playoff') || pollName.includes('cfp')) {
+            teamRankings.cfp = teamRank.rank;
+          } else if (pollName.includes('ap')) {
+            teamRankings.ap = teamRank.rank;
+            teamRankings.apPoints = teamRank.points;
+          } else if (pollName.includes('coaches')) {
+            teamRankings.coaches = teamRank.rank;
+            teamRankings.coachesPoints = teamRank.points;
+          }
+        }
+      });
+
+      return teamRankings;
+    } catch (error) {
+      console.error('Error loading current rankings:', error);
+      return {};
+    }
+  },
+
+  // Get coach information for a specific team and year
+  getCoachInfo: async (teamName, year = new Date().getFullYear()) => {
+    try {
+      return await fetchCollegeFootballData('/coaches', { 
+        team: teamName, 
+        year 
+      });
+    } catch (error) {
+      console.error('Error loading coach info:', error);
+      return [];
+    }
+  },
+
+  // Get recent game performance stats for quick stats display
+  getRecentPerformance: async (teamName, year = new Date().getFullYear()) => {
+    try {
+      const games = await teamService.getAdvancedGameStats(year, teamName);
+      
+      if (!games || games.length === 0) return {};
+
+      // Calculate averages from recent games
+      const gameStats = games.map(game => {
+        const teamStats = game.teams?.find(t => 
+          t.team.toLowerCase() === teamName.toLowerCase()
+        );
+        return teamStats;
+      }).filter(Boolean);
+
+      if (gameStats.length === 0) return {};
+
+      // Calculate key performance metrics
+      const totalPoints = gameStats.reduce((sum, game) => sum + (game.points || 0), 0);
+      const avgPointsScored = (totalPoints / gameStats.length).toFixed(1);
+      
+      // Extract specific stats (first downs, total yards, etc.)
+      const getStatValue = (statName) => {
+        const values = gameStats.map(game => {
+          const stat = game.stats?.find(s => s.category === statName);
+          return stat ? parseInt(stat.stat) || 0 : 0;
+        });
+        return values.length > 0 ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : 0;
+      };
+
+      return {
+        avgPointsScored,
+        avgTotalYards: getStatValue('totalYards'),
+        avgFirstDowns: getStatValue('firstDowns'),
+        gamesPlayed: gameStats.length
+      };
+    } catch (error) {
+      console.error('Error loading recent performance:', error);
+      return {};
+    }
+  },
+
+  // Get national averages for ratings comparison
+  getNationalAverages: () => {
+    // These are approximate 2024 FBS national averages
+    return {
+      spOverall: 0.0,        // SP+ Overall (0 is average)
+      spOffense: 0.0,        // SP+ Offense (0 is average)  
+      spDefense: 0.0,        // SP+ Defense (0 is average, lower is better)
+      srs: 0.0,              // SRS (0 is average)
+      recruitingRank: 65,    // Average recruiting rank (out of ~130 teams)
+      recruitingPoints: 150  // Average recruiting points
+    };
+  },
+
+  // Get rating comparison with national average
+  getRatingComparison: (value, average, isDefensive = false) => {
+    if (value === null || value === undefined || value === '--') {
+      return { color: 'gray', status: 'N/A', difference: null };
+    }
+
+    const numValue = parseFloat(value);
+    const numAverage = parseFloat(average);
+    
+    if (isNaN(numValue) || isNaN(numAverage)) {
+      return { color: 'gray', status: 'N/A', difference: null };
+    }
+
+    const difference = numValue - numAverage;
+    
+    // For defensive stats, lower is better (reverse logic)
+    const threshold = isDefensive ? -2 : 2;
+    const isGood = isDefensive ? difference < -threshold : difference > threshold;
+    const isOk = isDefensive ? 
+      (difference >= -threshold && difference <= 0) : 
+      (difference <= threshold && difference >= 0);
+
+    let color, status;
+    if (isGood) {
+      color = 'green';
+      status = isDefensive ? 'Excellent' : 'Above Average';
+    } else if (isOk) {
+      color = 'yellow';
+      status = 'Average';
+    } else {
+      color = 'red';
+      status = isDefensive ? 'Needs Improvement' : 'Below Average';
+    }
+
+    return {
+      color,
+      status,
+      difference: difference.toFixed(1),
+      isDefensive
+    };
   }
 };

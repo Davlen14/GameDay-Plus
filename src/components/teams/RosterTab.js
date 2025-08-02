@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { playerService } from '../../services/playerService';
+import PlayerDetailView from './PlayerDetailView';
 
 const RosterTab = ({ team, primaryTeamColor }) => {
   const [roster, setRoster] = useState([]);
@@ -11,6 +12,7 @@ const RosterTab = ({ team, primaryTeamColor }) => {
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
   const [positions] = useState(['All', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P', 'LS']);
   const [error, setError] = useState(null);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   const teamRgb = primaryTeamColor ? hexToRgb(primaryTeamColor) : { r: 220, g: 38, b: 38 };
   const teamColorRgb = `${teamRgb.r}, ${teamRgb.g}, ${teamRgb.b}`;
@@ -40,9 +42,18 @@ const RosterTab = ({ team, primaryTeamColor }) => {
     } : { r: 220, g: 38, b: 38 };
   }
 
-  // Get position gradient
+  // Get position gradient - metallic team color effect
   const getPositionGradient = (position) => {
-    return positionGradients[position] || `linear-gradient(135deg, rgba(${teamColorRgb}, 1), rgba(${teamColorRgb}, 0.8), rgba(${teamColorRgb}, 0.6), rgba(${teamColorRgb}, 0.8), rgba(${teamColorRgb}, 1))`;
+    const darkerRgb = `${Math.max(0, teamRgb.r - 40)}, ${Math.max(0, teamRgb.g - 40)}, ${Math.max(0, teamRgb.b - 40)}`;
+    const lighterRgb = `${Math.min(255, teamRgb.r + 60)}, ${Math.min(255, teamRgb.g + 60)}, ${Math.min(255, teamRgb.b + 60)}`;
+    return `linear-gradient(135deg, 
+      rgba(${lighterRgb}, 0.95) 0%, 
+      rgba(${teamColorRgb}, 1) 15%, 
+      rgba(${darkerRgb}, 1) 35%, 
+      rgba(${teamColorRgb}, 0.9) 50%, 
+      rgba(${darkerRgb}, 1) 65%, 
+      rgba(${teamColorRgb}, 1) 85%, 
+      rgba(${lighterRgb}, 0.95) 100%)`;
   };
 
   useEffect(() => {
@@ -362,8 +373,8 @@ const RosterTab = ({ team, primaryTeamColor }) => {
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
                     style={viewMode === 'grid' ? {
-                      background: `linear-gradient(135deg, ${primaryTeamColor} 0%, rgba(${teamColorRgb}, 0.8) 100%)`,
-                      boxShadow: `0 8px 25px rgba(${teamColorRgb}, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)`
+                      background: getPositionGradient(),
+                      boxShadow: `0 8px 25px rgba(${teamColorRgb}, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)`
                     } : {
                       background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
                       backdropFilter: 'blur(10px)'
@@ -379,8 +390,8 @@ const RosterTab = ({ team, primaryTeamColor }) => {
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
                     style={viewMode === 'table' ? {
-                      background: `linear-gradient(135deg, ${primaryTeamColor} 0%, rgba(${teamColorRgb}, 0.8) 100%)`,
-                      boxShadow: `0 8px 25px rgba(${teamColorRgb}, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)`
+                      background: getPositionGradient(),
+                      boxShadow: `0 8px 25px rgba(${teamColorRgb}, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)`
                     } : {
                       background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
                       backdropFilter: 'blur(10px)'
@@ -415,8 +426,8 @@ const RosterTab = ({ team, primaryTeamColor }) => {
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
                   style={selectedPosition === position ? {
-                    background: getPositionGradient(position),
-                    boxShadow: `0 8px 25px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3)`
+                    background: getPositionGradient(),
+                    boxShadow: `0 8px 25px rgba(${teamColorRgb}, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)`
                   } : {
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
                     backdropFilter: 'blur(10px)'
@@ -441,9 +452,9 @@ const RosterTab = ({ team, primaryTeamColor }) => {
             <div className="flex items-center">
               <div 
                 className="w-12 h-12 rounded-full flex items-center justify-center mr-4"
-                style={{ backgroundColor: `rgba(${teamColorRgb}, 0.1)` }}
+                style={{ background: getPositionGradient() }}
               >
-                <i className="fas fa-users text-xl" style={{ color: primaryTeamColor }}></i>
+                <i className="fas fa-users text-xl text-white"></i>
               </div>
               <div>
                 <p className="text-2xl font-bold" style={{ color: primaryTeamColor }}>{roster.length}</p>
@@ -459,9 +470,9 @@ const RosterTab = ({ team, primaryTeamColor }) => {
             <div className="flex items-center">
               <div 
                 className="w-12 h-12 rounded-full flex items-center justify-center mr-4"
-                style={{ backgroundColor: `rgba(${teamColorRgb}, 0.1)` }}
+                style={{ background: getPositionGradient() }}
               >
-                <i className="fas fa-running text-xl" style={{ color: primaryTeamColor }}></i>
+                <i className="fas fa-running text-xl text-white"></i>
               </div>
               <div>
                 <p className="text-2xl font-bold" style={{ color: primaryTeamColor }}>
@@ -479,9 +490,9 @@ const RosterTab = ({ team, primaryTeamColor }) => {
             <div className="flex items-center">
               <div 
                 className="w-12 h-12 rounded-full flex items-center justify-center mr-4"
-                style={{ backgroundColor: `rgba(${teamColorRgb}, 0.1)` }}
+                style={{ background: getPositionGradient() }}
               >
-                <i className="fas fa-filter text-xl" style={{ color: primaryTeamColor }}></i>
+                <i className="fas fa-filter text-xl text-white"></i>
               </div>
               <div>
                 <p className="text-2xl font-bold" style={{ color: primaryTeamColor }}>
@@ -503,6 +514,7 @@ const RosterTab = ({ team, primaryTeamColor }) => {
                 className="group relative backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 transition-all duration-500 hover:shadow-2xl hover:scale-105 cursor-pointer overflow-hidden"
                 onMouseEnter={() => setHoveredPlayer(player.id)}
                 onMouseLeave={() => setHoveredPlayer(null)}
+                onClick={() => setSelectedPlayer(player)}
                 style={{
                   background: hoveredPlayer === player.id 
                     ? `linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.15) 50%, rgba(${teamColorRgb}, 0.08) 100%)`
@@ -634,6 +646,7 @@ const RosterTab = ({ team, primaryTeamColor }) => {
                       className="transition-all duration-300 group cursor-pointer relative"
                       onMouseEnter={() => setHoveredPlayer(player.id)}
                       onMouseLeave={() => setHoveredPlayer(null)}
+                      onClick={() => setSelectedPlayer(player)}
                       style={{ 
                         background: hoveredPlayer === player.id 
                           ? `linear-gradient(135deg, rgba(${teamColorRgb}, 0.08) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.08) 100%)`
@@ -716,6 +729,16 @@ const RosterTab = ({ team, primaryTeamColor }) => {
           </div>
         )}
       </div>
+
+      {/* Player Detail Modal */}
+      {selectedPlayer && (
+        <PlayerDetailView
+          player={selectedPlayer}
+          team={team}
+          primaryTeamColor={primaryTeamColor}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </div>
   );
 };

@@ -50,9 +50,9 @@ const createStarIcon = (starRating) => {
   if (!leafletAvailable || !L) return null;
   
   const colors = {
-    3: "#4287f5", // Blue
-    4: "#f5a742", // Orange
-    5: "linear-gradient(135deg, #FF6B6B 0%, #E63946 50%, #D32F2F 100%)", // Modern red gradient
+    3: "linear-gradient(135deg, #4287f5, #2563eb, #1d4ed8, #2563eb, #4287f5)", // Blue gradient
+    4: "linear-gradient(135deg, #f5a742, #ea580c, #dc2626, #ea580c, #f5a742)", // Orange gradient  
+    5: "linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)", // Official brand gradient
   };
 
   return L.divIcon({
@@ -66,7 +66,7 @@ const createStarIcon = (starRating) => {
           transform: translate(-50%, -50%);
           width: 30px;
           height: 30px;
-          background-color: ${starRating === 5 ? '#E63946' : colors[starRating] || "#888"};
+          background: ${colors[starRating] || "#888"};
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -75,7 +75,7 @@ const createStarIcon = (starRating) => {
           font-weight: bold;
           font-size: 12px;
           border: 2px solid white;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 20px rgba(${starRating === 5 ? '204, 0, 28' : starRating === 4 ? '245, 167, 66' : '66, 135, 245'}, ${starRating >= 4 ? '0.3' : '0.2'});
         ">
           ${starRating}★
         </div>
@@ -314,7 +314,15 @@ const Commitments = () => {
   const ratings = [...new Set(commitments.map(c => c.rating.toString()))];
 
   const getStarRating = (rating) => {
-    return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      if (i <= rating) {
+        stars.push('★');
+      } else {
+        stars.push('☆');
+      }
+    }
+    return stars.join('');
   };
 
   const formatCommitDate = (dateString) => {
@@ -330,14 +338,16 @@ const Commitments = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center text-gray-800">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-600 mx-auto mb-6"></div>
-            <p className="text-xl mb-6">Loading commitments data...</p>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 mx-auto mb-6" style={{
+              borderColor: '#cc001c'
+            }}></div>
+            <p className="text-xl mb-6 gradient-text font-bold">Loading commitments data...</p>
             
             {/* Progress Bar */}
             <div className="max-w-md mx-auto">
               <div className="bg-gray-200 rounded-full h-3 mb-2">
                 <div 
-                  className="bg-gradient-to-r from-red-500 to-red-600 h-3 rounded-full transition-all duration-300 ease-out"
+                  className="h-3 rounded-full transition-all duration-300 ease-out gradient-bg"
                   style={{ width: `${loadingProgress}%` }}
                 ></div>
               </div>
@@ -357,7 +367,7 @@ const Commitments = () => {
             <p className="text-xl text-red-600 mb-4">⚠️ {error}</p>
             <button 
               onClick={() => window.location.reload()}
-              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              className="text-white px-6 py-2 rounded-lg transition-colors gradient-bg hover:opacity-90"
             >
               Retry
             </button>
@@ -372,7 +382,7 @@ const Commitments = () => {
       <div className="w-[97%] max-w-none mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-gray-800 mb-4">
+          <h1 className="text-5xl font-bold gradient-text mb-4">
             Player Commitments
           </h1>
           <p className="text-xl text-gray-600">
@@ -382,36 +392,36 @@ const Commitments = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg">
+          <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
             <div className="text-center">
-              <div className="text-3xl font-bold text-gray-800">{commitments.length}</div>
+              <div className="text-3xl font-bold gradient-text">{commitments.length}</div>
               <div className="text-gray-600">Total Commits</div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg">
+          <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
             <div className="text-center">
-              <div className="text-3xl font-bold text-gray-800">
+              <div className="text-3xl font-bold gradient-text">
                 {commitments.filter(c => c.rating === 5).length}
               </div>
               <div className="text-gray-600">5-Star Recruits</div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg">
+          <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
             <div className="text-center">
-              <div className="text-3xl font-bold text-gray-800">{conferences.length}</div>
+              <div className="text-3xl font-bold gradient-text">{conferences.length}</div>
               <div className="text-gray-600">Conferences</div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg">
+          <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
             <div className="text-center">
-              <div className="text-3xl font-bold text-gray-800">{positions.length}</div>
+              <div className="text-3xl font-bold gradient-text">{positions.length}</div>
               <div className="text-gray-600">Positions</div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl p-6 mb-8 border border-gray-200 shadow-lg">
+        <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 mb-8 border border-white/20 shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-gray-700 text-sm font-medium mb-2">Search</label>
@@ -420,9 +430,7 @@ const Commitments = () => {
                 placeholder="Search players, schools..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2" style={{
-                  focusRingColor: '#E63946'
-                }}
+                className="w-full px-3 py-2 bg-white/80 backdrop-blur-sm border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#cc001c]/50 focus:border-[#cc001c] transition-all duration-200"
               />
             </div>
             <div>
@@ -430,9 +438,7 @@ const Commitments = () => {
               <select
                 value={selectedConference}
                 onChange={(e) => setSelectedConference(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2" style={{
-                  focusRingColor: '#E63946'
-                }}
+                className="w-full px-3 py-2 bg-white/80 backdrop-blur-sm border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#cc001c]/50 focus:border-[#cc001c] transition-all duration-200"
               >
                 <option value="all">All Conferences</option>
                 {conferences.map(conf => (
@@ -445,9 +451,7 @@ const Commitments = () => {
               <select
                 value={selectedPosition}
                 onChange={(e) => setSelectedPosition(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2" style={{
-                  focusRingColor: '#E63946'
-                }}
+                className="w-full px-3 py-2 bg-white/80 backdrop-blur-sm border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#cc001c]/50 focus:border-[#cc001c] transition-all duration-200"
               >
                 <option value="all">All Positions</option>
                 {positions.map(pos => (
@@ -460,9 +464,7 @@ const Commitments = () => {
               <select
                 value={selectedRating}
                 onChange={(e) => setSelectedRating(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2" style={{
-                  focusRingColor: '#E63946'
-                }}
+                className="w-full px-3 py-2 bg-white/80 backdrop-blur-sm border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#cc001c]/50 focus:border-[#cc001c] transition-all duration-200"
               >
                 <option value="all">All Ratings</option>
                 {ratings.sort((a, b) => b - a).map(rating => (
@@ -478,10 +480,7 @@ const Commitments = () => {
                   setSelectedRating('all');
                   setSearchTerm('');
                 }}
-                className="w-full text-white px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105"
-                style={{
-                  background: 'linear-gradient(135deg, #FF6B6B 0%, #E63946 50%, #D32F2F 100%)'
-                }}
+                className="w-full text-white px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 gradient-bg shadow-lg hover:shadow-xl"
               >
                 Clear Filters
               </button>
@@ -490,14 +489,14 @@ const Commitments = () => {
         </div>
 
         {/* Map */}
-        <div className="bg-white rounded-xl p-6 mb-8 border border-gray-200 shadow-lg">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+        <div className="bg-white/80 backdrop-blur-md rounded-xl p-6 mb-8 border border-white/20 shadow-xl">
+          <h2 className="text-2xl font-bold gradient-text mb-4 flex items-center">
             <svg className="w-6 h-6 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
             Commitment Map
           </h2>
-          <div className="h-96 rounded-lg overflow-hidden">
+          <div className="h-96 rounded-lg overflow-hidden shadow-inner bg-gray-50/50 backdrop-blur-sm">
             {leafletAvailable && MapContainer ? (
               <MapContainer
                 center={[39.8283, -98.5795]} // Center of USA
@@ -517,11 +516,9 @@ const Commitments = () => {
                   >
                     <Popup>
                       <div className="p-2 min-w-48">
-                        <div className="font-bold text-lg" style={{
-                          color: commitment.rating === 5 ? '#E63946' : '#991B1B'
-                        }}>{commitment.name}</div>
+                        <div className="font-bold text-lg gradient-text">{commitment.name}</div>
                         <div className="text-sm text-gray-600 mb-2">
-                          {commitment.position} • {getStarRating(commitment.rating)}
+                          {commitment.position} • <span className="gold-star-gradient font-bold text-lg">{getStarRating(commitment.rating)}</span>
                         </div>
                         <div className="text-sm">
                           <div><strong>School:</strong> {commitment.school}</div>
@@ -536,10 +533,10 @@ const Commitments = () => {
                 ))}
               </MapContainer>
             ) : (
-              <div className="bg-gray-100 rounded-lg h-full flex items-center justify-center">
+              <div className="bg-gray-100/80 backdrop-blur-sm rounded-lg h-full flex items-center justify-center">
                 <div className="text-center text-gray-800">
                   <div className="text-4xl mb-4">🗺️</div>
-                  <div className="text-lg mb-2">Interactive Map Coming Soon</div>
+                  <div className="text-lg mb-2 gradient-text font-bold">Interactive Map Coming Soon</div>
                   <div className="text-gray-600 text-sm">Map functionality requires additional setup</div>
                 </div>
               </div>
@@ -549,7 +546,7 @@ const Commitments = () => {
 
         {/* Results Summary */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          <h2 className="text-2xl font-bold gradient-text mb-2">
             Showing {filteredCommitments.length} of {commitments.length} recruits
           </h2>
           <p className="text-gray-600">
@@ -562,19 +559,30 @@ const Commitments = () => {
           {filteredCommitments.map((commitment) => (
             <div
               key={commitment.id}
-              className="bg-white rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              className="bg-white/80 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/90"
             >
               <div className="flex items-start mb-4">
-                {/* Bug logo with checkmark overlay */}
-                <div className="relative mr-3 flex-shrink-0">
-                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
+                {/* Team logo - metallic effect, bigger, no circle */}
+                <div className="relative mr-4 flex-shrink-0">
+                  {commitment.school !== 'Uncommitted' && commitment.teamLogo ? (
+                    <img 
+                      src={commitment.teamLogo} 
+                      alt={`${commitment.school} logo`}
+                      className="w-20 h-20 object-contain metallic-team-logo rounded-lg"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-20 h-20 bg-gray-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center border-2 border-white shadow-lg">
+                      <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
                   {commitment.committed && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="absolute -top-2 -right-2 w-8 h-8 green-metallic-gradient flex items-center justify-center border-2 border-white shadow-lg">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
@@ -586,19 +594,12 @@ const Commitments = () => {
                   <div className="text-gray-600 text-sm">
                     {commitment.position} • {commitment.height}, {commitment.weight}
                   </div>
-                  <div className="text-yellow-500 text-lg mt-1 font-bold" style={{
-                    background: commitment.rating === 5 ? 'linear-gradient(135deg, #FF6B6B 0%, #E63946 50%, #D32F2F 100%)' : '',
-                    WebkitBackgroundClip: commitment.rating === 5 ? 'text' : '',
-                    WebkitTextFillColor: commitment.rating === 5 ? 'transparent' : '',
-                    backgroundClip: commitment.rating === 5 ? 'text' : ''
-                  }}>
+                  <div className="gold-star-gradient text-xl mt-1 font-bold">
                     {getStarRating(commitment.rating)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="px-2 py-1 rounded text-xs font-bold text-white" style={{
-                    background: 'linear-gradient(135deg, #FF6B6B 0%, #E63946 50%, #D32F2F 100%)'
-                  }}>
+                  <div className="px-3 py-1 rounded-full text-xs font-bold text-white gradient-bg shadow-lg">
                     #{commitment.recruitingRank}
                   </div>
                 </div>
@@ -612,7 +613,7 @@ const Commitments = () => {
                       <img 
                         src={commitment.teamLogo} 
                         alt={`${commitment.school} logo`}
-                        className="w-5 h-5 object-contain"
+                        className="w-8 h-8 object-contain metallic-team-logo rounded"
                         onError={(e) => {
                           e.target.style.display = 'none';
                         }}
@@ -637,16 +638,26 @@ const Commitments = () => {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="mt-4 pt-4 border-t border-gray-200/50">
                 <div className="flex items-center justify-between">
                   {commitment.committed ? (
-                    <span className="text-green-600 text-sm font-medium">✓ Committed</span>
+                    <span className="text-green-600 text-sm font-medium flex items-center">
+                      <div className="w-5 h-5 mr-2 green-metallic-gradient flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      Committed
+                    </span>
                   ) : (
-                    <span className="text-orange-600 text-sm font-medium">○ Uncommitted</span>
+                    <span className="text-orange-600 text-sm font-medium flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Uncommitted
+                    </span>
                   )}
-                  <button className="text-sm font-medium text-white px-3 py-1 rounded transition-all duration-200 hover:scale-105" style={{
-                    background: 'linear-gradient(135deg, #FF6B6B 0%, #E63946 50%, #D32F2F 100%)'
-                  }}>
+                  <button className="text-sm font-medium text-white px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 gradient-bg shadow-lg hover:shadow-xl">
                     View Profile →
                   </button>
                 </div>
@@ -657,7 +668,7 @@ const Commitments = () => {
 
         {filteredCommitments.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-800 text-xl mb-2">No commitments found</div>
+            <div className="gradient-text text-xl mb-2 font-bold">No commitments found</div>
             <div className="text-gray-600">Try adjusting your filters to see more results</div>
           </div>
         )}

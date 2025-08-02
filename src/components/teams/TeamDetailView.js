@@ -208,11 +208,6 @@ const TeamDetailView = () => {
     );
   }
 
-  const teamLogo = team.logos?.[0];
-  const secureTeamLogo = teamLogo ? teamLogo.replace(/^http:/, 'https:') : null;
-  const primaryColor = team.color || '#dc2626';
-  const secondaryColor = team.alternateColor || '#991b1b';
-
   // Convert hex to RGB for CSS
   const hexToRgb = (hex) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -223,8 +218,60 @@ const TeamDetailView = () => {
     } : { r: 220, g: 38, b: 38 };
   };
 
+  // Calculate luminance/brightness of a color (0-255 scale)
+  const getColorBrightness = (hexColor) => {
+    const rgb = hexToRgb(hexColor);
+    // Use standard luminance formula: (R×299 + G×587 + B×114) / 1000
+    return (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+  };
+
+  // Smart algorithm to determine if we should use secondary logo/color
+  const shouldUseSecondary = () => {
+    const primaryBrightness = getColorBrightness(team.color || '#dc2626');
+    const secondaryBrightness = team.alternateColor ? getColorBrightness(team.alternateColor) : 0;
+    
+    // Use secondary if:
+    // 1. Primary color is very dark (brightness < 60)
+    // 2. AND secondary color is significantly brighter (at least 40 points brighter)
+    // 3. AND we have both secondary logo and color available
+    const primaryIsDark = primaryBrightness < 60;
+    const secondaryIsBrighter = secondaryBrightness > primaryBrightness + 40;
+    const hasSecondaryOptions = team.alternateColor && team.logos?.[1];
+    
+    return primaryIsDark && secondaryIsBrighter && hasSecondaryOptions;
+  };
+
+  // Apply smart logo and color selection
+  const useSecondaryOptions = shouldUseSecondary();
+  const teamLogo = useSecondaryOptions ? team.logos[1] : team.logos?.[0];
+  const secureTeamLogo = teamLogo ? teamLogo.replace(/^http:/, 'https:') : null;
+  const primaryColor = useSecondaryOptions ? team.alternateColor : (team.color || '#dc2626');
+  const secondaryColor = useSecondaryOptions ? team.color : (team.alternateColor || '#991b1b');
+
+  // Header always uses original team colors for consistency
+  const headerColor = team.color || '#dc2626';
+  const headerRgb = hexToRgb(headerColor);
+  const headerColorRgb = `${headerRgb.r}, ${headerRgb.g}, ${headerRgb.b}`;
+  
+  // Header text also uses original secondary color
+  const headerSecondaryColor = team.alternateColor || '#991b1b';
+
   const teamRgb = hexToRgb(primaryColor);
   const teamColorRgb = `${teamRgb.r}, ${teamRgb.g}, ${teamRgb.b}`;
+
+  // Get metallic gradient for team colors
+  const getMetallicGradient = () => {
+    const darkerRgb = `${Math.max(0, teamRgb.r - 40)}, ${Math.max(0, teamRgb.g - 40)}, ${Math.max(0, teamRgb.b - 40)}`;
+    const lighterRgb = `${Math.min(255, teamRgb.r + 60)}, ${Math.min(255, teamRgb.g + 60)}, ${Math.min(255, teamRgb.b + 60)}`;
+    return `linear-gradient(135deg, 
+      rgba(${lighterRgb}, 0.95) 0%, 
+      rgba(${teamColorRgb}, 1) 15%, 
+      rgba(${darkerRgb}, 1) 35%, 
+      rgba(${teamColorRgb}, 0.9) 50%, 
+      rgba(${darkerRgb}, 1) 65%, 
+      rgba(${teamColorRgb}, 1) 85%, 
+      rgba(${lighterRgb}, 0.95) 100%)`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -234,12 +281,12 @@ const TeamDetailView = () => {
         style={{ 
           height: '415px',
           background: `linear-gradient(135deg, 
-            rgba(${teamColorRgb}, 0.95) 0%, 
-            rgba(${teamColorRgb}, 1) 20%, 
-            rgba(${teamColorRgb}, 0.85) 40%, 
-            rgba(${teamColorRgb}, 1) 60%, 
-            rgba(${teamColorRgb}, 0.9) 80%, 
-            rgba(${teamColorRgb}, 0.95) 100%)`,
+            rgba(${headerColorRgb}, 0.95) 0%, 
+            rgba(${headerColorRgb}, 1) 20%, 
+            rgba(${headerColorRgb}, 0.85) 40%, 
+            rgba(${headerColorRgb}, 1) 60%, 
+            rgba(${headerColorRgb}, 0.9) 80%, 
+            rgba(${headerColorRgb}, 0.95) 100%)`,
           filter: 'contrast(1.1) saturate(1.2) brightness(1.05)',
         }}
       >
@@ -261,12 +308,12 @@ const TeamDetailView = () => {
             className="absolute inset-0"
             style={{
               background: `radial-gradient(ellipse 150px 100px at 30% 30%, 
-                rgba(${teamColorRgb}, 0.4) 0%, 
-                rgba(${teamColorRgb}, 0.1) 15%,
+                rgba(${headerColorRgb}, 0.4) 0%, 
+                rgba(${headerColorRgb}, 0.1) 15%,
                 transparent 25%, 
-                rgba(${teamColorRgb}, 0.25) 45%, 
+                rgba(${headerColorRgb}, 0.25) 45%, 
                 transparent 65%, 
-                rgba(${teamColorRgb}, 0.5) 85%, 
+                rgba(${headerColorRgb}, 0.5) 85%, 
                 transparent 100%)`,
               transform: animateGalaxy ? 'scale(1.1) rotate(360deg)' : 'scale(0.9) rotate(0deg)',
               transition: 'transform 20s linear infinite',
@@ -280,11 +327,11 @@ const TeamDetailView = () => {
             style={{
               background: `radial-gradient(ellipse 120px 80px at 70% 70%, 
                 transparent 0%, 
-                rgba(${teamColorRgb}, 0.15) 20%,
+                rgba(${headerColorRgb}, 0.15) 20%,
                 transparent 35%, 
-                rgba(${teamColorRgb}, 0.35) 55%, 
+                rgba(${headerColorRgb}, 0.35) 55%, 
                 transparent 75%,
-                rgba(${teamColorRgb}, 0.2) 90%,
+                rgba(${headerColorRgb}, 0.2) 90%,
                 transparent 100%)`,
               transform: animateGalaxy ? 'scale(0.8) rotate(-180deg)' : 'scale(1.2) rotate(180deg)',
               transition: 'transform 15s linear infinite',
@@ -346,7 +393,7 @@ const TeamDetailView = () => {
                 height: `${crystal.size}px`,
                 background: `radial-gradient(circle, 
                   rgba(255, 255, 255, ${crystal.brightness}) 0%, 
-                  rgba(${teamColorRgb}, 0.4) 30%,
+                  rgba(${headerColorRgb}, 0.4) 30%,
                   rgba(255, 255, 255, 0.3) 60%, 
                   transparent 100%)`,
                 transform: animateGalaxy 
@@ -356,7 +403,7 @@ const TeamDetailView = () => {
                 transitionDelay: `${crystal.delay}s`,
                 animationDirection: 'alternate',
                 filter: 'brightness(1.3) contrast(1.1) saturate(1.2)',
-                boxShadow: `0 0 8px rgba(${teamColorRgb}, 0.6), 0 0 16px rgba(255,255,255,0.3)`,
+                boxShadow: `0 0 8px rgba(${headerColorRgb}, 0.6), 0 0 16px rgba(255,255,255,0.3)`,
               }}
             />
           ))}
@@ -366,13 +413,13 @@ const TeamDetailView = () => {
             className="absolute inset-0"
             style={{
               background: `conic-gradient(from 0deg at 20% 80%, 
-                rgba(${teamColorRgb}, 0.18) 0deg,
+                rgba(${headerColorRgb}, 0.18) 0deg,
                 transparent 60deg, 
-                rgba(${teamColorRgb}, 0.12) 120deg, 
+                rgba(${headerColorRgb}, 0.12) 120deg, 
                 transparent 180deg,
-                rgba(${teamColorRgb}, 0.08) 240deg,
+                rgba(${headerColorRgb}, 0.08) 240deg,
                 transparent 300deg,
-                rgba(${teamColorRgb}, 0.15) 360deg)`,
+                rgba(${headerColorRgb}, 0.15) 360deg)`,
               transform: animateGalaxy ? 'rotate(90deg) scale(1.1)' : 'rotate(-90deg) scale(0.9)',
               transition: 'transform 25s ease-in-out infinite',
               animationDirection: 'alternate',
@@ -385,11 +432,11 @@ const TeamDetailView = () => {
             style={{
               background: `conic-gradient(from 180deg at 80% 20%, 
                 transparent 0deg,
-                rgba(${teamColorRgb}, 0.15) 60deg, 
+                rgba(${headerColorRgb}, 0.15) 60deg, 
                 transparent 120deg, 
-                rgba(${teamColorRgb}, 0.08) 180deg,
+                rgba(${headerColorRgb}, 0.08) 180deg,
                 transparent 240deg,
-                rgba(${teamColorRgb}, 0.12) 300deg,
+                rgba(${headerColorRgb}, 0.12) 300deg,
                 transparent 360deg)`,
               transform: animateGalaxy ? 'rotate(-120deg) scale(0.9)' : 'rotate(120deg) scale(1.1)',
               transition: 'transform 30s ease-in-out infinite',
@@ -410,7 +457,7 @@ const TeamDetailView = () => {
                 height: `${particle.size}px`,
                 background: `radial-gradient(circle, 
                   rgba(255, 255, 255, 0.8) 0%, 
-                  rgba(${teamColorRgb}, 0.4) 30%,
+                  rgba(${headerColorRgb}, 0.4) 30%,
                   rgba(255, 255, 255, 0.3) 60%, 
                   transparent 100%)`,
                 transform: animateGalaxy 
@@ -420,7 +467,7 @@ const TeamDetailView = () => {
                 transitionDelay: `${particle.delay}s`,
                 animationDirection: 'alternate',
                 filter: 'brightness(1.4) contrast(1.2)',
-                boxShadow: `0 0 12px rgba(${teamColorRgb}, 0.5), 0 0 24px rgba(255,255,255,0.3)`,
+                boxShadow: `0 0 12px rgba(${headerColorRgb}, 0.5), 0 0 24px rgba(255,255,255,0.3)`,
               }}
             />
           ))}
@@ -430,11 +477,11 @@ const TeamDetailView = () => {
             className="absolute inset-0"
             style={{
               background: `linear-gradient(${animateGalaxy ? '45deg' : '225deg'}, 
-                rgba(${teamColorRgb}, 0.08) 0%, 
+                rgba(${headerColorRgb}, 0.08) 0%, 
                 transparent 20%, 
-                rgba(${teamColorRgb}, 0.12) 40%, 
+                rgba(${headerColorRgb}, 0.12) 40%, 
                 transparent 60%, 
-                rgba(${teamColorRgb}, 0.06) 80%,
+                rgba(${headerColorRgb}, 0.06) 80%,
                 transparent 100%)`,
               transition: 'background 12s ease-in-out infinite',
               animationDirection: 'alternate',
@@ -512,7 +559,7 @@ const TeamDetailView = () => {
                   style={{ 
                     fontFamily: 'Orbitron, sans-serif', 
                     textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                    color: secondaryColor
+                    color: headerSecondaryColor
                   }}
                 >
                   {team.mascot}
@@ -520,7 +567,7 @@ const TeamDetailView = () => {
               )}
               
               {team.mascot && team.conference && (
-                <span style={{ color: secondaryColor }}>•</span>
+                <span style={{ color: headerSecondaryColor }}>•</span>
               )}
               
               {team.conference && (
@@ -529,7 +576,7 @@ const TeamDetailView = () => {
                   style={{ 
                     fontFamily: 'Orbitron, sans-serif', 
                     textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                    color: secondaryColor
+                    color: headerSecondaryColor
                   }}
                 >
                   {team.conference}
@@ -545,9 +592,9 @@ const TeamDetailView = () => {
           style={{
             background: `linear-gradient(90deg, 
               transparent 0%, 
-              rgba(${teamColorRgb}, 0.2) 20%,
-              rgba(${teamColorRgb}, 0.6) 50%, 
-              rgba(${teamColorRgb}, 0.2) 80%,
+              rgba(${headerColorRgb}, 0.2) 20%,
+              rgba(${headerColorRgb}, 0.6) 50%, 
+              rgba(${headerColorRgb}, 0.2) 80%,
               transparent 100%)`,
             filter: 'blur(8px) brightness(1.2)',
           }}
@@ -569,14 +616,13 @@ const TeamDetailView = () => {
                 }`}
                 style={{ fontFamily: 'Orbitron, sans-serif' }}
               >
-                {/* Active solid team color background */}
+                {/* Active metallic team color background */}
                 {activeTab === tab.id && (
                   <div 
                     className="absolute inset-0 rounded-lg"
                     style={{
-                      backgroundColor: primaryColor,
-                      boxShadow: `0 4px 16px rgba(${teamColorRgb}, 0.25), 0 2px 8px rgba(${teamColorRgb}, 0.15)`,
-                      opacity: 0.95
+                      background: getMetallicGradient(),
+                      boxShadow: `0 8px 25px rgba(${teamColorRgb}, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)`
                     }}
                   ></div>
                 )}

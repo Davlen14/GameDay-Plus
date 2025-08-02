@@ -2,6 +2,138 @@
   text-align: center;
 }
 
+/* GAMEDAY+ FanHub - Official Gradient Styles */
+.gradient-bg {
+  background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.icon-gradient {
+  background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Star Rating Gradients */
+.gradient-text-3star {
+  background: linear-gradient(135deg, #4287f5, #2563eb, #1d4ed8, #2563eb, #4287f5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-4star {
+  background: linear-gradient(135deg, #f5a742, #ea580c, #dc2626, #ea580c, #f5a742);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-5star {
+  background: linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Modern Gold Star Gradient */
+.gold-star-gradient {
+  background: linear-gradient(135deg, #ffd700, #ffb347, #ff8c00, #ffb347, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+/* Modern Green Metallic Gradient for Checkmarks */
+.green-metallic-gradient {
+  background: linear-gradient(135deg, #10b981, #059669, #047857, #059669, #10b981);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 20px rgba(16, 185, 129, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.green-metallic-gradient::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  right: 10%;
+  bottom: 60%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Metallic Team Logo Effects */
+.metallic-team-logo {
+  filter: contrast(1.2) saturate(1.3) brightness(1.1) drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.metallic-team-logo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255,255,255,0.2) 0%, 
+    transparent 30%, 
+    transparent 70%, 
+    rgba(255,255,255,0.1) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.metallic-team-logo:hover {
+  filter: contrast(1.3) saturate(1.5) brightness(1.15) 
+    drop-shadow(0 0 15px rgba(255,255,255,0.3))
+    drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+  transform: scale(1.05);
+}
+
+.metallic-team-logo:hover::before {
+  background: linear-gradient(135deg, 
+    rgba(255,255,255,0.3) 0%, 
+    transparent 30%, 
+    transparent 70%, 
+    rgba(255,255,255,0.2) 100%
+  );
+  animation: metallic-shine 1.5s ease-in-out;
+}
+
+@keyframes metallic-shine {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(100%) skewX(-15deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
