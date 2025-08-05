@@ -20,6 +20,22 @@ const OverviewTab = ({ team, primaryTeamColor }) => {
     } : { r: 220, g: 38, b: 38 };
   }
 
+  // Helper to aggregate coach career data (similar to CoachOverview)
+  const aggregateCoachData = (seasons) => {
+    if (!seasons || seasons.length === 0) return { games: 0, wins: 0, losses: 0, ties: 0 };
+    
+    return seasons.reduce(
+      (acc, season) => {
+        acc.games += season.games || 0;
+        acc.wins += season.wins || 0;
+        acc.losses += season.losses || 0;
+        acc.ties += season.ties || 0;
+        return acc;
+      },
+      { games: 0, wins: 0, losses: 0, ties: 0 }
+    );
+  };
+
   // Get position gradient - metallic team color effect (from RosterTab)
   const getPositionGradient = () => {
     const darkerRgb = `${Math.max(0, teamRgb.r - 40)}, ${Math.max(0, teamRgb.g - 40)}, ${Math.max(0, teamRgb.b - 40)}`;
@@ -59,6 +75,13 @@ const OverviewTab = ({ team, primaryTeamColor }) => {
       status: comparison.status,
       difference: comparison.difference
     };
+  };
+
+  // Check if logo needs colored background (for light/white logos)
+  const needsColoredBackground = (logoUrl, index) => {
+    // Secondary logo (index 1) gets colored background for better visibility
+    // You can also add logic here to detect light colors in the future
+    return index === 1;
   };
 
   // Load comprehensive team data
@@ -301,19 +324,32 @@ const OverviewTab = ({ team, primaryTeamColor }) => {
               <div className="mt-6 pt-6 border-t border-white/20">
                 <div className="text-sm font-bold text-gray-700 mb-4">Official Logos:</div>
                 <div className="flex space-x-4">
-                  {teamData.basicInfo.logos.slice(0, 2).map((logo, index) => (
-                    <div 
-                      key={index}
-                      className="backdrop-blur-sm bg-white/10 rounded-2xl p-4 border border-white/20"
-                    >
-                      <img 
-                        src={logo} 
-                        alt={`${team.school} logo`}
-                        className="w-16 h-16 object-contain"
-                        onError={(e) => e.target.style.display = 'none'}
-                      />
-                    </div>
-                  ))}
+                  {teamData.basicInfo.logos.slice(0, 2).map((logo, index) => {
+                    const isSecondary = index === 1;
+                    return (
+                      <div 
+                        key={index}
+                        className={`backdrop-blur-sm rounded-2xl p-4 border transition-all duration-300 hover:scale-105 ${
+                          isSecondary 
+                            ? 'border-white/40 shadow-xl' 
+                            : 'bg-white/10 border-white/20'
+                        }`}
+                        style={isSecondary ? {
+                          background: getPositionGradient()
+                        } : {}}
+                      >
+                        <img 
+                          src={logo} 
+                          alt={`${team.school} logo ${index === 0 ? 'primary' : 'secondary'}`}
+                          className="w-16 h-16 object-contain"
+                          onError={(e) => e.target.style.display = 'none'}
+                          style={isSecondary ? {
+                            filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.25))',
+                          } : {}}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -479,27 +515,39 @@ const OverviewTab = ({ team, primaryTeamColor }) => {
                     <div className="text-sm text-gray-600 font-medium">
                       Hired: {teamData.coach.hireDate ? new Date(teamData.coach.hireDate).getFullYear() : 'N/A'}
                     </div>
-                    {teamData.coach.seasons?.[0] && (
+                    {(() => {
+                      const careerStats = aggregateCoachData(teamData.coach.seasons);
+                      const winPct = careerStats.games > 0 ? ((careerStats.wins / careerStats.games) * 100).toFixed(1) : 0;
+                      return careerStats.games > 0 ? (
+                        <div className="text-sm text-gray-500 mt-1">
+                          Career Record: {careerStats.wins}-{careerStats.losses} ({winPct}%)
+                        </div>
+                      ) : null;
+                    })()}
+                    {teamData.allTimeRecord && (
                       <div className="text-sm text-gray-500 mt-1">
-                        Career Win %: {((teamData.coach.seasons[0].wins / (teamData.coach.seasons[0].wins + teamData.coach.seasons[0].losses)) * 100).toFixed(1)}%
+                        All-Time Program Wins: {teamData.allTimeRecord.totalWins}
                       </div>
                     )}
                   </div>
                 </div>
-                {teamData.coach.seasons?.[0] && (
-                  <div className="text-right">
-                    <div 
-                      className="text-3xl font-black mb-2"
-                      style={{ color: primaryTeamColor, fontFamily: 'Orbitron, sans-serif' }}
-                    >
-                      {teamData.coach.seasons[0].wins}-{teamData.coach.seasons[0].losses}
+                {(() => {
+                  const currentSeason = teamData.coach.seasons?.[0];
+                  return currentSeason ? (
+                    <div className="text-right">
+                      <div 
+                        className="text-3xl font-black mb-2"
+                        style={{ color: primaryTeamColor, fontFamily: 'Orbitron, sans-serif' }}
+                      >
+                        {currentSeason.wins}-{currentSeason.losses}
+                      </div>
+                      <div className="text-sm text-gray-600 font-bold">2024 Record</div>
+                      {currentSeason.postseasonRank && (
+                        <div className="text-xs text-gray-500 mt-1">Final Rank: #{currentSeason.postseasonRank}</div>
+                      )}
                     </div>
-                    <div className="text-sm text-gray-600 font-bold">2024 Record</div>
-                    {teamData.coach.seasons[0].postseasonRank && (
-                      <div className="text-xs text-gray-500 mt-1">Final Rank: #{teamData.coach.seasons[0].postseasonRank}</div>
-                    )}
-                  </div>
-                )}
+                  ) : null;
+                })()}
               </div>
             </div>
           </div>

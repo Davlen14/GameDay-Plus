@@ -47,10 +47,86 @@ class MatchupPredictor {
     this.weatherDataCache = new Map();
     this.bettingDataCache = new Map();
     
+    // NEW: API call tracking and retry mechanism
+    this.apiCallCache = new Map();
+    this.apiFailureCount = new Map();
+    this.maxRetries = 2;
+    this.cacheExpiry = 10 * 60 * 1000; // 10 minutes
+    
     this.isInitialized = false;
     this.modelVersion = '2.0-Enhanced';
     
     console.log('🚀 Enhanced MatchupPredictor v2.0 initialized with advanced metrics');
+  }
+
+  /**
+   * Robust API call method with caching, retry logic, and error recovery
+   */
+  async robustApiCall(service, method, params, cacheKey = null) {
+    // Generate cache key if not provided
+    if (!cacheKey) {
+      cacheKey = `${service.name || 'unknown'}_${method}_${JSON.stringify(params)}`;
+    }
+    
+    // Check cache first
+    const cached = this.apiCallCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < this.cacheExpiry)) {
+      console.log(`💾 [CACHE HIT] Using cached data for ${cacheKey}`);
+      return cached.data;
+    }
+    
+    // Get failure count for this API call
+    const failureKey = `${service.name || 'unknown'}_${method}`;
+    const failures = this.apiFailureCount.get(failureKey) || 0;
+    
+    // If too many failures, return cached data or null
+    if (failures >= this.maxRetries) {
+      console.warn(`🚫 [API SKIP] Too many failures for ${failureKey}, using cache or fallback`);
+      return cached?.data || null;
+    }
+    
+    try {
+      console.log(`📡 [API CALL] ${failureKey} with params:`, params);
+      
+      // Make the API call with proper parameter handling
+      let result;
+      if (Array.isArray(params)) {
+        result = await service[method](...params);
+      } else if (typeof params === 'object') {
+        result = await service[method](params);
+      } else {
+        result = await service[method](params);
+      }
+      
+      // Cache successful result
+      this.apiCallCache.set(cacheKey, {
+        data: result,
+        timestamp: Date.now()
+      });
+      
+      // Reset failure count on success
+      this.apiFailureCount.set(failureKey, 0);
+      
+      console.log(`✅ [API SUCCESS] ${failureKey} returned ${Array.isArray(result) ? result.length : 'data'} result(s)`);
+      return result;
+      
+    } catch (error) {
+      // Increment failure count
+      const newFailureCount = failures + 1;
+      this.apiFailureCount.set(failureKey, newFailureCount);
+      
+      console.error(`❌ [API ERROR] ${failureKey} failed (attempt ${newFailureCount}/${this.maxRetries}):`, error.message);
+      
+      // Return cached data if available
+      if (cached) {
+        console.log(`🔄 [FALLBACK] Using stale cached data for ${failureKey}`);
+        return cached.data;
+      }
+      
+      // No cached data available
+      console.warn(`⚠️ [NO FALLBACK] No cached data available for ${failureKey}`);
+      return null;
+    }
   }
 
   /**
@@ -602,17 +678,38 @@ class MatchupPredictor {
       console.log(`📊 [API DEBUG] Loading season stats for ${team.school}...`);
       predictionDebugger.log('API_CALL', `Fetching season stats for ${team.school}`, 'info');
       
-      const stats = await teamService.getTeamStats(2024, team.school);
+      // Use robust API call with caching
+      const stats = await this.robustApiCall(
+        teamService,
+        'getTeamStats',
+        [2024, team.school],
+        `teamStats_${team.school}_2024`
+      );
+      
       predictionDebugger.trackApiCall('teamService', 'getTeamStats', { year: 2024, team: team.school }, stats);
       
       if (stats && stats.length > 0) {
-        // Convert array of {statName, statValue} to object
-        seasonStats = {};
-        stats.forEach(stat => {
-          seasonStats[stat.statName] = stat.statValue;
-        });
-        console.log(`✅ [API DEBUG] Loaded ${stats.length} season stats for ${team.school}`);
-        predictionDebugger.log('DATA_SUCCESS', `Loaded ${stats.length} season stats`, 'success', { teamName: team.school, statsCount: stats.length });
+        // College Football API returns array of team stat objects, find our team
+        const teamStat = stats.find(s => s.team === team.school || s.school === team.school);
+        
+        if (teamStat) {
+          seasonStats = {
+            games: teamStat.games || 0,
+            totalYards: teamStat.totalYards || 0,
+            totalYardsAllowed: teamStat.totalYardsAllowed || 0,
+            passYards: teamStat.netPassingYards || 0,
+            rushYards: teamStat.rushingYards || 0,
+            turnovers: teamStat.turnovers || 0,
+            // Add any other available stats
+            ...teamStat
+          };
+          console.log(`✅ [API DEBUG] Loaded season stats for ${team.school}:`, seasonStats);
+          predictionDebugger.log('DATA_SUCCESS', `Loaded season stats`, 'success', { teamName: team.school, games: seasonStats.games });
+        } else {
+          console.warn(`⚠️ [API DEBUG] Team ${team.school} not found in season stats response`);
+        }
+      } else {
+        console.warn(`⚠️ [API DEBUG] No season stats returned for ${team.school}`);
       }
     } catch (error) {
       predictionDebugger.trackApiCall('teamService', 'getTeamStats', { year: 2024, team: team.school }, null, error);
@@ -629,25 +726,26 @@ class MatchupPredictor {
     // Use season stats if available, otherwise calculate from games
     let avgPointsScored, avgPointsAllowed;
     
-    if (seasonStats && seasonStats.games) {
-      // Calculate from season totals if available
-      const games = seasonStats.games;
-      
-      // Look for scoring stats in the season data
-      // Note: College Football API doesn't provide direct points per game, 
-      // so we still need to calculate from game history
+    if (seasonStats && seasonStats.games > 0) {
+      // We don't have direct points from season stats API, so still calculate from game history
+      // but we can use other season metrics for validation
       avgPointsScored = allGames.length > 0 ? 
         allGames.reduce((sum, g) => sum + g.pointsScored, 0) / allGames.length : 0;
       avgPointsAllowed = allGames.length > 0 ? 
         allGames.reduce((sum, g) => sum + g.pointsAllowed, 0) / allGames.length : 0;
       
-      console.log(`📊 [API DEBUG] Calculated from games - PPG: ${avgPointsScored.toFixed(1)}, PAPG: ${avgPointsAllowed.toFixed(1)}`);
+      console.log(`📊 [API DEBUG] Using game history for scoring (season stats don't include points) - PPG: ${avgPointsScored.toFixed(1)}, PAPG: ${avgPointsAllowed.toFixed(1)}`);
+      console.log(`📊 [API DEBUG] Season stats available for context:`, {
+        games: seasonStats.games,
+        totalYards: seasonStats.totalYards,
+        totalYardsAllowed: seasonStats.totalYardsAllowed
+      });
     } else {
       // Calculate from game history
       avgPointsScored = this.calculateAverage(allGames.map(g => g.pointsScored));
       avgPointsAllowed = this.calculateAverage(allGames.map(g => g.pointsAllowed));
       
-      console.log(`📊 [API DEBUG] Calculated from game history - PPG: ${avgPointsScored.toFixed(1)}, PAPG: ${avgPointsAllowed.toFixed(1)}`);
+      console.log(`📊 [API DEBUG] Calculated from game history only - PPG: ${avgPointsScored.toFixed(1)}, PAPG: ${avgPointsAllowed.toFixed(1)}`);
     }
 
     const pointDifferential = avgPointsScored - avgPointsAllowed;
@@ -667,7 +765,15 @@ class MatchupPredictor {
     // Try to get more accurate SP+ ratings for 2024
     try {
       predictionDebugger.log('API_CALL', `Fetching current ratings for ${team.school}`, 'info');
-      const currentRatings = await teamService.getTeamRatings(team.school, 2024);
+      
+      // Use robust API call with caching
+      const currentRatings = await this.robustApiCall(
+        teamService,
+        'getTeamRatings',
+        [team.school, 2024],
+        `teamRatings_${team.school}_2024`
+      );
+      
       predictionDebugger.trackApiCall('teamService', 'getTeamRatings', { team: team.school, year: 2024 }, currentRatings);
       
       if (currentRatings && currentRatings.length > 0) {
@@ -676,6 +782,14 @@ class MatchupPredictor {
           spRating = { rating: spData.rating || spData.value, ranking: spData.ranking || spData.rank };
           console.log(`📈 [METRICS] Updated SP+ for ${team.school}: ${spRating.rating.toFixed(1)}`);
           predictionDebugger.log('DATA_UPDATE', `Updated SP+ rating: ${spRating.rating.toFixed(1)}`, 'success');
+        }
+        
+        // Also check for ELO data in the ratings
+        const eloData = currentRatings.find(r => r.rating_type === 'elo' || r.type === 'elo');
+        if (eloData) {
+          eloRating = { elo: eloData.rating || eloData.value };
+          console.log(`📈 [METRICS] Updated ELO for ${team.school}: ${eloRating.elo}`);
+          predictionDebugger.log('DATA_UPDATE', `Updated ELO rating: ${eloRating.elo}`, 'success');
         }
       }
     } catch (error) {
@@ -2155,20 +2269,55 @@ class MatchupPredictor {
     const awayRecentWinPct = awayMetrics?.recentWinPct || 0.5;
     
     const scoreDiff = safeHomeScore - safeAwayScore;
-    const strengthDiff = (homeSpRating - awaySpRating) / 10;
     
-    // Base probability from score differential
-    let prob = 0.5 + (scoreDiff / 35);
+    // Enhanced probability calculation with multiple factors
+    let prob = 0.5; // Start neutral
     
-    // Adjust for team strength
-    prob += strengthDiff * 0.05;
+    // 1. Score differential impact (most direct predictor)
+    prob += (scoreDiff / 35) * 0.7; // 70% weight on score difference
     
-    // Adjust for recent form
+    // 2. Team strength differential (SP+ is very predictive)
+    if (Math.abs(homeSpRating) > 0.1 || Math.abs(awaySpRating) > 0.1) {
+      const strengthDiff = (homeSpRating - awaySpRating) / 10;
+      prob += strengthDiff * 0.15; // 15% weight on strength
+      
+      console.log(`🧮 [WIN PROB] SP+ differential: ${strengthDiff.toFixed(2)} (Home: ${homeSpRating.toFixed(1)}, Away: ${awaySpRating.toFixed(1)})`);
+    }
+    
+    // 3. Recent form (momentum matters)
     const formDiff = (homeRecentWinPct - awayRecentWinPct);
-    prob += formDiff * 0.1;
+    if (Math.abs(formDiff) > 0.05) { // Only if meaningful difference
+      prob += formDiff * 0.08; // 8% weight on recent form
+      
+      console.log(`🧮 [WIN PROB] Recent form differential: ${formDiff.toFixed(2)} (Home: ${(homeRecentWinPct*100).toFixed(1)}%, Away: ${(awayRecentWinPct*100).toFixed(1)}%)`);
+    }
     
-    // Bound between 0.05 and 0.95
-    return Math.max(0.05, Math.min(0.95, prob));
+    // 4. Additional factors if available
+    
+    // Win percentage differential (season-long performance)
+    const homeWinPct = homeMetrics?.winPercentage || 0.5;
+    const awayWinPct = awayMetrics?.winPercentage || 0.5;
+    const winPctDiff = homeWinPct - awayWinPct;
+    if (Math.abs(winPctDiff) > 0.1) {
+      prob += winPctDiff * 0.05; // 5% weight on overall win percentage
+    }
+    
+    // Point differential for the season (quality of wins/losses)
+    const homePointDiff = homeMetrics?.pointDifferential || 0;
+    const awayPointDiff = awayMetrics?.pointDifferential || 0;
+    const avgPointDiff = (homePointDiff - awayPointDiff) / 20; // Normalize
+    if (Math.abs(avgPointDiff) > 0.05) {
+      prob += avgPointDiff * 0.03; // 3% weight on point differential
+    }
+    
+    // Home field advantage (typically 3-4 points)
+    const homeFieldAdv = homeMetrics?.homeFieldAdvantage || 3.2;
+    prob += (homeFieldAdv / 35) * 0.5; // Convert points to probability
+    
+    console.log(`🧮 [WIN PROB] Calculated probability: ${(prob * 100).toFixed(1)}% for home team (score diff: ${scoreDiff})`);
+    
+    // Bound between realistic limits (very rarely is a game 100% certain)
+    return Math.max(0.02, Math.min(0.98, prob));
   }
 
   probabilityToMoneyline(probability) {
@@ -2180,7 +2329,8 @@ class MatchupPredictor {
   }
 
   calculateConfidence(prediction, homeMetrics, awayMetrics) {
-    let confidence = 0.7; // Base confidence
+    let confidence = 0.6; // Start with moderate base confidence
+    let confidenceFactors = [];
 
     // Safely access metrics with fallbacks
     const homeGames = homeMetrics?.totalGames || 0;
@@ -2189,22 +2339,108 @@ class MatchupPredictor {
     const awaySpRating = awayMetrics?.spRating || 0;
     const spread = prediction?.spread || 0;
 
-    // Data quality
+    // 1. Data Quality Assessment (30% weight)
     const dataQuality = Math.min(homeGames, awayGames);
-    if (dataQuality >= 10) confidence += 0.1;
-    else if (dataQuality <= 5) confidence -= 0.1;
+    let dataQualityBoost = 0;
+    if (dataQuality >= 12) {
+      dataQualityBoost = 0.15; // Full season data
+      confidenceFactors.push('Full season data available');
+    } else if (dataQuality >= 8) {
+      dataQualityBoost = 0.10; // Most of season
+      confidenceFactors.push('Substantial season data');
+    } else if (dataQuality >= 5) {
+      dataQualityBoost = 0.05; // Mid-season data
+      confidenceFactors.push('Mid-season data');
+    } else {
+      dataQualityBoost = -0.10; // Limited data
+      confidenceFactors.push('Limited season data');
+    }
+    confidence += dataQualityBoost;
 
-    // Prediction certainty
+    // 2. Prediction Certainty (25% weight)
     const spreadAbs = Math.abs(spread);
-    if (spreadAbs >= 10) confidence += 0.1;
-    else if (spreadAbs <= 3) confidence -= 0.05;
+    let certaintyBoost = 0;
+    if (spreadAbs >= 14) {
+      certaintyBoost = 0.12; // Likely blowout
+      confidenceFactors.push('Clear favorite identified');
+    } else if (spreadAbs >= 7) {
+      certaintyBoost = 0.08; // Comfortable favorite
+      confidenceFactors.push('Moderate favorite');
+    } else if (spreadAbs >= 3) {
+      certaintyBoost = 0.04; // Close but not toss-up
+      confidenceFactors.push('Close game predicted');
+    } else {
+      certaintyBoost = -0.05; // Toss-up game
+      confidenceFactors.push('Toss-up game (low certainty)');
+    }
+    confidence += certaintyBoost;
 
-    // Team strength differential
+    // 3. Team Strength Differential (20% weight)
     const strengthDiff = Math.abs(homeSpRating - awaySpRating);
-    if (strengthDiff >= 10) confidence += 0.1;
-    else if (strengthDiff <= 3) confidence -= 0.05;
+    let strengthBoost = 0;
+    if (strengthDiff >= 15) {
+      strengthBoost = 0.10; // Large talent gap
+      confidenceFactors.push('Significant talent gap');
+    } else if (strengthDiff >= 8) {
+      strengthBoost = 0.06; // Moderate talent gap
+      confidenceFactors.push('Moderate talent difference');
+    } else if (strengthDiff >= 3) {
+      strengthBoost = 0.03; // Small talent gap
+      confidenceFactors.push('Small talent difference');
+    } else {
+      strengthBoost = -0.03; // Very even teams
+      confidenceFactors.push('Evenly matched teams');
+    }
+    confidence += strengthBoost;
 
-    return Math.max(0.4, Math.min(0.95, confidence));
+    // 4. Metrics Availability (15% weight)
+    let metricsAvailable = 0;
+    const availableMetrics = [];
+    
+    if (homeMetrics?.avgPointsScored > 0 && awayMetrics?.avgPointsScored > 0) {
+      metricsAvailable++;
+      availableMetrics.push('Scoring data');
+    }
+    if (homeMetrics?.eloRating && awayMetrics?.eloRating) {
+      metricsAvailable++;
+      availableMetrics.push('ELO ratings');
+    }
+    if (homeMetrics?.offensiveEfficiency && awayMetrics?.offensiveEfficiency) {
+      metricsAvailable++;
+      availableMetrics.push('Efficiency metrics');
+    }
+    if (homeMetrics?.recentForm !== undefined && awayMetrics?.recentForm !== undefined) {
+      metricsAvailable++;
+      availableMetrics.push('Recent form');
+    }
+
+    const metricsBoost = (metricsAvailable / 4) * 0.08; // Up to 8% boost
+    confidence += metricsBoost;
+    confidenceFactors.push(`${metricsAvailable}/4 key metrics available`);
+
+    // 5. Win Probability Clarity (10% weight)
+    const winProb = prediction?.winProbability?.home || 50;
+    const winProbDiff = Math.abs(winProb - 50);
+    let winProbBoost = 0;
+    if (winProbDiff >= 25) {
+      winProbBoost = 0.05; // Clear favorite (75%+ or 25%-)
+      confidenceFactors.push('Clear win probability advantage');
+    } else if (winProbDiff >= 15) {
+      winProbBoost = 0.03; // Moderate favorite
+      confidenceFactors.push('Moderate win probability edge');
+    } else {
+      winProbBoost = -0.02; // Close to 50-50
+      confidenceFactors.push('Even win probability');
+    }
+    confidence += winProbBoost;
+
+    // Final confidence with realistic bounds
+    const finalConfidence = Math.max(0.35, Math.min(0.95, confidence));
+    
+    console.log(`🎯 [CONFIDENCE] Final confidence: ${(finalConfidence * 100).toFixed(1)}%`);
+    console.log(`🎯 [CONFIDENCE] Factors:`, confidenceFactors);
+    
+    return finalConfidence;
   }
 
   // Placeholder implementations for data loading methods

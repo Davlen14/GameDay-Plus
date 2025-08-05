@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { gameService } from '../../services/gameService';
-import graphqlService from '../../services/graphqlService';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { gameService, teamService, rankingsService } from '../../services';
 
 const LiveGames = () => {
   const [animateShine, setAnimateShine] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [teams, setTeams] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [selectedWeek, setSelectedWeek] = useState(1);
-  const [selectedConference, setSelectedConference] = useState('all');
-  const [error, setError] = useState(null);
+  const [selectedConference, setSelectedConference] = useState('');
+  const [selectedYear] = useState(2025);
 
   // Available weeks and conferences for filtering
   const weeks = Array.from({ length: 15 }, (_, i) => i + 1);
   const conferences = [
-    { value: 'all', label: 'All Conferences' },
+    { value: '', label: 'All Conferences' },
     { value: 'SEC', label: 'SEC' },
     { value: 'Big Ten', label: 'Big Ten' },
     { value: 'Big 12', label: 'Big 12' },
@@ -38,192 +39,166 @@ const LiveGames = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Load games when week or conference changes
-  useEffect(() => {
-    const loadGames = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Use 2024 since 2025 season hasn't started yet (same as GamePredictor)
-        const year = 2024;
-        console.log(`🚀 Loading games for Week ${selectedWeek} ${year} using GamePredictor pattern...`);
-        
-        // Try GraphQL first (same pattern as GamePredictor)
-        let weekGames = [];
-        
-        try {
-          console.log('🚀 Loading games via GraphQL...');
-          
-          // Check GraphQL availability first
-          const isGraphQLAvailable = await graphqlService.utils.isAvailable();
-          if (!isGraphQLAvailable) {
-            throw new Error('GraphQL service not available');
-          }
-          
-          const graphqlData = await graphqlService.getWeeklyGamesForPrediction(selectedWeek, year);
-          
-          if (graphqlData && graphqlData.games) {
-            weekGames = graphqlData.games;
-            console.log('✓ Successfully loaded data via GraphQL');
-          } else {
-            throw new Error('GraphQL returned empty data');
-          }
-        } catch (graphqlError) {
-          console.warn('⚠️ GraphQL loading failed, falling back to REST API:', graphqlError.message);
-          try {
-            weekGames = await gameService.getGames(year, selectedWeek, 'regular', null, null, null, null, 'fbs', null, false);
-            console.log('✓ Successfully loaded data via REST API');
-          } catch (restError) {
-            console.error('❌ REST API fallback also failed:', restError.message);
-            console.warn('Using mock data for demo purposes');
-            // Fallback to mock data for demo
-            weekGames = [
-              {
-                id: 1,
-                season: year,
-                week: selectedWeek,
-                start_date: '2024-09-02T19:00:00.000Z',
-                home_team: 'Georgia',
-                away_team: 'Clemson',
-                home_conference: 'SEC',
-                away_conference: 'ACC',
-                venue: 'Mercedes-Benz Stadium',
-                completed: true,
-                home_points: 34,
-                away_points: 3
-              },
-              {
-                id: 2,
-                season: year,
-                week: selectedWeek,
-                start_date: '2024-09-02T20:00:00.000Z',
-                home_team: 'Texas',
-                away_team: 'Colorado State',
-                home_conference: 'Big 12',
-                away_conference: 'Mountain West',
-                venue: 'DKR-Texas Memorial Stadium',
-                completed: false
-              },
-              {
-                id: 3,
-                season: year,
-                week: selectedWeek,
-                start_date: '2024-09-02T21:00:00.000Z',
-                home_team: 'Ohio State',
-                away_team: 'Akron',
-                home_conference: 'Big Ten',
-                away_conference: 'Mid-American',
-                venue: 'Ohio Stadium',
-                completed: true,
-                home_points: 52,
-                away_points: 6
-              },
-              {
-                id: 4,
-                season: year,
-                week: selectedWeek,
-                start_date: '2024-09-02T15:30:00.000Z',
-                home_team: 'Alabama',
-                away_team: 'Western Kentucky',
-                home_conference: 'SEC',
-                away_conference: 'Conference USA',
-                venue: 'Bryant-Denny Stadium',
-                completed: true,
-                home_points: 63,
-                away_points: 0
-              },
-              {
-                id: 5,
-                season: year,
-                week: selectedWeek,
-                start_date: '2024-09-02T16:00:00.000Z',
-                home_team: 'Michigan',
-                away_team: 'Fresno State',
-                home_conference: 'Big Ten',
-                away_conference: 'Mountain West',
-                venue: 'Michigan Stadium',
-                completed: false
-              }
-            ];
-          }
-        }
-        
-        // Filter by conference if selected
-        let filteredGames = weekGames || [];
-        if (selectedConference !== 'all') {
-          filteredGames = filteredGames.filter(game => 
-            game.home_conference === selectedConference || 
-            game.away_conference === selectedConference
-          );
-        }
+  // Mirror Schedule's loadDataIfNeeded function exactly
+  const loadDataIfNeeded = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
 
-        // Sort games by date
-        filteredGames.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-        
-        setGames(filteredGames);
-        console.log(`✅ Loaded ${filteredGames.length} games for Week ${selectedWeek} ${year}`);
-      } catch (error) {
-        console.error('Error loading games:', error);
-        setError(`Failed to load games: ${error.message}`);
-      } finally {
-        setLoading(false);
+    try {
+      console.log(`🚀 Loading games for Week ${selectedWeek} ${selectedYear}...`);
+      
+      // Load teams if not cached - including both FBS and FCS teams
+      let loadedTeams = teams;
+      if (loadedTeams.length === 0) {
+        loadedTeams = await teamService.getAllTeams(true);
+        setTeams(loadedTeams);
       }
-    };
 
-    loadGames();
-  }, [selectedWeek, selectedConference]);
+      // Load games using the EXACT same method as Schedule
+      let loadedGames = [];
+      loadedGames = await gameService.getGamesByWeek(selectedYear, selectedWeek, 'regular', false);
+      console.log(`✅ Loaded ${loadedGames?.length || 0} games from gameService.getGamesByWeek`);
+      
+      setGames(loadedGames || []);
 
-  const formatTime = (date) => {
-    return date.toLocaleTimeString('en-US', { 
+    } catch (error) {
+      setErrorMessage(error.message);
+      console.error('Error loading schedule data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedWeek, selectedYear, teams]);
+
+  // Mirror Schedule's filtering logic exactly
+  const filteredGames = useMemo(() => {
+    let filtered = [...games];
+
+    // Filter by conference if selected
+    if (selectedConference) {
+      const conferenceTeamIds = new Set(
+        teams.filter(team => team.conference === selectedConference).map(team => team.id)
+      );
+      filtered = filtered.filter(game => 
+        conferenceTeamIds.has(game.home_id || game.homeId) ||
+        conferenceTeamIds.has(game.away_id || game.awayId)
+      );
+    }
+
+    return filtered;
+  }, [games, selectedConference, teams]);
+
+  useEffect(() => {
+    loadDataIfNeeded();
+  }, [loadDataIfNeeded]);
+
+  // Helper functions matching Schedule
+  const getTeamLogo = useCallback((teamId) => {
+    if (!teamId) return '/team_logos/default.png';
+    const team = teams.find(t => t.id === teamId);
+    if (!team) return '/team_logos/default.png';
+    const logoName = team.school?.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '') || 'default';
+    return `/team_logos/${logoName}.png`;
+  }, [teams]);
+
+  const getTeamById = useCallback((teamId) => {
+    return teams.find(team => team.id === teamId) || { school: 'Unknown', conference: 'Unknown' };
+  }, [teams]);
+
+  const formatTime = useCallback((date) => {
+    if (!date || isNaN(new Date(date).getTime())) return '--:--:--';
+    return new Date(date).toLocaleTimeString('en-US', { 
       hour12: true, 
       hour: 'numeric', 
       minute: '2-digit',
       second: '2-digit'
     });
-  };
+  }, []);
 
-  const formatGameTime = (dateString) => {
+  const formatGameTime = useCallback((dateString) => {
+    if (!dateString) return 'TBD';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'TBD';
+    
     return date.toLocaleTimeString('en-US', {
       hour12: true,
       hour: 'numeric',
       minute: '2-digit'
     });
-  };
+  }, []);
 
-  const formatGameDate = (dateString) => {
+  const formatGameDate = useCallback((dateString) => {
+    if (!dateString) return 'TBD';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'TBD';
+    
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric'
     });
-  };
+  }, []);
 
-  const getGameStatus = (game) => {
-    const now = new Date();
-    const gameDate = new Date(game.start_date);
+  const getGameStatus = useCallback((game) => {
+    if (!game) return { status: 'unknown', text: 'TBD', color: 'text-gray-500' };
     
-    if (game.completed) {
+    const now = new Date();
+    const gameDate = new Date(game.start_date || game.startDate || game.date);
+    
+    // Handle invalid dates
+    if (isNaN(gameDate.getTime())) {
+      return { status: 'unknown', text: 'TBD', color: 'text-gray-500' };
+    }
+    
+    // Check if game is completed first
+    if (game.completed === true || game.status === 'completed' || game.status === 'final') {
       return { status: 'completed', text: 'FINAL', color: 'text-gray-600' };
-    } else if (gameDate > now) {
-      return { status: 'upcoming', text: formatGameTime(game.start_date), color: 'text-blue-600' };
-    } else {
+    }
+    
+    // Check if game hasn't started yet
+    if (gameDate > now) {
+      const timeDiff = gameDate - now;
+      const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff > 0) {
+        return { status: 'upcoming', text: `${daysDiff}d away`, color: 'text-blue-600' };
+      } else if (hoursDiff > 0) {
+        return { status: 'upcoming', text: `${hoursDiff}h away`, color: 'text-blue-600' };
+      } else {
+        return { status: 'upcoming', text: formatGameTime(gameDate), color: 'text-blue-600' };
+      }
+    }
+    
+    // Game has started but not marked as completed
+    const timeSinceStart = now - gameDate;
+    const minutesSinceStart = Math.floor(timeSinceStart / (1000 * 60));
+    const hoursSinceStart = Math.floor(timeSinceStart / (1000 * 60 * 60));
+    
+    // If it's been more than 4 hours since start and not marked complete, probably finished
+    if (hoursSinceStart >= 4) {
+      return { status: 'completed', text: 'FINAL', color: 'text-gray-600' };
+    }
+    
+    // If game started recently and not marked complete, it's likely live
+    if (minutesSinceStart >= 0 && hoursSinceStart < 4) {
       return { status: 'live', text: 'LIVE', color: 'text-red-600' };
     }
-  };
+    
+    // Fallback
+    return { status: 'unknown', text: 'TBD', color: 'text-gray-500' };
+  }, [formatGameTime]);
 
-  const getTeamLogo = (teamName) => {
-    if (!teamName) return '/team_logos/default.png';
-    const logoName = teamName.replace(/\s+/g, '_');
-    return `/team_logos/${logoName}.png`;
-  };
-
-  const getTVNetwork = (game) => {
-    // Mock TV networks for demo - in real implementation this would come from API
+  const getTVNetwork = useCallback((game) => {
+    // Check if game has network info from API
+    if (game.tv || game.television || game.network) {
+      return game.tv || game.television || game.network;
+    }
+    
+    // Fallback to mock networks for demo
     const networks = ['ESPN', 'ABC', 'CBS', 'FOX', 'NBC', 'ESPN2', 'FS1', 'CBSSN', 'ACCN', 'SECN', 'BTN'];
-    return networks[Math.floor(Math.random() * networks.length)];
-  };
+    const gameId = game.id || game.game_id || 0;
+    return networks[gameId % networks.length];
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -239,7 +214,7 @@ const LiveGames = () => {
             <span className="gradient-text">Live Games</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Real-time game tracking, live scores, and instant updates from college football games (2024 Season).
+            Real-time game tracking, live scores, and instant updates from college football games (2025 Season).
           </p>
           
           {/* Live Time Display */}
@@ -295,7 +270,7 @@ const LiveGames = () => {
         </div>
 
         {/* Games Grid */}
-        {loading ? (
+        {isLoading ? (
           <div className="text-center py-20">
             <div className="relative inline-block">
               <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center mb-6">
@@ -304,15 +279,15 @@ const LiveGames = () => {
               <p className="text-gray-700 font-medium">Loading Week {selectedWeek} Games...</p>
             </div>
           </div>
-        ) : error ? (
+        ) : errorMessage ? (
           <div className="text-center py-20">
             <div className="bg-red-50 border border-red-200 rounded-3xl p-8 max-w-md mx-auto">
               <i className="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
               <h3 className="text-xl font-bold text-red-800 mb-2">Error Loading Games</h3>
-              <p className="text-red-600">{error}</p>
+              <p className="text-red-600">{errorMessage}</p>
             </div>
           </div>
-        ) : games.length === 0 ? (
+        ) : filteredGames.length === 0 ? (
           <div className="text-center py-20">
             <div className="bg-gray-50 border border-gray-200 rounded-3xl p-8 max-w-md mx-auto">
               <i className="fas fa-calendar-times text-gray-400 text-4xl mb-4"></i>
@@ -322,7 +297,9 @@ const LiveGames = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
-            {games.map((game, index) => {
+            {filteredGames.map((game, index) => {
+              const homeTeam = getTeamById(game.home_id || game.homeId);
+              const awayTeam = getTeamById(game.away_id || game.awayId);
               const gameStatus = getGameStatus(game);
               const tvNetwork = getTVNetwork(game);
               
@@ -335,19 +312,6 @@ const LiveGames = () => {
                 >
                   {/* Game Header with TV Info */}
                   <div className="relative gradient-bg p-4 text-white">
-                    {/* Animated Background Elements */}
-                    <div className="absolute inset-0 overflow-hidden">
-                      <div className="absolute top-2 right-2 w-16 h-16 border border-white border-opacity-20 rounded-full animate-ping"></div>
-                      <div className="absolute bottom-2 left-2 w-12 h-12 border border-white border-opacity-10 rounded-full animate-ping animation-delay-1000"></div>
-                    </div>
-                    
-                    {/* Live Indicator Dots */}
-                    <div className="absolute inset-0 opacity-30">
-                      <div className="absolute top-3 left-3 w-1 h-1 bg-white rounded-full animate-pulse"></div>
-                      <div className="absolute top-6 right-6 w-2 h-2 bg-white rounded-full animate-pulse animation-delay-500"></div>
-                      <div className="absolute bottom-3 left-6 w-1 h-1 bg-white rounded-full animate-pulse animation-delay-1000"></div>
-                    </div>
-                    
                     <div className="relative z-10 flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -375,16 +339,16 @@ const LiveGames = () => {
                       {/* Away Team */}
                       <div className="flex items-center space-x-3 flex-1">
                         <img 
-                          src={getTeamLogo(game.away_team)} 
-                          alt={`${game.away_team} logo`}
+                          src={getTeamLogo(game.away_id || game.awayId)} 
+                          alt={`${awayTeam.school} logo`}
                           className="w-12 h-12 rounded-full shadow-md"
                           onError={(e) => { 
                             e.target.src = '/team_logos/default.png';
                           }}
                         />
                         <div>
-                          <div className="font-bold text-lg text-gray-800">{game.away_team}</div>
-                          <div className="text-sm text-gray-500">{game.away_conference}</div>
+                          <div className="font-bold text-lg text-gray-800">{awayTeam.school}</div>
+                          <div className="text-sm text-gray-500">{awayTeam.conference}</div>
                         </div>
                       </div>
 
@@ -393,7 +357,7 @@ const LiveGames = () => {
                         {game.completed ? (
                           <div className="text-center">
                             <div className="text-3xl font-black gradient-text">
-                              {game.away_points} - {game.home_points}
+                              {game.away_points || 0} - {game.home_points || 0}
                             </div>
                             <div className={`text-sm font-bold ${gameStatus.color}`}>
                               {gameStatus.text}
@@ -415,12 +379,12 @@ const LiveGames = () => {
                       {/* Home Team */}
                       <div className="flex items-center space-x-3 flex-1 justify-end">
                         <div className="text-right">
-                          <div className="font-bold text-lg text-gray-800">{game.home_team}</div>
-                          <div className="text-sm text-gray-500">{game.home_conference}</div>
+                          <div className="font-bold text-lg text-gray-800">{homeTeam.school}</div>
+                          <div className="text-sm text-gray-500">{homeTeam.conference}</div>
                         </div>
                         <img 
-                          src={getTeamLogo(game.home_team)} 
-                          alt={`${game.home_team} logo`}
+                          src={getTeamLogo(game.home_id || game.homeId)} 
+                          alt={`${homeTeam.school} logo`}
                           className="w-12 h-12 rounded-full shadow-md"
                           onError={(e) => { 
                             e.target.src = '/team_logos/default.png';
@@ -434,11 +398,11 @@ const LiveGames = () => {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex items-center space-x-2">
                           <i className="fas fa-clock text-gray-400"></i>
-                          <span>Week {game.week}</span>
+                          <span>Week {game.week || selectedWeek}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <i className="fas fa-map-marker-alt text-gray-400"></i>
-                          <span className="truncate">{game.venue_id || 'TBD'}</span>
+                          <span className="truncate">{game.venue || 'TBD'}</span>
                         </div>
                       </div>
                       
