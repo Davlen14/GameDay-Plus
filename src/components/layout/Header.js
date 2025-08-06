@@ -206,9 +206,10 @@ const Header = () => {
               Betting <FontAwesomeIcon icon={faChevronDown} className="text-xs icon-gradient" />
             </button>
             <div className="dropdown-content">
+              <a href="#player-props"><i className="fas fa-running icon-gradient"></i> <span>Player Props</span></a>
+              <a href="#arbitrage-ev"><i className="fas fa-dollar-sign icon-gradient"></i> <span>Arbitrage EV</span></a>
               <a href="#betting-models"><i className="fas fa-chart-line icon-gradient"></i> <span>Betting Models</span></a>
               <a href="#spread-analysis"><i className="fas fa-chart-area icon-gradient"></i> <span>Spread Analysis</span></a>
-              <a href="#arbitrage-ev"><i className="fas fa-dollar-sign icon-gradient"></i> <span>Arbitrage EV</span></a>
               <a href="#over-under-metrics"><i className="fas fa-balance-scale icon-gradient"></i> <span>Over/Under Metrics</span></a>
               <a href="#betting-suggestions"><i className="fas fa-lightbulb icon-gradient"></i> <span>Betting Suggestions</span></a>
             </div>
@@ -421,9 +422,10 @@ const Header = () => {
             Betting <i className="fas fa-chevron-down text-xs icon-gradient"></i>
           </button>
           <div className="mobile-dropdown-content px-4">
+            <a href="#player-props" className="block text-gray-600 hover:gradient-text py-1 px-4">Player Props</a>
+            <a href="#arbitrage-ev" className="block text-gray-600 hover:gradient-text py-1 px-4">Arbitrage EV</a>
             <a href="#betting-models" className="block text-gray-600 hover:gradient-text py-1 px-4">Betting Models</a>
             <a href="#spread-analysis" className="block text-gray-600 hover:gradient-text py-1 px-4">Spread Analysis</a>
-            <a href="#arbitrage-ev" className="block text-gray-600 hover:gradient-text py-1 px-4">Arbitrage EV</a>
             <a href="#over-under-metrics" className="block text-gray-600 hover:gradient-text py-1 px-4">Over/Under Metrics</a>
             <a href="#betting-suggestions" className="block text-gray-600 hover:gradient-text py-1 px-4">Betting Suggestions</a>
           </div>

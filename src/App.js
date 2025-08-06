@@ -61,6 +61,7 @@ const PlayerStats = React.lazy(() => import('./components/stats/PlayerStats'));
 const TeamStats = React.lazy(() => import('./components/stats/TeamStats'));
 
 // Betting Components
+const PlayerProps = React.lazy(() => import('./components/betting/PlayerProps'));
 const BettingModels = React.lazy(() => import('./components/betting/BettingModels'));
 const SpreadAnalysis = React.lazy(() => import('./components/betting/SpreadAnalysis'));
 const ArbitrageEV = React.lazy(() => import('./components/betting/ArbitrageEV'));
@@ -350,6 +351,12 @@ function App() {
         return <AIInsights />;
       
       // Betting routes
+      case 'player-props':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <PlayerProps />
+          </Suspense>
+        );
       case 'betting-models':
         return <BettingModels />;
       case 'spread-analysis':
