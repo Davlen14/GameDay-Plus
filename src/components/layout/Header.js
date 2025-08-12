@@ -68,7 +68,7 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 w-full bg-white bg-opacity-95 shadow-lg z-50 py-4 px-8 border-b border-gray-200 backdrop-filter backdrop-blur-md">
+    <header className="fixed top-0 left-0 w-full bg-white bg-opacity-95 shadow-lg z-50 py-2 px-8 border-b border-gray-200 backdrop-filter backdrop-blur-md">
       <nav className="flex items-center justify-between w-full max-w-none">
         {/* Logo - Far Left */}
         <div className="flex items-center pr-4">
@@ -298,7 +298,7 @@ const Header = () => {
       </nav>
       
       {/* Mobile Menu */}
-      <div className={`lg:hidden mt-4 space-y-2 text-base bg-white bg-opacity-95 rounded-lg py-4 px-2 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+      <div className={`lg:hidden mt-2 space-y-2 text-base bg-white bg-opacity-95 rounded-lg py-4 px-2 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
         <button 
           onClick={() => navigateTo('home-page')} 
           className="block gradient-text py-2 px-4 w-full text-left bg-transparent border-none cursor-pointer"

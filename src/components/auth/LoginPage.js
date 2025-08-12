@@ -4,10 +4,21 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle, faApple, faFacebook } from '@fortawesome/free-brands-svg-icons';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { teamService } from '../../services/teamService';
+import { useAuth } from '../../contexts/AuthContext';
 import './LoginPage.css';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { 
+    signIn, 
+    signUp, 
+    signInWithGoogle, 
+    signInWithFacebook, 
+    signInWithApple,
+    loading: authLoading,
+    authError 
+  } = useAuth();
+  
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,8 +31,6 @@ const LoginPage = () => {
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
-  const [showTeamSelector, setShowTeamSelector] = useState(false);
-  const [teamSearch, setTeamSearch] = useState('');
   const [signupStep, setSignupStep] = useState(1); // 1 = basic info, 2 = team selection
   const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
   const [fbsTeams, setFbsTeams] = useState([]);
@@ -52,77 +61,87 @@ const LoginPage = () => {
     loadTeams();
   }, [signupStep, fbsTeams.length]);
 
-  const handleSocialLogin = (provider) => {
+  const handleSocialLogin = async (provider) => {
     setIsLoading(true);
-    // Simulate loading
-    setTimeout(() => {
+    
+    try {
+      let user;
+      
+      switch (provider) {
+        case 'google':
+          user = await signInWithGoogle();
+          break;
+        case 'facebook':
+          user = await signInWithFacebook();
+          break;
+        case 'apple':
+          user = await signInWithApple();
+          break;
+        default:
+          throw new Error('Unknown provider');
+      }
+
+      if (user) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error(`${provider} login error:`, error);
+      // Error is already handled by the auth context
+    } finally {
       setIsLoading(false);
-      console.log(`Logging in with ${provider}`);
-      // Here you would implement actual social authentication
-      // For testing, simulate successful login
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userProfile', JSON.stringify({
-        name: 'John Doe',
-        email: 'john@example.com',
-        photo: null,
-        team: null
-      }));
-      window.location.hash = 'home-page';
-    }, 1500);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Test credentials for easy testing
-    const testEmail = 'test@gameday.com';
-    const testPassword = 'password123';
-    
-    // Simulate form submission
-    setTimeout(() => {
-      setIsLoading(false);
-      
+    try {
       if (!isSignUp) {
-        // Sign in logic
-        if (email === testEmail && password === testPassword) {
-          console.log('Login successful');
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userProfile', JSON.stringify({
-            name: 'Test User',
-            email: testEmail,
-            photo: '/photos/default-avatar.png',
-            team: selectedTeam || { school: 'Alabama', mascot: 'Crimson Tide' }
-          }));
-          window.location.hash = 'home-page';
-        } else {
-          alert('Invalid credentials. Use test@gameday.com / password123');
+        // Sign in with Firebase
+        const user = await signIn(email, password);
+        if (user) {
+          navigate('/');
         }
       } else {
-        // Sign up - go to team selection step
+        // Sign up logic
         if (signupStep === 1) {
+          // Validate first step
+          if (!firstName || !lastName || !email || !password) {
+            alert('Please fill in all required fields');
+            setIsLoading(false);
+            return;
+          }
+          if (password.length < 6) {
+            alert('Password must be at least 6 characters long');
+            setIsLoading(false);
+            return;
+          }
           setSignupStep(2);
+          setIsLoading(false);
         } else {
-          // Complete signup
-          console.log('Sign up data:', { 
-            firstName, 
-            lastName, 
-            email, 
-            password, 
-            profilePhoto,
-            selectedTeam 
-          });
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userProfile', JSON.stringify({
-            name: `${firstName} ${lastName}`,
-            email: email,
-            photo: profilePhotoPreview,
-            team: selectedTeam
-          }));
-          window.location.hash = 'home-page';
+          // Complete signup with Firebase
+          const displayName = `${firstName} ${lastName}`;
+          const additionalData = {
+            firstName,
+            lastName,
+            displayName,
+            favoriteTeam: selectedTeam,
+            profileSetupComplete: true
+          };
+
+          const user = await signUp(email, password, additionalData);
+          if (user) {
+            navigate('/');
+          }
         }
       }
-    }, 1500);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      // Error is already handled by the auth context
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePhotoUpload = (e) => {

@@ -5,6 +5,11 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import usePreloader from './hooks/usePreloader';
 
+// Firebase Authentication
+import { AuthProvider } from './contexts/AuthContext';
+import { ToastContainer } from './components/common/Toast';
+import ProtectedRoute from './components/common/ProtectedRoute';
+
 // Layout Components (always loaded)
 import Header from './components/layout/Header';
 import Hero from './components/layout/Hero';  
@@ -23,6 +28,12 @@ const Heatmaps = React.lazy(() => import('./components/analytics/advanced/Heatma
 
 // Auth Components
 const LoginPage = React.lazy(() => import('./components/auth/LoginPage'));
+
+// Profile Components
+const ProfilePage = React.lazy(() => import('./components/profile/ProfilePage'));
+
+// Settings Components
+const SettingsPage = React.lazy(() => import('./components/settings/SettingsPage'));
 
 // Pricing Components
 const PricingPage = React.lazy(() => import('./components/pricing/PricingPage'));
@@ -456,6 +467,22 @@ function App() {
           </Suspense>
         );
       
+      // Profile route
+      case 'profile':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <ProfilePage />
+          </Suspense>
+        );
+      
+      // Settings route
+      case 'settings':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <SettingsPage />
+          </Suspense>
+        );
+      
       // Pricing route
       case 'pricing':
         return (
@@ -476,22 +503,25 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          {/* All routes with header/footer */}
-          <Route path="/*" element={
-            <>
-              <Header />
-              <main className="pt-16">
-                {renderPage()}
-              </main>
-              <Footer />
-            </>
-          } />
-        </Routes>
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            {/* All routes with header/footer */}
+            <Route path="/*" element={
+              <>
+                <Header />
+                <main className="pt-16">
+                  {renderPage()}
+                </main>
+                <Footer />
+              </>
+            } />
+          </Routes>
+          <ToastContainer />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
