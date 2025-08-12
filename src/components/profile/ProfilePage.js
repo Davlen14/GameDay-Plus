@@ -1,42 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faEdit, faSave, faTimes, faUser, faEnvelope, faCalendarAlt, faFootballBall, faTrophy, faChartLine, faFireAlt } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../../contexts/AuthContext';
 import './ProfilePage.css';
 
 const ProfilePage = () => {
-  const [userProfile, setUserProfile] = useState(null);
+  const { user, userData, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Load user profile from localStorage
-    const profile = localStorage.getItem('userProfile');
-    if (profile) {
-      const parsedProfile = JSON.parse(profile);
-      setUserProfile(parsedProfile);
-      setEditData(parsedProfile);
+    // Load user profile from Firebase Auth
+    if (userData) {
+      setEditData(userData);
     }
-  }, []);
+  }, [userData]);
 
   const handleEdit = () => {
     setIsEditing(true);
-    setEditData({ ...userProfile });
+    setEditData({ ...userData });
   };
 
-  const handleSave = () => {
-    // Update localStorage with new data
-    localStorage.setItem('userProfile', JSON.stringify(editData));
-    setUserProfile(editData);
-    setIsEditing(false);
-    
-    // Trigger storage event for header update
-    window.dispatchEvent(new Event('storage'));
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      await updateUserProfile(editData);
+      setIsEditing(false);
+      setProfilePhotoPreview(null);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setEditData({ ...userProfile });
+    setEditData({ ...userData });
     setProfilePhotoPreview(null);
   };
 
@@ -47,7 +50,7 @@ const ProfilePage = () => {
       reader.onload = (e) => {
         const newPhotoUrl = e.target.result;
         setProfilePhotoPreview(newPhotoUrl);
-        setEditData({ ...editData, photo: newPhotoUrl });
+        setEditData({ ...editData, photoURL: newPhotoUrl });
       };
       reader.readAsDataURL(file);
     }
@@ -57,14 +60,14 @@ const ProfilePage = () => {
     setEditData({ ...editData, [field]: value });
   };
 
-  if (!userProfile) {
+  if (!user || !userData) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 rounded-full bg-white/60 backdrop-blur-lg border border-white/40 flex items-center justify-center mx-auto mb-4">
             <div className="animate-spin rounded-full h-10 w-10 border-4 border-transparent" style={{borderTopColor: 'rgb(204,0,28)'}}></div>
           </div>
-          <p className="text-gray-600">Loading profile...</p>
+          <p className="text-gray-600">Please log in to view your profile</p>
         </div>
       </div>
     );
@@ -91,9 +94,9 @@ const ProfilePage = () => {
               {/* Profile Photo */}
               <div className="relative">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                  {(profilePhotoPreview || userProfile.photo) ? (
+                  {(profilePhotoPreview || userData?.photoURL || user?.photoURL) ? (
                     <img 
-                      src={profilePhotoPreview || userProfile.photo} 
+                      src={profilePhotoPreview || userData?.photoURL || user?.photoURL} 
                       alt="Profile" 
                       className="w-full h-full object-cover"
                     />
@@ -122,8 +125,8 @@ const ProfilePage = () => {
                   <div className="space-y-4">
                     <input
                       type="text"
-                      value={editData.name || ''}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      value={editData.displayName || ''}
+                      onChange={(e) => handleInputChange('displayName', e.target.value)}
                       className="text-3xl font-bold bg-white/60 backdrop-blur-lg border border-white/40 rounded-xl px-4 py-2 w-full gradient-text focus:outline-none focus:border-red-500"
                       placeholder="Full Name"
                     />
@@ -133,24 +136,25 @@ const ProfilePage = () => {
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       className="text-gray-600 bg-white/60 backdrop-blur-lg border border-white/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:border-red-500"
                       placeholder="Email"
+                      disabled
                     />
                   </div>
                 ) : (
                   <>
-                    <h1 className="text-3xl font-bold gradient-text mb-2">{userProfile.name}</h1>
+                    <h1 className="text-3xl font-bold gradient-text mb-2">{userData?.displayName || user?.displayName}</h1>
                     <p className="text-gray-600 mb-4 flex items-center justify-center md:justify-start">
                       <FontAwesomeIcon icon={faEnvelope} className="mr-2" style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}} />
-                      {userProfile.email}
+                      {userData?.email || user?.email}
                     </p>
                   </>
                 )}
 
                 {/* Team Affiliation */}
-                {userProfile.team && (
+                {userData?.favoriteTeam && (
                   <div className="flex items-center justify-center md:justify-start mb-4">
                     <FontAwesomeIcon icon={faFootballBall} className="mr-2" style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}} />
                     <span className="text-gray-700 font-medium">
-                      {userProfile.team.school} {userProfile.team.mascot}
+                      {userData.favoriteTeam.school} {userData.favoriteTeam.mascot}
                     </span>
                   </div>
                 )}
@@ -168,10 +172,11 @@ const ProfilePage = () => {
                   <>
                     <button
                       onClick={handleSave}
-                      className="px-6 py-2 gradient-bg text-white rounded-xl hover:shadow-xl transition-all duration-300 font-medium"
+                      disabled={isLoading}
+                      className="px-6 py-2 gradient-bg text-white rounded-xl hover:shadow-xl transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <FontAwesomeIcon icon={faSave} className="mr-2" />
-                      Save Changes
+                      {isLoading ? 'Saving...' : 'Save Changes'}
                     </button>
                     <button
                       onClick={handleCancel}

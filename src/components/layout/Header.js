@@ -1,31 +1,16 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faBars } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdowns, setActiveDropdowns] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
+  const { user, userData, signOut } = useAuth();
 
-  // Check login status on component mount and when localStorage changes
-  React.useEffect(() => {
-    const checkLoginStatus = () => {
-      const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-      const profile = localStorage.getItem('userProfile');
-      setIsLoggedIn(loggedIn);
-      if (loggedIn && profile) {
-        setUserProfile(JSON.parse(profile));
-      }
-    };
-
-    checkLoginStatus();
-    
-    // Listen for storage changes (in case user logs in/out in another tab)
-    window.addEventListener('storage', checkLoginStatus);
-    
-    return () => window.removeEventListener('storage', checkLoginStatus);
-  }, []);
+  // Get login status from Firebase Auth
+  const isLoggedIn = !!user;
+  const userProfile = userData;
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -49,12 +34,13 @@ const Header = () => {
     setMobileMenuOpen(false); // Close mobile menu if open
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userProfile');
-    setIsLoggedIn(false);
-    setUserProfile(null);
-    navigateTo('home');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigateTo('home');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const openProfile = () => {
@@ -253,8 +239,8 @@ const Header = () => {
                 onClick={openProfile} 
                 className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition duration-300 bg-transparent border-none cursor-pointer"
               >
-                {userProfile?.photo ? (
-                  <img src={userProfile.photo} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+                {userProfile?.photoURL || user?.photoURL ? (
+                  <img src={userProfile?.photoURL || user?.photoURL} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
                     <i className="fas fa-user text-gray-600 text-sm"></i>
@@ -465,8 +451,8 @@ const Header = () => {
           {isLoggedIn ? (
             <>
               <button onClick={openProfile} className="mx-4 bg-transparent border-none cursor-pointer w-full flex items-center justify-center space-x-2 py-2">
-                {userProfile?.photo ? (
-                  <img src={userProfile.photo} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
+                {userProfile?.photoURL || user?.photoURL ? (
+                  <img src={userProfile?.photoURL || user?.photoURL} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
                 ) : (
                   <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
                     <i className="fas fa-user text-gray-600 text-xs"></i>

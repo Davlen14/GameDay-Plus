@@ -104,7 +104,7 @@ const LoginPage = () => {
           navigate('/');
         }
       } else {
-        // Sign up logic
+        // Sign up logic - only handle step 1 (account details)
         if (signupStep === 1) {
           // Validate first step
           if (!firstName || !lastName || !email || !password) {
@@ -119,22 +119,8 @@ const LoginPage = () => {
           }
           setSignupStep(2);
           setIsLoading(false);
-        } else {
-          // Complete signup with Firebase
-          const displayName = `${firstName} ${lastName}`;
-          const additionalData = {
-            firstName,
-            lastName,
-            displayName,
-            favoriteTeam: selectedTeam,
-            profileSetupComplete: true
-          };
-
-          const user = await signUp(email, password, additionalData);
-          if (user) {
-            navigate('/');
-          }
         }
+        // Step 2 (team selection) is handled by handleTeamSelect or skipTeamSelection
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -156,8 +142,31 @@ const LoginPage = () => {
     }
   };
 
-  const handleTeamSelect = (team) => {
+  const handleTeamSelect = async (team) => {
     setSelectedTeam(team);
+    setIsLoading(true);
+    
+    try {
+      // Complete signup with selected team
+      const displayName = `${firstName} ${lastName}`;
+      const additionalData = {
+        firstName,
+        lastName,
+        displayName,
+        favoriteTeam: team,
+        profileSetupComplete: true,
+        photoURL: profilePhotoPreview || null
+      };
+
+      const user = await signUp(email, password, additionalData);
+      if (user) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Team selection signup error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const nextTeam = () => {
@@ -172,18 +181,31 @@ const LoginPage = () => {
     setCurrentTeamIndex(index);
   };
 
-  const skipTeamSelection = () => {
+  const skipTeamSelection = async () => {
     setSelectedTeam(null);
-    setSignupStep(1);
-    // Complete signup without team
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userProfile', JSON.stringify({
-      name: `${firstName} ${lastName}`,
-      email: email,
-      photo: profilePhotoPreview,
-      team: null
-    }));
-    window.location.hash = 'home-page';
+    setIsLoading(true);
+    
+    try {
+      // Complete signup without team
+      const displayName = `${firstName} ${lastName}`;
+      const additionalData = {
+        firstName,
+        lastName,
+        displayName,
+        favoriteTeam: null,
+        profileSetupComplete: true,
+        photoURL: profilePhotoPreview || null
+      };
+
+      const user = await signUp(email, password, additionalData);
+      if (user) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Skip team signup error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const togglePasswordVisibility = () => {
