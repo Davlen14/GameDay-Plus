@@ -120,24 +120,42 @@ export const AuthProvider = ({ children }) => {
 
   // Email/Password Sign Up
   const signUp = async (email, password, additionalData = {}) => {
+    console.log('🔥 AuthContext signUp called with:', { email, hasPassword: !!password, additionalData });
     setAuthError(null);
     setLoading(true);
 
     try {
+      console.log('🔥 Attempting createUserWithEmailAndPassword...');
+      console.log('🔥 Auth instance:', auth);
+      console.log('🔥 Firebase config check:', {
+        projectId: auth.app.options.projectId,
+        authDomain: auth.app.options.authDomain,
+        hasApiKey: !!auth.app.options.apiKey
+      });
+      
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('✅ Firebase user created successfully:', user);
       
       // Update display name if provided
       if (additionalData.displayName) {
+        console.log('🔥 Updating user profile with displayName:', additionalData.displayName);
         await updateProfile(user, {
           displayName: additionalData.displayName
         });
       }
 
+      console.log('🔥 Creating user document in Firestore...');
       await createUserDocument(user, additionalData);
+      console.log('✅ User document created successfully');
+      
       showToast.success('Account created successfully!');
       return user;
     } catch (error) {
-      console.error('Sign up error:', error);
+      console.error('❌ Sign up error details:', error);
+      console.error('❌ Error code:', error.code);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Full error object:', error);
+      
       setAuthError(error.message);
       
       // User-friendly error messages
@@ -148,8 +166,13 @@ export const AuthProvider = ({ children }) => {
         errorMessage = 'Password should be at least 6 characters';
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Email/password authentication is not enabled';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection.';
       }
       
+      console.log('🔥 Showing error toast:', errorMessage);
       showToast.error(errorMessage);
       throw error;
     } finally {
