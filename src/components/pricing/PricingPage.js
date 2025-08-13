@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faArrowLeft, faArrowRight, faCrown, faStar, faRocket, faGem } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faArrowLeft, faArrowRight, faCrown, faStar, faRocket, faGem, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 
 const PricingPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -372,7 +372,34 @@ const PricingPage = () => {
         'Basic news updates',
         'Mobile responsive design',
         'Email support',
-        'Weekly newsletter'
+        'Weekly newsletter',
+        'AP, Coaches, CFP rankings',
+        'Conference standings',
+        'Team schedules & scores',
+        'Basic game highlights',
+        'Fan prediction contests',
+        'Social media feeds integration'
+      ],
+      allFeatures: [
+        'Basic team stats & rankings',
+        '5 game predictions per week',
+        'Access to community forums',
+        'Basic news updates',
+        'Mobile responsive design',
+        'Email support',
+        'Weekly newsletter',
+        'AP, Coaches, CFP rankings',
+        'Conference standings',
+        'Team schedules & scores',
+        'Basic game highlights',
+        'Fan prediction contests',
+        'Social media feeds integration',
+        'Basic player profiles',
+        'Team comparison tool',
+        'Recent game results',
+        'Conference tournament brackets',
+        'Bowl game predictions',
+        'Season outlook summaries'
       ],
       limitations: [
         'Includes advertisements',
@@ -385,7 +412,7 @@ const PricingPage = () => {
     {
       id: 'juco',
       name: 'Division 3',
-      subtitle: 'Base Tier',
+      subtitle: 'Base Premium',
       price: '$9.99',
       yearlyPrice: '$8.99',
       period: '/month',
@@ -405,6 +432,35 @@ const PricingPage = () => {
         'Priority email support',
         'Weekly prediction accuracy reports',
         'Basic recruiting insights'
+      ],
+      allFeatures: [
+        'Everything in Free (ad-free)',
+        'Unlimited game predictions',
+        'Advanced team analytics',
+        'Player performance metrics',
+        'Injury reports & updates',
+        'Coach performance analysis',
+        'Historical data access (3 years)',
+        'Priority email support (12hr response)',
+        'Weekly prediction accuracy reports',
+        'Basic recruiting insights',
+        'Transfer portal tracking',
+        'Team depth charts',
+        'Advanced statistical models',
+        'Weather impact analysis',
+        'Home field advantage metrics',
+        'Strength of schedule analysis',
+        'Conference power rankings',
+        'Player efficiency ratings',
+        'Coaching staff analysis',
+        'Team trend analysis',
+        'Custom alert notifications',
+        'Export basic data (CSV)',
+        'Premium forum access',
+        'Ad-free mobile experience',
+        'Push notifications',
+        'Offline data access',
+        'Multi-device sync'
       ],
       limitations: [
         'No live betting odds',
@@ -435,9 +491,42 @@ const PricingPage = () => {
         'Custom prediction models',
         'Advanced analytics dashboard',
         'Transfer portal insights',
+        'Recruiting database access'
+      ],
+      allFeatures: [
+        'Everything in Division 3',
+        'AI-powered game predictions',
+        'Live betting odds tracking (15+ sportsbooks)',
+        'Spread & over/under insights',
+        'Arbitrage opportunities detection',
+        'Real-time line movement alerts',
+        'Custom prediction models',
+        'Advanced analytics dashboard',
+        'Transfer portal insights',
         'Recruiting database access',
         'Discord community access',
-        'Weekly profit/loss tracking'
+        'Weekly profit/loss tracking',
+        'GamedayGPT AI Assistant (50 queries/day)',
+        'Professional betting models',
+        'Expected value calculations',
+        'Sharp vs public money tracking',
+        'Consensus betting data',
+        'Weather-adjusted predictions',
+        'Injury impact modeling',
+        'Live game probability updates',
+        'Bankroll management tools',
+        'ROI performance tracking',
+        'Multi-sportsbook comparison',
+        'Line shopping recommendations',
+        'Automated bet suggestions',
+        'Risk assessment tools',
+        'Hedge betting calculator',
+        'Kelly criterion calculator',
+        'Steam move detection',
+        'Reverse line movement alerts',
+        'Custom betting strategies',
+        'Portfolio analytics',
+        'Advanced data exports'
       ],
       limitations: [
         'Limited GamedayGPT queries (50/day)',
@@ -467,12 +556,53 @@ const PricingPage = () => {
         'Dedicated account manager',
         '24/7 priority support',
         'Custom analytics reports',
+        'Early insider information'
+      ],
+      allFeatures: [
+        'Everything in Division 2',
+        'GamedayGPT Pro (unlimited queries)',
+        'Professional betting models',
+        'Live game probability tracking',
+        'API access for integrations',
+        'White-label dashboard options',
+        'Dedicated account manager',
+        '24/7 priority support',
+        'Custom analytics reports',
         'Early insider information',
         'VIP forum access',
         'Mobile app beta features',
-        'Data export capabilities',
+        'Data export capabilities (all formats)',
         'Sportsbook comparison tools',
-        'Automated bet tracking'
+        'Automated bet tracking',
+        'Advanced machine learning models',
+        'Ensemble prediction algorithms',
+        'Real-time data streaming',
+        'Custom dashboard creation',
+        'Personalized betting strategies',
+        'Institutional-grade analytics',
+        'Professional research reports',
+        'Direct analyst access',
+        'Custom alert systems',
+        'Advanced visualization tools',
+        'Third-party integrations',
+        'Webhook notifications',
+        'Advanced backtesting tools',
+        'Portfolio optimization',
+        'Risk management suite',
+        'Compliance reporting',
+        'Data lake access',
+        'Machine learning APIs',
+        'Custom model training',
+        'A/B testing framework',
+        'Advanced attribution modeling',
+        'Predictive injury analytics',
+        'Recruiting prediction models',
+        'Transfer portal predictions',
+        'Coaching change impact analysis',
+        'Media sentiment analysis',
+        'Social media monitoring',
+        'Insider trading detection',
+        'Market manipulation alerts'
       ],
       limitations: []
     }
@@ -605,6 +735,293 @@ const PricingPage = () => {
           ))}
         </div>
 
+        {/* Value Proposition Section */}
+        <div className="mt-20">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-6">
+              <span className="pricing-text-gradient">Why Choose GAMEDAY+ FanHub?</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              We're the only platform that combines the analytics of PFF, the arbitrage detection of OddsJam, 
+              the community of Reddit, and the coverage of ESPN into one comprehensive college football ecosystem.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            <div className="text-center p-8 pricing-glass rounded-2xl">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full clean-gradient-red flex items-center justify-center">
+                <i className="fas fa-dollar-sign text-white text-2xl"></i>
+              </div>
+              <h3 className="text-xl font-bold mb-4 gradient-text">Unmatched Value</h3>
+              <p className="text-gray-600 mb-4">
+                Our Division 2 tier ($19.99) includes arbitrage detection that OddsJam charges $79-199/month for, 
+                plus comprehensive college football coverage competitors don't offer.
+              </p>
+              <div className="text-sm text-gray-500">
+                <strong>Save 60-75%</strong> vs buying separate tools
+              </div>
+            </div>
+
+            <div className="text-center p-8 pricing-glass rounded-2xl">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full clean-gradient-gold flex items-center justify-center">
+                <i className="fas fa-brain text-white text-2xl"></i>
+              </div>
+              <h3 className="text-xl font-bold mb-4 gradient-text">AI-Powered Intelligence</h3>
+              <p className="text-gray-600 mb-4">
+                GamedayGPT is the only AI assistant specifically trained on college football data. 
+                No other platform offers natural language queries for college football analytics.
+              </p>
+              <div className="text-sm text-gray-500">
+                <strong>Exclusive Feature</strong> - Not available anywhere else
+              </div>
+            </div>
+
+            <div className="text-center p-8 pricing-glass rounded-2xl">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full clean-gradient-green flex items-center justify-center">
+                <i className="fas fa-mobile-alt text-white text-2xl"></i>
+              </div>
+              <h3 className="text-xl font-bold mb-4 gradient-text">Mobile-First Design</h3>
+              <p className="text-gray-600 mb-4">
+                Our completed mobile app provides full platform access while competitors charge extra 
+                for mobile features or lack mobile apps entirely.
+              </p>
+              <div className="text-sm text-gray-500">
+                <strong>Mobile App Included</strong> in all paid tiers
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Competitive Comparison Table */}
+        <div className="mt-20">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-6">
+              <span className="pricing-text-gradient">How We Compare</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              See why GAMEDAY+ FanHub offers more value than any competitor in the college football space.
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <div className="min-w-full pricing-glass rounded-2xl p-8">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-4 px-6 font-bold text-gray-800">Features</th>
+                    <th className="text-center py-4 px-4 font-bold">
+                      <div className="flex flex-col items-center space-y-2">
+                        <img src="/GDPLUS.png" alt="GAMEDAY+" className="w-16 h-16 rounded-xl object-contain bg-white p-2" />
+                        <span className="pricing-text-gradient">GAMEDAY+</span>
+                        <span className="text-xs text-gray-500">$19.99/mo</span>
+                      </div>
+                    </th>
+                    <th className="text-center py-4 px-4 font-bold text-gray-600">
+                      <div className="flex flex-col items-center space-y-2">
+                        <img src="/oddsjam.jpg" alt="OddsJam" className="w-12 h-12 rounded-xl object-contain bg-white p-2" />
+                        <span>OddsJam</span>
+                        <span className="text-xs text-gray-500">$79/mo</span>
+                      </div>
+                    </th>
+                    <th className="text-center py-4 px-4 font-bold text-gray-600">
+                      <div className="flex flex-col items-center space-y-2">
+                        <img src="/espn-logo.png" alt="ESPN+" className="w-20 h-20 rounded-lg object-contain bg-white p-2" />
+                        <span>ESPN+</span>
+                        <span className="text-xs text-gray-500">$10.99/mo</span>
+                      </div>
+                    </th>
+                    <th className="text-center py-4 px-4 font-bold text-gray-600">
+                      <div className="flex flex-col items-center space-y-2">
+                        <img src="/247SportsCompanyLogo.png" alt="247Sports" className="w-20 h-20 rounded-lg object-contain bg-white p-2" />
+                        <span>247Sports</span>
+                        <span className="text-xs text-gray-500">$9.95/mo</span>
+                      </div>
+                    </th>
+                    <th className="text-center py-4 px-4 font-bold text-gray-600">
+                      <div className="flex flex-col items-center space-y-2">
+                        <img src="/Pff.jpg" alt="PFF" className="w-20 h-20 rounded-lg object-contain bg-white p-2" />
+                        <span>PFF</span>
+                        <span className="text-xs text-gray-500">$39.99/mo</span>
+                      </div>
+                    </th>
+                    <th className="text-center py-4 px-4 font-bold text-gray-600">
+                      <div className="flex flex-col items-center space-y-2">
+                        <img src="/action-logo.png" alt="Action Network" className="w-20 h-20 rounded-lg object-contain bg-white p-2" />
+                        <span>Action Network</span>
+                        <span className="text-xs text-gray-500">$39/mo</span>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">Arbitrage Detection</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">AI-Powered Predictions</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">College Football Specialization</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">Live Betting Odds</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">Fan Community & Forums</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">Transfer Portal Tracking</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">Recruiting Database</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">Advanced Analytics</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">Mobile App Included</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-yellow-500">~</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-6 font-medium">Weather Impact Analysis</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-6 font-medium">GamedayGPT AI Assistant</td>
+                    <td className="text-center py-3 px-4"><span className="text-green-600 font-bold">✓</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                    <td className="text-center py-3 px-4"><span className="text-red-500">✗</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              
+              <div className="mt-6 text-center">
+                <div className="flex items-center justify-center space-x-8 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <span className="text-gray-600">Full Feature</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-yellow-500 font-bold">~</span>
+                    <span className="text-gray-600">Limited/Basic</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-red-500 font-bold">✗</span>
+                    <span className="text-gray-600">Not Available</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Unique Features Section */}
+        <div className="mt-20">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-6">
+              <span className="pricing-text-gradient">Exclusive Features Nobody Else Has</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              These game-changing features are only available on GAMEDAY+ FanHub.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="text-center p-6 pricing-glass rounded-xl">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full clean-gradient-red flex items-center justify-center">
+                <i className="fas fa-robot text-white"></i>
+              </div>
+              <h3 className="font-bold mb-2 gradient-text">GamedayGPT</h3>
+              <p className="text-sm text-gray-600">AI assistant trained specifically on college football data</p>
+            </div>
+
+            <div className="text-center p-6 pricing-glass rounded-xl">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full clean-gradient-gold flex items-center justify-center">
+                <i className="fas fa-exchange-alt text-white"></i>
+              </div>
+              <h3 className="font-bold mb-2 gradient-text">CFB Arbitrage</h3>
+              <p className="text-sm text-gray-600">College football specific arbitrage detection across 15+ sportsbooks</p>
+            </div>
+
+            <div className="text-center p-6 pricing-glass rounded-xl">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full clean-gradient-green flex items-center justify-center">
+                <i className="fas fa-cloud-rain text-white"></i>
+              </div>
+              <h3 className="font-bold mb-2 gradient-text">Weather Analytics</h3>
+              <p className="text-sm text-gray-600">Advanced weather impact modeling for game predictions</p>
+            </div>
+
+            <div className="text-center p-6 pricing-glass rounded-xl">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full clean-gradient-silver flex items-center justify-center">
+                <i className="fas fa-users text-white"></i>
+              </div>
+              <h3 className="font-bold mb-2 gradient-text">The Colosseum</h3>
+              <p className="text-sm text-gray-600">Advanced fan engagement platform with prediction contests</p>
+            </div>
+          </div>
+        </div>
+
         {/* Bottom CTA */}
         <div className="text-center mt-16 p-8 pricing-glass rounded-2xl">
           <h3 className="text-2xl font-bold text-gray-800 mb-4">
@@ -624,8 +1041,12 @@ const PricingPage = () => {
 };
 
 const PricingCard = ({ tier, onSelect, billingCycle }) => {
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
   const currentPrice = billingCycle === 'yearly' ? tier.yearlyPrice : tier.price;
   const originalPrice = tier.price;
+  
+  const displayFeatures = showAllFeatures ? tier.allFeatures : tier.features.slice(0, 8);
+  const remainingFeatures = tier.allFeatures ? tier.allFeatures.length - 8 : tier.features.length - 8;
   
   return (
     <div className={`relative tier-card rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl metallic-shine flex flex-col h-full glass-enhanced ${tier.popular ? 'ring-2 ring-yellow-400 ring-opacity-60' : ''}`}>
@@ -660,24 +1081,34 @@ const PricingCard = ({ tier, onSelect, billingCycle }) => {
       {/* Features */}
       <div className="p-6 flex-grow flex flex-col glass-content">
         <div className="space-y-3 mb-6 flex-grow">
-          {tier.features.slice(0, 8).map((feature, index) => (
+          {displayFeatures.map((feature, index) => (
             <div key={index} className="flex items-start space-x-2">
-              <FontAwesomeIcon icon={faCheck} className="feature-check mt-0.5 flex-shrink-0 text-sm" />
+              <FontAwesomeIcon icon={faCheck} className="feature-check mt-0.5 flex-shrink-0 text-sm text-green-600" />
               <span className="text-gray-700 text-xs leading-relaxed">{feature}</span>
             </div>
           ))}
           
-          {tier.features.length > 8 && (
-            <div className="text-xs text-gray-500 font-medium">
-              +{tier.features.length - 8} more features
-            </div>
+          {/* Show More/Less Button */}
+          {tier.allFeatures && tier.allFeatures.length > 8 && (
+            <button
+              onClick={() => setShowAllFeatures(!showAllFeatures)}
+              className="flex items-center space-x-2 text-xs font-medium transition-colors mt-2"
+            >
+              <span className={tier.textGradientClass}>
+                {showAllFeatures ? 'Show Less' : `+${remainingFeatures} More Features`}
+              </span>
+              <FontAwesomeIcon 
+                icon={showAllFeatures ? 'fa-chevron-up' : 'fa-chevron-down'} 
+                className={`text-xs transform transition-transform duration-200 ${tier.textGradientClass}`}
+              />
+            </button>
           )}
           
           {tier.limitations.length > 0 && (
             <>
               <div className="border-t pt-3 mt-3">
                 <h4 className="text-xs font-semibold text-gray-500 mb-2">Limitations:</h4>
-                {tier.limitations.slice(0, 3).map((limitation, index) => (
+                {tier.limitations.map((limitation, index) => (
                   <div key={index} className="flex items-start space-x-2 mb-1">
                     <span className="text-gray-400 mt-0.5 flex-shrink-0 text-xs">•</span>
                     <span className="text-gray-500 text-xs">{limitation}</span>
