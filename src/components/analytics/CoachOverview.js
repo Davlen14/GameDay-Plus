@@ -184,7 +184,7 @@ const CoachOverview = () => {
           
           // Get team data for conference info
           const teamData = teamsData.find(
-            (t) => t.school && t.school.toLowerCase() === currentTeam.toLowerCase()
+            (t) => t.school && currentTeam && t.school.toLowerCase() === currentTeam.toLowerCase()
           );
           const conference = teamData ? teamData.conference : "";
 
@@ -269,6 +269,11 @@ const CoachOverview = () => {
 
   // Filter and sort coaches
   useEffect(() => {
+    if (!coaches || coaches.length === 0) {
+      setFilteredCoaches([]);
+      return;
+    }
+
     let filtered = [...coaches];
 
     // Apply search filter
@@ -276,17 +281,17 @@ const CoachOverview = () => {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(
         coach => 
-          coach.firstName.toLowerCase().includes(search) ||
-          coach.lastName.toLowerCase().includes(search) ||
-          coach.school.toLowerCase().includes(search) ||
-          coach.conference.toLowerCase().includes(search)
+          (coach.firstName && coach.firstName.toLowerCase().includes(search)) ||
+          (coach.lastName && coach.lastName.toLowerCase().includes(search)) ||
+          (coach.school && coach.school.toLowerCase().includes(search)) ||
+          (coach.conference && coach.conference.toLowerCase().includes(search))
       );
     }
 
     // Apply status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter(coach => 
-        coach.status.className === `status-${statusFilter}`
+        coach.status && coach.status.className === `status-${statusFilter}`
       );
     }
 
@@ -296,20 +301,20 @@ const CoachOverview = () => {
       
       switch (sortField) {
         case "name":
-          aValue = `${a.firstName} ${a.lastName}`.toLowerCase();
-          bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
+          aValue = `${a.firstName || ''} ${a.lastName || ''}`.toLowerCase();
+          bValue = `${b.firstName || ''} ${b.lastName || ''}`.toLowerCase();
           break;
         case "school":
-          aValue = a.school.toLowerCase();
-          bValue = b.school.toLowerCase();
+          aValue = (a.school || '').toLowerCase();
+          bValue = (b.school || '').toLowerCase();
           break;
         case "winPct":
-          aValue = a.winPct;
-          bValue = b.winPct;
+          aValue = a.winPct || 0;
+          bValue = b.winPct || 0;
           break;
         case "composite":
-          aValue = a.composite;
-          bValue = b.composite;
+          aValue = a.composite || 0;
+          bValue = b.composite || 0;
           break;
         default:
           aValue = a[sortField] || 0;
