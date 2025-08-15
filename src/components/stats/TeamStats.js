@@ -279,7 +279,14 @@ const TeamCard = ({ team, modernRedGradient }) => {
 
       {/* Team Logo and Info */}
       <div className="text-center mb-6">
-        <div className="w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+        <div 
+          className="w-16 h-16 mx-auto mb-3 flex items-center justify-center cursor-pointer hover:scale-110 transition-all duration-300"
+          onClick={(e) => {
+            e.stopPropagation();
+            localStorage.setItem('selectedTeamData', JSON.stringify(team));
+            window.location.hash = `team-detail-${team.id}`;
+          }}
+        >
           {team.logos?.[0] ? (
             <img 
               src={team.logos[0]} 

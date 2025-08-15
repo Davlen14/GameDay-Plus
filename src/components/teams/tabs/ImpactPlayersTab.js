@@ -723,7 +723,15 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
         <div className="flex justify-center space-x-12 mb-12">
           {/* Team 1 Logo */}
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-white/40 backdrop-blur-xl border border-white/50 shadow-xl flex items-center justify-center animate-pulse">
+            <div 
+              className="w-20 h-20 rounded-full bg-white/40 backdrop-blur-xl border border-white/50 shadow-xl flex items-center justify-center animate-pulse cursor-pointer hover:scale-110 transition-all duration-300"
+              onClick={() => {
+                if (team1) {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team1));
+                  window.location.hash = `team-detail-${team1.id}`;
+                }
+              }}
+            >
               {team1?.logos?.[0] ? (
                 <img src={team1.logos[0]} alt={team1.school} className="w-16 h-16 object-contain" />
               ) : (
@@ -742,7 +750,15 @@ const ImpactPlayersTab = ({ team1, team2 }) => {
           
           {/* Team 2 Logo */}
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-white/40 backdrop-blur-xl border border-white/50 shadow-xl flex items-center justify-center animate-pulse">
+            <div 
+              className="w-20 h-20 rounded-full bg-white/40 backdrop-blur-xl border border-white/50 shadow-xl flex items-center justify-center animate-pulse cursor-pointer hover:scale-110 transition-all duration-300"
+              onClick={() => {
+                if (team2) {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team2));
+                  window.location.hash = `team-detail-${team2.id}`;
+                }
+              }}
+            >
               {team2?.logos?.[0] ? (
                 <img src={team2.logos[0]} alt={team2.school} className="w-16 h-16 object-contain" />
               ) : (

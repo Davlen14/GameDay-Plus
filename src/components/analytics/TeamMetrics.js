@@ -1169,7 +1169,16 @@ const TeamMetrics = ({ onNavigate }) => {
                     key={team.school}
                     className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center"
                   >
-                    <img src={getTeamLogo(team)} alt={team.school} className="w-4 h-4 mr-2" />
+                    <img 
+                      src={getTeamLogo(team)} 
+                      alt={team.school} 
+                      className="w-4 h-4 mr-2 cursor-pointer hover:scale-125 transition-all duration-300" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        localStorage.setItem('selectedTeamData', JSON.stringify(team));
+                        window.location.hash = `team-detail-${team.id}`;
+                      }}
+                    />
                     {team.school}
                     <button
                       onClick={() => toggleTeamComparison(team)}
@@ -1235,7 +1244,16 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
       <div className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img src={getTeamLogo(team)} alt={team.school} className="w-12 h-12 object-contain" />
+            <img 
+              src={getTeamLogo(team)} 
+              alt={team.school} 
+              className="w-12 h-12 object-contain cursor-pointer hover:scale-110 transition-all duration-300" 
+              onClick={(e) => {
+                e.stopPropagation();
+                localStorage.setItem('selectedTeamData', JSON.stringify(team));
+                window.location.hash = `team-detail-${team.id}`;
+              }}
+            />
             <div>
               <h3 className="font-bold text-lg">{team.school}</h3>
               <p className="text-sm text-gray-600">{team.conference}</p>
@@ -1277,7 +1295,16 @@ const TeamMetricCard = ({ team, index, viewMode, selectedMetric, onSort, getSort
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <img src={getTeamLogo(team)} alt={team.school} className="w-16 h-16 object-contain" />
+              <img 
+                src={getTeamLogo(team)} 
+                alt={team.school} 
+                className="w-16 h-16 object-contain cursor-pointer hover:scale-110 transition-all duration-300" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team));
+                  window.location.hash = `team-detail-${team.id}`;
+                }}
+              />
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">{team.school}</h2>
                 <p className="text-gray-600">{team.conference}</p>
@@ -1560,7 +1587,16 @@ const ComparisonModal = ({ teams, onClose, getTeamLogo, getRatingColor }) => {
                   {teams.map((team) => (
                     <th key={team.school} className="text-center py-3 px-4 font-semibold text-gray-700">
                       <div className="flex flex-col items-center gap-2">
-                        <img src={getTeamLogo(team)} alt={team.school} className="w-8 h-8 object-contain" />
+                        <img 
+                          src={getTeamLogo(team)} 
+                          alt={team.school} 
+                          className="w-8 h-8 object-contain cursor-pointer hover:scale-125 transition-all duration-300" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            localStorage.setItem('selectedTeamData', JSON.stringify(team));
+                            window.location.hash = `team-detail-${team.id}`;
+                          }}
+                        />
                         <div>
                           {team.school}
                           <div className="text-sm text-gray-500 font-normal">{team.conference}</div>

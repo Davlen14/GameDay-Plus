@@ -1,15 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faEdit, faSave, faTimes, faUser, faEnvelope, faCalendarAlt, faFootballBall, faTrophy, faChartLine, faFireAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faEdit, faSave, faTimes, faUser, faEnvelope, faCalendarAlt, faFootballBall, faTrophy, faChartLine, faFireAlt, faStar } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { teamService } from '../../services/teamService';
+import { showToast } from '../common/Toast';
 import './ProfilePage.css';
 
 const ProfilePage = () => {
-  const { user, userData, updateUserProfile } = useAuth();
+  const { user, userData, updateUserProfile, uploadProfilePhoto } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [teams, setTeams] = useState([]);
+
+  // Load teams for dropdown
+  useEffect(() => {
+    const loadTeams = async () => {
+      try {
+        const teamsData = await teamService.getAllTeams();
+        setTeams(teamsData);
+      } catch (error) {
+        console.error('Error loading teams:', error);
+      }
+    };
+    loadTeams();
+  }, []);
+
+  // Helper function to get team logo
+  const getTeamLogo = (teamName) => {
+    if (!teamName) return null;
+    
+    // Convert team name to logo filename format
+    const logoName = teamName.replace(/\s+/g, '_').replace(/&/g, '').replace(/'/g, '');
+    return `/team_logos/${logoName}.png`;
+  };
+
+  // Helper function to get team colors (you can expand this)
+  const getTeamColors = (teamName) => {
+    const teamColors = {
+      'Alabama': { primary: '#9E1B32', secondary: '#FFFFFF' },
+      'Auburn': { primary: '#0C2340', secondary: '#DD550C' },
+      'Georgia': { primary: '#BA0C2F', secondary: '#000000' },
+      'Florida': { primary: '#0021A5', secondary: '#FA4616' },
+      'LSU': { primary: '#461D7C', secondary: '#FDD023' },
+      'Tennessee': { primary: '#FF8200', secondary: '#FFFFFF' },
+      'Texas': { primary: '#BF5700', secondary: '#FFFFFF' },
+      'Oklahoma': { primary: '#841617', secondary: '#FDFDFD' },
+      'Ohio State': { primary: '#BB0000', secondary: '#FFFFFF' },
+      'Michigan': { primary: '#00274C', secondary: '#FFCB05' },
+      'Notre Dame': { primary: '#0C2340', secondary: '#C99700' },
+      'USC': { primary: '#990000', secondary: '#FFCC00' },
+      // Add more teams as needed
+    };
+    
+    return teamColors[teamName] || { primary: '#374151', secondary: '#F3F4F6' };
+  };
 
   useEffect(() => {
     // Load user profile from Firebase Auth
@@ -24,14 +72,39 @@ const ProfilePage = () => {
   };
 
   const handleSave = async () => {
+    // Basic validation
+    if (!editData.displayName || editData.displayName.trim() === '') {
+      showToast.error('Please enter your display name.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await updateUserProfile(editData);
+      let photoURL = editData.photoURL;
+      
+      // If user selected a new photo, upload it first
+      if (selectedPhotoFile) {
+        setUploadProgress(0);
+        photoURL = await uploadProfilePhoto(selectedPhotoFile, user.uid, setUploadProgress);
+      }
+      
+      // Update profile data
+      const updatedData = {
+        ...editData,
+        displayName: editData.displayName.trim(),
+        bio: editData.bio?.trim() || '',
+        location: editData.location?.trim() || '',
+        photoURL
+      };
+      
+      await updateUserProfile(updatedData);
       setIsEditing(false);
       setProfilePhotoPreview(null);
+      setSelectedPhotoFile(null);
+      setUploadProgress(0);
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      showToast.error('Failed to update profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -41,16 +114,31 @@ const ProfilePage = () => {
     setIsEditing(false);
     setEditData({ ...userData });
     setProfilePhotoPreview(null);
+    setSelectedPhotoFile(null);
+    setUploadProgress(0);
   };
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showToast.error('Please select a valid image file.');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showToast.error('Please select an image smaller than 5MB.');
+        return;
+      }
+      
+      setSelectedPhotoFile(file);
+      
+      // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
-        const newPhotoUrl = e.target.result;
-        setProfilePhotoPreview(newPhotoUrl);
-        setEditData({ ...editData, photoURL: newPhotoUrl });
+        setProfilePhotoPreview(e.target.result);
       };
       reader.readAsDataURL(file);
     }
@@ -75,14 +163,6 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden pt-16 pb-8">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-r from-red-600/15 to-red-800/15 rounded-full blur-3xl animate-pulse" style={{background: 'radial-gradient(circle, rgba(204,0,28,0.15) 0%, rgba(161,0,20,0.15) 50%, rgba(115,0,13,0.15) 100%)'}}></div>
-        <div className="absolute top-3/4 right-1/4 w-24 h-24 bg-gradient-to-r from-red-600/10 to-red-800/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s', background: 'radial-gradient(circle, rgba(204,0,28,0.10) 0%, rgba(161,0,20,0.10) 50%, rgba(115,0,13,0.10) 100%)' }}></div>
-        <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-gradient-to-r from-red-600/8 to-red-800/8 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s', background: 'radial-gradient(circle, rgba(204,0,28,0.08) 0%, rgba(161,0,20,0.08) 50%, rgba(115,0,13,0.08) 100%)' }}></div>
-        <div className="absolute top-1/6 right-1/3 w-20 h-20 bg-gradient-to-r from-red-600/12 to-red-800/12 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s', background: 'radial-gradient(circle, rgba(204,0,28,0.12) 0%, rgba(161,0,20,0.12) 50%, rgba(115,0,13,0.12) 100%)' }}></div>
-      </div>
-
       <div className="relative z-10 max-w-none mx-auto px-4" style={{width: '97%'}}>
         {/* Profile Header */}
         <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 shadow-[0_25px_50px_rgba(239,68,68,0.15)] overflow-hidden mb-8">
@@ -117,6 +197,15 @@ const ProfilePage = () => {
                     />
                   </label>
                 )}
+                
+                {/* Upload Progress */}
+                {isLoading && uploadProgress > 0 && uploadProgress < 100 && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                    <div className="text-white text-sm font-medium">
+                      {uploadProgress}%
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Profile Info */}
@@ -138,6 +227,35 @@ const ProfilePage = () => {
                       placeholder="Email"
                       disabled
                     />
+                    <input
+                      type="text"
+                      value={editData.bio || ''}
+                      onChange={(e) => handleInputChange('bio', e.target.value)}
+                      className="text-gray-600 bg-white/60 backdrop-blur-lg border border-white/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:border-red-500"
+                      placeholder="Bio (optional)"
+                    />
+                    <input
+                      type="text"
+                      value={editData.location || ''}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      className="text-gray-600 bg-white/60 backdrop-blur-lg border border-white/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:border-red-500"
+                      placeholder="Location (optional)"
+                    />
+                    <select
+                      value={editData.favoriteTeam?.id || ''}
+                      onChange={(e) => {
+                        const selectedTeam = teams.find(team => team.id === parseInt(e.target.value));
+                        handleInputChange('favoriteTeam', selectedTeam || null);
+                      }}
+                      className="text-gray-600 bg-white/60 backdrop-blur-lg border border-white/40 rounded-xl px-4 py-2 w-full focus:outline-none focus:border-red-500"
+                    >
+                      <option value="">Select Favorite Team (optional)</option>
+                      {teams.map(team => (
+                        <option key={team.id} value={team.id}>
+                          {team.school} {team.mascot}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 ) : (
                   <>
@@ -146,16 +264,105 @@ const ProfilePage = () => {
                       <FontAwesomeIcon icon={faEnvelope} className="mr-2" style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}} />
                       {userData?.email || user?.email}
                     </p>
+                    {userData?.bio && (
+                      <p className="text-gray-700 mb-3 italic">"{userData.bio}"</p>
+                    )}
+                    {userData?.location && (
+                      <p className="text-gray-600 mb-4">📍 {userData.location}</p>
+                    )}
                   </>
                 )}
 
-                {/* Team Affiliation */}
+                {/* Team Affiliation with Cool Logo Display */}
                 {userData?.favoriteTeam && (
-                  <div className="flex items-center justify-center md:justify-start mb-4">
-                    <FontAwesomeIcon icon={faFootballBall} className="mr-2" style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}} />
-                    <span className="text-gray-700 font-medium">
-                      {userData.favoriteTeam.school} {userData.favoriteTeam.mascot}
-                    </span>
+                  <div className="relative mb-6">
+                    {/* Team Logo Background Effect */}
+                    <div className="absolute inset-0 opacity-5">
+                      <img 
+                        src={getTeamLogo(userData.favoriteTeam.school)} 
+                        alt={`${userData.favoriteTeam.school} logo`}
+                        className="w-full h-full object-contain"
+                        onError={(e) => e.target.style.display = 'none'}
+                      />
+                    </div>
+                    
+                    {/* Main Team Display */}
+                    <div 
+                      className="relative bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-lg rounded-2xl p-6 border border-white/40 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                      style={{
+                        background: `linear-gradient(135deg, ${getTeamColors(userData.favoriteTeam.school).primary}15, ${getTeamColors(userData.favoriteTeam.school).secondary}15)`
+                      }}
+                    >
+                      <div className="flex items-center justify-center md:justify-start space-x-4">
+                        {/* Animated Team Logo */}
+                        <div className="relative group">
+                          <div 
+                            className="absolute inset-0 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"
+                            style={{ background: `linear-gradient(45deg, ${getTeamColors(userData.favoriteTeam.school).primary}, ${getTeamColors(userData.favoriteTeam.school).secondary})` }}
+                          ></div>
+                          <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-white shadow-lg flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300">
+                            <img 
+                              src={getTeamLogo(userData.favoriteTeam.school)} 
+                              alt={`${userData.favoriteTeam.school} logo`}
+                              className="w-12 h-12 md:w-14 md:h-14 object-contain"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.parentNode.innerHTML = `<FontAwesome icon={faFootballBall} className="text-2xl" style={{color: '${getTeamColors(userData.favoriteTeam.school).primary}'}} />`;
+                              }}
+                            />
+                          </div>
+                          
+                          {/* Floating Star Effect */}
+                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                            <FontAwesomeIcon icon={faStar} className="text-white text-xs" />
+                          </div>
+                        </div>
+                        
+                        {/* Team Info */}
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <FontAwesomeIcon 
+                              icon={faFootballBall} 
+                              className="text-lg"
+                              style={{ color: getTeamColors(userData.favoriteTeam.school).primary }}
+                            />
+                            <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">My Team</span>
+                          </div>
+                          <h3 
+                            className="text-xl md:text-2xl font-bold mb-1"
+                            style={{ 
+                              background: `linear-gradient(45deg, ${getTeamColors(userData.favoriteTeam.school).primary}, ${getTeamColors(userData.favoriteTeam.school).secondary})`,
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent',
+                              backgroundClip: 'text'
+                            }}
+                          >
+                            {userData.favoriteTeam.school}
+                          </h3>
+                          <p className="text-gray-600 font-medium">
+                            {userData.favoriteTeam.mascot}
+                          </p>
+                          
+                          {/* Team Stats or Conference (if available) */}
+                          {userData.favoriteTeam.conference && (
+                            <div className="mt-2 flex items-center space-x-2">
+                              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                                {userData.favoriteTeam.conference}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Decorative Elements */}
+                      <div className="absolute top-2 right-2 w-8 h-8 opacity-20">
+                        <FontAwesomeIcon 
+                          icon={faTrophy} 
+                          className="text-2xl"
+                          style={{ color: getTeamColors(userData.favoriteTeam.school).primary }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -173,10 +380,14 @@ const ProfilePage = () => {
                     <button
                       onClick={handleSave}
                       disabled={isLoading}
-                      className="px-6 py-2 gradient-bg text-white rounded-xl hover:shadow-xl transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-2 gradient-bg text-white rounded-xl hover:shadow-xl transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                       <FontAwesomeIcon icon={faSave} className="mr-2" />
-                      {isLoading ? 'Saving...' : 'Save Changes'}
+                      {isLoading ? (
+                        uploadProgress > 0 && uploadProgress < 100 ? 
+                          `Uploading... ${uploadProgress}%` : 
+                          'Saving...'
+                      ) : 'Save Changes'}
                     </button>
                     <button
                       onClick={handleCancel}
@@ -357,12 +568,6 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
-
-      {/* Decorative glass elements */}
-      <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full blur-xl animate-pulse" style={{background: 'radial-gradient(circle, rgba(204,0,28,0.20) 0%, rgba(161,0,20,0.20) 50%, rgba(115,0,13,0.20) 100%)'}}></div>
-      <div className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s', background: 'radial-gradient(circle, rgba(204,0,28,0.15) 0%, rgba(161,0,20,0.15) 50%, rgba(115,0,13,0.15) 100%)' }}></div>
-      <div className="absolute top-1/2 -right-4 w-12 h-12 rounded-full blur-lg animate-pulse" style={{ animationDelay: '2s', background: 'radial-gradient(circle, rgba(204,0,28,0.25) 0%, rgba(161,0,20,0.25) 50%, rgba(115,0,13,0.25) 100%)' }}></div>
-      <div className="absolute top-1/4 -left-4 w-16 h-16 rounded-full blur-lg animate-pulse" style={{ animationDelay: '0.5s', background: 'radial-gradient(circle, rgba(204,0,28,0.18) 0%, rgba(161,0,20,0.18) 50%, rgba(115,0,13,0.18) 100%)' }}></div>
     </div>
   );
 };

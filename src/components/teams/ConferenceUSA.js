@@ -115,7 +115,14 @@ const TeamPerformanceCard = ({ team, rank, record, eloRating, talentRating, onTe
                                 {rank}
                             </div>
                         )}
-                        <div className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center overflow-hidden">
+                        <div 
+                            className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-white/70 transition-all duration-300"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                localStorage.setItem('selectedTeamData', JSON.stringify(team));
+                                window.location.hash = `team-detail-${team.id}`;
+                            }}
+                        >
                             <img 
                                 src={team.logos?.[0] || '/photos/ncaaf.png'} 
                                 alt={team.school}

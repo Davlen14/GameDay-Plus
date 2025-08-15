@@ -162,22 +162,58 @@ const CompareTeamsView = () => {
           {/* Team 1 logos - left side, varied sizes */}
           {team1.logos?.[0] && (
             <>
-              <div className="absolute top-12 left-6 w-12 h-12 opacity-7">
+              <div 
+                className="absolute top-12 left-6 w-12 h-12 opacity-7 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team1));
+                  window.location.hash = `team-detail-${team1.id}`;
+                }}
+              >
                 <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute top-1/3 left-4 w-10 h-10 opacity-6 rotate-12">
+              <div 
+                className="absolute top-1/3 left-4 w-10 h-10 opacity-6 rotate-12 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team1));
+                  window.location.hash = `team-detail-${team1.id}`;
+                }}
+              >
                 <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute top-2/3 left-8 w-10 h-10 opacity-6 -rotate-6">
+              <div 
+                className="absolute top-2/3 left-8 w-10 h-10 opacity-6 -rotate-6 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team1));
+                  window.location.hash = `team-detail-${team1.id}`;
+                }}
+              >
                 <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute bottom-32 left-2 w-12 h-12 opacity-7">
+              <div 
+                className="absolute bottom-32 left-2 w-12 h-12 opacity-7 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team1));
+                  window.location.hash = `team-detail-${team1.id}`;
+                }}
+              >
                 <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute bottom-12 left-10 w-8 h-8 opacity-5 rotate-30">
+              <div 
+                className="absolute bottom-12 left-10 w-8 h-8 opacity-5 rotate-30 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team1));
+                  window.location.hash = `team-detail-${team1.id}`;
+                }}
+              >
                 <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute top-1/4 left-1 w-9 h-9 opacity-5 rotate-45">
+              <div 
+                className="absolute top-1/4 left-1 w-9 h-9 opacity-5 rotate-45 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team1));
+                  window.location.hash = `team-detail-${team1.id}`;
+                }}
+              >
                 <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
             </>
@@ -186,22 +222,58 @@ const CompareTeamsView = () => {
           {/* Team 2 logos - right side, varied sizes */}
           {team2.logos?.[0] && (
             <>
-              <div className="absolute top-16 right-8 w-12 h-12 opacity-7">
+              <div 
+                className="absolute top-16 right-8 w-12 h-12 opacity-7 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team2));
+                  window.location.hash = `team-detail-${team2.id}`;
+                }}
+              >
                 <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute top-1/2 right-4 w-9 h-9 opacity-6 rotate-15">
+              <div 
+                className="absolute top-1/2 right-4 w-9 h-9 opacity-6 rotate-15 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team2));
+                  window.location.hash = `team-detail-${team2.id}`;
+                }}
+              >
                 <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute top-1/4 right-2 w-10 h-10 opacity-6 -rotate-20">
+              <div 
+                className="absolute top-1/4 right-2 w-10 h-10 opacity-6 -rotate-20 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team2));
+                  window.location.hash = `team-detail-${team2.id}`;
+                }}
+              >
                 <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute bottom-20 right-6 w-9 h-9 opacity-6">
+              <div 
+                className="absolute bottom-20 right-6 w-9 h-9 opacity-6 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team2));
+                  window.location.hash = `team-detail-${team2.id}`;
+                }}
+              >
                 <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute bottom-40 right-1 w-8 h-8 opacity-5 -rotate-12">
+              <div 
+                className="absolute bottom-40 right-1 w-8 h-8 opacity-5 -rotate-12 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team2));
+                  window.location.hash = `team-detail-${team2.id}`;
+                }}
+              >
                 <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute bottom-8 right-12 w-10 h-10 opacity-5 rotate-25">
+              <div 
+                className="absolute bottom-8 right-12 w-10 h-10 opacity-5 rotate-25 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team2));
+                  window.location.hash = `team-detail-${team2.id}`;
+                }}
+              >
                 <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
             </>
@@ -210,16 +282,40 @@ const CompareTeamsView = () => {
           {/* Center subtle logos - very small and subtle */}
           {team1.logos?.[0] && team2.logos?.[0] && (
             <>
-              <div className="absolute top-1/5 left-1/3 w-7 h-7 opacity-4 rotate-45">
+              <div 
+                className="absolute top-1/5 left-1/3 w-7 h-7 opacity-4 rotate-45 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team1));
+                  window.location.hash = `team-detail-${team1.id}`;
+                }}
+              >
                 <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute bottom-1/5 right-1/3 w-6 h-6 opacity-3 -rotate-30">
+              <div 
+                className="absolute bottom-1/5 right-1/3 w-6 h-6 opacity-3 -rotate-30 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team2));
+                  window.location.hash = `team-detail-${team2.id}`;
+                }}
+              >
                 <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute top-1/2 left-1/4 w-5 h-5 opacity-3 rotate-60">
+              <div 
+                className="absolute top-1/2 left-1/4 w-5 h-5 opacity-3 rotate-60 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team1));
+                  window.location.hash = `team-detail-${team1.id}`;
+                }}
+              >
                 <img src={team1.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="absolute top-3/4 right-1/4 w-8 h-8 opacity-4 -rotate-45">
+              <div 
+                className="absolute top-3/4 right-1/4 w-8 h-8 opacity-4 -rotate-45 cursor-pointer hover:opacity-100 hover:scale-110 transition-all duration-300"
+                onClick={() => {
+                  localStorage.setItem('selectedTeamData', JSON.stringify(team2));
+                  window.location.hash = `team-detail-${team2.id}`;
+                }}
+              >
                 <img src={team2.logos[0]} alt="" className="w-full h-full object-contain" />
               </div>
             </>

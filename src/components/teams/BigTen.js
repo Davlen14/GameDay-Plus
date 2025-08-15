@@ -363,7 +363,14 @@ const TeamCard = ({ team, isSelected1, isSelected2, isSelected, onTeamClick, sel
                 
                 <div className="relative z-10 text-center">
                     {/* Team Logo */}
-                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center overflow-hidden">
+                    <div 
+                        className="w-12 h-12 mx-auto mb-2 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-white/70 transition-all duration-300"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            localStorage.setItem('selectedTeamData', JSON.stringify(team));
+                            window.location.hash = `team-detail-${team.id}`;
+                        }}
+                    >
                         <img 
                             src={team.logos?.[0] || '/photos/ncaaf.png'} 
                             alt={team.school}
