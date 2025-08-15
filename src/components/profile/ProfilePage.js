@@ -62,13 +62,26 @@ const ProfilePage = () => {
   useEffect(() => {
     // Load user profile from Firebase Auth
     if (userData) {
-      setEditData(userData);
+      console.log('Loading user data into edit form:', userData);
+      setEditData({ ...userData });
+    } else if (user) {
+      console.log('Loading basic user data from auth:', user);
+      setEditData({
+        displayName: user.displayName || '',
+        email: user.email || '',
+        photoURL: user.photoURL || '',
+        bio: '',
+        location: '',
+        favoriteTeam: null
+      });
     }
-  }, [userData]);
+  }, [userData, user]);
 
   const handleEdit = () => {
     setIsEditing(true);
     setEditData({ ...userData });
+    // Reset any previous error states
+    setUploadProgress(0);
   };
 
   const handleSave = async () => {
@@ -79,31 +92,47 @@ const ProfilePage = () => {
     }
 
     setIsLoading(true);
+    console.log('Starting profile save...');
+    
     try {
       let photoURL = editData.photoURL;
       
       // If user selected a new photo, upload it first
       if (selectedPhotoFile) {
+        console.log('Uploading photo...');
         setUploadProgress(0);
-        photoURL = await uploadProfilePhoto(selectedPhotoFile, user.uid, (progress) => {
-          setUploadProgress(progress);
-        });
+        
+        try {
+          photoURL = await uploadProfilePhoto(selectedPhotoFile, user.uid, setUploadProgress);
+          console.log('Photo uploaded successfully:', photoURL);
+        } catch (photoError) {
+          console.error('Photo upload failed:', photoError);
+          // Show error but continue with save without photo
+          showToast.error('Photo upload failed. Saving profile without photo change.');
+          photoURL = userData.photoURL || editData.photoURL; // Keep existing photo
+        }
       }
       
       // Update profile data
       const updatedData = {
-        ...editData,
         displayName: editData.displayName.trim(),
         bio: editData.bio?.trim() || '',
         location: editData.location?.trim() || '',
-        photoURL
+        photoURL,
+        favoriteTeam: editData.favoriteTeam || null
       };
       
+      console.log('Updating profile with data:', updatedData);
       await updateUserProfile(updatedData);
+      
+      // Success - reset states
       setIsEditing(false);
       setProfilePhotoPreview(null);
       setSelectedPhotoFile(null);
       setUploadProgress(0);
+      
+      showToast.success('Profile updated successfully!');
+      
     } catch (error) {
       console.error('Error updating profile:', error);
       showToast.error('Failed to update profile. Please try again.');
@@ -112,11 +141,46 @@ const ProfilePage = () => {
     }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditData({ ...userData });
-    setProfilePhotoPreview(null);
-    setSelectedPhotoFile(null);
+  const handleSaveWithoutPhoto = async () => {
+    // Basic validation
+    if (!editData.displayName || editData.displayName.trim() === '') {
+      showToast.error('Please enter your display name.');
+      return;
+    }
+
+    setIsLoading(true);
+    console.log('Saving profile without photo...');
+    
+    try {
+      // Update profile data without photo change
+      const updatedData = {
+        displayName: editData.displayName.trim(),
+        bio: editData.bio?.trim() || '',
+        location: editData.location?.trim() || '',
+        photoURL: userData.photoURL || editData.photoURL, // Keep existing photo
+        favoriteTeam: editData.favoriteTeam || null
+      };
+      
+      await updateUserProfile(updatedData);
+      
+      // Success - reset states
+      setIsEditing(false);
+      setProfilePhotoPreview(null);
+      setSelectedPhotoFile(null);
+      setUploadProgress(0);
+      
+      showToast.success('Profile updated successfully!');
+      
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      showToast.error('Failed to update profile. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetEditingState = () => {
+    setIsLoading(false);
     setUploadProgress(0);
   };
 
@@ -413,13 +477,22 @@ const ProfilePage = () => {
                         uploadProgress > 0 && uploadProgress < 100 ? 
                           `Uploading photo... ${uploadProgress}%` : 
                           uploadProgress === 100 ?
-                          'Saving profile...' :
+                          'Finalizing...' :
                           'Saving...'
                       ) : 'Save Changes'}
                     </button>
+                    {selectedPhotoFile && !isLoading && (
+                      <button
+                        onClick={handleSaveWithoutPhoto}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all duration-300 font-medium text-sm"
+                      >
+                        Save Without Photo
+                      </button>
+                    )}
                     <button
                       onClick={handleCancel}
-                      className="px-6 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all duration-300 font-medium"
+                      disabled={isLoading}
+                      className="px-6 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all duration-300 font-medium disabled:opacity-50"
                     >
                       <FontAwesomeIcon icon={faTimes} className="mr-2" />
                       Cancel

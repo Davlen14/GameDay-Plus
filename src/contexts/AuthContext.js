@@ -336,8 +336,14 @@ export const AuthProvider = ({ children }) => {
   const uploadProfilePhoto = async (file, userId, onProgress) => {
     if (!file || !userId) throw new Error('File and userId are required');
 
+    console.log('Starting photo upload...', { fileName: file.name, fileSize: file.size });
+
     try {
-      const fileRef = ref(storage, `profile-photos/${userId}/${Date.now()}_${file.name}`);
+      // Create a unique filename
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `profile_${timestamp}.${fileExtension}`;
+      const fileRef = ref(storage, `profile-photos/${userId}/${fileName}`);
       
       if (onProgress) {
         // Use Firebase's resumable upload with real progress tracking
@@ -348,36 +354,31 @@ export const AuthProvider = ({ children }) => {
             (snapshot) => {
               // Calculate and report real progress
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log('Upload progress:', progress);
               onProgress(Math.round(progress));
             },
             (error) => {
               console.error('Upload error:', error);
-              reject(error);
+              
+              let errorMessage = 'Upload failed';
+              if (error.code === 'storage/canceled') {
+                errorMessage = 'Upload was canceled';
+              } else if (error.code === 'storage/unauthorized') {
+                errorMessage = 'Unauthorized to upload files';
+              } else if (error.code === 'storage/quota-exceeded') {
+                errorMessage = 'Storage quota exceeded';
+              }
+              
+              reject(new Error(errorMessage));
             },
             async () => {
               try {
                 // Upload completed successfully
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                
-                // Update user profile
-                await updateProfile(auth.currentUser, {
-                  photoURL: downloadURL
-                });
-
-                // Update Firestore document
-                await updateDoc(doc(db, 'users', userId), {
-                  photoURL: downloadURL
-                });
-
-                // Update local state
-                setUserData(prev => ({
-                  ...prev,
-                  photoURL: downloadURL
-                }));
-
-                showToast.success('Profile photo updated!');
+                console.log('Photo uploaded successfully:', downloadURL);
                 resolve(downloadURL);
               } catch (error) {
+                console.error('Error getting download URL:', error);
                 reject(error);
               }
             }
@@ -385,31 +386,14 @@ export const AuthProvider = ({ children }) => {
         });
       } else {
         // Simple upload without progress
+        console.log('Starting simple upload without progress...');
         await uploadBytes(fileRef, file);
         const downloadURL = await getDownloadURL(fileRef);
-
-        // Update user profile
-        await updateProfile(auth.currentUser, {
-          photoURL: downloadURL
-        });
-
-        // Update Firestore document
-        await updateDoc(doc(db, 'users', userId), {
-          photoURL: downloadURL
-        });
-
-        // Update local state
-        setUserData(prev => ({
-          ...prev,
-          photoURL: downloadURL
-        }));
-
-        showToast.success('Profile photo updated!');
+        console.log('Simple upload completed:', downloadURL);
         return downloadURL;
       }
     } catch (error) {
       console.error('Photo upload error:', error);
-      showToast.error('Failed to upload photo');
       throw error;
     }
   };
@@ -418,31 +402,55 @@ export const AuthProvider = ({ children }) => {
   const updateUserProfile = async (updates) => {
     if (!user) throw new Error('No user logged in');
 
-    try {
-      // Update Firebase Auth profile if needed
-      if (updates.displayName || updates.photoURL) {
-        await updateProfile(user, {
-          displayName: updates.displayName || user.displayName,
-          photoURL: updates.photoURL || user.photoURL
-        });
-      }
+    console.log('Starting profile update...', updates);
 
-      // Update Firestore document
-      await updateDoc(doc(db, 'users', user.uid), {
-        ...updates,
-        updatedAt: new Date().toISOString()
+    try {
+      // Create a timeout promise to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Profile update timed out')), 30000); // 30 second timeout
       });
 
-      // Update local state
-      setUserData(prev => ({
-        ...prev,
-        ...updates
-      }));
+      const updatePromise = async () => {
+        // Update Firebase Auth profile if needed
+        if (updates.displayName || updates.photoURL) {
+          console.log('Updating Firebase Auth profile...');
+          await updateProfile(user, {
+            displayName: updates.displayName || user.displayName,
+            photoURL: updates.photoURL || user.photoURL
+          });
+          console.log('Firebase Auth profile updated');
+        }
 
-      showToast.success('Profile updated successfully!');
+        // Update Firestore document
+        console.log('Updating Firestore document...');
+        await updateDoc(doc(db, 'users', user.uid), {
+          ...updates,
+          updatedAt: new Date().toISOString()
+        });
+        console.log('Firestore document updated');
+
+        // Update local state
+        setUserData(prev => ({
+          ...prev,
+          ...updates
+        }));
+
+        console.log('Profile update completed successfully');
+        showToast.success('Profile updated successfully!');
+      };
+
+      // Race between update and timeout
+      await Promise.race([updatePromise(), timeoutPromise]);
+
     } catch (error) {
       console.error('Profile update error:', error);
-      showToast.error('Failed to update profile');
+      
+      if (error.message === 'Profile update timed out') {
+        showToast.error('Profile update timed out. Please check your connection and try again.');
+      } else {
+        showToast.error(`Failed to update profile: ${error.message}`);
+      }
+      
       throw error;
     }
   };
