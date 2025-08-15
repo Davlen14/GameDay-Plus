@@ -85,7 +85,9 @@ const ProfilePage = () => {
       // If user selected a new photo, upload it first
       if (selectedPhotoFile) {
         setUploadProgress(0);
-        photoURL = await uploadProfilePhoto(selectedPhotoFile, user.uid, setUploadProgress);
+        photoURL = await uploadProfilePhoto(selectedPhotoFile, user.uid, (progress) => {
+          setUploadProgress(progress);
+        });
       }
       
       // Update profile data
@@ -187,22 +189,46 @@ const ProfilePage = () => {
                   )}
                 </div>
                 {isEditing && (
-                  <label className="absolute bottom-2 right-2 w-10 h-10 bg-gradient-to-r from-red-600 to-red-800 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg" style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))'}}>
-                    <FontAwesomeIcon icon={faCamera} className="text-white text-sm" />
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handlePhotoUpload}
-                      className="hidden" 
-                    />
-                  </label>
+                  <>
+                    <label className="absolute bottom-2 right-2 w-10 h-10 bg-gradient-to-r from-red-600 to-red-800 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg" style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))'}}>
+                      <FontAwesomeIcon icon={faCamera} className="text-white text-sm" />
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handlePhotoUpload}
+                        className="hidden" 
+                      />
+                    </label>
+                    
+                    {/* Remove photo preview button */}
+                    {profilePhotoPreview && (
+                      <button
+                        onClick={() => {
+                          setProfilePhotoPreview(null);
+                          setSelectedPhotoFile(null);
+                        }}
+                        className="absolute top-2 right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors shadow-lg"
+                        title="Remove photo"
+                      >
+                        <FontAwesomeIcon icon={faTimes} className="text-white text-xs" />
+                      </button>
+                    )}
+                  </>
                 )}
                 
                 {/* Upload Progress */}
                 {isLoading && uploadProgress > 0 && uploadProgress < 100 && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                    <div className="text-white text-sm font-medium">
-                      {uploadProgress}%
+                    <div className="text-center">
+                      <div className="text-white text-sm font-medium mb-2">
+                        {uploadProgress}%
+                      </div>
+                      <div className="w-16 h-1 bg-white/30 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-white transition-all duration-300 ease-out" 
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -385,7 +411,9 @@ const ProfilePage = () => {
                       <FontAwesomeIcon icon={faSave} className="mr-2" />
                       {isLoading ? (
                         uploadProgress > 0 && uploadProgress < 100 ? 
-                          `Uploading... ${uploadProgress}%` : 
+                          `Uploading photo... ${uploadProgress}%` : 
+                          uploadProgress === 100 ?
+                          'Saving profile...' :
                           'Saving...'
                       ) : 'Save Changes'}
                     </button>

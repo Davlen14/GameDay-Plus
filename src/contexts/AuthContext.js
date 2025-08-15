@@ -17,6 +17,7 @@ import {
 import { 
   ref, 
   uploadBytes, 
+  uploadBytesResumable,
   getDownloadURL 
 } from 'firebase/storage';
 import { 
@@ -336,51 +337,76 @@ export const AuthProvider = ({ children }) => {
     if (!file || !userId) throw new Error('File and userId are required');
 
     try {
-      const fileRef = ref(storage, `profile-photos/${userId}/${file.name}`);
-      
-      // Upload file with progress tracking
-      const uploadTask = uploadBytes(fileRef, file);
+      const fileRef = ref(storage, `profile-photos/${userId}/${Date.now()}_${file.name}`);
       
       if (onProgress) {
-        // Simulate progress for now - Firebase v9 doesn't have progress callbacks in uploadBytes
-        const interval = setInterval(() => {
-          onProgress(prev => {
-            if (prev >= 90) {
-              clearInterval(interval);
-              return prev;
-            }
-            return prev + 10;
-          });
-        }, 100);
+        // Use Firebase's resumable upload with real progress tracking
+        const uploadTask = uploadBytesResumable(fileRef, file);
         
-        await uploadTask;
-        clearInterval(interval);
-        onProgress(100);
+        return new Promise((resolve, reject) => {
+          uploadTask.on('state_changed',
+            (snapshot) => {
+              // Calculate and report real progress
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              onProgress(Math.round(progress));
+            },
+            (error) => {
+              console.error('Upload error:', error);
+              reject(error);
+            },
+            async () => {
+              try {
+                // Upload completed successfully
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                
+                // Update user profile
+                await updateProfile(auth.currentUser, {
+                  photoURL: downloadURL
+                });
+
+                // Update Firestore document
+                await updateDoc(doc(db, 'users', userId), {
+                  photoURL: downloadURL
+                });
+
+                // Update local state
+                setUserData(prev => ({
+                  ...prev,
+                  photoURL: downloadURL
+                }));
+
+                showToast.success('Profile photo updated!');
+                resolve(downloadURL);
+              } catch (error) {
+                reject(error);
+              }
+            }
+          );
+        });
       } else {
-        await uploadTask;
+        // Simple upload without progress
+        await uploadBytes(fileRef, file);
+        const downloadURL = await getDownloadURL(fileRef);
+
+        // Update user profile
+        await updateProfile(auth.currentUser, {
+          photoURL: downloadURL
+        });
+
+        // Update Firestore document
+        await updateDoc(doc(db, 'users', userId), {
+          photoURL: downloadURL
+        });
+
+        // Update local state
+        setUserData(prev => ({
+          ...prev,
+          photoURL: downloadURL
+        }));
+
+        showToast.success('Profile photo updated!');
+        return downloadURL;
       }
-
-      // Get download URL
-      const downloadURL = await getDownloadURL(fileRef);
-
-      // Update user profile
-      await updateProfile(auth.currentUser, {
-        photoURL: downloadURL
-      });
-
-      // Update Firestore document
-      await updateDoc(doc(db, 'users', userId), {
-        photoURL: downloadURL
-      });
-
-      // Update local state
-      setUserData(prev => ({
-        ...prev,
-        photoURL: downloadURL
-      }));
-
-      showToast.success('Profile photo updated!');
-      return downloadURL;
     } catch (error) {
       console.error('Photo upload error:', error);
       showToast.error('Failed to upload photo');
