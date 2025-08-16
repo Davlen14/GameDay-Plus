@@ -40,7 +40,9 @@ const ProfilePage = () => {
     
     // Convert team name to logo filename format
     const logoName = teamName.replace(/\s+/g, '_').replace(/&/g, '').replace(/'/g, '');
-    return `/team_logos/${logoName}.png`;
+    const logoPath = `/team_logos/${logoName}.png`;
+    console.log('Loading team logo for:', teamName, 'Path:', logoPath);
+    return logoPath;
   };
 
   // Helper function to get team colors (you can expand this)
@@ -523,25 +525,35 @@ const ProfilePage = () => {
                       <div className="flex items-center justify-center md:justify-start space-x-4">
                         {/* Animated Team Logo */}
                         <div className="relative group">
-                          <div 
-                            className="absolute inset-0 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"
-                            style={{ background: `linear-gradient(45deg, ${getTeamColors(userData.favoriteTeam.school).primary}, ${getTeamColors(userData.favoriteTeam.school).secondary})` }}
-                          ></div>
-                          <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-white shadow-lg flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300">
+                          <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300">
                             <img 
                               src={getTeamLogo(userData.favoriteTeam.school)} 
                               alt={`${userData.favoriteTeam.school} logo`}
-                              className="w-12 h-12 md:w-14 md:h-14 object-contain"
+                              className="w-16 h-16 md:w-20 md:h-20 object-contain filter drop-shadow-lg"
                               onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.parentNode.innerHTML = `<FontAwesome icon={faFootballBall} className="text-2xl" style={{color: '${getTeamColors(userData.favoriteTeam.school).primary}'}} />`;
+                                console.log('Logo failed to load for:', userData.favoriteTeam.school);
+                                const fallbackContainer = document.createElement('div');
+                                fallbackContainer.className = 'w-16 h-16 md:w-20 md:h-20 flex items-center justify-center text-4xl md:text-5xl font-bold';
+                                fallbackContainer.style.color = getTeamColors(userData.favoriteTeam.school).primary;
+                                fallbackContainer.innerHTML = '🏈';
+                                e.target.parentNode.replaceChild(fallbackContainer, e.target);
                               }}
                             />
                           </div>
                           
                           {/* Floating Star Effect */}
-                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg animate-pulse">
-                            <FontAwesomeIcon icon={faStar} className="text-white text-xs" />
+                          <div className="absolute -top-2 -right-2 flex items-center justify-center animate-pulse">
+                            <FontAwesomeIcon 
+                              icon={faStar} 
+                              className="text-xl filter drop-shadow-lg"
+                              style={{
+                                background: 'linear-gradient(135deg, rgb(255,193,7), rgb(255,179,0), rgb(255,160,0), rgb(255,179,0), rgb(255,193,7))',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                                color: 'transparent'
+                              }}
+                            />
                           </div>
                         </div>
                         
