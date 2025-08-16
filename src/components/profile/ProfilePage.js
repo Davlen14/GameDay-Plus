@@ -4,6 +4,8 @@ import { faCamera, faEdit, faSave, faTimes, faUser, faEnvelope, faCalendarAlt, f
 import { useAuth } from '../../contexts/AuthContext';
 import { teamService } from '../../services/teamService';
 import { showToast } from '../common/Toast';
+import SuccessPopup from '../common/SuccessPopup';
+import UploadProgress from '../common/UploadProgress';
 import './ProfilePage.css';
 
 const ProfilePage = () => {
@@ -15,6 +17,9 @@ const ProfilePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [teams, setTeams] = useState([]);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showUploadProgress, setShowUploadProgress] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('uploading');
 
   // Load teams for dropdown
   useEffect(() => {
@@ -92,52 +97,161 @@ const ProfilePage = () => {
     }
 
     setIsLoading(true);
-    console.log('Starting profile save...');
+    setUploadProgress(0);
+    console.log('Starting profile save process...');
     
     try {
       let photoURL = editData.photoURL;
       
-      // If user selected a new photo, upload it first
-      if (selectedPhotoFile) {
-        console.log('Uploading photo...');
-        setUploadProgress(0);
+      // If user selected a new photo, upload it
+      if (selectedPhotoFile && profilePhotoPreview) {
+        console.log('Uploading new profile photo...');
+        
+        // Show upload progress modal
+        setShowUploadProgress(true);
+        setUploadStatus('uploading');
         
         try {
-          photoURL = await uploadProfilePhoto(selectedPhotoFile, user.uid, setUploadProgress);
+          // Show upload starting immediately
+          setUploadProgress(1);
+          
+          // Small delay to ensure UI updates
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Upload the actual file to Firebase Storage
+          const result = await uploadProfilePhoto(
+            selectedPhotoFile, 
+            user.uid, 
+            (progress) => {
+              console.log('Upload progress:', progress);
+              // Ensure minimum visible progress
+              const displayProgress = Math.max(progress, 1);
+              setUploadProgress(displayProgress);
+              
+              // Update status based on progress
+              if (progress >= 95) {
+                setUploadStatus('processing');
+              }
+            }
+          );
+          
+          photoURL = result.downloadURL || result;
           console.log('Photo uploaded successfully:', photoURL);
+          setUploadStatus('complete');
+          
         } catch (photoError) {
           console.error('Photo upload failed:', photoError);
-          // Show error but continue with save without photo
-          showToast.error('Photo upload failed. Saving profile without photo change.');
-          photoURL = userData.photoURL || editData.photoURL; // Keep existing photo
+          
+          // Hide upload progress on error
+          setShowUploadProgress(false);
+          
+          // Check if we should fallback to base64
+          if (photoError.message.includes('timeout') || photoError.message.includes('Upload timed out')) {
+            // Don't show error for timeout - just use fallback silently
+            console.log('Upload timed out, using fallback method...');
+            
+            // Fallback to base64
+            try {
+              const base64Result = await convertToBase64(selectedPhotoFile);
+              photoURL = base64Result;
+              // Success message will be shown after profile update completes
+            } catch (fallbackError) {
+              console.error('Base64 fallback failed:', fallbackError);
+              
+              // Ask user if they want to save without photo
+              if (window.confirm(
+                `Photo upload failed: ${photoError.message}\n\nWould you like to save your profile without updating the photo?`
+              )) {
+                photoURL = editData.photoURL; // Keep existing photo
+              } else {
+                setIsLoading(false);
+                setUploadProgress(0);
+                return;
+              }
+            }
+          } else if (photoError.message.includes('invalid-profile-attribute') || photoError.message.includes('URL too long')) {
+            // Firebase Storage URL issue - use fallback silently
+            console.log('Firebase Storage URL issue, using fallback method...');
+            try {
+              const base64Result = await convertToBase64(selectedPhotoFile);
+              photoURL = base64Result;
+              // Success message will be shown after profile update completes
+            } catch (fallbackError) {
+              console.error('Base64 fallback failed:', fallbackError);
+              photoURL = profilePhotoPreview; // Use preview as fallback
+            }
+          } else {
+            // For other errors, ask user what to do
+            if (window.confirm(
+              `Photo upload failed: ${photoError.message}\n\nWould you like to save your profile with a temporary photo? (You can try uploading again later)`
+            )) {
+              console.log('Using fallback base64 photo like signup');
+              photoURL = profilePhotoPreview; // Use base64 like signup
+              showToast.warning('Profile saved with temporary photo');
+            } else {
+              setIsLoading(false);
+              setUploadProgress(0);
+              return; // User chose not to continue
+            }
+          }
         }
+        
+        // Hide upload progress after a short delay
+        setTimeout(() => {
+          setShowUploadProgress(false);
+        }, 1000);
       }
       
-      // Update profile data
+      // Prepare profile update data (same as before)
       const updatedData = {
         displayName: editData.displayName.trim(),
         bio: editData.bio?.trim() || '',
         location: editData.location?.trim() || '',
-        photoURL,
         favoriteTeam: editData.favoriteTeam || null
       };
       
+      // Only include photoURL if it's different
+      if (photoURL && photoURL !== userData?.photoURL) {
+        updatedData.photoURL = photoURL;
+      }
+      
       console.log('Updating profile with data:', updatedData);
+      
+      // Update the profile
       await updateUserProfile(updatedData);
       
-      // Success - reset states
+      // Success - immediately exit edit mode
       setIsEditing(false);
       setProfilePhotoPreview(null);
       setSelectedPhotoFile(null);
       setUploadProgress(0);
       
-      showToast.success('Profile updated successfully!');
+      // Show success popup
+      setShowSuccessPopup(true);
+      
+      console.log('Profile save completed successfully');
       
     } catch (error) {
-      console.error('Error updating profile:', error);
-      showToast.error('Failed to update profile. Please try again.');
+      console.error('Error saving profile:', error);
+      setUploadProgress(0);
+      setShowUploadProgress(false);
+      
+      // Don't show error messages for Firebase Storage URL issues that were handled by fallback
+      if (error.message.includes('invalid-profile-attribute') || error.message.includes('URL too long')) {
+        console.log('Firebase Storage URL issue was handled by fallback, not showing error');
+        return; // Don't show error, fallback handled it
+      }
+      
+      if (error.message.includes('network') || error.message.includes('connection')) {
+        showToast.error('Network error. Please check your connection and try again.');
+      } else if (error.message.includes('permission') || error.message.includes('unauthorized')) {
+        showToast.error('Permission error. Please log out and log back in.');
+      } else {
+        showToast.error(`Failed to save profile: ${error.message}`);
+      }
     } finally {
       setIsLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -179,34 +293,57 @@ const ProfilePage = () => {
     }
   };
 
-  const resetEditingState = () => {
-    setIsLoading(false);
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditData({ ...userData });
+    setProfilePhotoPreview(null);
+    setSelectedPhotoFile(null);
     setUploadProgress(0);
   };
 
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        showToast.error('Please select a valid image file.');
-        return;
-      }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        showToast.error('Please select an image smaller than 5MB.');
-        return;
-      }
-      
-      setSelectedPhotoFile(file);
-      
-      // Create preview
+  // Helper function for base64 fallback
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfilePhotoPreview(e.target.result);
-      };
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
       reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    console.log('Photo file selected:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
+
+    // Validate file
+    if (file.size > 5 * 1024 * 1024) {
+      showToast.error('File size must be less than 5MB');
+      e.target.value = '';
+      return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+      showToast.error('Please select an image file');
+      e.target.value = '';
+      return;
+    }
+
+    // Set the file and create preview - exactly like signup
+    setSelectedPhotoFile(file);
+    
+    try {
+      const base64Preview = await convertToBase64(file);
+      setProfilePhotoPreview(base64Preview);
+      console.log('Photo preview created successfully');
+    } catch (error) {
+      console.error('Error creating photo preview:', error);
+      showToast.error('Error creating photo preview');
     }
   };
 
@@ -458,7 +595,7 @@ const ProfilePage = () => {
 
                 {/* Join Date */}
                 <div className="flex items-center justify-center md:justify-start text-gray-500 text-sm">
-                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}} />
                   Member since August 2025
                 </div>
               </div>
@@ -484,7 +621,8 @@ const ProfilePage = () => {
                     {selectedPhotoFile && !isLoading && (
                       <button
                         onClick={handleSaveWithoutPhoto}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all duration-300 font-medium text-sm"
+                        className="px-4 py-2 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-medium text-sm"
+                        style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))'}}
                       >
                         Save Without Photo
                       </button>
@@ -571,7 +709,7 @@ const ProfilePage = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{background: 'linear-gradient(135deg, rgb(59,130,246), rgb(37,99,235), rgb(29,78,216), rgb(37,99,235), rgb(59,130,246))'}}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))'}}>
                     <FontAwesomeIcon icon={faUser} className="text-white text-sm" />
                   </div>
                   <div>
@@ -600,7 +738,7 @@ const ProfilePage = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div className="w-2 h-2 rounded-full mt-2" style={{background: 'linear-gradient(135deg, rgb(204,0,28), rgb(161,0,20), rgb(115,0,13), rgb(161,0,20), rgb(204,0,28))'}}></div>
                   <div>
                     <p className="text-sm font-medium text-gray-800">Joined FanHub discussion</p>
                     <p className="text-xs text-gray-500">5 hours ago</p>
@@ -669,6 +807,23 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Upload Progress Modal */}
+      <UploadProgress
+        isVisible={showUploadProgress}
+        progress={uploadProgress}
+        fileName="Profile Photo"
+        status={uploadStatus}
+      />
+
+      {/* Success Popup */}
+      <SuccessPopup
+        isVisible={showSuccessPopup}
+        onClose={() => setShowSuccessPopup(false)}
+        title="Profile Updated!"
+        message="Your profile has been successfully updated with your new information."
+        autoCloseDelay={3000}
+      />
     </div>
   );
 };

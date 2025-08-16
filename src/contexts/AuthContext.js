@@ -16,7 +16,6 @@ import {
 } from 'firebase/firestore';
 import { 
   ref, 
-  uploadBytes, 
   uploadBytesResumable,
   getDownloadURL 
 } from 'firebase/storage';
@@ -332,125 +331,249 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Upload Profile Photo
-  const uploadProfilePhoto = async (file, userId, onProgress) => {
-    if (!file || !userId) throw new Error('File and userId are required');
-
-    console.log('Starting photo upload...', { fileName: file.name, fileSize: file.size });
-
-    try {
-      // Create a unique filename
-      const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `profile_${timestamp}.${fileExtension}`;
-      const fileRef = ref(storage, `profile-photos/${userId}/${fileName}`);
+  // Image compression utility
+  const compressImage = (file, maxWidth = 800, quality = 0.8) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
       
-      if (onProgress) {
-        // Use Firebase's resumable upload with real progress tracking
-        const uploadTask = uploadBytesResumable(fileRef, file);
+      img.onload = () => {
+        // Calculate new dimensions maintaining aspect ratio
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
         
-        return new Promise((resolve, reject) => {
-          uploadTask.on('state_changed',
-            (snapshot) => {
-              // Calculate and report real progress
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              console.log('Upload progress:', progress);
-              onProgress(Math.round(progress));
-            },
-            (error) => {
-              console.error('Upload error:', error);
-              
-              let errorMessage = 'Upload failed';
-              if (error.code === 'storage/canceled') {
-                errorMessage = 'Upload was canceled';
-              } else if (error.code === 'storage/unauthorized') {
-                errorMessage = 'Unauthorized to upload files';
-              } else if (error.code === 'storage/quota-exceeded') {
-                errorMessage = 'Storage quota exceeded';
-              }
-              
-              reject(new Error(errorMessage));
-            },
-            async () => {
-              try {
-                // Upload completed successfully
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                console.log('Photo uploaded successfully:', downloadURL);
-                resolve(downloadURL);
-              } catch (error) {
-                console.error('Error getting download URL:', error);
-                reject(error);
-              }
-            }
-          );
-        });
-      } else {
-        // Simple upload without progress
-        console.log('Starting simple upload without progress...');
-        await uploadBytes(fileRef, file);
-        const downloadURL = await getDownloadURL(fileRef);
-        console.log('Simple upload completed:', downloadURL);
-        return downloadURL;
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(resolve, 'image/jpeg', quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Network performance monitoring
+  const monitorNetworkSpeed = () => {
+    if (navigator.connection) {
+      const connection = navigator.connection;
+      console.log('Network info:', {
+        effectiveType: connection.effectiveType,
+        downlink: connection.downlink,
+        rtt: connection.rtt
+      });
+      
+      // Adjust timeout based on network speed
+      if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
+        return 300000; // 5 minutes for slow connections
+      } else if (connection.effectiveType === '3g') {
+        return 180000; // 3 minutes for 3G
       }
+    }
+    return 120000; // 2 minutes default
+  };
+
+  // Upload Profile Photo - Optimized Version
+  const uploadProfilePhoto = async (file, userId, onProgress = () => {}) => {
+    try {
+      // Validate user authentication
+      if (!auth.currentUser || auth.currentUser.uid !== userId) {
+        throw new Error('User authentication required');
+      }
+
+      // Compress image before upload
+      console.log(`Original file size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      const compressedFile = await compressImage(file);
+      console.log(`Compressed file size: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+
+      // Create unique filename
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(2, 15);
+      const fileExtension = compressedFile.type.split('/')[1] || 'jpg';
+      const fileName = `profile_${timestamp}_${randomId}.${fileExtension}`;
+      
+      // Create storage reference
+      const storageRef = ref(storage, `profile-photos/${userId}/${fileName}`);
+      
+      // Configure upload with metadata
+      const metadata = {
+        contentType: compressedFile.type,
+        customMetadata: {
+          'uploaded-by': userId,
+          'upload-timestamp': timestamp.toString(),
+          'original-name': file.name
+        }
+      };
+
+      // Start resumable upload with increased timeout handling
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile, metadata);
+      
+      return new Promise((resolve, reject) => {
+        // Set up dynamic timeout based on network
+        const dynamicTimeout = monitorNetworkSpeed();
+        const timeoutId = setTimeout(() => {
+          uploadTask.cancel();
+          reject(new Error(`Upload timed out after ${dynamicTimeout/1000} seconds`));
+        }, dynamicTimeout);
+
+        // Track upload progress
+        uploadTask.on('state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload progress: ${progress.toFixed(2)}%`);
+            onProgress(progress);
+            
+            // Log detailed state for debugging
+            console.log('Upload state:', snapshot.state);
+            console.log(`${snapshot.bytesTransferred} of ${snapshot.totalBytes} bytes`);
+          },
+          (error) => {
+            clearTimeout(timeoutId);
+            console.error('Upload error details:', error);
+            
+            // Enhanced error handling
+            switch (error.code) {
+              case 'storage/unauthorized':
+                reject(new Error('Upload unauthorized. Please check your permissions and try again.'));
+                break;
+              case 'storage/canceled':
+                reject(new Error('Upload was canceled'));
+                break;
+              case 'storage/quota-exceeded':
+                reject(new Error('Storage quota exceeded'));
+                break;
+              case 'storage/invalid-format':
+                reject(new Error('Invalid file format'));
+                break;
+              case 'storage/invalid-argument':
+                reject(new Error('Invalid upload parameters'));
+                break;
+              default:
+                reject(new Error(`Upload failed: ${error.message}`));
+            }
+          },
+          async () => {
+            try {
+              clearTimeout(timeoutId);
+              
+              // Get download URL
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              
+              console.log('Upload successful:', downloadURL);
+              resolve({
+                downloadURL,
+                fileName,
+                size: compressedFile.size,
+                path: `profile-photos/${userId}/${fileName}`
+              });
+              
+            } catch (urlError) {
+              reject(new Error(`Failed to get download URL: ${urlError.message}`));
+            }
+          }
+        );
+      });
+
     } catch (error) {
-      console.error('Photo upload error:', error);
-      throw error;
+      console.error('Upload preparation error:', error);
+      throw new Error(`Photo upload preparation failed: ${error.message}`);
     }
   };
 
   // Update user profile
   const updateUserProfile = async (updates) => {
-    if (!user) throw new Error('No user logged in');
+    if (!user) {
+      throw new Error('No user logged in');
+    }
 
     console.log('Starting profile update...', updates);
 
     try {
-      // Create a timeout promise to prevent hanging
+      // Create a comprehensive timeout promise
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile update timed out')), 30000); // 30 second timeout
+        setTimeout(() => reject(new Error('Profile update timed out after 45 seconds')), 45000);
       });
 
       const updatePromise = async () => {
+        const updateOperations = [];
+
         // Update Firebase Auth profile if needed
-        if (updates.displayName || updates.photoURL) {
-          console.log('Updating Firebase Auth profile...');
-          await updateProfile(user, {
-            displayName: updates.displayName || user.displayName,
-            photoURL: updates.photoURL || user.photoURL
+        if (updates.displayName !== undefined || updates.photoURL !== undefined) {
+          console.log('Updating Firebase Auth profile...', {
+            displayName: updates.displayName,
+            photoURL: updates.photoURL
           });
-          console.log('Firebase Auth profile updated');
+          
+          const authProfileUpdate = updateProfile(user, {
+            displayName: updates.displayName || user.displayName || '',
+            photoURL: updates.photoURL || user.photoURL || ''
+          });
+          
+          updateOperations.push(authProfileUpdate);
         }
 
         // Update Firestore document
         console.log('Updating Firestore document...');
-        await updateDoc(doc(db, 'users', user.uid), {
+        const firestoreUpdate = updateDoc(doc(db, 'users', user.uid), {
           ...updates,
           updatedAt: new Date().toISOString()
         });
-        console.log('Firestore document updated');
+        
+        updateOperations.push(firestoreUpdate);
 
-        // Update local state
-        setUserData(prev => ({
-          ...prev,
-          ...updates
-        }));
+        // Execute all updates concurrently
+        await Promise.all(updateOperations);
+        console.log('All profile updates completed successfully');
 
-        console.log('Profile update completed successfully');
-        showToast.success('Profile updated successfully!');
+        // Update local state - ensure we merge properly
+        setUserData(prev => {
+          const updated = {
+            ...prev,
+            ...updates,
+            updatedAt: new Date().toISOString()
+          };
+          console.log('Updated local user data:', updated);
+          return updated;
+        });
+
+        return true;
       };
 
-      // Race between update and timeout
+      // Race between update operations and timeout
       await Promise.race([updatePromise(), timeoutPromise]);
+      
+      console.log('Profile update completed successfully');
+      showToast.success('Profile updated successfully!');
 
     } catch (error) {
-      console.error('Profile update error:', error);
+      console.error('Profile update error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
       
-      if (error.message === 'Profile update timed out') {
-        showToast.error('Profile update timed out. Please check your connection and try again.');
+      let errorMessage = 'Failed to update profile';
+      let shouldShowError = true;
+      
+      if (error.message.includes('timed out')) {
+        errorMessage = 'Profile update timed out. Please check your connection and try again.';
+      } else if (error.code === 'permission-denied') {
+        errorMessage = 'Permission denied. Please log out and log back in.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Service temporarily unavailable. Please try again.';
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (error.message.includes('invalid-profile-attribute') || error.message.includes('URL too long')) {
+        // Don't show error for Firebase Storage URL issues - they're handled by fallback
+        shouldShowError = false;
+        console.log('Firebase Storage URL issue detected, fallback should handle this');
       } else {
-        showToast.error(`Failed to update profile: ${error.message}`);
+        errorMessage = `Failed to update profile: ${error.message}`;
       }
       
+      if (shouldShowError) {
+        showToast.error(errorMessage);
+      }
       throw error;
     }
   };

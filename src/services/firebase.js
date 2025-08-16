@@ -37,6 +37,13 @@ export const storage = getStorage(app);
 // Initialize Analytics (only in production)
 export const analytics = process.env.NODE_ENV === 'production' ? getAnalytics(app) : null;
 
+// Enable debug mode in development
+if (process.env.NODE_ENV === 'development') {
+  console.log('Firebase initialized in development mode');
+  console.log('Storage bucket:', firebaseConfig.storageBucket);
+  console.log('Project ID:', firebaseConfig.projectId);
+}
+
 // Authentication providers
 export const googleProvider = new GoogleAuthProvider();
 export const facebookProvider = new FacebookAuthProvider();
@@ -54,5 +61,19 @@ facebookProvider.setCustomParameters({
 appleProvider.setCustomParameters({
   locale: 'en'
 });
+
+// Debug: Log Firebase configuration (without sensitive data)
+console.log('🔥 Firebase initialized with config:', {
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  storageBucket: firebaseConfig.storageBucket,
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasAppId: !!firebaseConfig.appId
+});
+
+// Load debug utilities in development
+if (process.env.NODE_ENV === 'development') {
+  import('./firebaseDebug');
+}
 
 export default app;

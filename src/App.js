@@ -117,6 +117,7 @@ const GameDetailView = React.lazy(() => import('./components/games/GameDetailVie
 // Testing Component
 const APITester = React.lazy(() => import('./components/APITester'));
 const GraphQLDemo = React.lazy(() => import('./components/GraphQLDemo'));
+const FirebaseDebugPanel = React.lazy(() => import('./components/debug/FirebaseDebugPanel'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -458,6 +459,12 @@ function App() {
         return <APITester />;
       case 'graphql-demo':
         return <GraphQLDemo />;
+      case 'firebase-debug':
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <FirebaseDebugPanel />
+          </Suspense>
+        );
 
       // Auth route
       case 'login':
