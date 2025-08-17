@@ -22,7 +22,7 @@ firebase login
 
 3. **Initialize Firebase in your project** (if not already done):
 ```bash
-cd /Users/davlenswain/Desktop/davlens-final-gameday-website/gameday-website-react
+cd /Users/davlenswain/Development/davlens-final-gameday-website/gameday-website-react
 firebase init
 ```
 - Select "Storage" when prompted
@@ -89,7 +89,7 @@ service firebase.storage {
 
 1. **Start your development server**:
 ```bash
-cd /Users/davlenswain/Desktop/davlens-final-gameday-website/gameday-website-react
+cd /Users/davlenswain/Development/davlens-final-gameday-website/gameday-website-react
 npm start
 ```
 

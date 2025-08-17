@@ -78,7 +78,7 @@ async function main() {
     console.log('Fetching teams data...');
     const teams = await fetchTeams();
     
-    const logoDir = '/Users/davlenswain/Desktop/davlens-final-gameday-website/gameday-website-react/public/team logos';
+    const logoDir = '/Users/davlenswain/Development/davlens-final-gameday-website/gameday-website-react/public/team logos';
     
     // Ensure directory exists
     if (!fs.existsSync(logoDir)) {

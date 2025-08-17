@@ -35,6 +35,9 @@ const LoginPage = () => {
   const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
   const [fbsTeams, setFbsTeams] = useState([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredTeams, setFilteredTeams] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Load real FBS teams data
   useEffect(() => {
@@ -45,6 +48,7 @@ const LoginPage = () => {
           const realTeams = await teamService.getFBSTeams(true);
           const filteredTeams = realTeams.filter(team => team.school);
           setFbsTeams(filteredTeams);
+          setFilteredTeams(filteredTeams); // Initialize filtered teams
         } catch (error) {
           console.error('Error loading teams:', error);
           // Fallback to a few basic teams if API fails
@@ -60,6 +64,22 @@ const LoginPage = () => {
     };
     loadTeams();
   }, [signupStep, fbsTeams.length]);
+
+  // Filter teams based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredTeams(fbsTeams);
+      setShowSearchResults(false);
+    } else {
+      const filtered = fbsTeams.filter(team => 
+        team.school?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        team.mascot?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        team.conference?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredTeams(filtered);
+      setShowSearchResults(true);
+    }
+  }, [searchQuery, fbsTeams]);
 
   const handleSocialLogin = async (provider) => {
     setIsLoading(true);
@@ -82,7 +102,7 @@ const LoginPage = () => {
       }
 
       if (user) {
-        navigate('/');
+        navigate('/profile');
       }
     } catch (error) {
       console.error(`${provider} login error:`, error);
@@ -101,7 +121,7 @@ const LoginPage = () => {
         // Sign in with Firebase
         const user = await signIn(email, password);
         if (user) {
-          navigate('/');
+          navigate('/profile');
         }
       } else {
         // Sign up logic - only handle step 1 (account details)
@@ -160,7 +180,7 @@ const LoginPage = () => {
 
       const user = await signUp(email, password, additionalData);
       if (user) {
-        navigate('/');
+        navigate('/profile');
       }
     } catch (error) {
       console.error('Team selection signup error:', error);
@@ -170,15 +190,39 @@ const LoginPage = () => {
   };
 
   const nextTeam = () => {
-    setCurrentTeamIndex((prev) => (prev + 1) % fbsTeams.length);
+    setCurrentTeamIndex((prev) => 
+      prev < fbsTeams.length - 1 ? prev + 1 : 0
+    );
   };
 
   const prevTeam = () => {
-    setCurrentTeamIndex((prev) => (prev - 1 + fbsTeams.length) % fbsTeams.length);
+    setCurrentTeamIndex((prev) => 
+      prev > 0 ? prev - 1 : fbsTeams.length - 1
+    );
   };
 
   const goToTeam = (index) => {
     setCurrentTeamIndex(index);
+  };
+
+  const handleSearchSelect = (team) => {
+    const teamIndex = fbsTeams.findIndex(t => t.id === team.id);
+    setCurrentTeamIndex(teamIndex);
+    setSearchQuery('');
+    setShowSearchResults(false);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setShowSearchResults(false);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      clearSearch();
+    } else if (e.key === 'Enter' && filteredTeams.length > 0) {
+      handleSearchSelect(filteredTeams[0]);
+    }
   };
 
   const skipTeamSelection = async () => {
@@ -199,7 +243,7 @@ const LoginPage = () => {
 
       const user = await signUp(email, password, additionalData);
       if (user) {
-        navigate('/');
+        navigate('/profile');
       }
     } catch (error) {
       console.error('Skip team signup error:', error);
@@ -236,7 +280,7 @@ const LoginPage = () => {
             {isSignUp && signupStep === 2 ? (
               <div className="text-center">
                 {/* Step Header */}
-                <div className="mb-8">
+                <div className="mb-6">
                   <h2 className="text-3xl font-bold gradient-text mb-2">Pick Your Affiliation</h2>
                   <p className="text-gray-600 text-sm">Choose your favorite college football team</p>
                   <div className="flex justify-center mt-4">
@@ -245,6 +289,88 @@ const LoginPage = () => {
                       <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-600 to-red-800"></div>
                     </div>
                   </div>
+                </div>
+
+                {/* Modern Search Bar */}
+                <div className="relative mb-6">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={handleSearchKeyDown}
+                      placeholder="Search teams, mascots, or conferences..."
+                      className="w-full h-12 pl-12 pr-10 bg-white/60 backdrop-blur-lg border border-white/40 rounded-xl text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600/30 focus:border-red-600/50 transition-all duration-300 shadow-lg"
+                    />
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                      <i className="fas fa-search text-gray-400 text-lg"></i>
+                    </div>
+                    {searchQuery && (
+                      <button
+                        onClick={clearSearch}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-300 hover:bg-gray-400 rounded-full flex items-center justify-center transition-colors duration-200"
+                      >
+                        <i className="fas fa-times text-gray-600 text-xs"></i>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Search Results Dropdown */}
+                  {showSearchResults && filteredTeams.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/90 backdrop-blur-lg border border-white/40 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50">
+                      {filteredTeams.slice(0, 8).map((team) => {
+                        const teamLogo = team.logos?.[0];
+                        const teamColor = team.color || '#cc001c';
+                        
+                        return (
+                          <button
+                            key={team.id}
+                            onClick={() => handleSearchSelect(team)}
+                            className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-white/50 transition-colors duration-200 border-b border-gray-100/50 last:border-b-0"
+                          >
+                            <div className="w-8 h-8 flex-shrink-0">
+                              {teamLogo ? (
+                                <img
+                                  src={teamLogo}
+                                  alt={team.school}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" fill="${encodeURIComponent(teamColor)}" rx="4"/><text x="16" y="20" font-family="Arial" font-size="12" fill="white" text-anchor="middle">${team.school.charAt(0)}</text></svg>`;
+                                  }}
+                                />
+                              ) : (
+                                <div 
+                                  className="w-full h-full rounded flex items-center justify-center text-white text-xs font-bold"
+                                  style={{ backgroundColor: teamColor }}
+                                >
+                                  {team.school.charAt(0)}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 text-left">
+                              <div className="font-medium text-gray-800 text-sm">{team.school}</div>
+                              <div className="text-xs text-gray-500">{team.mascot} • {team.conference}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                      {filteredTeams.length > 8 && (
+                        <div className="px-4 py-2 text-center text-xs text-gray-500 border-t border-gray-100/50">
+                          +{filteredTeams.length - 8} more teams match your search
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* No Results Message */}
+                  {showSearchResults && filteredTeams.length === 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/90 backdrop-blur-lg border border-white/40 rounded-xl shadow-xl p-4 z-50">
+                      <div className="text-center text-gray-500">
+                        <i className="fas fa-search text-2xl mb-2"></i>
+                        <p className="text-sm">No teams found matching "{searchQuery}"</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Loading State */}
@@ -259,8 +385,19 @@ const LoginPage = () => {
                   </div>
                 ) : fbsTeams.length > 0 ? (
                   <>
+                    {/* Search Hint */}
+                    {!showSearchResults && (
+                      <div className="text-center mb-4">
+                        <p className="text-gray-500 text-xs">
+                          💡 Use the search above or browse through the carousel below
+                        </p>
+                      </div>
+                    )}
+
                     {/* Team Slider */}
-                    <div className="relative mb-8">
+                    <div className="relative mb-8"
+                         style={{ display: showSearchResults ? 'none' : 'block' }}
+                    >
                       {/* Main Team Display */}
                       <div className="relative h-80 overflow-hidden rounded-2xl">
                         <div 
@@ -333,7 +470,9 @@ const LoginPage = () => {
                     </div>
 
                     {/* Team Dots Indicator */}
-                    <div className="flex justify-center mb-8 space-x-2 overflow-x-auto px-4 max-h-8">
+                    <div className="flex justify-center mb-8 space-x-2 overflow-x-auto px-4 max-h-8"
+                         style={{ display: showSearchResults ? 'none' : 'flex' }}
+                    >
                       {fbsTeams.slice(0, Math.min(fbsTeams.length, 20)).map((_, index) => (
                         <button
                           key={index}
