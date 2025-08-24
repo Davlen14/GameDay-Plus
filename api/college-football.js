@@ -33,10 +33,13 @@ export default async function handler(req, res) {
 
     console.log(`📡 [API Proxy] College Football request: ${url.toString()}`);
 
+    // Try multiple environment variable names for flexibility
+    const apiKey = process.env.COLLEGE_FOOTBALL_API_KEY || process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY || 'T0iV2bfp8UKCf8rTV12qsS26USzyDYiVNA7x6WbaV3NOvewuDQnJlv3NfPzr3f/p';
+    
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${process.env.COLLEGE_FOOTBALL_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },

@@ -24,10 +24,13 @@ export default async function handler(req, res) {
   try {
     console.log('🚀 [GraphQL Proxy] Attempting request to GraphQL endpoint...');
 
+    // Try multiple environment variable names for flexibility
+    const apiKey = process.env.COLLEGE_FOOTBALL_API_KEY || process.env.REACT_APP_COLLEGE_FOOTBALL_API_KEY || 'T0iV2bfp8UKCf8rTV12qsS26USzyDYiVNA7x6WbaV3NOvewuDQnJlv3NfPzr3f/p';
+
     const response = await fetch('https://graphql.collegefootballdata.com/v1/graphql', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.COLLEGE_FOOTBALL_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
