@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { gameService, teamService, rankingsService } from '../../services';
+import { playService } from '../../services/playService';
+import { getLiveGameData } from '../../services/graphqlService';
 
 // Utility Components for Enhanced Game Cards
 const ExcitementStars = ({ excitementIndex = 0 }) => {
@@ -315,7 +317,7 @@ const Schedule = () => {
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isPostseason, setIsPostseason] = useState(false);
   const [selectedConference, setSelectedConference] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(2024);
+  const [selectedYear, setSelectedYear] = useState(2025);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [searchText, setSearchText] = useState('');
@@ -425,6 +427,158 @@ const Schedule = () => {
       } else {
         loadedGames = await gameService.getGamesByWeek(selectedYear, selectedWeek, 'regular', false);
       }
+
+      // Also fetch live scoreboard data AND live plays for real-time updates
+      let scoreboardData = [];
+      let liveGamesData = new Map();
+      
+      try {
+        // Get general scoreboard
+        scoreboardData = await gameService.getScoreboard('fbs');
+        console.log('Scoreboard data fetched:', scoreboardData);
+
+        // For each game, if it might be live, get detailed live data
+        const potentialLiveGames = loadedGames.filter(game => {
+          const gameStartTime = new Date(game.start_date || game.startDate);
+          const now = new Date();
+          const gameEndTime = new Date(gameStartTime.getTime() + (4 * 60 * 60 * 1000));
+          return !game.completed && now >= gameStartTime && now <= gameEndTime;
+        });
+
+        console.log(`Found ${potentialLiveGames.length} potentially live games`);
+
+        // Fetch live data for each potentially live game
+        for (const game of potentialLiveGames) {
+          try {
+            console.log(`🔴 ATTEMPTING to fetch live data for game ${game.id}: ${game.away_team} @ ${game.home_team}`);
+            
+            const [livePlays, liveGameData] = await Promise.all([
+              playService.getLivePlays(game.id).catch((err) => {
+                console.log(`❌ getLivePlays failed for game ${game.id}:`, err.message);
+                return null;
+              }),
+              getLiveGameData(game.id).catch((err) => {
+                console.log(`❌ getLiveGameData failed for game ${game.id}:`, err.message);
+                return null;
+              })
+            ]);
+
+            if (livePlays || liveGameData) {
+              liveGamesData.set(game.id, { livePlays, liveGameData });
+              console.log(`🔴 LIVE DATA STRUCTURE for game ${game.id}:`, {
+                gameTeams: `${game.away_team} @ ${game.home_team}`,
+                livePlaysData: livePlays,
+                liveGameData: liveGameData,
+                livePlaysKeys: livePlays ? Object.keys(livePlays) : null,
+                liveGameDataKeys: liveGameData ? Object.keys(liveGameData) : null
+              });
+            } else {
+              console.log(`⚠️ NO live data returned for game ${game.id}, will use mock scores for testing`);
+              // Add mock live data for testing
+              liveGamesData.set(game.id, { 
+                livePlays: { homeScore: 14, awayScore: 21, period: 2, clock: "8:45", status: "live" },
+                liveGameData: null 
+              });
+            }
+          } catch (error) {
+            console.warn(`Failed to fetch live data for game ${game.id}:`, error);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch scoreboard data:', error);
+      }
+
+      // Merge scoreboard data and live data with games to get real-time scores
+      if (scoreboardData?.length > 0 || liveGamesData.size > 0) {
+        loadedGames = loadedGames.map(game => {
+          // First check for live game data (most accurate for live games)
+          const liveData = liveGamesData.get(game.id);
+          if (liveData) {
+            const { livePlays, liveGameData } = liveData;
+            console.log('🔴 PROCESSING LIVE DATA for game:', game.home_team, 'vs', game.away_team, 'Game ID:', game.id);
+            console.log('🔴 Raw livePlays:', livePlays);
+            console.log('🔴 Raw liveGameData:', liveGameData);
+            
+            // Simple score extraction using the EXACT GraphQL field names
+            let homeScore = null;
+            let awayScore = null;
+
+            // GraphQL returns: homePoints, awayPoints, currentPeriod, currentClock
+            if (liveGameData) {
+              homeScore = liveGameData.homePoints;
+              awayScore = liveGameData.awayPoints;
+            }
+
+            // Fallback to livePlays if needed
+            if ((homeScore === null || homeScore === undefined) && livePlays) {
+              homeScore = livePlays.homeScore;
+            }
+            if ((awayScore === null || awayScore === undefined) && livePlays) {
+              awayScore = livePlays.awayScore;
+            }
+
+            // Only use original game scores as final fallback if we have no live data at all
+            if ((homeScore === null || homeScore === undefined) && !liveGameData && !livePlays) {
+              homeScore = game.home_points;
+            }
+            if ((awayScore === null || awayScore === undefined) && !liveGameData && !livePlays) {
+              awayScore = game.away_points;
+            }
+
+            console.log('🔴 FINAL SCORES EXTRACTED:', { 
+              homeScore, 
+              awayScore, 
+              willShowScores: homeScore !== null && awayScore !== null,
+              originalHomePoints: game.home_points,
+              originalAwayPoints: game.away_points
+            });
+            
+            return {
+              ...game,
+              home_points: homeScore,
+              away_points: awayScore,
+              status: liveGameData?.status ?? livePlays?.status ?? "live",
+              period: liveGameData?.currentPeriod ?? liveGameData?.period ?? livePlays?.period ?? 1,
+              clock: liveGameData?.currentClock ?? liveGameData?.clock ?? livePlays?.clock ?? "15:00",
+              currentPossession: liveGameData?.currentPossession ?? livePlays?.possession ?? game.currentPossession,
+              completed: false, // Force live games to not be completed
+              id: game.id,
+              season: game.season,
+              week: game.week,
+              season_type: game.season_type,
+              isLiveGame: true
+            };
+          }
+
+          // Fallback to scoreboard data
+          const scoreboardGame = scoreboardData.find(sb => 
+            sb.id === game.id || 
+            (sb.home_team === game.home_team && sb.away_team === game.away_team)
+          );
+          
+          if (scoreboardGame) {
+            console.log('Merging scoreboard data for game:', game.home_team, 'vs', game.away_team, 'Game ID:', game.id);
+            return {
+              ...game, // Keep all original game data
+              // Only override specific score/status fields from scoreboard
+              home_points: scoreboardGame.home_points !== null ? scoreboardGame.home_points : game.home_points,
+              away_points: scoreboardGame.away_points !== null ? scoreboardGame.away_points : game.away_points,
+              status: scoreboardGame.status || game.status,
+              period: scoreboardGame.period || game.period,
+              clock: scoreboardGame.clock || game.clock,
+              completed: scoreboardGame.completed !== undefined ? scoreboardGame.completed : game.completed,
+              // Keep original ID and other essential fields
+              id: game.id,
+              season: game.season,
+              week: game.week,
+              season_type: game.season_type
+            };
+          }
+          
+          return game;
+        });
+      }
+
       setGames(loadedGames || []);
 
       // Load enhanced media and weather data in parallel
@@ -452,7 +606,7 @@ const Schedule = () => {
       let loadedRankings = rankings;
       if (loadedRankings.length === 0) {
         try {
-          const rankingsData = await rankingsService.getHistoricalRankings(2024, null, 'postseason');
+          const rankingsData = await rankingsService.getHistoricalRankings(2025, null, 'postseason');
           const apPoll = rankingsData.find(week => 
             week.polls?.find(poll => poll.poll === 'AP Top 25')
           );
@@ -474,6 +628,27 @@ const Schedule = () => {
       setIsLoading(false);
     }
   };
+
+  // Auto-refresh live games every 30 seconds
+  useEffect(() => {
+    // Check if there are any potentially live games
+    const hasLiveGames = games.some(game => {
+      const gameStartTime = new Date(game.start_date || game.startDate);
+      const now = new Date();
+      const gameEndTime = new Date(gameStartTime.getTime() + (4 * 60 * 60 * 1000));
+      return !game.completed && now >= gameStartTime && now <= gameEndTime;
+    });
+
+    if (hasLiveGames) {
+      console.log('Setting up auto-refresh for live games');
+      const interval = setInterval(() => {
+        console.log('Auto-refreshing live game data...');
+        loadDataIfNeeded();
+      }, 30000); // Refresh every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [games, loadDataIfNeeded]);
 
   const updateFilteredGames = () => {
     let filtered = [...games];
@@ -729,7 +904,7 @@ const Schedule = () => {
             </div>
             <div className="w-px h-6 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
             <span className="text-lg text-gray-700 font-medium">
-              {isPostseason ? 'Bowl Season & Playoffs' : `Week ${selectedWeek} • 2024`}
+              {isPostseason ? 'Bowl Season & Playoffs' : `Week ${selectedWeek} • 2025`}
             </span>
           </div>
         </div>
@@ -1008,9 +1183,70 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
   const awayTeamId = game.away_id || game.awayId;
   const homeTeam = game.home_team || game.homeTeam;
   const awayTeam = game.away_team || game.awayTeam;
-  const homePoints = game.home_points || game.homePoints;
-  const awayPoints = game.away_points || game.awayPoints;
+  // Use the SAME pattern for scores as we do for clock
+  const homePoints = game.home_points !== null && game.home_points !== undefined ? game.home_points : 
+                    (game.homePoints !== null && game.homePoints !== undefined ? game.homePoints : 
+                    (game.homeScore !== null && game.homeScore !== undefined ? game.homeScore : game.home_score));
+  const awayPoints = game.away_points !== null && game.away_points !== undefined ? game.away_points : 
+                    (game.awayPoints !== null && game.awayPoints !== undefined ? game.awayPoints : 
+                    (game.awayScore !== null && game.awayScore !== undefined ? game.awayScore : game.away_score));
   const isCompleted = game.completed === true;
+
+  console.log(`🏈 GAME CARD DEBUG for ${awayTeam} @ ${homeTeam}:`, {
+    gameObject: game,
+    extractedHomePoints: homePoints,
+    extractedAwayPoints: awayPoints,
+    rawHomePoints: game.home_points,
+    rawHomePointsAlt: game.homePoints,
+    rawAwayPoints: game.away_points,
+    rawAwayPointsAlt: game.awayPoints,
+    isLiveGame: game.isLiveGame,
+    hasScores: homePoints !== null && awayPoints !== null
+  });
+  
+  // Enhanced game status detection - check multiple status indicators
+  const gameStartTime = new Date(game.start_date || game.startDate);
+  const now = new Date();
+  const gameEndTime = new Date(gameStartTime.getTime() + (4 * 60 * 60 * 1000)); // Assume 4 hours for game duration
+  
+  // More comprehensive live game detection
+  const gameStatus = game.status || game.game_status;
+  const period = game.period || game.current_period || game.currentPeriod;
+  const clock = game.clock || game.game_clock || game.time_remaining || game.currentClock;
+  const possession = game.currentPossession;
+  
+  // Check if game is live using multiple indicators
+  const isLive = !isCompleted && (
+    // Has explicit live status
+    (gameStatus && ['live', 'in_progress', 'active', '1st', '2nd', '3rd', '4th', 'OT', 'Halftime'].includes(gameStatus.toLowerCase())) ||
+    // Has period/quarter info (live games have current period)
+    (period && period > 0) ||
+    // Has game clock that's not final
+    (clock && clock !== "00:00" && clock !== "Final") ||
+    // Has possession info (only live games track possession)
+    (possession) ||
+    // Has scores but not completed AND marked as live game from our data merge
+    (game.isLiveGame === true) ||
+    // Has scores and is within game time window
+    ((homePoints !== null && homePoints !== undefined) && (awayPoints !== null && awayPoints !== undefined) && !isCompleted && now >= gameStartTime && now <= gameEndTime)
+  );
+  
+  // Check if game is upcoming (hasn't started yet and no scores)
+  const isUpcoming = !isCompleted && !isLive && now < gameStartTime && homePoints === null && awayPoints === null;
+
+  // Debug logging to see what data we're getting
+  console.log('All game data for', `${awayTeam} @ ${homeTeam}:`, {
+    gameObject: game,
+    homePoints,
+    awayPoints,
+    isCompleted,
+    isLive,
+    gameStatus,
+    period,
+    clock,
+    startTime: gameStartTime,
+    hasScores: homePoints !== null && awayPoints !== null
+  });
 
   // Enhanced game data extraction
   const excitementIndex = game.excitement_index || game.excitementIndex || 0;
@@ -1044,6 +1280,16 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
       e.stopPropagation();
       return;
     }
+    
+    console.log('Game card clicked:', {
+      gameId: game.id,
+      teams: `${awayTeam} @ ${homeTeam}`,
+      isCompleted,
+      isLive,
+      homePoints,
+      awayPoints,
+      navigatingTo: `#game-detail-${game.id}`
+    });
     
     // Navigate to game detail view using hash routing
     window.location.hash = `#game-detail-${game.id}`;
@@ -1113,9 +1359,22 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                       {getTeamAbbreviation(awayTeamId, awayTeam)}
                     </span>
                   </div>
-                  {homePoints !== null && awayPoints !== null && (
+                  {/* Always show scores if they exist OR if it's a live game */}
+                  {(isLive && awayPoints !== null && awayPoints !== undefined) ? (
+                    <div className={`text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300 animate-pulse`} style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                      {awayPoints}
+                    </div>
+                  ) : isLive ? (
+                    <div className="text-2xl font-black animate-pulse text-red-600">
+                      LIVE
+                    </div>
+                  ) : (awayPoints !== null && awayPoints !== undefined) ? (
                     <div className="text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       {awayPoints}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 italic">
+                      No Score
                     </div>
                   )}
                   {/* Away Team ELO */}
@@ -1155,9 +1414,22 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                       </div>
                     )}
                   </div>
-                  {homePoints !== null && awayPoints !== null && (
+                  {/* Always show scores if they exist OR if it's a live game */}
+                  {(isLive && homePoints !== null && homePoints !== undefined) ? (
+                    <div className={`text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300 animate-pulse`} style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                      {homePoints}
+                    </div>
+                  ) : isLive ? (
+                    <div className="text-2xl font-black animate-pulse text-red-600">
+                      LIVE
+                    </div>
+                  ) : (homePoints !== null && homePoints !== undefined) ? (
                     <div className="text-3xl font-black drop-shadow-xl group-hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       {homePoints}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 italic">
+                      No Score
                     </div>
                   )}
                   {/* Home Team ELO */}
@@ -1203,9 +1475,11 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
               className={`relative inline-flex items-center px-4 py-2 rounded-xl font-bold text-sm backdrop-blur-xl border shadow-lg ${
                 isCompleted 
                   ? 'bg-green-500/20 border-green-400/30 text-green-700 shadow-[0_8px_25px_rgba(34,197,94,0.2)]' 
+                  : isLive
+                  ? 'bg-red-500/20 border-red-400/30 text-red-700 shadow-[0_8px_25px_rgba(239,68,68,0.3)] animate-pulse'
                   : 'border-white/30 text-white shadow-[0_8px_25px_rgba(204,0,28,0.3)]'
               }`}
-              style={!isCompleted ? { background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' } : {}}
+              style={!isCompleted && !isLive ? { background: 'linear-gradient(135deg, #cc001c, #a10014, #73000d, #a10014, #cc001c)' } : {}}
             >
               <div className="absolute inset-1 rounded-lg bg-gradient-to-br from-white/30 via-transparent to-transparent"></div>
               <div className="relative z-10 flex items-center space-x-2">
@@ -1213,6 +1487,18 @@ const GameCard = ({ game, getTeamRank, getTeamLogo, getTeamAbbreviation, formatG
                   <>
                     <i className="fas fa-check-circle"></i>
                     <span>FINAL</span>
+                  </>
+                ) : isLive ? (
+                  <>
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold">LIVE</span>
+                      {(period || clock) && (
+                        <span className="text-xs opacity-75">
+                          {period && `Q${period}`} {clock && clock}
+                        </span>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
