@@ -56,6 +56,31 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   const homeData = getHomeTeamData();
   const awayData = getAwayTeamData();
 
+  // Get team score with proper fallback (matches GameDetailView logic)
+  const getTeamScore = (isHome) => {
+    if (!game) return 0;
+    
+    // Check both possible field names and return the first valid score
+    let homeScore = null;
+    let awayScore = null;
+    
+    // Try home_points first, then homePoints
+    if (game.home_points !== null && game.home_points !== undefined) {
+      homeScore = game.home_points;
+    } else if (game.homePoints !== null && game.homePoints !== undefined) {
+      homeScore = game.homePoints;
+    }
+    
+    // Try away_points first, then awayPoints
+    if (game.away_points !== null && game.away_points !== undefined) {
+      awayScore = game.away_points;
+    } else if (game.awayPoints !== null && game.awayPoints !== undefined) {
+      awayScore = game.awayPoints;
+    }
+    
+    return isHome ? (homeScore || 0) : (awayScore || 0);
+  };
+
   // Convert plays or drives data to win probability data
   const processWinProbabilityData = () => {
     console.log('Processing data - Plays:', plays, 'Drives:', drives);
@@ -475,78 +500,177 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
   }, [game]);
 
   // Game Header Component
-  const GameHeader = () => (
-    <div className="flex items-center justify-between p-6 bg-white rounded-xl shadow-sm mb-6">
-      {/* Home Team */}
-      <div className="flex flex-col items-center space-y-2 flex-1">
-        <img
-          src={homeData.logo}
-          alt={`${homeData.name} logo`}
-          className="w-12 h-12 object-contain"
-          onError={(e) => { e.target.src = '/photos/Whitmer.png'; }}
-        />
-        <span className="text-sm font-medium text-gray-700">{homeData.name}</span>
-        <span className="text-2xl font-bold text-gray-900">{game.homePoints || 0}</span>
-      </div>
+  const GameHeader = () => {
+    // Get the last play for current scores
+    const lastPlay = winProbData.length > 0 ? winProbData[winProbData.length - 1] : null;
+    
+    // Use lastPlay scores if available, otherwise fall back to game scores
+    const homeScore = lastPlay && lastPlay.homeScore !== undefined ? lastPlay.homeScore : getTeamScore(true);
+    const awayScore = lastPlay && lastPlay.awayScore !== undefined ? lastPlay.awayScore : getTeamScore(false);
+    
+    return (
+      <div className="flex items-center justify-between p-6 bg-white rounded-xl shadow-sm mb-6">
+        {/* Home Team */}
+        <div className="flex flex-col items-center space-y-2 flex-1">
+          <img
+            src={homeData.logo}
+            alt={`${homeData.name} logo`}
+            className="w-12 h-12 object-contain"
+            onError={(e) => { e.target.src = '/photos/Whitmer.png'; }}
+          />
+          <span className="text-sm font-medium text-gray-700">{homeData.name}</span>
+          <span className="text-2xl font-bold text-gray-900">{homeScore}</span>
+        </div>
 
-      {/* Game Status */}
-      <div className="flex flex-col items-center space-y-1">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          {game.completed ? 'FINAL' : 'LIVE'}
-        </span>
-        <span className="text-xs text-gray-400">Play-by-Play</span>
-      </div>
+        {/* Game Status */}
+        <div className="flex flex-col items-center space-y-1">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {game.completed ? 'FINAL' : 'LIVE'}
+          </span>
+          <span className="text-xs text-gray-400">Play-by-Play</span>
+        </div>
 
-      {/* Away Team */}
-      <div className="flex flex-col items-center space-y-2 flex-1">
-        <img
-          src={awayData.logo}
-          alt={`${awayData.name} logo`}
-          className="w-12 h-12 object-contain"
-          onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
-        />
-        <span className="text-sm font-medium text-gray-700">{awayData.name}</span>
-        <span className="text-2xl font-bold text-gray-900">{game.awayPoints || 0}</span>
+        {/* Away Team */}
+        <div className="flex flex-col items-center space-y-2 flex-1">
+          <img
+            src={awayData.logo}
+            alt={`${awayData.name} logo`}
+            className="w-12 h-12 object-contain"
+            onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+          />
+          <span className="text-sm font-medium text-gray-700">{awayData.name}</span>
+          <span className="text-2xl font-bold text-gray-900">{awayScore}</span>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
-  // Live Ball Indicator Component
+  // Enhanced Live Ball Indicator Component with Team Logos and Field Position
   const LiveBallIndicator = () => {
     if (game.completed || winProbData.length === 0) return null;
     
     const lastPlay = winProbData[winProbData.length - 1];
+    const possessingTeam = lastPlay.homeBall ? homeData : awayData;
+    const defendingTeam = lastPlay.homeBall ? awayData : homeData;
+    
+    // Calculate field position display
+    const fieldPosition = lastPlay.yardLine || 50;
+    const yardLineDisplay = formatYardLine(fieldPosition, lastPlay.homeBall);
+    
+    // Determine if in red zone (within 20 yards of goal)
+    const inRedZone = fieldPosition <= 20;
     
     return (
-      <div className="flex items-center space-x-3 px-4 py-3 bg-white rounded-lg border border-red-200 mb-4">
-        {/* Live indicator */}
-        <div className="relative">
-          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-          <div className="absolute inset-0 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-30"></div>
+      <div className="bg-gradient-to-r from-red-50 via-white to-red-50 rounded-xl border-2 border-red-200 p-6 mb-6 shadow-lg">
+        {/* Live Game Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="absolute inset-0 w-3 h-3 bg-red-500 rounded-full animate-ping opacity-40"></div>
+            </div>
+            <span className="text-sm font-bold text-red-600 uppercase tracking-wide">LIVE</span>
+          </div>
+          
+          <div className="text-right">
+            <div className="text-xs text-gray-500 mb-1">Quarter {lastPlay.period}</div>
+            <div className="text-sm font-medium text-gray-700">{lastPlay.clock}</div>
+          </div>
         </div>
 
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-bold text-gray-900">
-              {lastPlay.homeScore} - {lastPlay.awayScore}
-            </span>
-            <div className="flex items-center space-x-1">
-              <div 
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: lastPlay.homeBall ? homeData.primaryColor : awayData.primaryColor }}
-              ></div>
-              <span 
-                className="text-xs font-medium"
-                style={{ color: lastPlay.homeBall ? homeData.primaryColor : awayData.primaryColor }}
-              >
-                {lastPlay.homeBall ? homeData.name : awayData.name}
-              </span>
+        {/* Score Display */}
+        <div className="flex items-center justify-center space-x-8 mb-6">
+          {/* Away Team Score */}
+          <div className="flex items-center space-x-3">
+            <img
+              src={awayData.logo}
+              alt={`${awayData.name} logo`}
+              className="w-10 h-10 object-contain"
+              onError={(e) => { e.target.src = '/photos/ncaaf.png'; }}
+            />
+            <div className="text-center">
+              <div className="text-sm font-medium text-gray-600">{awayData.name}</div>
+              <div className="text-2xl font-bold text-gray-900">{lastPlay.awayScore !== undefined ? lastPlay.awayScore : getTeamScore(false)}</div>
             </div>
           </div>
-          <span className="text-xs text-gray-500">
-            {ordinalString(lastPlay.down)} & {lastPlay.distance} at {formatYardLine(lastPlay.yardLine, lastPlay.homeBall)}
-          </span>
+
+          <div className="text-2xl font-bold text-gray-400">-</div>
+
+          {/* Home Team Score */}
+          <div className="flex items-center space-x-3">
+            <div className="text-center">
+              <div className="text-sm font-medium text-gray-600">{homeData.name}</div>
+              <div className="text-2xl font-bold text-gray-900">{lastPlay.homeScore !== undefined ? lastPlay.homeScore : getTeamScore(true)}</div>
+            </div>
+            <img
+              src={homeData.logo}
+              alt={`${homeData.name} logo`}
+              className="w-10 h-10 object-contain"
+              onError={(e) => { e.target.src = '/photos/Whitmer.png'; }}
+            />
+          </div>
         </div>
+
+        {/* Possession and Down/Distance */}
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center justify-between">
+            {/* Possession Indicator */}
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <img
+                  src={possessingTeam.logo}
+                  alt={`${possessingTeam.name} logo`}
+                  className="w-8 h-8 object-contain"
+                  onError={(e) => { 
+                    e.target.src = possessingTeam === homeData ? '/photos/Whitmer.png' : '/photos/ncaaf.png'; 
+                  }}
+                />
+                <div 
+                  className="w-3 h-3 rounded-full animate-pulse"
+                  style={{ backgroundColor: possessingTeam.primaryColor }}
+                ></div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">POSSESSION</div>
+                <div 
+                  className="text-sm font-bold"
+                  style={{ color: possessingTeam.primaryColor }}
+                >
+                  {possessingTeam.name}
+                </div>
+              </div>
+            </div>
+
+            {/* Down and Distance */}
+            <div className="text-center">
+              <div className="text-xs text-gray-500">DOWN & DISTANCE</div>
+              <div className="text-lg font-bold text-gray-900">
+                {ordinalString(lastPlay.down)} & {lastPlay.distance}
+              </div>
+            </div>
+
+            {/* Field Position */}
+            <div className="text-right">
+              <div className="text-xs text-gray-500">FIELD POSITION</div>
+              <div className={`text-sm font-bold ${inRedZone ? 'text-red-600' : 'text-gray-900'}`}>
+                {yardLineDisplay}
+                {inRedZone && (
+                  <span className="ml-1 text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
+                    RED ZONE
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Current Play Text */}
+        {lastPlay.playText && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <div className="text-xs text-gray-500 mb-1">LAST PLAY</div>
+            <div className="text-sm text-gray-700 leading-relaxed">{lastPlay.playText}</div>
+          </div>
+        )}
       </div>
     );
   };
@@ -992,9 +1116,58 @@ const GamePlayByPlay = ({ game, awayTeam, homeTeam }) => {
           <GameHeader />
         </div>
 
-        {/* Football Field */}
+        {/* Football Field with Live Game State */}
         <div className="px-4 space-y-3">
-          <FootballField homeTeam={homeTeam} awayTeam={awayTeam} />
+          <FootballField 
+            homeTeam={homeTeam} 
+            awayTeam={awayTeam}
+            ballPosition={(() => {
+              if (!winProbData.length) return null;
+              const lastPlay = winProbData[winProbData.length - 1];
+              // Convert yard line to field percentage (0% = away endzone, 100% = home endzone)
+              // Field position is typically given as yards from goal line
+              const yardLine = lastPlay.yardLine || 50;
+              if (lastPlay.homeBall) {
+                // Home team has ball - yardLine is distance from home goal
+                return 100 - yardLine; // Closer to home endzone = higher percentage
+              } else {
+                // Away team has ball - yardLine is distance from away goal  
+                return yardLine; // Closer to away endzone = lower percentage
+              }
+            })()}
+            possession={(() => {
+              if (!winProbData.length) return null;
+              const lastPlay = winProbData[winProbData.length - 1];
+              return lastPlay.homeBall ? 'home' : 'away';
+            })()}
+            down={(() => {
+              if (!winProbData.length) return null;
+              const lastPlay = winProbData[winProbData.length - 1];
+              return lastPlay.down;
+            })()}
+            distance={(() => {
+              if (!winProbData.length) return null;
+              const lastPlay = winProbData[winProbData.length - 1];
+              return lastPlay.distance;
+            })()}
+            firstDownMarker={(() => {
+              if (!winProbData.length) return null;
+              const lastPlay = winProbData[winProbData.length - 1];
+              const yardLine = lastPlay.yardLine || 50;
+              const distance = lastPlay.distance || 10;
+              
+              if (lastPlay.homeBall) {
+                // Home team has ball - first down marker is distance yards closer to home endzone
+                const firstDownYardLine = Math.max(0, yardLine - distance);
+                return 100 - firstDownYardLine;
+              } else {
+                // Away team has ball - first down marker is distance yards closer to away endzone
+                const firstDownYardLine = Math.min(100, yardLine + distance);
+                return firstDownYardLine;
+              }
+            })()}
+            isLive={!game.completed && winProbData.length > 0}
+          />
           
           {/* Live game indicator */}
           <LiveBallIndicator />

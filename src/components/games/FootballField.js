@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 
-const FootballField = ({ homeTeam, awayTeam }) => {
+const FootballField = ({ 
+  homeTeam, 
+  awayTeam, 
+  ballPosition = null, 
+  possession = null, 
+  down = null, 
+  distance = null, 
+  firstDownMarker = null,
+  isLive = false 
+}) => {
   const [animateField, setAnimateField] = useState(false);
 
   // Get team data with fallbacks to Whitmer
@@ -502,6 +511,109 @@ const FootballField = ({ homeTeam, awayTeam }) => {
             transform: perspective(1000px) rotateX(2deg) scale(1);
           }
         }
+
+        /* Ball Position and Possession Indicators */
+        .ball-indicator {
+          position: absolute;
+          width: clamp(8px, 2vw, 16px);
+          height: clamp(8px, 2vw, 16px);
+          background: #8B4513;
+          border-radius: 50%;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 20;
+          box-shadow: 
+            0 0 8px rgba(139, 69, 19, 0.8),
+            0 0 16px rgba(139, 69, 19, 0.4),
+            inset 0 1px 2px rgba(255, 255, 255, 0.3);
+          animation: ballPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes ballPulse {
+          0%, 100% { transform: translateY(-50%) scale(1); }
+          50% { transform: translateY(-50%) scale(1.2); }
+        }
+
+        .possession-indicator {
+          position: absolute;
+          width: clamp(24px, 4vw, 40px);
+          height: clamp(24px, 4vw, 40px);
+          border-radius: 50%;
+          top: 20%;
+          transform: translateX(-50%);
+          z-index: 15;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: possessionGlow 1.5s ease-in-out infinite alternate;
+          border: 2px solid rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(4px);
+        }
+
+        @keyframes possessionGlow {
+          0% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+          100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px currentColor; }
+        }
+
+        .possession-indicator img {
+          width: 70%;
+          height: 70%;
+          object-fit: contain;
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .first-down-marker {
+          position: absolute;
+          width: clamp(2px, 0.4vw, 3px);
+          height: 80%;
+          top: 10%;
+          z-index: 18;
+          background: linear-gradient(to bottom, 
+            #FFD700 0%, 
+            #FFA500 50%, 
+            #FFD700 100%
+          );
+          box-shadow: 
+            0 0 8px rgba(255, 215, 0, 0.8),
+            0 0 16px rgba(255, 215, 0, 0.4);
+          animation: firstDownGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes firstDownGlow {
+          0%, 100% { opacity: 0.8; }
+          50% { opacity: 1; }
+        }
+
+        .first-down-marker::before {
+          content: '1ST';
+          position: absolute;
+          top: -20px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: clamp(8px, 1.5vw, 12px);
+          font-weight: bold;
+          color: #FFD700;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+          white-space: nowrap;
+        }
+
+        .down-distance-display {
+          position: absolute;
+          top: 70%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: clamp(2px, 1vw, 8px) clamp(6px, 2vw, 12px);
+          border-radius: clamp(4px, 1vw, 8px);
+          font-size: clamp(10px, 2vw, 14px);
+          font-weight: bold;
+          z-index: 25;
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          text-align: center;
+          min-width: clamp(40px, 8vw, 80px);
+        }
       `}</style>
 
       <div className="football-field">
@@ -557,6 +669,49 @@ const FootballField = ({ homeTeam, awayTeam }) => {
                 style={{ left: `${(hashMark / 100) * 100}%` }}
               />
             ))}
+
+            {/* Ball Position Indicator */}
+            {isLive && ballPosition !== null && (
+              <div 
+                className="ball-indicator"
+                style={{ left: `${ballPosition}%` }}
+              />
+            )}
+
+            {/* First Down Marker */}
+            {isLive && firstDownMarker !== null && (
+              <div 
+                className="first-down-marker"
+                style={{ left: `${firstDownMarker}%` }}
+              />
+            )}
+
+            {/* Possession Indicator */}
+            {isLive && possession && ballPosition !== null && (
+              <div 
+                className="possession-indicator"
+                style={{ 
+                  left: `${ballPosition}%`,
+                  backgroundColor: possession === 'home' ? homeData.primaryColor : awayData.primaryColor,
+                  color: possession === 'home' ? homeData.primaryColor : awayData.primaryColor
+                }}
+              >
+                <img
+                  src={possession === 'home' ? homeData.logo : awayData.logo}
+                  alt={`${possession === 'home' ? homeData.name : awayData.name} possession`}
+                  onError={(e) => { 
+                    e.target.src = possession === 'home' ? '/photos/Whitmer.png' : '/photos/ncaaf.png'; 
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Down and Distance Display */}
+            {isLive && down !== null && distance !== null && (
+              <div className="down-distance-display">
+                {down === 1 ? '1st' : down === 2 ? '2nd' : down === 3 ? '3rd' : '4th'} & {distance}
+              </div>
+            )}
 
             {/* Home Team Logo in Center */}
             <div className="center-logo">

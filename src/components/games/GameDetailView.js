@@ -43,9 +43,10 @@ const GameDetailView = ({ gameId }) => {
         const teamsData = await teamService.getFBSTeams(true);
         setTeams(teamsData);
 
-        // Try to find the game in recent weeks (we'll check multiple weeks)
-        let foundGame = null;
-        const currentYear = 2024;
+  // Try to find the game in recent weeks (we'll check multiple weeks)
+  let foundGame = null;
+  // Use the runtime current year instead of a hardcoded 2024 so new seasons (e.g. 2025) resolve.
+  const currentYear = new Date().getFullYear();
         
         // Check recent weeks for the game
         for (let week = 1; week <= 15; week++) {
@@ -67,6 +68,22 @@ const GameDetailView = ({ gameId }) => {
             foundGame = postseasonGames?.find(game => game.id?.toString() === gameId);
           } catch (error) {
             console.warn('Error loading postseason games:', error);
+          }
+        }
+
+        // If still not found, try an ID-based lookup (REST supports querying by id). This handles cases
+        // where the game belongs to a different season or the API returns it outside regular/week lookups.
+        if (!foundGame) {
+          try {
+            const byIdGames = await gameService.getGames(null, null, 'both', null, null, null, null, 'fbs', gameId, false);
+            if (Array.isArray(byIdGames) && byIdGames.length > 0) {
+              foundGame = byIdGames.find(g => g.id?.toString() === gameId) || byIdGames[0];
+            } else if (byIdGames && byIdGames.id && byIdGames.id.toString() === gameId) {
+              foundGame = byIdGames;
+            }
+            if (foundGame) console.log('🔎 Found game via ID lookup:', foundGame.id);
+          } catch (err) {
+            console.warn('Error loading game by ID fallback:', err);
           }
         }
         
